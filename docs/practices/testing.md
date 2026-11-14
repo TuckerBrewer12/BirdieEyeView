@@ -31,10 +31,11 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
+npm run test:espresso
 npm run test:screenshots
 ```
 
-Use focused test filters where appropriate. Vitest runs helper/hook tests in jsdom; screenshot specs are excluded from that suite. Playwright screenshot tests use the existing config, start their own Vite server on port 5174, and use mocked data/session fixtures. Browser dependencies must be available. Update snapshots only after reviewing the intended visual change; do not regenerate baselines to hide an unexplained failure.
+Use focused test filters where appropriate. Vitest runs view-model, hook and helper tests in jsdom, with `Fake*` repositories rather than mocks. Playwright runs espresso flows (behaviour, through each page's robot) and screenshot specs (looks); both start their own Vite server on port 5174 and answer the API from `FakeBackend`. Screenshot baselines are the macOS renders CI takes (`*-darwin.png`). Update them only after reviewing the intended visual change; do not regenerate baselines to hide an unexplained failure.
 
 ## Live checks
 

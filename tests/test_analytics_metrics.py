@@ -194,7 +194,8 @@ def test_course_handicap_rounds_half_up_and_halves_the_index_for_nine_holes():
 
     assert round_half_up(16.95, 1) == 17.0
     assert round_half_up(2.5) == 3.0
-    assert course_handicap(9.0, nine) == 4  # 4.5 + (35 - 36) = 3.5 -> 4
+    from analytics.handicap import round_course_handicap
+    assert round_course_handicap(nine, 9.0) == 4  # 4.5 + (35 - 36) = 3.5 -> 4
 
 
 # ================================================================

@@ -51,10 +51,11 @@ def test_index_and_used_flags_come_from_the_same_selection():
 def test_display_window_shows_flags_from_the_full_history():
     rounds = rated_rounds([0] * 8 + [10] * 12)
 
-    shown = stats._build_handicap_trend(rounds, rounds[-5:], make_user(uuid4()))
+    from api.analytics_responses import _handicap_trend
+    shown = _handicap_trend(make_user(uuid4()), rounds, rounds[-5:])
 
     assert len(shown) == 5 and not any(e["used_in_hi"] for e in shown)
-    assert [e["round_index"] for e in shown] == [1, 2, 3, 4, 5]
+    assert [e["round_index"] for e in shown] == [16, 17, 18, 19, 20]
 
 
 def test_rounds_before_a_reset_are_not_marked_used():
@@ -100,11 +101,11 @@ async def test_every_screen_reports_the_same_seeded_index():
     db = make_mock_database()
     db.users.get_user = AsyncMock(return_value=user)
     db.rounds.get_rounds_for_user = AsyncMock(return_value=list(reversed(history)))
-    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[make_round_summary(uuid4())])
+    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=history)
 
     from_users = (await users.get_user_handicap(user_id, db, user))["handicap_index"]
     from_dashboard = (await stats.get_dashboard(user_id, db, user)).handicap_index
-    from_analytics = (await stats.get_analytics(user_id, 50, None, None, db, user))["kpis"]["handicap_index"]
+    from_analytics = (await stats.get_analytics(user_id, 50, None, None, db, user)).kpis.handicap_index
 
     assert from_users == from_dashboard == from_analytics == 10.0
     assert all(call.kwargs.get("limit") in (None, 50) for call in db.rounds.get_rounds_for_user.await_args_list)

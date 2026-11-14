@@ -72,7 +72,6 @@ class StatefulPrivateS3:
         class Paginator:
             def paginate(self, **params):
                 assert params == {"Bucket": "private-test", "Prefix": PREFIX}
-                # One item per page exercises real iteration across page boundaries.
                 yield {}
                 for key in owner.objects:
                     if key.startswith(params["Prefix"]):
@@ -193,7 +192,6 @@ def test_listing_is_paginated_and_deletion_only_targets_the_selected_report():
     store = make_store()
     first, second = report(), report()
     store.save_sync(first)
-    # An existing report written before timestamp naming remains unchanged.
     from services.scan_report_sanitizer import sanitize_scorecard
     image, media = sanitize_scorecard(second.image, second.media_type)
     legacy = report_object_key(second.retry_key)

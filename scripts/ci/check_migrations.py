@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""Structural checks on database/migrations/.
-
-Migrations are applied by hand in this repo, so ordering and destructive-change
-mistakes are silent until they hit a real database. These checks are cheap.
-"""
 from __future__ import annotations
 
 import re
@@ -13,7 +8,6 @@ from pathlib import Path
 MIGRATIONS = Path(__file__).resolve().parents[2] / "database" / "migrations"
 NAME_RE = re.compile(r"^(\d{3})_[a-z0-9_]+\.sql$")
 
-# Statements that can drop data. Allowed only with an explicit opt-in marker.
 DESTRUCTIVE_RE = re.compile(
     r"\b(DROP\s+TABLE|DROP\s+COLUMN|DROP\s+SCHEMA|TRUNCATE)\b", re.IGNORECASE
 )
@@ -52,7 +46,6 @@ def main() -> int:
                 f'add the line "{APPROVAL_MARKER}" to the migration.'
             )
 
-    # Numbers must be contiguous from 001 so ordering is unambiguous.
     numbers = sorted(int(n) for n in seen)
     expected = list(range(1, len(numbers) + 1))
     if numbers != expected:

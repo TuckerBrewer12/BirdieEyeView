@@ -1,23 +1,36 @@
+import json
+
+import httpx
+import pytest
+
 from api.auth_notifications import send_password_reset_email, send_verification_email
 
 
-def test_resend_disabled_without_api_key(monkeypatch):
+def _client_with(monkeypatch, handler, captured=None):
+    real_client = httpx.AsyncClient
+
+    def _client(**kwargs):
+        if captured is not None:
+            captured["client_kwargs"] = kwargs
+        return real_client(transport=httpx.MockTransport(handler), **kwargs)
+
+    monkeypatch.setattr("api.auth_notifications.httpx.AsyncClient", _client)
+
+
+@pytest.mark.asyncio
+async def test_resend_disabled_without_api_key(monkeypatch):
     monkeypatch.delenv("RESEND_API_KEY", raising=False)
 
-    called = False
+    def _handler(request):
+        raise AssertionError("Resend should not be called without RESEND_API_KEY")
 
-    def _fake_post(*_args, **_kwargs):
-        nonlocal called
-        called = True
-        raise AssertionError("requests.post should not be called without RESEND_API_KEY")
+    _client_with(monkeypatch, _handler)
 
-    monkeypatch.setattr("api.auth_notifications.requests.post", _fake_post)
-
-    send_verification_email("user@example.com", "https://example.com/verify?token=abc")
-    assert called is False
+    await send_verification_email("user@example.com", "https://example.com/verify?token=abc")
 
 
-def test_resend_api_payload(monkeypatch):
+@pytest.mark.asyncio
+async def test_resend_api_payload(monkeypatch):
     monkeypatch.setenv("RESEND_API_KEY", "resend_test_key")
     monkeypatch.setenv("AUTH_FROM_EMAIL", "noreply@birdie-eye-view.com")
     monkeypatch.setenv("RESEND_API_URL", "https://api.resend.com/emails")
@@ -25,20 +38,15 @@ def test_resend_api_payload(monkeypatch):
 
     captured = {}
 
-    class _DummyResponse:
-        def raise_for_status(self):
-            captured["raise_for_status_called"] = True
+    def _handler(request):
+        captured["url"] = str(request.url)
+        captured["headers"] = request.headers
+        captured["json"] = json.loads(request.content)
+        return httpx.Response(200, json={"id": "email-1"})
 
-    def _fake_post(url, headers, json, timeout):
-        captured["url"] = url
-        captured["headers"] = headers
-        captured["json"] = json
-        captured["timeout"] = timeout
-        return _DummyResponse()
+    _client_with(monkeypatch, _handler, captured)
 
-    monkeypatch.setattr("api.auth_notifications.requests.post", _fake_post)
-
-    send_password_reset_email("user@example.com", "https://example.com/reset?token=def")
+    await send_password_reset_email("user@example.com", "https://example.com/reset?token=def")
 
     assert captured["url"] == "https://api.resend.com/emails"
     assert captured["headers"]["Authorization"] == "Bearer resend_test_key"
@@ -47,5 +55,13 @@ def test_resend_api_payload(monkeypatch):
     assert captured["json"]["to"] == ["user@example.com"]
     assert captured["json"]["subject"] == "Reset your ScanScorecards password"
     assert "https://example.com/reset?token=def" in captured["json"]["text"]
-    assert captured["timeout"] == 7.5
-    assert captured["raise_for_status_called"] is True
+    assert captured["client_kwargs"]["timeout"] == 7.5
+
+
+@pytest.mark.asyncio
+async def test_resend_error_status_raises(monkeypatch):
+    monkeypatch.setenv("RESEND_API_KEY", "resend_test_key")
+    _client_with(monkeypatch, lambda request: httpx.Response(500))
+
+    with pytest.raises(httpx.HTTPStatusError):
+        await send_verification_email("user@example.com", "https://example.com/verify?token=abc")

@@ -16,3 +16,11 @@ class IntegrityError(DatabaseError):
 
 class ConflictError(IntegrityError):
     """An existing reference prevents an otherwise permitted mutation."""
+
+
+class FriendRequestBlockedError(DuplicateError):
+    ...
+
+
+class AlreadyFriendsError(DuplicateError):
+    ...

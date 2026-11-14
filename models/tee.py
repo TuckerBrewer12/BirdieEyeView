@@ -136,3 +136,16 @@ class TeeData(BaseGolfModel):
 class Tee(TeeData):
     """Represents a tee box option with its ratings and hole yardages."""
     color: Optional[str] = None
+
+    @property
+    def back_nine_yardage(self) -> Optional[int]:
+        return self._nine_yardage(10)
+    @property
+    def front_nine_yardage(self) -> Optional[int]:
+        return self._nine_yardage(1)
+
+    def _nine_yardage(self, first: int) -> Optional[int]:
+        yards = [self.hole_yardages.get(n) for n in range(first, first + 9)]
+        if any(y is None for y in yards):
+            return None
+        return sum(yards)

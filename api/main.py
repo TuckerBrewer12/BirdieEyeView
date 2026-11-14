@@ -1,5 +1,3 @@
-"""FastAPI application for the Golf Scorecard API."""
-
 import asyncio
 import logging
 import os
@@ -8,14 +6,15 @@ from contextlib import asynccontextmanager, suppress
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from starlette.types import Receive, Scope, Send
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s [%(name)s] %(message)s",
 )
-# Show all llm pipeline logs at DEBUG level
 logging.getLogger("llm").setLevel(logging.DEBUG)
 
 from api.messages import (
@@ -48,7 +47,6 @@ from models import Round, User  # noqa: F401 — Round must be imported for User
 from database.connection import db
 from database.db_manager import DatabaseManager
 
-# Resolve forward reference (User -> Round)
 User.model_rebuild()
 
 
@@ -60,6 +58,16 @@ def _env_float(name: str, default: float) -> float:
         return float(raw)
     except (TypeError, ValueError):
         return default
+
+
+class _GZipOutsideAuthMiddleware(GZipMiddleware):
+    """Gzip responses, except auth ones: login puts the access token in its body (BREACH)."""
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "http" and scope["path"].startswith("/api/auth/"):
+            await self.app(scope, receive, send)
+            return
+        await super().__call__(scope, receive, send)
 
 
 @asynccontextmanager
@@ -122,6 +130,10 @@ def create_app() -> FastAPI:
         version="1.0.0",
         lifespan=lifespan,
     )
+
+    # Added first so it sits innermost: CORS answers preflights before they reach it and
+    # stamps its headers on the compressed response on the way out.
+    app.add_middleware(_GZipOutsideAuthMiddleware, minimum_size=1024)
 
     allowed_hosts = parse_allowed_hosts()
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
@@ -336,7 +348,6 @@ def create_app() -> FastAPI:
                 user_agent=user_agent,
             )
 
-        # Basic hardening headers for API responses.
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -345,7 +356,7 @@ def create_app() -> FastAPI:
         return response
 
     @app.exception_handler(ScanExtractionError)
-    async def scan_failure_response(request: Request, exc: ScanExtractionError):
+    async def scan_failure_response(_request: Request, exc: ScanExtractionError):
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail, "failure": exc.failure})
 
     from api.routers import auth, courses, users, rounds, stats, scan, scan_reports, ai_insights

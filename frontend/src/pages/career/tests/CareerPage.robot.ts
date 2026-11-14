@@ -1,0 +1,207 @@
+import { type Page } from "@playwright/test";
+import { test as base, expect } from "../../../testing/playwright";
+import { FakeSession } from "../../../testing/fakes/FakeSession";
+import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
+import { sampleAnalyticsAYearOn, withoutRounds } from "../../../testing/fakes/analyticsResponses";
+import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
+import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
+import { fontsLoaded } from "../../../testing/fontsLoaded";
+import { captureOptions } from "../../../testing/fullPageCapture";
+
+const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
+
+type WindowLabel = "Lifetime" | "Last 365 Days";
+type MilestoneTab = "Career" | "Putting" | "GIR";
+
+export class CareerRobot {
+  private readonly page: Page;
+  private backend: FakeBackend | null = null;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  private shown(selector: string) {
+    return this.page.locator(selector).filter({ visible: true });
+  }
+
+  async dark(): Promise<this> {
+    await this.page.addInitScript(() => {
+      localStorage.setItem("theme", "dark");
+    });
+    return this;
+  }
+
+  private async install(seed: FakeBackendSeed): Promise<void> {
+    await this.page.emulateMedia({ reducedMotion: "reduce" });
+    await this.page.clock.setFixedTime(new Date(FROZEN_NOW));
+    this.backend = await FakeSession.install(this.page, { ...sampleGolfer, ...seed });
+    await this.page.goto("/career");
+    await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
+  }
+
+  async open(seed: FakeBackendSeed = {}): Promise<this> {
+    await this.install(seed);
+    await this.seesCareer();
+    return this;
+  }
+
+  async openLater(): Promise<this> {
+    await this.install({ analytics: sampleAnalyticsAYearOn });
+    await this.seesCareer();
+    return this;
+  }
+
+  async seesTrendRounds(text: string): Promise<this> {
+    await expect(this.page.locator("[data-slot=handicap-trend-card]:visible")).toContainText(text);
+    return this;
+  }
+
+  async seesTotalInColour(label: string, kind: string): Promise<this> {
+    const tile = this.page.locator("[data-slot=totals-card]:visible [data-slot=stat]").filter({ hasText: label });
+    await expect(tile).toHaveAttribute("data-kind", kind);
+    return this;
+  }
+
+  async openWithoutRounds(): Promise<this> {
+    await this.install({ analytics: withoutRounds(sampleGolfer.analytics) });
+    return this;
+  }
+
+  async openFailed(): Promise<this> {
+    await this.install({ analytics: null });
+    return this;
+  }
+
+  nextLoadSucceeds(): this {
+    if (this.backend) this.backend.analytics = sampleGolfer.analytics;
+    return this;
+  }
+
+  async seesCareer(): Promise<this> {
+    await expect(this.shown("[data-slot=records-card]")).toBeVisible();
+    return this;
+  }
+
+  async seesNoRoundsYet(): Promise<this> {
+    await expect(this.page.getByText("Play some rounds to start your career record.")).toBeVisible();
+    return this;
+  }
+
+  async seesLoadError(): Promise<this> {
+    await expect(this.page.getByRole("alert")).toContainText("Analytics failed to load.");
+    return this;
+  }
+
+  async retry(): Promise<this> {
+    await this.page.getByRole("button", { name: "Retry" }).click();
+    return this;
+  }
+
+  async askedFor(filters: Partial<AnalyticsFilters>): Promise<this> {
+    await expect.poll(() => this.backend?.analyticsRequests.at(-1)).toMatchObject(filters);
+    return this;
+  }
+
+  async pickWindow(label: WindowLabel): Promise<this> {
+    await this.shown("[data-slot=career-window-picker]").getByRole("button", { name: label, exact: true }).click();
+    return this;
+  }
+
+  async seesWindowPicked(label: WindowLabel): Promise<this> {
+    await expect(
+      this.shown("[data-slot=career-window-picker]").getByRole("button", { name: label, exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    return this;
+  }
+
+  private totals() {
+    return this.shown("[data-slot=totals-card]");
+  }
+
+  async seesTotalsTitle(title: string): Promise<this> {
+    await expect(this.totals().getByText(title, { exact: true })).toBeVisible();
+    return this;
+  }
+
+  async seesTotal(label: string, value: string): Promise<this> {
+    const tile = this.totals().locator("[data-slot=stat]").filter({ hasText: label });
+    await expect(tile.locator("[data-slot=stat-label]")).toHaveText(label);
+    await expect(tile.locator("[data-slot=stat-value]")).toHaveText(value);
+    return this;
+  }
+
+  async seesNoTotal(label: string): Promise<this> {
+    await expect(this.totals().locator("[data-slot=stat-label]").getByText(label, { exact: true })).toHaveCount(0);
+    return this;
+  }
+
+  async tapMilestoneTab(label: MilestoneTab): Promise<this> {
+    await this.shown("[data-slot=milestone-tabs]").getByRole("button", { name: label, exact: true }).tap();
+    return this;
+  }
+
+  private milestones(title: string) {
+    return this.shown("[data-slot=milestones-card]").filter({ hasText: title });
+  }
+
+  async seesMilestoneNote(title: string, note: string): Promise<this> {
+    await expect(this.milestones(title).getByText(note, { exact: true })).toBeVisible();
+    return this;
+  }
+
+  async seesMilestone(title: string, label: string, achieved: boolean): Promise<this> {
+    const row = this.milestones(title).locator("[data-slot=milestone-row]").filter({ hasText: label });
+    await expect(row).toHaveCount(1);
+    await expect(row).toHaveAttribute("data-achieved", String(achieved));
+    return this;
+  }
+
+  async seesNoMilestone(title: string, label: string): Promise<this> {
+    await expect(
+      this.milestones(title).locator("[data-slot=milestone-row]").filter({ hasText: label }),
+    ).toHaveCount(0);
+    return this;
+  }
+
+  async openMilestone(title: string, label: string): Promise<this> {
+    await this.milestones(title).getByRole("button", { name: new RegExp(`^${label}`) }).click();
+    return this;
+  }
+
+  async seesRecord(label: string, value: string): Promise<this> {
+    const row = this.shown("[data-slot=records-card]").locator("[data-slot=record-row]").filter({ hasText: label });
+    await expect(row).toContainText(value);
+    return this;
+  }
+
+  async openRecord(label: string): Promise<this> {
+    await this.shown("[data-slot=records-card]").getByRole("button", { name: new RegExp(`^${label}`) }).click();
+    return this;
+  }
+
+  async isAtRound(roundId: string): Promise<this> {
+    await expect(this.page).toHaveURL(new RegExp(`/rounds/${roundId}$`));
+    return this;
+  }
+
+  async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
+    await this.page.evaluate(() => window.scrollTo(0, 0));
+    await fontsLoaded(this.page);
+    await expect(this.page).toHaveScreenshot(name, captureOptions(options.fullPage));
+    return this;
+  }
+}
+
+export const test = base.extend<{ career: CareerRobot }>({
+  career: async ({ page }, provide) => {
+    await provide(new CareerRobot(page));
+  },
+});
+
+const events = sampleGolfer.analytics.notable_achievements;
+
+export const LOWEST_ROUND_ID = events.scoring_records_events.lifetime.lowest_round!.round_id!;
+
+export const BREAK_80_ROUND_ID = events.round_milestones.lifetime.score_breaks.find((row) => row.threshold === 80)!
+  .achievement!.round_id!;

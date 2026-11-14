@@ -1,15 +1,15 @@
-"""User API endpoints."""
-
+from api.messages import CANNOT_FRIEND_YOURSELF, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR, INVALID_EMAIL_FORMAT, INVALID_FRIENDSHIP_STATUS, USERS_ARE_ALREADY_FRIENDS
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
 from database.db_manager import DatabaseManager
-from database.exceptions import ConflictError, DuplicateError, IntegrityError, NotFoundError
+from database.exceptions import AlreadyFriendsError, FriendRequestBlockedError, ConflictError, DuplicateError, IntegrityError, NotFoundError
 from api.messages import (
     FORBIDDEN, FRIENDSHIP_NOT_FOUND, FRIEND_CODE_NOT_FOUND, HOME_COURSE_NOT_FOUND, LINKED_COURSE_NOT_FOUND,
     USER_NOT_FOUND, USER_TEE_EXISTS, USER_TEE_IN_USE, USER_TEE_NAME_TAKEN, USER_TEE_NOT_FOUND,
 )
+from api.player_handicap import player_handicap_index_with_rounds
 from api.course_access import load_linkable_course
 from api.dependencies import get_current_user, get_db
 from api.input_validation import normalize_email
@@ -51,8 +51,8 @@ async def get_user_by_email(
 ):
     try:
         normalized_email = normalize_email(email)
-    except ValueError as exc:
-        raise HTTPException(422, str(exc))
+    except ValueError:
+        raise HTTPException(422, INVALID_EMAIL_FORMAT) from None
     if normalized_email != (current_user.email or "").lower():
         raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user_by_email(normalized_email)
@@ -116,10 +116,6 @@ async def get_user_handicap(
     return {"handicap_index": hcap.user_handicap_index(history, user)}
 
 
-# ================================================================
-# User tees
-# ================================================================
-
 @router.get("/{user_id}/tees", response_model=List[UserTeeResponse])
 async def get_user_tees(
     user_id: UUID,
@@ -127,7 +123,6 @@ async def get_user_tees(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """List a user's custom tee configurations."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, FORBIDDEN)
     return await db.user_tees.get_user_tees(str(user_id), course_id=str(course_id) if course_id else None)
@@ -140,7 +135,6 @@ async def create_user_tee(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Create a user tee configuration."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, FORBIDDEN)
     linked = None
@@ -174,7 +168,6 @@ async def update_user_tee(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Update a user tee configuration."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, FORBIDDEN)
     updates = req.model_dump(exclude_none=True)
@@ -199,7 +192,6 @@ async def delete_user_tee(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Delete a user tee configuration."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, FORBIDDEN)
     try:
@@ -210,17 +202,12 @@ async def delete_user_tee(
         raise HTTPException(404, USER_TEE_NOT_FOUND)
 
 
-# ================================================================
-# Friendships
-# ================================================================
-
 @router.post("/me/friends", response_model=FriendshipResponse, status_code=201)
 async def send_friend_request(
     req: SendFriendRequest,
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Send (or re-open) a friend request to another user."""
     addressee_user_id: Optional[str] = str(req.addressee_user_id) if req.addressee_user_id else None
     addressee_friend_code = (req.addressee_friend_code or "").strip().upper()
 
@@ -234,13 +221,15 @@ async def send_friend_request(
 
     try:
         row = await db.friendships.send_request(str(current_user.id), str(addressee_user_id))
-        rows = await db.friendships.list_for_user(str(current_user.id))
-        match = next((r for r in rows if str(r["id"]) == str(row["id"])), row)
-        return _friendship_row_to_response(match)
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-    except DuplicateError as e:
-        raise HTTPException(409, str(e))
+    except ValueError:
+        raise HTTPException(400, CANNOT_FRIEND_YOURSELF) from None
+    except AlreadyFriendsError:
+        raise HTTPException(409, USERS_ARE_ALREADY_FRIENDS) from None
+    except FriendRequestBlockedError:
+        raise HTTPException(409, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR) from None
+    rows = await db.friendships.list_for_user(str(current_user.id))
+    match = next((r for r in rows if str(r["id"]) == str(row["id"])), row)
+    return _friendship_row_to_response(match)
 
 
 @router.patch("/me/friends/{friendship_id}", response_model=FriendshipResponse)
@@ -250,13 +239,12 @@ async def update_friendship_status(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Accept/decline/block a friendship request."""
     try:
         updated = await db.friendships.update_status(
             str(friendship_id), str(current_user.id), req.status
         )
-    except ValueError as e:
-        raise HTTPException(400, str(e))
+    except ValueError:
+        raise HTTPException(400, INVALID_FRIENDSHIP_STATUS) from None
     if not updated:
         raise HTTPException(404, FRIENDSHIP_NOT_FOUND)
 
@@ -271,6 +259,25 @@ async def list_friendships(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """List friendships for the current user."""
-    rows = await db.friendships.list_for_user(str(current_user.id), status=status)
-    return [_friendship_row_to_response(r) for r in rows]
+    viewer = str(current_user.id)
+    rows = await db.friendships.list_for_user(viewer, status=status)
+    responses = []
+    for row in rows:
+        response = _friendship_row_to_response(row)
+        if response.status == "accepted":
+            friend_id = response.addressee_id if response.requester_id == viewer else response.requester_id
+            index, last_played = await _friend_figures(db, friend_id)
+            response = response.model_copy(
+                update={"friend_handicap_index": index, "friend_last_played": last_played}
+            )
+        responses.append(response)
+    return responses
+
+
+async def _friend_figures(db: DatabaseManager, friend_id: str) -> tuple[Optional[float], Optional[str]]:
+    friend = await db.users.get_user(friend_id)
+    if friend is None:
+        return None, None
+    index, rounds = await player_handicap_index_with_rounds(db, friend)
+    last = rounds[0].date if rounds and rounds[0].date else None
+    return index, last.date().isoformat() if last else None

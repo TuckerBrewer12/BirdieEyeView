@@ -7,25 +7,17 @@ from models.hole_layout import FRONT_NINE, BACK_NINE, FULL_ROUND
 from models.tee import TeeRating
 
 
-# ================================================================
-# Hole
-# ================================================================
-
 def test_hole_validation():
     h = Hole(number=1, par=4, handicap=18)
     assert h.number == 1
     assert h.par == 4
 
     with pytest.raises(ValidationError):
-        Hole(number=1, par=7)          # par > 6
+        Hole(number=1, par=7)
 
     with pytest.raises(ValidationError):
-        Hole(number=1, handicap=19)    # handicap > 18
+        Hole(number=1, handicap=19)
 
-
-# ================================================================
-# Tee
-# ================================================================
 
 def test_tee_validation_and_calculations():
     tee = Tee(
@@ -39,10 +31,10 @@ def test_tee_validation_and_calculations():
     assert tee.get_hole_yardage(3) is None
 
     with pytest.raises(ValidationError):
-        Tee(hole_yardages={19: 400})   # hole > 18
+        Tee(hole_yardages={19: 400})
 
     with pytest.raises(ValidationError):
-        Tee(hole_yardages={1: -50})    # negative yardage
+        Tee(hole_yardages={1: -50})
 
     with pytest.raises(ValidationError):
         Tee(hole_yardages={1: 1001})
@@ -50,13 +42,9 @@ def test_tee_validation_and_calculations():
 
 def test_tee_empty_yardages():
     tee = Tee(color="Red")
-    assert tee.get_total_yardage() is None   # returns None, not 0, when no yardages
+    assert tee.get_total_yardage() is None
     assert tee.get_hole_yardage(1) is None
 
-
-# ================================================================
-# Course
-# ================================================================
 
 def test_course_par_calculations():
     holes = [Hole(number=i, par=4, handicap=i) for i in range(1, 19)]
@@ -67,7 +55,6 @@ def test_course_par_calculations():
     assert course.back_nine_par == 36
     assert course.get_par() == 72
 
-    # Missing par on a hole makes calculated_par None
     holes[0].par = None
     assert course.calculated_par is None
     assert course.front_nine_par is None
@@ -87,58 +74,49 @@ def test_course_lookups():
     assert course.get_hole(1).par == 4
     assert course.get_hole(2) is None
 
-    assert course.get_tee("blue").color == "Blue"  # case-insensitive
+    assert course.get_tee("blue").color == "Blue"
     assert course.get_tee("Red") is None
 
 
-# ================================================================
-# HoleScore
-# ================================================================
-
 def test_hole_score_validation_and_logic():
     with pytest.raises(ValidationError):
-        HoleScore(strokes=4, putts=5)  # putts > strokes
+        HoleScore(strokes=4, putts=5)
 
     hs = HoleScore(hole_number=1, strokes=5, putts=2, par_played=4)
     assert hs.to_par() == 1
     assert hs.get_score_type() == "bogey"
 
-    # Explicit par arg overrides par_played
     assert hs.to_par(par=5) == 0
     assert hs.get_score_type(par=5) == "par"
 
-    # Common score types via par_played
     assert HoleScore(strokes=3, par_played=5).get_score_type() == "eagle"
     assert HoleScore(strokes=3, par_played=4).get_score_type() == "birdie"
     assert HoleScore(strokes=6, par_played=4).get_score_type() == "double bogey"
     assert HoleScore(strokes=7, par_played=4).get_score_type() == "triple bogey"
 
-    # None strokes → always None
     assert HoleScore(strokes=None, par_played=4).to_par() is None
     assert HoleScore(strokes=None, par_played=None).get_score_type() is None
 
 
 def test_hole_score_par_played_validation():
-    # Boundary values
     assert HoleScore(strokes=3, par_played=3).par_played == 3
     assert HoleScore(strokes=6, par_played=6).par_played == 6
 
     with pytest.raises(ValidationError):
-        HoleScore(strokes=3, par_played=2)   # par < 3
+        HoleScore(strokes=3, par_played=2)
 
     with pytest.raises(ValidationError):
-        HoleScore(strokes=3, par_played=7)   # par > 6
+        HoleScore(strokes=3, par_played=7)
 
     with pytest.raises(ValidationError):
-        HoleScore(strokes=3, handicap_played=0)   # handicap < 1
+        HoleScore(strokes=3, handicap_played=0)
 
     with pytest.raises(ValidationError):
-        HoleScore(strokes=3, handicap_played=19)  # handicap > 18
+        HoleScore(strokes=3, handicap_played=19)
 
 
 def test_hole_score_to_par_no_par_data():
-    """to_par and get_score_type return None when neither par arg nor par_played is set."""
-    hs = HoleScore(strokes=5)  # no par_played
+    hs = HoleScore(strokes=5)
     assert hs.to_par() is None
     assert hs.get_score_type() is None
 
@@ -195,10 +173,6 @@ def test_score_consistency_and_net_context():
         HoleScore(net_score=2**31)
 
 
-# ================================================================
-# Round
-# ================================================================
-
 def test_round_property_aggregations():
     scores = [
         HoleScore(hole_number=1, strokes=4, putts=2, green_in_regulation=True,  par_played=4),
@@ -212,7 +186,6 @@ def test_round_property_aggregations():
 
 
 def test_round_nine_hole_calculations():
-    # 9-hole round
     scores = [HoleScore(hole_number=i, strokes=4) for i in range(1, 10)]
     r = Round(hole_scores=scores, intended_holes=FRONT_NINE)
 
@@ -220,7 +193,6 @@ def test_round_nine_hole_calculations():
     assert r.calculate_back_nine() is None
     assert r.is_complete()
 
-    # 18-hole round
     scores_18 = [HoleScore(hole_number=i, strokes=i % 2 + 4) for i in range(1, 19)]
     r18 = Round(hole_scores=scores_18)
     assert r18.calculate_front_nine() == sum(i % 2 + 4 for i in range(1, 10))
@@ -231,7 +203,7 @@ def test_round_nine_hole_calculations():
 def test_round_to_par_with_course():
     holes = [Hole(number=i, par=4) for i in range(1, 19)]
     course = Course(holes=holes)
-    scores = [HoleScore(hole_number=i, strokes=5) for i in range(1, 19)]  # +1 each
+    scores = [HoleScore(hole_number=i, strokes=5) for i in range(1, 19)]
 
     r = Round(course=course, hole_scores=scores)
     assert r.get_hole_par(1) == 4
@@ -241,10 +213,9 @@ def test_round_to_par_with_course():
 
 
 def test_round_to_par_without_course_fallback():
-    """par_played on hole scores is used when no course is attached."""
     scores = [HoleScore(hole_number=i, strokes=5, par_played=4) for i in range(1, 19)]
 
-    r = Round(hole_scores=scores)  # no course
+    r = Round(hole_scores=scores)
     assert r.get_hole_par(1) == 4
     assert r.get_par() == 72
     assert r.score_to_par(1) == 1
@@ -252,7 +223,6 @@ def test_round_to_par_without_course_fallback():
 
 
 def test_round_total_to_par_no_par_data():
-    """total_to_par returns None when no course and no par_played on scores."""
     scores = [HoleScore(hole_number=i, strokes=5) for i in range(1, 19)]
     r = Round(hole_scores=scores)
     assert r.get_par() is None
@@ -266,19 +236,16 @@ def test_round_gets_correct_tee():
     assert r.get_tee().color == "White"
 
 
-# ================================================================
-# UserTee
-# ================================================================
-
+# =========================================================
 def test_user_tee_validation():
     ut = UserTee(user_id="user1", name="Custom Tee", slope_rating=120, course_rating=72.0)
     assert ut.slope_rating == 120
 
     with pytest.raises(ValidationError):
-        UserTee(user_id="user1", name="t", slope_rating=50)   # slope < 55
+        UserTee(user_id="user1", name="t", slope_rating=50)
 
     with pytest.raises(ValidationError):
-        UserTee(user_id="user1", name="t", slope_rating=156)  # slope > 155
+        UserTee(user_id="user1", name="t", slope_rating=156)
 
     with pytest.raises(ValidationError):
         UserTee(user_id="user1", name="t", course_rating=0)

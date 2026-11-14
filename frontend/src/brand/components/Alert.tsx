@@ -1,0 +1,68 @@
+import * as React from "react";
+import { type VariantProps } from "class-variance-authority";
+import { cn } from "@/brand/cn";
+import { alertVariants } from "./variants";
+
+type AlertVariantProps = VariantProps<typeof alertVariants>;
+
+function Alert({
+  className,
+  tone,
+  variant,
+  role,
+  ...props
+}: React.ComponentProps<"div"> & {
+  tone: NonNullable<AlertVariantProps["tone"]>;
+  variant?: AlertVariantProps["variant"];
+}) {
+  return (
+    <div
+      data-slot="alert"
+      role={role ?? (tone === "danger" ? "alert" : "status")}
+      className={cn(alertVariants({ tone, variant }), className)}
+      {...props}
+    />
+  );
+}
+
+function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="alert-title"
+      className={cn(
+        "font-semibold group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-2",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function AlertDescription({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="alert-description"
+      className={cn(
+        "leading-snug text-pretty group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-2 [&_p:not(:last-child)]:mb-4",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="alert-action"
+      className={cn(
+        "mt-1 justify-self-start group-has-[>svg]/alert:col-start-2",
+        "md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0 md:self-center md:justify-self-end md:group-has-[>svg]/alert:col-start-3",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export { Alert, AlertTitle, AlertDescription, AlertAction };

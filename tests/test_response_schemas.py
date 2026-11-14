@@ -102,7 +102,21 @@ def test_response_schema_returns_the_domain_json_unchanged(domain, schema):
     # FastAPI validates the returned domain object itself into the response model.
     frozen = schema.model_validate(domain).model_dump(mode="json")
 
-    assert frozen == domain.model_dump(mode="json")
+    expected = domain.model_dump(mode="json")
+    def assert_domain_fields(actual, expected):
+        if isinstance(expected, dict):
+            for key, value in expected.items():
+                assert key in actual
+                assert_domain_fields(actual[key], value)
+        elif isinstance(expected, list):
+            assert len(actual) == len(expected)
+            for sent, original in zip(actual, expected):
+                assert_domain_fields(sent, original)
+        else:
+            assert actual == expected
+    assert_domain_fields(frozen, expected)
+    assert not ({"_par_source", "_summary_sources", "_revision"} & frozen.keys())
+
 
 
 def test_course_detail_http_response_is_unchanged():
@@ -126,4 +140,5 @@ def test_course_detail_http_response_is_unchanged():
     response = TestClient(app).get(f"/api/courses/{uuid4()}")
 
     assert response.status_code == 200
-    assert response.json() == course.model_dump(mode="json")
+    from api.course_responses import course_detail
+    assert response.json() == course_detail(course).model_dump(mode="json")

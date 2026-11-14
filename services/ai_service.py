@@ -570,3 +570,60 @@ class AIService:
                     ))
 
         return strengths[:3]
+
+    @staticmethod
+    def _putts_per_gir_per_round(rounds: list) -> List[Optional[float]]:
+        results: List[Optional[float]] = []
+        for r in rounds:
+            gir_scores = [
+                hs for hs in r.hole_scores
+                if hs.green_in_regulation is True and hs.putts is not None
+            ]
+            results.append(
+                sum(hs.putts for hs in gir_scores) / len(gir_scores) if gir_scores else None
+            )
+        return results
+
+    @staticmethod
+    def _par_stats(rounds: list) -> tuple[Dict[int, float], Dict[int, int]]:
+        by_par: Dict[int, List[float]] = {}
+        for r in rounds:
+            for hs in r.hole_scores:
+                if hs.strokes is None:
+                    continue
+                par: Optional[int] = None
+                if r.course and hs.hole_number:
+                    hole = r.course.get_hole(hs.hole_number)
+                    if hole and hole.par:
+                        par = hole.par
+                if par is None:
+                    par = hs.par_played
+                if par not in (3, 4, 5):
+                    continue
+                by_par.setdefault(par, []).append(float(hs.strokes - par))
+        avgs = {p: sum(vals) / len(vals) for p, vals in by_par.items() if vals}
+        counts = {p: len(vals) for p, vals in by_par.items() if vals}
+        return avgs, counts
+
+    @staticmethod
+    def _par_stats_per_round(rounds: list) -> Dict[int, List[Optional[float]]]:
+        result: Dict[int, List[Optional[float]]] = {3: [], 4: [], 5: []}
+        for r in rounds:
+            by_par: Dict[int, List[float]] = {}
+            for hs in r.hole_scores:
+                if hs.strokes is None:
+                    continue
+                par: Optional[int] = None
+                if r.course and hs.hole_number:
+                    hole = r.course.get_hole(hs.hole_number)
+                    if hole and hole.par:
+                        par = hole.par
+                if par is None:
+                    par = hs.par_played
+                if par not in (3, 4, 5):
+                    continue
+                by_par.setdefault(par, []).append(float(hs.strokes - par))
+            for p in (3, 4, 5):
+                vals = by_par.get(p, [])
+                result[p].append(sum(vals) / len(vals) if vals else None)
+        return result

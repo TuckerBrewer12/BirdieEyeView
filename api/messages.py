@@ -105,3 +105,25 @@ REPORT_FIELDS_NOT_ALLOWED = "Only a scorecard and report metadata are accepted."
 REPORT_METADATA_INVALID = "Invalid report metadata."
 REPORT_FILE_TYPE_UNSUPPORTED = "Unsupported scorecard file type."
 REPORT_FILE_REJECTED = "This file cannot be reported. Use a supported scorecard up to 20 MB."
+
+INVALID_EMAIL_FORMAT = 'Invalid email format.'
+
+CANNOT_FRIEND_YOURSELF = 'Cannot friend yourself'
+
+USERS_ARE_ALREADY_FRIENDS = 'Users are already friends'
+
+FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR = 'Friend request blocked for this pair'
+
+INVALID_FRIENDSHIP_STATUS = 'Invalid friendship status'
+
+FRIEND_ID_IS_REQUIRED = 'friend_id is required'
+
+NO_BENCHMARK_FOR_THAT_HANDICAP = 'No benchmark for that handicap'
+
+COURSE_ID_MUST_BE_A_VALID_UUID = 'course_id must be a valid UUID.'
+
+Q_MUST_BE_PLAIN_TEXT_OF_AT_MOST_120_CHARACTERS = 'q must be plain text of at most 120 characters.'
+
+USER_CONTEXT_INVALID = "user_context must be plain text of at most {limit} characters."
+
+OCR_TEXT_INVALID = "ocr_text must be plain text of at most {limit} characters."

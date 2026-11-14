@@ -1,3 +1,4 @@
+from unittest.mock import AsyncMock
 """End-to-end API tests: the real FastAPI app (middleware, auth, routing, serialization) on a real
 PostgreSQL database. Only outgoing email and the paid OCR/LLM providers are replaced, so tests can
 read the emailed tokens and scan a committed scorecard without network calls.
@@ -111,8 +112,8 @@ def api(monkeypatch):
         monkeypatch.setattr(limiter, "_buckets", empty)
     with TestClient(api_main.create_app(), base_url="http://localhost") as client:
         harness = Api(client, url)
-        monkeypatch.setattr(auth, "send_verification_email", lambda to, link: harness.emails.append(("verify", to, link)))
-        monkeypatch.setattr(auth, "send_password_reset_email", lambda to, link: harness.emails.append(("reset", to, link)))
+        monkeypatch.setattr(auth, "send_verification_email", AsyncMock(side_effect=lambda to, link: harness.emails.append(("verify", to, link))))
+        monkeypatch.setattr(auth, "send_password_reset_email", AsyncMock(side_effect=lambda to, link: harness.emails.append(("reset", to, link))))
         yield harness
 
 
@@ -267,6 +268,12 @@ def test_friends_can_view_analytics_only_after_accepting(api):
     analytics = api.client.get(f"/api/stats/analytics/{alice['id']}", headers=bob["headers"])
     assert analytics.status_code == 200 and analytics.json()["kpis"]["total_rounds"] == 1
     assert api.client.get(f"/api/stats/dashboard/{alice['id']}", headers=bob["headers"]).status_code == 403
+
+    comparison = f"/api/stats/{bob['id']}/benchmark?against=friend&friend_id={alice['id']}"
+    assert api.client.get(comparison, headers=bob["headers"]).status_code == 200
+    assert api.client.get(comparison, headers=carol["headers"]).status_code == 403
+    unaccepted = f"/api/stats/{bob['id']}/benchmark?against=friend&friend_id={carol['id']}"
+    assert api.client.get(unaccepted, headers=bob["headers"]).status_code == 403
 
 
 # ================================================================
@@ -572,7 +579,7 @@ def test_compare_goal_report_and_course_analytics_are_owner_only(api):
     assert api.client.get(f"/api/stats/compare/{bob['id']}/{round_id}", headers=bob["headers"]).status_code == 404
     seen = api.client.get(f"/api/stats/course-analytics/{bob['id']}/{course}", headers=bob["headers"])
     assert seen.status_code == 200
-    assert (seen.json()["rounds_played"], seen.json()["score_trend_on_course"]) == (0, [])
+    assert (seen.json()["rounds_played"], seen.json()["score_trend"]) == (0, [])
     assert api.client.get(f"/api/stats/{bob['id']}/goal-report", headers=bob["headers"]).json()["gap"] is None
 
 
@@ -675,12 +682,64 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
     assert (body["dashboard"]["scoring_average"], body["dashboard"]["best_round"]) == (82.0, 78)
     assert body["analytics"]["kpis"]["total_rounds"] == 3
     assert [c["id"] for c in body["played"]] == [course]
-    assert (body["goal"]["scoring_average"], body["goal"]["best_score"], body["goal"]["gap"],
+    assert (body["goal"]["scoring_average"], body["goal"]["lowest_score"], body["goal"]["gap"],
             body["goal"]["on_track"]) == (82.0, 78, 2.0, False)
-    selected = next(row for row in body["compare"]["score"] if row["label"] == "Selected Round")
-    assert (selected["round_id"], selected["primary_value"], selected["secondary_value"]) == (rounds[1], 78, 6)
+    window = body["compare"]["windows"][0]
+    selected = next(row for row in window["metrics"] if row["metric"] == "score")
+    assert (selected["value"], selected["average"], window["rounds"]) == (78, 82, 1)
     assert body["course"]["rounds_played"] == 3
     assert isinstance(body["milestones"]["milestones"], list)
+
+    benchmark_path = f"/api/stats/{alice['id']}/benchmark?against=handicap&handicap=15"
+    benchmark = get(benchmark_path)
+    assert benchmark.status_code == 200, benchmark.text
+    assert benchmark.json()["benchmark"]["par4_to_par"] == 1.025
+    assert get(f"/api/stats/{alice['id']}/benchmark?against=handicap&handicap=13").status_code == 422
+    assert get(f"/api/stats/{alice['id']}/benchmark?against=friend").status_code == 422
+
+    nine_course = api.client.post("/api/courses", headers=alice["headers"], json={
+        "name": "Nine Links", "holes": [{"number": n, "par": 4} for n in range(1, 10)],
+        "tees": [{"color": "Blue", "course_rating": 35.5, "slope_rating": 113,
+                  "hole_yardages": {str(n): 300 for n in range(1, 10)}}],
+    })
+    assert nine_course.status_code == 201, nine_course.text
+    nine_id = nine_course.json()["id"]
+    saved_nine = api.client.post("/api/scan/save", headers=alice["headers"], json={
+        "course_id": nine_id, "tee_box": "Blue", "date": "2026-09-02",
+        "hole_scores": [{"hole_number": n, "strokes": 5 if n <= 6 else 4, "putts": 2} for n in range(1, 10)],
+    })
+    assert saved_nine.status_code == 200, saved_nine.text
+    partial = api.client.post("/api/scan/save", headers=alice["headers"], json={
+        "course_id": course, "date": "2026-09-03", "hole_scores": [{"hole_number": 1, "strokes": 3}],
+    })
+    assert partial.status_code == 200, partial.text
+    assert api.client.patch(f"/api/users/{alice['id']}", headers=alice["headers"], json={"scoring_goal_nine": 44}).status_code == 200
+    dashboard = get(paths["dashboard"]).json()
+    assert (dashboard["scoring_average"], dashboard["scoring_average_nine"], dashboard["best_round_nine"]) == (82.0, 42.0, 42)
+    analytics = get(paths["analytics"]).json()
+    assert (analytics["kpis"]["scoring_average"], analytics["kpis"]["scoring_average_nine"]) == (82.0, 42.0)
+    assert (analytics["kpis"]["average_putts"], analytics["kpis"]["average_putts_nine"]) == (36.0, 18.0)
+    goal = get(paths["goal"]).json()
+    assert goal["nine_hole"]["on_track"] is True
+    assert {a["round_id"] for a in goal["attempts"]} == set(rounds)
+    detail = get(f"/api/rounds/{saved_nine.json()['id']}").json()
+    assert detail["nines"]["front"]["putts"] == 18 and detail["nines"]["back"]["putts"] is None
+    rated_course = get(f"/api/courses/{nine_id}").json()
+    assert rated_course["tees"][0]["course_handicap"] == detail["course_handicap"]
+
+    compared = get(paths["compare"]).json()["windows"][0]
+    assert compared["rounds"] == 1
+    assert next(m for m in compared["metrics"] if m["metric"] == "score")["average"] == 82
+    for day in range(1, 22):
+        response = api.client.post("/api/scan/save", headers=alice["headers"], json={
+            "course_id": nine_id, "date": f"2026-10-{day:02d}",
+            "hole_scores": [{"hole_number": n, "strokes": 4} for n in range(1, 10)],
+        })
+        assert response.status_code == 200, response.text
+    dashboard = get(paths["dashboard"]).json()
+    assert dashboard["handicap_index"] == body["dashboard"]["handicap_index"]
+    assert dashboard["scoring_average_l5"] == 82.0
+    assert sum(row["used"] for row in dashboard["whs"]["rows"]) == dashboard["whs"]["count_used"] == 1
 
 
 # ================================================================

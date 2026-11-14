@@ -24,6 +24,7 @@ from analytics.stats import (
     scoring_by_yardage_buckets,
     three_putts_per_round,
 )
+from analytics.peak import peak_gap, peak_meets_goal
 from models.round import Round
 
 # ---- Display policy
@@ -253,8 +254,30 @@ def goal_report(
         ]
         savers = [s for s in candidates if s is not None and s["strokes_saved"] >= MIN_SAVER_STROKES]
         savers.sort(key=lambda s: s["strokes_saved"], reverse=True)
+    scores = [r.calculate_total_score() for r in eighteen]
+    report["lowest_score"] = report.pop("best_score")
+    report.update(progress_pct=_progress_pct(scores[0], report["scoring_average"], scoring_goal, report["on_track"]) if scores and scoring_goal is not None else None,
+                  rounds_meeting_goal=sum(score <= scoring_goal for score in scores) if scoring_goal is not None else 0,
+                  peak_gap=peak_gap(eighteen, scoring_goal) if scores and scoring_goal is not None else None,
+                  peak_meets_goal=peak_meets_goal(eighteen, scoring_goal) if scores and scoring_goal is not None else None,
+                  attempts=goal_attempts(eighteen, scoring_goal) if scoring_goal is not None else [])
     report["savers"] = savers
 
     if scoring_goal_nine is not None:
         report["nine_hole"] = _summary(el.complete_rounds(rounds, el.NINE), scoring_goal_nine)
     return report
+
+
+def goal_attempts(rounds: List[Round], scoring_goal: int) -> List[Dict[str, Any]]:
+    attempts = []
+    for r in rounds:
+        score = r.calculate_total_score()
+        if score is not None:
+            attempts.append({"round_id": r.id, "score": score, "met_goal": score <= scoring_goal})
+    return attempts
+
+
+def _progress_pct(start: int, average: float, goal: int, on_track: bool) -> float:
+    if on_track or start <= goal:
+        return 100.0
+    return min(100.0, max(0.0, (start - average) / (start - goal) * 100))

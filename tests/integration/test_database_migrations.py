@@ -8,7 +8,7 @@ import pytest
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 ROOT = Path(__file__).resolve().parents[2]
 LEGACY = Path(__file__).parent / "fixtures" / "schema_012.sql"
-NEW_MIGRATIONS = sorted((ROOT / "database" / "migrations").glob("01[34]_*.sql"))
+NEW_MIGRATIONS = sorted((ROOT / "database" / "migrations").glob("01[45]_*.sql"))
 
 
 async def load_legacy(conn):
@@ -65,6 +65,7 @@ async def test_new_upgrade_matches_fresh_schema_without_guessing_legacy_context(
             user_id,
             course_id,
         )
+        await conn.execute((ROOT / "database/migrations/013_add_course_trigram_indexes.sql").read_text())
         for path in NEW_MIGRATIONS:
             await conn.execute(path.read_text())
         assert await shape(conn) == fresh_shape

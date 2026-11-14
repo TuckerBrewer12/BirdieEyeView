@@ -556,5 +556,6 @@ class ScanService:
         return tee_box
 
 
+
 def _messages(error: ValidationError) -> List[str]:
     return [str(item.get("msg", "invalid value")).removeprefix("Value error, ") for item in error.errors()]

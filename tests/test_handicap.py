@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
 import analytics.handicap as handicap
-from models import Round
+from models import Round, User
 from tests.helpers import make_scoring_round
 
 
@@ -80,9 +80,9 @@ def test_handicap_index_uses_seed_without_rounds():
 @pytest.fixture
 def dated_rounds(monkeypatch):
     rounds = [
-        Round(id="old-high", date=datetime(2025, 1, 1)),
-        Round(id="old-low", date=datetime(2025, 1, 2)),
-        Round(id="new-high", date=datetime(2025, 2, 1)),
+        Round(id="old-high", date=datetime(2025, 1, 1, tzinfo=timezone.utc)),
+        Round(id="old-low", date=datetime(2025, 1, 2, tzinfo=timezone.utc)),
+        Round(id="new-high", date=datetime(2025, 2, 1, tzinfo=timezone.utc)),
     ]
     differentials = {"old-high": 20.0, "old-low": 10.0, "new-high": 22.0}
     monkeypatch.setattr(
@@ -134,6 +134,7 @@ def test_trend_marks_the_rounds_the_current_index_uses_preferring_recent_ties(mo
 
     assert [entry["used_in_hi"] for entry in trend] == [False, False, True, False]
     assert all(entry["hi_threshold"] == 10.0 for entry in trend)
+    assert [entry["differential_status"] for entry in trend] == ["close", "close", "counting", "out"]
 
 
 def test_trend_with_short_history_marks_nothing(monkeypatch):

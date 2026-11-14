@@ -75,9 +75,9 @@ async def test_partial_round_preserves_played_unknown_and_zero(database_manager)
     assert saved.get_hole_score(3).played is True
     assert saved.get_hole_score(1).net_score == -2000
     summary = (await database_manager.rounds.get_round_summaries_for_user(user.id))[0]
-    assert summary["total_putts"] == summary["total_gir"] == 0
-    assert summary["to_par"] == saved.total_to_par() == -3
-    assert summary["course_par"] == saved.get_par() == 36
+    assert summary.get_total_putts() == summary.get_total_gir() == 0
+    assert summary.total_to_par() == saved.total_to_par() == -3
+    assert summary.get_par() == saved.get_par() == 36
 
 
 async def test_empty_and_unnumbered_rounds_never_write(database_manager):
@@ -114,7 +114,7 @@ async def test_supplied_totals_invalidate_without_resurrecting_after_reload(data
     assert cleared.get_total_putts() is None
     assert cleared.get_total_gir() == 4
     summary = (await database_manager.rounds.get_round_summaries_for_user(user.id))[0]
-    assert summary["total_putts"] is None and summary["total_gir"] == 4
+    assert summary.get_total_putts() is None and summary.get_total_gir() == 4
 
 
 async def test_rating_coverage_and_supplied_yardage_survive_clone_and_bulk(database_manager):
@@ -236,7 +236,7 @@ async def test_saved_date_and_same_day_order_are_independent(database_manager):
     assert (await database_manager.rounds.get_rounds_for_user(user.id, limit=1))[0].id == second.id
     assert (await database_manager.rounds.get_rounds_for_user(user.id, limit=1, offset=1))[0].id == first.id
     summary = await database_manager.rounds.get_round_summaries_for_user(user.id)
-    assert [str(row["id"]) for row in summary] == [second.id, first.id]
+    assert [str(row.id) for row in summary] == [second.id, first.id]
     assert (await database_manager.rounds.get_round(first.id)).date == date
 
 
@@ -385,8 +385,8 @@ async def test_round_fallback_uses_persisted_course_but_preserves_accepted_par(d
     loaded = await database_manager.rounds.get_round(saved.id)
     summary = (await database_manager.rounds.get_round_summaries_for_user(user.id))[0]
     assert loaded.get_hole_par(1) == 5
-    assert summary["to_par"] == loaded.total_to_par() == 2
-    assert summary["course_par"] == loaded.get_par() == 36
+    assert summary.total_to_par() == loaded.total_to_par() == 2
+    assert summary.get_par() == loaded.get_par() == 36
 
 
 async def test_course_id_only_round_derives_nine_hole_completion_from_database(database_manager):
@@ -443,10 +443,10 @@ async def test_sql_and_model_summaries_ignore_unscored_stats_and_keep_unknowns(d
         user.id,
     )
     summary = (await database_manager.rounds.get_round_summaries_for_user(user.id))[0]
-    assert summary["total_score"] == saved.calculate_total_score() == 9
-    assert summary["total_putts"] == saved.get_total_putts() is None
-    assert summary["total_gir"] == saved.get_total_gir() is None
-    assert summary["to_par"] == saved.total_to_par() == 1
+    assert summary.calculate_total_score() == saved.calculate_total_score() == 9
+    assert summary.get_total_putts() == saved.get_total_putts() is None
+    assert summary.get_total_gir() == saved.get_total_gir() is None
+    assert summary.total_to_par() == saved.total_to_par() == 1
     with pytest.raises(IntegrityError):
         await database_manager.rounds.update_hole_scores(
             saved.id,

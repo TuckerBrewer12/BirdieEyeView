@@ -21,10 +21,15 @@ def by_type(report):
 def test_goal_report_without_scores_returns_empty_report():
     assert goals.goal_report([Round()], 85) == {
         "scoring_average": None,
-        "best_score": None,
+        "lowest_score": None,
         "scoring_goal": 85,
         "gap": None,
         "on_track": False,
+        "progress_pct": None,
+        "rounds_meeting_goal": 0,
+        "peak_gap": None,
+        "peak_meets_goal": None,
+        "attempts": [],
         "savers": [],
     }
 
@@ -39,7 +44,7 @@ def test_eighteen_hole_goal_uses_only_complete_eighteen_hole_rounds():
 
     report = goals.goal_report(rounds, 85)
 
-    assert (report["scoring_average"], report["best_score"], report["gap"], report["on_track"]) == (91.0, 90, 6.0, False)
+    assert (report["scoring_average"], report["lowest_score"], report["gap"], report["on_track"]) == (91.0, 90, 6.0, False)
     assert "nine_hole" not in report
 
 

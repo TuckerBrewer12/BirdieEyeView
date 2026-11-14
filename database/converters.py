@@ -293,3 +293,40 @@ def user_tee_to_row(ut: UserTee) -> dict:
         "rating_holes": ut.rating_holes,
         "total_yardage": ut.get_total_yardage() if not ut.hole_yardages else None,
     }
+
+
+def round_from_summary_row(row) -> Round:
+    raw = row["hole_scores"]
+    holes = (json.loads(raw) if isinstance(raw, str) else raw) or []
+    course = None
+    if row["course_id"]:
+        course = Course(
+            id=str(row["course_id"]),
+            name=row["course_name"],
+            par=row["course_par"],
+            total_holes=row.get("course_total_holes"),
+            holes=[Hole(**h) for h in (json.loads(row["course_holes"]) if isinstance(row.get("course_holes"), str) else row.get("course_holes") or [])]
+                if "course_holes" in row else [Hole(number=h["hole_number"], par=h["course_par"]) for h in holes if h["course_par"] is not None],
+        )
+    return Round(
+        id=str(row["id"]),
+        course=course,
+        tee_box=row["tee_box_played"],
+        date=row["round_date"],
+        intended_holes=row.get("intended_holes"),
+        notes=row.get("notes"),
+        total_putts=row.get("supplied_total_putts"),
+        total_gir=row.get("supplied_total_gir"),
+        hole_scores=[
+            HoleScore(
+                hole_number=h["hole_number"],
+                strokes=h["strokes"],
+                played=h.get("played"),
+                putts=h["putts"],
+                green_in_regulation=h["green_in_regulation"],
+                par_played=h["par_played"],
+            )
+            for h in holes
+        ],
+        course_name_played=row["course_name_played"],
+    )

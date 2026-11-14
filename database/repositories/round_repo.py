@@ -10,7 +10,7 @@ from uuid import UUID
 from pydantic import ValidationError
 
 from models import HoleScore, Round
-from database.converters import round_from_rows, round_to_row, hole_score_to_row, user_tee_from_row, course_from_rows
+from database.converters import round_from_summary_row, round_from_rows, round_to_row, hole_score_to_row, user_tee_from_row, course_from_rows
 from database.connection import write_transaction
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from database.repositories.course_repo import CourseRepositoryDB
@@ -246,106 +246,57 @@ class RoundRepositoryDB:
             return None
         return await self._assemble_round(conn, row)
 
-    async def get_round_summaries_for_user(self, user_id: str, *, limit=100, offset=0) -> list[dict]:
-        """Aggregate the same scored/observed sets as Round without loading nested models.
-
-        ``limit=None`` returns the full history. Each row also carries the stored ``is_complete``
-        and ``hole_count`` (9 or 18 from the round's intended holes) so callers can total complete
-        rounds by format.
-        """
+    async def get_round_summaries_for_user(
+        self,
+        user_id: str,
+        *,
+        limit: Optional[int] = 100,
+        offset: int = 0,
+        course_ids: Optional[List[str]] = None,
+    ) -> List[Round]:
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
-                """
-                WITH selected AS (
-                    SELECT r.*, c.name, c.location, c.par AS stored_course_par, c.total_holes AS course_total_holes
-                    FROM users.rounds r LEFT JOIN courses.courses c ON c.id=r.course_id
-                    WHERE r.user_id=$1
-                    ORDER BY r.round_date DESC NULLS LAST,r.created_at DESC NULLS LAST,r.id DESC
+                """WITH page AS (
+                    SELECT id, course_id, tee_box_played, round_date, course_name_played, intended_holes, notes, supplied_total_putts, supplied_total_gir, created_at
+                    FROM users.rounds
+                    WHERE user_id = $1
+                      AND ($4::uuid[] IS NULL OR course_id = ANY($4::uuid[]))
+                    ORDER BY round_date DESC NULLS LAST, created_at DESC NULLS LAST, id DESC
                     LIMIT $2 OFFSET $3
                 )
-                SELECT r.id,r.course_id,r.tee_box_played AS tee_box,r.round_date,r.notes,
-                       r.course_name_played,COALESCE(r.course_name_played,r.name) AS course_name,
-                       r.location AS course_location,
-                       CASE WHEN observations.outside_coverage > 0 THEN NULL
-                            WHEN pars.known_pars=cardinality(coverage.expected) THEN pars.total_par
-                            WHEN coverage.expected=ARRAY(SELECT generate_series(1,layout.hole_count))
-                                 AND NOT EXISTS (SELECT 1 FROM courses.holes ch
-                                                 WHERE ch.course_id=r.course_id AND ch.par IS NOT NULL)
-                                 AND NOT EXISTS (SELECT 1 FROM users.hole_scores hs
-                                                 WHERE hs.round_id=r.id AND hs.par_played IS NOT NULL)
-                            THEN r.stored_course_par END AS course_par,
-                       CASE WHEN observations.outside_coverage=0 THEN observations.total_score END AS total_score,
-                       CASE WHEN observations.outside_coverage=0 AND observations.known_scored_pars=observations.scored
-                                 THEN observations.observed_to_par END AS to_par,
-                       CASE WHEN observations.outside_coverage > 0 THEN NULL
-                            WHEN observations.known_putts=0 THEN r.supplied_total_putts
-                            WHEN observations.known_putts=observations.scored THEN observations.putts END AS total_putts,
-                       CASE WHEN observations.outside_coverage > 0 THEN NULL
-                            WHEN observations.known_gir=0 THEN r.supplied_total_gir
-                            WHEN observations.known_gir=observations.scored THEN observations.gir END AS total_gir,
-                       CASE WHEN observations.outside_coverage=0 THEN observations.fairways END AS fairways_hit,
-                       CASE WHEN observations.outside_coverage=0 THEN observations.front_nine END AS front_nine,
-                       CASE WHEN observations.outside_coverage=0 THEN observations.back_nine END AS back_nine,
-                       observations.hole_scores_summary,
-                       COALESCE(r.is_complete, FALSE) AS is_complete,
-                       cardinality(coverage.expected) AS hole_count
-                FROM selected r
+                SELECT
+                    p.id, p.course_id, p.tee_box_played, p.round_date, p.course_name_played, p.intended_holes, p.notes, p.supplied_total_putts, p.supplied_total_gir,
+                    c.total_holes AS course_total_holes,
+                    c.name AS course_name,
+                    c.par AS course_par,
+                    (SELECT json_agg(json_build_object('number', ch.hole_number, 'par', ch.par) ORDER BY ch.hole_number)
+                     FROM courses.holes ch WHERE ch.course_id=p.course_id) AS course_holes,
+                    holes.hole_scores
+                FROM page p
+                LEFT JOIN courses.courses c ON c.id = p.course_id
                 LEFT JOIN LATERAL (
-                    SELECT COALESCE(r.course_total_holes,
-                        CASE WHEN (SELECT COUNT(*) FROM courses.holes WHERE course_id=r.course_id)=18
-                             THEN 18 END) AS hole_count
-                ) layout ON TRUE
-                LEFT JOIN LATERAL (
-                    SELECT COALESCE(r.intended_holes,
-                        CASE WHEN layout.hole_count IS NOT NULL
-                                  THEN ARRAY(SELECT generate_series(1,layout.hole_count))
-                             WHEN (SELECT COUNT(*) FROM users.hole_scores WHERE round_id=r.id)=18
-                                  THEN ARRAY(SELECT generate_series(1,18)) END) AS expected
-                ) coverage ON TRUE
-                LEFT JOIN LATERAL (
-                    SELECT COUNT(*) FILTER (WHERE p.par IS NOT NULL) AS known_pars,SUM(p.par) AS total_par
-                    FROM (
-                        SELECT COALESCE(hs.par_played,ch.par) AS par
-                        FROM unnest(coverage.expected) number
-                        LEFT JOIN users.hole_scores hs ON hs.round_id=r.id AND hs.hole_number=number
-                        LEFT JOIN courses.holes ch ON ch.course_id=r.course_id AND ch.hole_number=number
-                    ) p
-                ) pars ON TRUE
-                LEFT JOIN LATERAL (
-                    SELECT COUNT(*) FILTER (WHERE eligible) AS scored,
-                           COUNT(*) FILTER (WHERE eligible AND coverage.expected IS NOT NULL
-                                             AND NOT h.hole_number=ANY(coverage.expected)) AS outside_coverage,
-                           SUM(h.strokes) FILTER (WHERE eligible) AS total_score,
-                           COUNT(*) FILTER (WHERE eligible AND COALESCE(h.par_played,ch.par) IS NOT NULL) AS known_scored_pars,
-                           SUM(h.strokes-COALESCE(h.par_played,ch.par)) FILTER (WHERE eligible) AS observed_to_par,
-                           COUNT(h.putts) FILTER (WHERE eligible) AS known_putts,
-                           SUM(h.putts) FILTER (WHERE eligible) AS putts,
-                           COUNT(h.green_in_regulation) FILTER (WHERE eligible) AS known_gir,
-                           SUM(h.green_in_regulation::INTEGER) FILTER (WHERE eligible) AS gir,
-                           SUM(h.fairway_hit::INTEGER) FILTER (WHERE eligible) AS fairways,
-                           SUM(h.strokes) FILTER (WHERE eligible AND h.hole_number<=9) AS front_nine,
-                           SUM(h.strokes) FILTER (WHERE eligible AND h.hole_number>=10) AS back_nine,
-                           json_agg(json_build_object('h',h.hole_number,'s',h.strokes,'p',h.par_played)
-                                    ORDER BY h.hole_number) AS hole_scores_summary
-                    FROM users.hole_scores h
-                    LEFT JOIN courses.holes ch ON ch.course_id=r.course_id AND ch.hole_number=h.hole_number
-                    CROSS JOIN LATERAL (SELECT h.strokes IS NOT NULL AND h.played IS DISTINCT FROM FALSE AS eligible) e
-                    WHERE h.round_id=r.id
-                ) observations ON TRUE
-                ORDER BY r.round_date DESC NULLS LAST,r.created_at DESC NULLS LAST,r.id DESC
-                """,
-                UUID(user_id),
-                limit,
-                offset,
+                    SELECT json_agg(
+                        json_build_object(
+                            'hole_number', hs.hole_number,
+                            'strokes', hs.strokes,
+                            'played', hs.played,
+                            'putts', hs.putts,
+                            'green_in_regulation', hs.green_in_regulation,
+                            'par_played', hs.par_played,
+                            'course_par', ch.par
+                        )
+                        ORDER BY hs.hole_number
+                    ) AS hole_scores
+                    FROM users.hole_scores hs
+                    LEFT JOIN courses.holes ch
+                        ON ch.course_id = p.course_id AND ch.hole_number = hs.hole_number
+                    WHERE hs.round_id = p.id AND hs.hole_number IS NOT NULL
+                ) holes ON true
+                ORDER BY p.round_date DESC NULLS LAST, p.created_at DESC NULLS LAST, p.id DESC""",
+                UUID(user_id), limit, offset,
+                [UUID(c) for c in course_ids] if course_ids is not None else None,
             )
-        result = []
-        for row in rows:
-            summary = dict(row)
-            raw = summary.get("hole_scores_summary")
-            if isinstance(raw, str):
-                summary["hole_scores_summary"] = json.loads(raw)
-            result.append(summary)
-        return result
+            return [round_from_summary_row(r) for r in rows]
 
     async def get_rounds_for_user(
         self,

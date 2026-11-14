@@ -1,0 +1,115 @@
+import { describe, expect, it } from "vitest";
+import {
+  formatCount,
+  formatFileSize,
+  formatOneDecimal,
+  formatPercent,
+  formatSigned,
+  formatTwoDecimals,
+  formatWhole,
+  pluralize,
+  pluralNoun,
+} from "../format";
+
+describe("pluralNoun", () => {
+  it("gives the bare noun, for callers that render the count themselves", () => {
+    expect(pluralNoun(1, "Birdie")).toBe("Birdie");
+    expect(pluralNoun(2, "Birdie")).toBe("Birdies");
+    expect(pluralNoun(0, "Par")).toBe("Pars");
+  });
+
+  it("takes an explicit plural", () => {
+    expect(pluralNoun(1, "Triple+", "Triples+")).toBe("Triple+");
+    expect(pluralNoun(3, "Triple+", "Triples+")).toBe("Triples+");
+  });
+});
+
+describe("pluralize", () => {
+  it("uses the singular for exactly one", () => {
+    expect(pluralize(1, "round")).toBe("1 round");
+    expect(pluralize(1, "course")).toBe("1 course");
+  });
+
+  it("uses the plural for everything else, including zero", () => {
+    expect(pluralize(0, "round")).toBe("0 rounds");
+    expect(pluralize(2, "round")).toBe("2 rounds");
+    expect(pluralize(12, "course")).toBe("12 courses");
+  });
+
+  it("takes an explicit plural for nouns that need one", () => {
+    expect(pluralize(1, "birdie")).toBe("1 birdie");
+    expect(pluralize(3, "bogey", "bogeys")).toBe("3 bogeys");
+  });
+
+  it("groups thousands", () => {
+    expect(pluralize(1432, "hole")).toBe("1,432 holes");
+  });
+});
+
+describe("formatPercent", () => {
+  it("rounds to a whole percent by default", () => {
+    expect(formatPercent(31.4)).toBe("31%");
+    expect(formatPercent(31.5)).toBe("32%");
+    expect(formatPercent(0)).toBe("0%");
+  });
+
+  it("keeps the digits asked for", () => {
+    expect(formatPercent(31.44, 1)).toBe("31.4%");
+    expect(formatPercent(50, 1)).toBe("50.0%");
+  });
+
+  it("is a dash when there is nothing to show", () => {
+    expect(formatPercent(null)).toBe("—");
+    expect(formatPercent(undefined)).toBe("—");
+    expect(formatPercent(Number.NaN)).toBe("—");
+  });
+});
+
+describe("formatOneDecimal", () => {
+  it("writes one decimal, or a dash", () => {
+    expect(formatOneDecimal(82.44)).toBe("82.4");
+    expect(formatOneDecimal(33)).toBe("33.0");
+    expect(formatOneDecimal(null)).toBe("—");
+  });
+});
+
+describe("formatWhole", () => {
+  it("rounds to a whole number, or a dash", () => {
+    expect(formatWhole(31.4)).toBe("31");
+    expect(formatWhole(31.5)).toBe("32");
+    expect(formatWhole(null)).toBe("—");
+  });
+});
+
+describe("formatFileSize", () => {
+  it("writes whole kilobytes", () => {
+    expect(formatFileSize(421_888)).toBe("412 KB");
+    expect(formatFileSize(300)).toBe("0 KB");
+  });
+});
+
+describe("formatSigned", () => {
+  it("signs a difference with a plus or a true minus, to one decimal", () => {
+    expect(formatSigned(2.1)).toBe("+2.1");
+    expect(formatSigned(-2.4)).toBe("\u22122.4");
+    expect(formatSigned(0)).toBe("0.0");
+  });
+
+  it("takes the decimals of the figure it sits beside", () => {
+    expect(formatSigned(-0.24, 2)).toBe("\u22120.24");
+  });
+});
+
+describe("formatTwoDecimals", () => {
+  it("reads to a hundredth, a dash when missing", () => {
+    expect(formatTwoDecimals(1.705)).toMatch(/^1\.7[01]$/);
+    expect(formatTwoDecimals(null)).toBe("—");
+  });
+});
+
+describe("formatCount", () => {
+  it("groups by thousands, a dash when missing", () => {
+    expect(formatCount(6697)).toBe("6,697");
+    expect(formatCount(undefined)).toBe("—");
+  });
+});

@@ -19,8 +19,11 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from analytics import eligibility as el
+from models.user import User
 from models.round import Round
 
+CLOSE_TO_COUNTING = 2.0
+WHS_ROUNDS = 20
 MAX_HANDICAP_INDEX = 54.0
 WHS_WINDOW = 20
 
@@ -76,19 +79,8 @@ def round_rating(round_obj: Round) -> Optional[Tuple[float, float]]:
     return values if None not in values else None
 
 
-def course_handicap(handicap_index_value: Optional[float], round_obj: Round) -> Optional[int]:
-    """WHS Course Handicap for the round's holes, rounded .5 up; None without index, rating or par.
-
-    A nine-hole round uses half the Handicap Index with its nine-hole rating and par.
-    """
-    rating = round_rating(round_obj)
-    par = round_obj.get_par()
-    coverage = round_obj.get_intended_holes()
-    if handicap_index_value is None or rating is None or par is None or coverage is None:
-        return None
-    course_rating, slope = rating
-    index = handicap_index_value / 2 if len(coverage) == 9 else handicap_index_value
-    return int(round_half_up(index * slope / 113 + (course_rating - par)))
+def course_handicap(handicap_index: float, slope_rating: float, course_rating: float, par: int) -> int:
+    return int(round_half_up(handicap_index * slope_rating / 113 + (course_rating - par), 0))
 
 
 def score_differential(score: int, course_rating: float, slope_rating: float) -> float:
@@ -286,4 +278,95 @@ def handicap_trend(
         entry["hi_threshold"] = threshold
         if entry["differential"] is not None:
             entry["used_in_hi"] = id(round_obj) in used_ids
+    eligible = _eligible(differentials, seed_handicap=seed_handicap, transition_rounds=transition_rounds, seed_set_at=seed_set_at)[-WHS_WINDOW:]
+    eligible_ids = {id(d.round_obj) for d in eligible}
+    for entry, round_obj in zip(results, ordered):
+        entry["differential_status"] = differential_status(entry["differential"], bool(entry["used_in_hi"]), entry["hi_threshold"] if id(round_obj) in eligible_ids else None)
     return results
+
+
+def differential_status(differential: Optional[float], used: bool, threshold: Optional[float]) -> str:
+    if differential is None:
+        return "unrated"
+    if used:
+        return "counting"
+    if threshold is not None and differential - threshold <= CLOSE_TO_COUNTING:
+        return "close"
+    return "out"
+
+
+def player_handicap_trend(user: Optional[User], history: List[Round]) -> List[Dict[str, Any]]:
+    return handicap_trend(history, **_seed(user))
+
+
+def player_handicap_index(user: Optional[User], rounds: Iterable[Round]) -> Optional[float]:
+    return player_index_window(user, rounds)["index"]
+
+
+def player_index_window(user: Optional[User], rounds: Iterable[Round]) -> Dict[str, Any]:
+    return index_window(rounds, **_seed(user))
+
+
+def _seed(user: Optional[User]) -> Dict[str, Any]:
+    if user is None:
+        return {"seed_handicap": None, "seed_set_at": None}
+    return {"seed_handicap": user.handicap, "seed_set_at": user.last_handicap_update}
+
+
+def index_window(rounds: Iterable[Round], use_last_n: int = WHS_WINDOW, *,
+                 seed_handicap: Optional[float] = None, transition_rounds: int = 10,
+                 seed_set_at: Optional[datetime] = None) -> Dict[str, Any]:
+    _check_window(use_last_n)
+    ordered = el.chronological(rounds)
+    differentials = _differentials(ordered)
+    options = dict(seed_handicap=seed_handicap, transition_rounds=transition_rounds, seed_set_at=seed_set_at)
+    eligible = _eligible(differentials, **options)[-use_last_n:]
+    index, used = _index_from(differentials, use_last_n=use_last_n, **options)
+    used_ids = {id(d.round_obj) for d in used}
+    eligible_ids = {id(d.round_obj) for d in eligible}
+    count, adjustment = whs_window(len(eligible))
+    return dict(index=index, counting={i for i,r in enumerate(ordered) if id(r) in used_ids},
+                eligible={i for i,r in enumerate(ordered) if id(r) in eligible_ids},
+                threshold=max((d.value for d in used), default=None), rated=len(eligible),
+                count=count, adjustment=adjustment)
+
+
+
+
+
+
+def round_net_score(round_obj: Round, handicap_index: Optional[float]) -> Optional[int]:
+    gross = round_obj.calculate_total_score()
+    strokes = round_course_handicap(round_obj, handicap_index)
+    if gross is None or strokes is None:
+        return None
+    return gross - strokes
+
+
+def round_course_handicap(round_obj: Round, handicap_index: Optional[float]) -> Optional[int]:
+    rating = round_rating(round_obj)
+    par = round_obj.get_par()
+    coverage = round_obj.get_intended_holes()
+    if handicap_index is None or rating is None or par is None or coverage is None or not round_obj.is_complete():
+        return None
+    course_rating, slope = rating
+    index = handicap_index / 2 if len(coverage) == 9 else handicap_index
+    return course_handicap(index, slope, course_rating, par)
+
+
+def tee_course_handicap(
+    handicap_index: Optional[float],
+    slope_rating: Optional[float],
+    course_rating: Optional[float],
+    par: Optional[int],
+) -> Optional[int]:
+    if handicap_index is None or slope_rating is None or course_rating is None or par is None:
+        return None
+    return course_handicap(handicap_index, slope_rating, course_rating, par)
+
+
+def whs_window(rated_rounds: int) -> tuple[int, float]:
+    n = min(rated_rounds, 20)
+    if n < 3:
+        return 0, 0.0
+    return _WHS_TABLE[min(n - 3, len(_WHS_TABLE) - 1)]

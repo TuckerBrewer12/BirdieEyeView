@@ -1,0 +1,2559 @@
+import type { AnalyticsDto, NotableAchievementsDto } from "../../types/api";
+import type { FakeBackendSeed } from "../fakes/FakeBackend";
+
+export const sampleGolfer = {
+  "analytics": {
+    "gir_trend": [
+      {"gir_percentage": 27.77777777777778, "holes_played": 18, "rolling_average": 27.8, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "total_gir": 5},
+      {"gir_percentage": 11.11111111111111, "holes_played": 18, "rolling_average": 19.4, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "total_gir": 2},
+      {"gir_percentage": 11.11111111111111, "holes_played": 18, "rolling_average": 16.7, "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638", "round_index": 3, "total_gir": 2},
+      {"gir_percentage": 22.22222222222222, "holes_played": 18, "rolling_average": 18.1, "round_id": "2579c7a3-a3b3-5d82-b538-61d2128a6e1f", "round_index": 4, "total_gir": 4},
+      {"gir_percentage": 22.22222222222222, "holes_played": 18, "rolling_average": 18.9, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "total_gir": 4},
+      {"gir_percentage": 38.88888888888889, "holes_played": 18, "rolling_average": 21.1, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 6, "total_gir": 7},
+      {"gir_percentage": 22.22222222222222, "holes_played": 18, "rolling_average": 23.3, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "round_index": 7, "total_gir": 4},
+      {"gir_percentage": 38.88888888888889, "holes_played": 18, "rolling_average": 28.9, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "round_index": 8, "total_gir": 7},
+      {"gir_percentage": 27.77777777777778, "holes_played": 18, "rolling_average": 30.0, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "round_index": 9, "total_gir": 5},
+      {"gir_percentage": 33.33333333333333, "holes_played": 18, "rolling_average": 32.2, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "total_gir": 6},
+      {"gir_percentage": 44.44444444444444, "holes_played": 18, "rolling_average": 33.3, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "round_index": 11, "total_gir": 8},
+      {"gir_percentage": 27.77777777777778, "holes_played": 18, "rolling_average": 34.4, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "round_index": 12, "total_gir": 5},
+      {"gir_percentage": 16.666666666666664, "holes_played": 18, "rolling_average": 30.0, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "round_index": 13, "total_gir": 3},
+      {"gir_percentage": 44.44444444444444, "holes_played": 18, "rolling_average": 33.3, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "round_index": 14, "total_gir": 8},
+      {"gir_percentage": 16.666666666666664, "holes_played": 18, "rolling_average": 30.0, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "total_gir": 3},
+      {"gir_percentage": 16.666666666666664, "holes_played": 18, "rolling_average": 24.4, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "round_index": 16, "total_gir": 3},
+      {"gir_percentage": 38.88888888888889, "holes_played": 18, "rolling_average": 26.7, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "round_index": 17, "total_gir": 7},
+      {"gir_percentage": 44.44444444444444, "holes_played": 18, "rolling_average": 32.2, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "round_index": 18, "total_gir": 8},
+      {"gir_percentage": 38.88888888888889, "holes_played": 18, "rolling_average": 31.1, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "round_index": 19, "total_gir": 7},
+      {"gir_percentage": 44.44444444444444, "holes_played": 18, "rolling_average": 36.7, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "total_gir": 8},
+      {"gir_percentage": 50.0, "holes_played": 18, "rolling_average": 43.3, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "round_index": 21, "total_gir": 9},
+      {"gir_percentage": 61.111111111111114, "holes_played": 18, "rolling_average": 47.8, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "total_gir": 11},
+      {"gir_percentage": 44.44444444444444, "holes_played": 18, "rolling_average": 47.8, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "total_gir": 8},
+      {"gir_percentage": 50.0, "holes_played": 18, "rolling_average": 50.0, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "total_gir": 9}
+    ],
+    "gir_vs_non_gir": [
+      {"birdie": 16.083916083916083, "bogey": 18.181818181818183, "bucket": "GIR", "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 143, "par": 65.73426573426573, "quad_bogey": 0.0, "triple_bogey": 0.0},
+      {"birdie": 0.0, "bogey": 50.17301038062284, "bucket": "No GIR", "double_bogey": 17.647058823529413, "eagle": 0.0, "holes_counted": 289, "par": 30.79584775086505, "quad_bogey": 0.0, "triple_bogey": 1.384083044982699}
+    ],
+    "handicap_trend": [
+      {"differential": 8.7, "differential_status": "out", "handicap_index": null, "hi_threshold": 9.5, "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "used_in_hi": false},
+      {"differential": 14.6, "differential_status": "out", "handicap_index": null, "hi_threshold": 9.5, "in_window": true, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "used_in_hi": false},
+      {"differential": 18.9, "differential_status": "out", "handicap_index": 6.7, "hi_threshold": 9.5, "in_window": true, "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638", "round_index": 3, "used_in_hi": false},
+      {"differential": 11.2, "differential_status": "out", "handicap_index": 7.7, "hi_threshold": 9.5, "in_window": true, "round_id": "2579c7a3-a3b3-5d82-b538-61d2128a6e1f", "round_index": 4, "used_in_hi": false},
+      {"differential": 16.4, "differential_status": "out", "handicap_index": 8.7, "hi_threshold": 9.5, "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "used_in_hi": false},
+      {"differential": 11.2, "differential_status": "close", "handicap_index": 8.9, "hi_threshold": 9.5, "in_window": true, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 6, "used_in_hi": false},
+      {"differential": 17.0, "differential_status": "out", "handicap_index": 9.9, "hi_threshold": 9.5, "in_window": true, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "round_index": 7, "used_in_hi": false},
+      {"differential": 10.4, "differential_status": "close", "handicap_index": 9.5, "hi_threshold": 9.5, "in_window": true, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "round_index": 8, "used_in_hi": false},
+      {"differential": 8.7, "differential_status": "counting", "handicap_index": 9.2, "hi_threshold": 9.5, "in_window": true, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "round_index": 9, "used_in_hi": true},
+      {"differential": 12.9, "differential_status": "out", "handicap_index": 9.2, "hi_threshold": 9.5, "in_window": true, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "used_in_hi": false},
+      {"differential": 10.4, "differential_status": "close", "handicap_index": 9.2, "hi_threshold": 9.5, "in_window": true, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "round_index": 11, "used_in_hi": false},
+      {"differential": 9.6, "differential_status": "close", "handicap_index": 9.3, "hi_threshold": 9.5, "in_window": true, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "round_index": 12, "used_in_hi": false},
+      {"differential": 13.8, "differential_status": "out", "handicap_index": 9.3, "hi_threshold": 9.5, "in_window": true, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "round_index": 13, "used_in_hi": false},
+      {"differential": 7.8, "differential_status": "counting", "handicap_index": 8.7, "hi_threshold": 9.5, "in_window": true, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "round_index": 14, "used_in_hi": true},
+      {"differential": 10.2, "differential_status": "close", "handicap_index": 9.0, "hi_threshold": 9.5, "in_window": true, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "used_in_hi": false},
+      {"differential": 12.1, "differential_status": "out", "handicap_index": 9.0, "hi_threshold": 9.5, "in_window": true, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "round_index": 16, "used_in_hi": false},
+      {"differential": 9.6, "differential_status": "close", "handicap_index": 9.1, "hi_threshold": 9.5, "in_window": true, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "round_index": 17, "used_in_hi": false},
+      {"differential": 9.5, "differential_status": "counting", "handicap_index": 9.0, "hi_threshold": 9.5, "in_window": true, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "round_index": 18, "used_in_hi": true},
+      {"differential": 4.4, "differential_status": "counting", "handicap_index": 8.3, "hi_threshold": 9.5, "in_window": true, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "round_index": 19, "used_in_hi": true},
+      {"differential": 8.5, "differential_status": "counting", "handicap_index": 8.4, "hi_threshold": 9.5, "in_window": true, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "used_in_hi": true},
+      {"differential": 7.0, "differential_status": "counting", "handicap_index": 8.1, "hi_threshold": 9.5, "in_window": true, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "round_index": 21, "used_in_hi": true},
+      {"differential": 3.6, "differential_status": "counting", "handicap_index": 7.4, "hi_threshold": 9.5, "in_window": true, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "used_in_hi": true},
+      {"differential": 9.6, "differential_status": "close", "handicap_index": 7.4, "hi_threshold": 9.5, "in_window": true, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "used_in_hi": false},
+      {"differential": 7.0, "differential_status": "counting", "handicap_index": 7.0, "hi_threshold": 9.5, "in_window": true, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "used_in_hi": true}
+    ],
+    "headline": [
+      {
+        "change": -3.9,
+        "metric": "scoring_average",
+        "trend": [81.0, 84.5, 86.7, 86.0, 86.8, 87.4, 87.6, 86.0, 85.4, 84.6, 84.4, 82.8, 83.6, 83.4, 82.8, 83.2, 83.2, 82.2, 81.4, 81.0, 79.8, 78.6, 78.4, 79.0],
+        "value": 82.9,
+        "verdict": "good"
+      },
+      {
+        "change": 17.0,
+        "metric": "gir_percentage",
+        "trend": [27.8, 19.4, 16.7, 18.1, 18.9, 21.1, 23.3, 28.9, 30.0, 32.2, 33.3, 34.4, 30.0, 33.3, 30.0, 24.4, 26.7, 32.2, 31.1, 36.7, 43.3, 47.8, 47.8, 50.0],
+        "value": 33.1,
+        "verdict": "good"
+      },
+      {
+        "change": 0.9,
+        "metric": "average_putts",
+        "trend": [29.0, 30.0, 32.0, 31.8, 32.2, 33.4, 34.0, 33.6, 33.4, 33.6, 33.2, 32.6, 32.6, 33.0, 32.0, 31.6, 31.8, 32.0, 31.4, 32.0, 32.6, 32.6, 32.6, 33.6],
+        "value": 32.7,
+        "verdict": "bad"
+      },
+      {
+        "change": 6.0,
+        "metric": "scrambling_percentage",
+        "trend": [46.2, 32.5, 27.9, 28.1, 25.3, 23.3, 25.3, 21.6, 28.2, 30.3, 27.0, 30.5, 35.9, 33.6, 36.6, 36.6, 32.8, 31.5, 30.5, 26.5, 33.7, 39.6, 39.6, 37.2],
+        "value": 31.6,
+        "verdict": "good"
+      },
+      {
+        "change": -2.0,
+        "metric": "three_putt_rate",
+        "trend": [0.0, 5.6, 11.1, 9.7, 11.1, 16.7, 18.9, 14.4, 15.6, 17.8, 14.4, 14.4, 18.9, 18.9, 15.6, 14.4, 12.2, 11.1, 10.0, 8.9, 11.1, 10.0, 10.0, 11.1],
+        "value": 13.2,
+        "verdict": "good"
+      }
+    ],
+    "kpis": {"average_putts": 32.7, "best_round": 75, "best_round_course": "Presidio Golf Course", "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "gir_percentage": 33.1, "handicap_index": 7.0, "putts_per_gir": 2.02, "scoring_average": 82.9, "scrambling_percentage": 31.6, "three_putt_rate": 13.2, "three_putts_per_round": 2.4, "total_rounds": 24, "up_and_down_percentage": 39.5},
+    "net_score_trend": [
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 81, "net_score": 74, "rolling_average": 74.0, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "to_par": 9},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 88, "net_score": 81, "rolling_average": 77.5, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "to_par": 16},
+      {"course_handicap": 6, "course_name": "Sharp Park Golf Course", "gross_score": 91, "net_score": 85, "rolling_average": 80.0, "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638", "round_index": 3, "to_par": 19},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 84, "net_score": 77, "rolling_average": 79.3, "round_id": "2579c7a3-a3b3-5d82-b538-61d2128a6e1f", "round_index": 4, "to_par": 12},
+      {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 90, "net_score": 83, "rolling_average": 80.0, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "to_par": 18},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 84, "net_score": 77, "rolling_average": 80.6, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 6, "to_par": 12},
+      {"course_handicap": 6, "course_name": "Sharp Park Golf Course", "gross_score": 89, "net_score": 83, "rolling_average": 81.0, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "round_index": 7, "to_par": 17},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 83, "net_score": 76, "rolling_average": 79.2, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "round_index": 8, "to_par": 11},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 81, "net_score": 74, "rolling_average": 78.6, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "round_index": 9, "to_par": 9},
+      {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 86, "net_score": 79, "rolling_average": 77.8, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "to_par": 14},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 83, "net_score": 76, "rolling_average": 77.6, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "round_index": 11, "to_par": 11},
+      {"course_handicap": 6, "course_name": "Sharp Park Golf Course", "gross_score": 81, "net_score": 75, "rolling_average": 76.0, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "round_index": 12, "to_par": 9},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 87, "net_score": 80, "rolling_average": 76.8, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "round_index": 13, "to_par": 15},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 80, "net_score": 73, "rolling_average": 76.6, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "round_index": 14, "to_par": 8},
+      {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 83, "net_score": 76, "rolling_average": 76.0, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "to_par": 11},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 85, "net_score": 78, "rolling_average": 76.4, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "round_index": 16, "to_par": 13},
+      {"course_handicap": 6, "course_name": "Sharp Park Golf Course", "gross_score": 81, "net_score": 75, "rolling_average": 76.4, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "round_index": 17, "to_par": 9},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 82, "net_score": 75, "rolling_average": 75.4, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "round_index": 18, "to_par": 10},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 76, "net_score": 69, "rolling_average": 74.6, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "round_index": 19, "to_par": 4},
+      {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 81, "net_score": 74, "rolling_average": 74.2, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "to_par": 9},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 79, "net_score": 72, "rolling_average": 73.0, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "round_index": 21, "to_par": 7},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 75, "net_score": 68, "rolling_average": 71.6, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "to_par": 3},
+      {"course_handicap": 6, "course_name": "Sharp Park Golf Course", "gross_score": 81, "net_score": 75, "rolling_average": 71.6, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "to_par": 9},
+      {"course_handicap": 7, "course_name": "Presidio Golf Course", "gross_score": 79, "net_score": 72, "rolling_average": 72.2, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "to_par": 7}
+    ],
+    "next_level_handicap": 5,
+    "notable_achievements": {
+      "best_performance_streaks": {
+        "lifetime": {"longest_2_putt_or_less_streak": 30, "longest_birdie_streak": 1, "longest_par_streak": 7, "most_gir_in_a_row": 5},
+        "one_year": {"longest_2_putt_or_less_streak": 30, "longest_birdie_streak": 1, "longest_par_streak": 7, "most_gir_in_a_row": 5}
+      },
+      "best_performance_streaks_events": {
+        "lifetime": {
+          "longest_2_putt_or_less_streak": {"course": "Presidio Golf Course", "date": "2026/3/5", "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243"},
+          "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026/5/28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
+          "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
+        },
+        "one_year": {
+          "longest_2_putt_or_less_streak": {"course": "Presidio Golf Course", "date": "2026/3/5", "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243"},
+          "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026/5/28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
+          "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
+        }
+      },
+      "career_totals": {
+        "lifetime": {"total_3_putts": 57, "total_birdies": 23, "total_bogeys": 171, "total_double_bogeys": 51, "total_eagles": 0, "total_gir": 143, "total_hole_in_ones": 0, "total_holes_played": 432, "total_pars": 183, "total_quad_bogeys_plus": 0, "total_rounds_played": 24, "total_triple_bogeys": 4},
+        "one_year": {"birdies": 23, "double_bogeys": 51, "eagles": 0, "gir": 143, "hole_in_ones": 0, "quad_bogeys_plus": 0, "rounds_played": 24, "three_putts": 57, "triple_bogeys": 4}
+      },
+      "gir_milestones": {
+        "lifetime": {
+          "gir_breaks": [
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 3
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/20", "in_window": true, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"},
+              "threshold": 6
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/5/21", "in_window": true, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd"},
+              "threshold": 9
+            },
+            {"achievement": null, "threshold": 12},
+            {"achievement": null, "threshold": 15},
+            {"achievement": null, "threshold": 18}
+          ],
+          "highest_gir_percentage_in_round": 61.111111111111114,
+          "most_gir_in_round": 11
+        },
+        "one_year": {
+          "best_gir_in_round": 11,
+          "best_gir_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+          "gir_milestones_achieved_from_lifetime_set": 3,
+          "highest_gir_percentage": 61.111111111111114
+        }
+      },
+      "gir_milestones_events": {
+        "lifetime": {
+          "highest_gir_percentage_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+          "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+        },
+        "one_year": {
+          "best_gir_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+          "highest_gir_percentage": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+        }
+      },
+      "home_course_records": {
+        "lifetime": {"home_course_name": "Presidio Golf Course", "lowest_score_on_home_course": 75, "most_rounds_played_at_home_course": 15},
+        "one_year": {"home_course_name": "Presidio Golf Course", "lowest_score_on_home_course": 75}
+      },
+      "home_course_records_events": {
+        "lifetime": {
+          "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+        },
+        "one_year": {
+          "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+        }
+      },
+      "putting_milestones": {
+        "lifetime": {
+          "fewest_putts_in_round": 29,
+          "most_1_putts_in_round": 9,
+          "most_3_putts_in_round": 5,
+          "putt_breaks": [
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 45
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 42
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 39
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 36
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 33
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 30
+            },
+            {"achievement": null, "threshold": 27},
+            {"achievement": null, "threshold": 24},
+            {"achievement": null, "threshold": 21}
+          ]
+        },
+        "one_year": {"fewest_putts_in_round": 29, "most_1_putts_in_round": 9, "most_3_putts_in_round": 5, "putting_milestones_achieved_from_lifetime_set": 6}
+      },
+      "putting_milestones_events": {
+        "lifetime": {
+          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026/4/14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
+          "most_3_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/20", "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"}
+        },
+        "one_year": {
+          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026/4/14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
+          "most_3_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/20", "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"}
+        }
+      },
+      "round_milestones": {
+        "lifetime": {
+          "first_eagle": null,
+          "first_hole_in_one": null,
+          "first_round_under_par": null,
+          "score_breaks": [
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 120
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 110
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 100
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 95
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 90
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": true, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+              "threshold": 85
+            },
+            {
+              "achievement": {"course": "Presidio Golf Course", "date": "2026/5/13", "in_window": true, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+              "threshold": 80
+            },
+            {"achievement": null, "threshold": 75},
+            {"achievement": null, "threshold": 70},
+            {"achievement": null, "threshold": 65},
+            {"achievement": null, "threshold": 60}
+          ],
+          "under_par_position": 8
+        },
+        "one_year": {"new_personal_records_achieved_count": 7}
+      },
+      "scoring_records": {
+        "lifetime": {"fewest_putts_in_round": 29, "highest_round": 91, "lowest_9_holes": 36, "lowest_round": 75, "most_birdies_in_round": 3, "most_eagles_in_round": 0, "most_gir_in_round": 11},
+        "one_year": {"fewest_putts_in_round": 29, "lowest_round": 75, "most_birdies_in_round": 3, "most_gir_in_round": 11}
+      },
+      "scoring_records_events": {
+        "lifetime": {
+          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "highest_round": {"course": "Sharp Park Golf Course", "date": "2026/3/8", "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638"},
+          "lowest_9_holes": {"course": "Presidio Golf Course", "date": "2026/5/8", "round_id": "5ba4527d-c48a-549c-a054-9306305065af"},
+          "lowest_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+          "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+          "most_eagles_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+        },
+        "one_year": {
+          "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "lowest_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+          "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+          "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+        }
+      },
+      "window_days": 365
+    },
+    "par_types": [
+      {"average_to_par": 0.625, "benchmark_to_par": 0.2, "gap": 0.43, "par": 3, "verdict": "behind"},
+      {"average_to_par": 0.5875000000000004, "benchmark_to_par": 0.5, "gap": 0.09, "par": 4, "verdict": "behind"},
+      {"average_to_par": 0.635416666666667, "benchmark_to_par": 0.55, "gap": 0.09, "par": 5, "verdict": "behind"}
+    ],
+    "peak_game": {
+      "average": 76.7,
+      "impacts": [
+        {"average": 0.96, "kind": "birdies", "peak": 1.33, "strokes": 0.37},
+        {"average": 7.13, "kind": "bogeys", "peak": 6.0, "strokes": 1.13},
+        {"average": 2.29, "kind": "doubles", "peak": 0.0, "strokes": 4.58}
+      ],
+      "rounds": [
+        {"course_name": "Presidio Golf Course", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "score": 75},
+        {"course_name": "Presidio Golf Course", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "score": 76},
+        {"course_name": "Presidio Golf Course", "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "score": 79}
+      ]
+    },
+    "putts_per_hole": {"holes": 432, "one_or_fewer": 31.71, "three_or_more": 13.19, "two": 55.09},
+    "putts_trend": [
+      {"holes_played": 18, "rolling_average": 29.0, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "total_putts": 29},
+      {"holes_played": 18, "rolling_average": 30.0, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "total_putts": 31},
+      {"holes_played": 18, "rolling_average": 32.0, "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638", "round_index": 3, "total_putts": 36},
+      {"holes_played": 18, "rolling_average": 31.8, "round_id": "2579c7a3-a3b3-5d82-b538-61d2128a6e1f", "round_index": 4, "total_putts": 31},
+      {"holes_played": 18, "rolling_average": 32.2, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "total_putts": 34},
+      {"holes_played": 18, "rolling_average": 33.4, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 6, "total_putts": 35},
+      {"holes_played": 18, "rolling_average": 34.0, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "round_index": 7, "total_putts": 34},
+      {"holes_played": 18, "rolling_average": 33.6, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "round_index": 8, "total_putts": 34},
+      {"holes_played": 18, "rolling_average": 33.4, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "round_index": 9, "total_putts": 30},
+      {"holes_played": 18, "rolling_average": 33.6, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "total_putts": 35},
+      {"holes_played": 18, "rolling_average": 33.2, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "round_index": 11, "total_putts": 33},
+      {"holes_played": 18, "rolling_average": 32.6, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "round_index": 12, "total_putts": 31},
+      {"holes_played": 18, "rolling_average": 32.6, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "round_index": 13, "total_putts": 34},
+      {"holes_played": 18, "rolling_average": 33.0, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "round_index": 14, "total_putts": 32},
+      {"holes_played": 18, "rolling_average": 32.0, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "total_putts": 30},
+      {"holes_played": 18, "rolling_average": 31.6, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "round_index": 16, "total_putts": 31},
+      {"holes_played": 18, "rolling_average": 31.8, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "round_index": 17, "total_putts": 32},
+      {"holes_played": 18, "rolling_average": 32.0, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "round_index": 18, "total_putts": 35},
+      {"holes_played": 18, "rolling_average": 31.4, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "round_index": 19, "total_putts": 29},
+      {"holes_played": 18, "rolling_average": 32.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "total_putts": 33},
+      {"holes_played": 18, "rolling_average": 32.6, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "round_index": 21, "total_putts": 34},
+      {"holes_played": 18, "rolling_average": 32.6, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "total_putts": 32},
+      {"holes_played": 18, "rolling_average": 32.6, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "total_putts": 35},
+      {"holes_played": 18, "rolling_average": 33.6, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "total_putts": 34}
+    ],
+    "score_mix": {"birdie": 5.32, "bogey": 39.58, "double": 11.81, "eagle": 0.0, "par": 42.36, "quad": 0.0, "triple": 0.93},
+    "score_trend": [
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 81.0,
+        "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919",
+        "round_index": 1,
+        "score_counts": {"birdie": 1, "bogey": 4, "double": 3, "eagle": 0, "par": 10, "quad": 0, "triple": 0},
+        "to_par": 9,
+        "total_score": 81
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 84.5,
+        "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243",
+        "round_index": 2,
+        "score_counts": {"birdie": 0, "bogey": 10, "double": 3, "eagle": 0, "par": 5, "quad": 0, "triple": 0},
+        "to_par": 16,
+        "total_score": 88
+      },
+      {
+        "course_name": "Sharp Park Golf Course",
+        "par": 72,
+        "rolling_average": 86.7,
+        "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638",
+        "round_index": 3,
+        "score_counts": {"birdie": 0, "bogey": 8, "double": 4, "eagle": 0, "par": 5, "quad": 0, "triple": 1},
+        "to_par": 19,
+        "total_score": 91
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 86.0,
+        "round_id": "2579c7a3-a3b3-5d82-b538-61d2128a6e1f",
+        "round_index": 4,
+        "score_counts": {"birdie": 2, "bogey": 6, "double": 4, "eagle": 0, "par": 6, "quad": 0, "triple": 0},
+        "to_par": 12,
+        "total_score": 84
+      },
+      {
+        "course_name": "Half Moon Bay Golf Links",
+        "par": 72,
+        "rolling_average": 86.8,
+        "round_id": "90d024a6-751b-5a66-90da-db249dc124d7",
+        "round_index": 5,
+        "score_counts": {"birdie": 1, "bogey": 6, "double": 5, "eagle": 0, "par": 5, "quad": 0, "triple": 1},
+        "to_par": 18,
+        "total_score": 90
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 87.4,
+        "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f",
+        "round_index": 6,
+        "score_counts": {"birdie": 1, "bogey": 7, "double": 3, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+        "to_par": 12,
+        "total_score": 84
+      },
+      {
+        "course_name": "Sharp Park Golf Course",
+        "par": 72,
+        "rolling_average": 87.6,
+        "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d",
+        "round_index": 7,
+        "score_counts": {"birdie": 0, "bogey": 8, "double": 3, "eagle": 0, "par": 6, "quad": 0, "triple": 1},
+        "to_par": 17,
+        "total_score": 89
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 86.0,
+        "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c",
+        "round_index": 8,
+        "score_counts": {"birdie": 2, "bogey": 9, "double": 2, "eagle": 0, "par": 5, "quad": 0, "triple": 0},
+        "to_par": 11,
+        "total_score": 83
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 85.4,
+        "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab",
+        "round_index": 9,
+        "score_counts": {"birdie": 0, "bogey": 3, "double": 3, "eagle": 0, "par": 12, "quad": 0, "triple": 0},
+        "to_par": 9,
+        "total_score": 81
+      },
+      {
+        "course_name": "Half Moon Bay Golf Links",
+        "par": 72,
+        "rolling_average": 84.6,
+        "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d",
+        "round_index": 10,
+        "score_counts": {"birdie": 0, "bogey": 10, "double": 2, "eagle": 0, "par": 6, "quad": 0, "triple": 0},
+        "to_par": 14,
+        "total_score": 86
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 84.4,
+        "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b",
+        "round_index": 11,
+        "score_counts": {"birdie": 1, "bogey": 6, "double": 3, "eagle": 0, "par": 8, "quad": 0, "triple": 0},
+        "to_par": 11,
+        "total_score": 83
+      },
+      {
+        "course_name": "Sharp Park Golf Course",
+        "par": 72,
+        "rolling_average": 82.8,
+        "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab",
+        "round_index": 12,
+        "score_counts": {"birdie": 2, "bogey": 7, "double": 2, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+        "to_par": 9,
+        "total_score": 81
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 83.6,
+        "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a",
+        "round_index": 13,
+        "score_counts": {"birdie": 0, "bogey": 7, "double": 4, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+        "to_par": 15,
+        "total_score": 87
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 83.4,
+        "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc",
+        "round_index": 14,
+        "score_counts": {"birdie": 1, "bogey": 5, "double": 2, "eagle": 0, "par": 10, "quad": 0, "triple": 0},
+        "to_par": 8,
+        "total_score": 80
+      },
+      {
+        "course_name": "Half Moon Bay Golf Links",
+        "par": 72,
+        "rolling_average": 82.8,
+        "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49",
+        "round_index": 15,
+        "score_counts": {"birdie": 0, "bogey": 11, "double": 0, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+        "to_par": 11,
+        "total_score": 83
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 83.2,
+        "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc",
+        "round_index": 16,
+        "score_counts": {"birdie": 0, "bogey": 13, "double": 0, "eagle": 0, "par": 5, "quad": 0, "triple": 0},
+        "to_par": 13,
+        "total_score": 85
+      },
+      {
+        "course_name": "Sharp Park Golf Course",
+        "par": 72,
+        "rolling_average": 83.2,
+        "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff",
+        "round_index": 17,
+        "score_counts": {"birdie": 2, "bogey": 8, "double": 0, "eagle": 0, "par": 7, "quad": 0, "triple": 1},
+        "to_par": 9,
+        "total_score": 81
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 82.2,
+        "round_id": "5ba4527d-c48a-549c-a054-9306305065af",
+        "round_index": 18,
+        "score_counts": {"birdie": 2, "bogey": 4, "double": 4, "eagle": 0, "par": 8, "quad": 0, "triple": 0},
+        "to_par": 10,
+        "total_score": 82
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 81.4,
+        "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d",
+        "round_index": 19,
+        "score_counts": {"birdie": 3, "bogey": 7, "double": 0, "eagle": 0, "par": 8, "quad": 0, "triple": 0},
+        "to_par": 4,
+        "total_score": 76
+      },
+      {
+        "course_name": "Half Moon Bay Golf Links",
+        "par": 72,
+        "rolling_average": 81.0,
+        "round_id": "fab7f282-178f-506b-9713-9764f5104099",
+        "round_index": 20,
+        "score_counts": {"birdie": 1, "bogey": 8, "double": 1, "eagle": 0, "par": 8, "quad": 0, "triple": 0},
+        "to_par": 9,
+        "total_score": 81
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 79.8,
+        "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd",
+        "round_index": 21,
+        "score_counts": {"birdie": 0, "bogey": 7, "double": 0, "eagle": 0, "par": 11, "quad": 0, "triple": 0},
+        "to_par": 7,
+        "total_score": 79
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 78.6,
+        "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd",
+        "round_index": 22,
+        "score_counts": {"birdie": 1, "bogey": 4, "double": 0, "eagle": 0, "par": 13, "quad": 0, "triple": 0},
+        "to_par": 3,
+        "total_score": 75
+      },
+      {
+        "course_name": "Sharp Park Golf Course",
+        "par": 72,
+        "rolling_average": 78.4,
+        "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806",
+        "round_index": 23,
+        "score_counts": {"birdie": 2, "bogey": 7, "double": 2, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+        "to_par": 9,
+        "total_score": 81
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 79.0,
+        "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed",
+        "round_index": 24,
+        "score_counts": {"birdie": 1, "bogey": 6, "double": 1, "eagle": 0, "par": 10, "quad": 0, "triple": 0},
+        "to_par": 7,
+        "total_score": 79
+      }
+    ],
+    "scoring_by_handicap": [
+      {"average_to_par": 0.5833333333333334, "handicap": 1, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.16666666666666666, "handicap": 2, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.5833333333333334, "handicap": 3, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.5416666666666666, "handicap": 4, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.875, "handicap": 5, "hardest": true, "sample_size": 24},
+      {"average_to_par": 0.7083333333333334, "handicap": 6, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.75, "handicap": 7, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.5833333333333334, "handicap": 8, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.6666666666666666, "handicap": 9, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.5, "handicap": 10, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.625, "handicap": 11, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.75, "handicap": 12, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.5416666666666666, "handicap": 13, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.5416666666666666, "handicap": 14, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.25, "handicap": 15, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.875, "handicap": 16, "hardest": true, "sample_size": 24},
+      {"average_to_par": 0.5416666666666666, "handicap": 17, "hardest": false, "sample_size": 24},
+      {"average_to_par": 0.8333333333333334, "handicap": 18, "hardest": true, "sample_size": 24}
+    ],
+    "scoring_by_par": [
+      {"average_strokes": 3.625, "average_to_par": 0.625, "par": 3, "sample_size": 96},
+      {"average_strokes": 4.5875, "average_to_par": 0.5875000000000004, "par": 4, "sample_size": 240},
+      {"average_strokes": 5.635416666666667, "average_to_par": 0.635416666666667, "par": 5, "sample_size": 96}
+    ],
+    "scoring_by_yardage": [
+      {
+        "average_strokes": 3.6666666666666665,
+        "average_to_par": 0.6666666666666666,
+        "bucket_label": "< 150",
+        "bucket_order": 0,
+        "gir_percentage": 29.166666666666668,
+        "par": 3,
+        "raw_scores": [
+          {"to_par": 0, "yardage": 148},
+          {"to_par": 2, "yardage": 148},
+          {"to_par": 1, "yardage": 142},
+          {"to_par": 2, "yardage": 148},
+          {"to_par": 2, "yardage": 149},
+          {"to_par": 0, "yardage": 148},
+          {"to_par": 0, "yardage": 142},
+          {"to_par": 0, "yardage": 148},
+          {"to_par": 0, "yardage": 148},
+          {"to_par": 1, "yardage": 149},
+          {"to_par": -1, "yardage": 148},
+          {"to_par": 0, "yardage": 142},
+          {"to_par": 0, "yardage": 148},
+          {"to_par": 1, "yardage": 148},
+          {"to_par": 1, "yardage": 149},
+          {"to_par": 1, "yardage": 148},
+          {"to_par": 1, "yardage": 142},
+          {"to_par": -1, "yardage": 148},
+          {"to_par": 1, "yardage": 148},
+          {"to_par": 1, "yardage": 149},
+          {"to_par": 1, "yardage": 148},
+          {"to_par": 0, "yardage": 148},
+          {"to_par": 1, "yardage": 142},
+          {"to_par": 2, "yardage": 148}
+        ],
+        "sample_size": 24,
+        "score_mix": {"birdie": 8.33, "bogey": 41.67, "double": 16.67, "eagle": 0.0, "par": 33.33, "quad": 0.0, "triple": 0.0},
+        "worst": true
+      },
+      {
+        "average_strokes": 3.611111111111111,
+        "average_to_par": 0.6111111111111112,
+        "bucket_label": "150\u2013199",
+        "bucket_order": 1,
+        "gir_percentage": 36.11111111111111,
+        "par": 3,
+        "raw_scores": [
+          {"to_par": 0, "yardage": 165},
+          {"to_par": 1, "yardage": 172},
+          {"to_par": 2, "yardage": 155},
+          {"to_par": 0, "yardage": 165},
+          {"to_par": 0, "yardage": 172},
+          {"to_par": 2, "yardage": 155},
+          {"to_par": 0, "yardage": 158},
+          {"to_par": 1, "yardage": 176},
+          {"to_par": 2, "yardage": 167},
+          {"to_par": 1, "yardage": 165},
+          {"to_par": 2, "yardage": 172},
+          {"to_par": 1, "yardage": 155},
+          {"to_par": -1, "yardage": 158},
+          {"to_par": 0, "yardage": 172},
+          {"to_par": 1, "yardage": 181},
+          {"to_par": 2, "yardage": 165},
+          {"to_par": 0, "yardage": 172},
+          {"to_par": 2, "yardage": 155},
+          {"to_par": 2, "yardage": 158},
+          {"to_par": 0, "yardage": 176},
+          {"to_par": 3, "yardage": 167},
+          {"to_par": -1, "yardage": 165},
+          {"to_par": 1, "yardage": 172},
+          {"to_par": 1, "yardage": 155},
+          {"to_par": 2, "yardage": 165},
+          {"to_par": 0, "yardage": 172},
+          {"to_par": 0, "yardage": 155},
+          {"to_par": 1, "yardage": 158},
+          {"to_par": 0, "yardage": 172},
+          {"to_par": 2, "yardage": 181},
+          {"to_par": 0, "yardage": 165},
+          {"to_par": 0, "yardage": 172},
+          {"to_par": 0, "yardage": 155},
+          {"to_par": 1, "yardage": 158},
+          {"to_par": -1, "yardage": 176},
+          {"to_par": 0, "yardage": 167},
+          {"to_par": 0, "yardage": 165},
+          {"to_par": 1, "yardage": 172},
+          {"to_par": 0, "yardage": 155},
+          {"to_par": 0, "yardage": 165},
+          {"to_par": 2, "yardage": 172},
+          {"to_par": 1, "yardage": 155},
+          {"to_par": 0, "yardage": 158},
+          {"to_par": 1, "yardage": 172},
+          {"to_par": 0, "yardage": 181},
+          {"to_par": 0, "yardage": 165},
+          {"to_par": 1, "yardage": 172},
+          {"to_par": 0, "yardage": 155},
+          {"to_par": 1, "yardage": 158},
+          {"to_par": 0, "yardage": 176},
+          {"to_par": 0, "yardage": 167},
+          {"to_par": 0, "yardage": 165},
+          {"to_par": 2, "yardage": 172},
+          {"to_par": 2, "yardage": 155},
+          {"to_par": 0, "yardage": 165},
+          {"to_par": 0, "yardage": 172},
+          {"to_par": 1, "yardage": 155},
+          {"to_par": 0, "yardage": 158},
+          {"to_par": 0, "yardage": 172},
+          {"to_par": 1, "yardage": 181},
+          {"to_par": 1, "yardage": 165},
+          {"to_par": 0, "yardage": 172},
+          {"to_par": 1, "yardage": 155},
+          {"to_par": 1, "yardage": 165},
+          {"to_par": 1, "yardage": 172},
+          {"to_par": 0, "yardage": 155},
+          {"to_par": 0, "yardage": 158},
+          {"to_par": -1, "yardage": 176},
+          {"to_par": -1, "yardage": 167},
+          {"to_par": 1, "yardage": 165},
+          {"to_par": 1, "yardage": 172},
+          {"to_par": 0, "yardage": 155}
+        ],
+        "sample_size": 72,
+        "score_mix": {"birdie": 6.94, "bogey": 30.56, "double": 16.67, "eagle": 0.0, "par": 44.44, "quad": 0.0, "triple": 1.39},
+        "worst": false
+      },
+      {
+        "average_strokes": 4.8,
+        "average_to_par": 0.8,
+        "bucket_label": "< 350",
+        "bucket_order": 0,
+        "gir_percentage": 20.0,
+        "par": 4,
+        "raw_scores": [
+          {"to_par": 1, "yardage": 348},
+          {"to_par": 2, "yardage": 348},
+          {"to_par": 0, "yardage": 348},
+          {"to_par": 1, "yardage": 348},
+          {"to_par": 0, "yardage": 348}
+        ],
+        "sample_size": 5,
+        "score_mix": {"birdie": 0.0, "bogey": 40.0, "double": 20.0, "eagle": 0.0, "par": 40.0, "quad": 0.0, "triple": 0.0},
+        "worst": true
+      },
+      {
+        "average_strokes": 4.604651162790698,
+        "average_to_par": 0.6046511627906976,
+        "bucket_label": "350\u2013399",
+        "bucket_order": 1,
+        "gir_percentage": 31.007751937984494,
+        "par": 4,
+        "raw_scores": [
+          {"to_par": 0, "yardage": 378},
+          {"to_par": 0, "yardage": 356},
+          {"to_par": 0, "yardage": 389},
+          {"to_par": 2, "yardage": 365},
+          {"to_par": 0, "yardage": 395},
+          {"to_par": 1, "yardage": 378},
+          {"to_par": 1, "yardage": 356},
+          {"to_par": 1, "yardage": 389},
+          {"to_par": 2, "yardage": 365},
+          {"to_par": 1, "yardage": 395},
+          {"to_par": 2, "yardage": 372},
+          {"to_par": 1, "yardage": 360},
+          {"to_par": 0, "yardage": 392},
+          {"to_par": 0, "yardage": 381},
+          {"to_par": 2, "yardage": 366},
+          {"to_par": 1, "yardage": 389},
+          {"to_par": 1, "yardage": 378},
+          {"to_par": 0, "yardage": 356},
+          {"to_par": 2, "yardage": 389},
+          {"to_par": 0, "yardage": 365},
+          {"to_par": -1, "yardage": 395},
+          {"to_par": 0, "yardage": 385},
+          {"to_par": 2, "yardage": 362},
+          {"to_par": 2, "yardage": 380},
+          {"to_par": 1, "yardage": 372},
+          {"to_par": 1, "yardage": 395},
+          {"to_par": 2, "yardage": 365},
+          {"to_par": 1, "yardage": 378},
+          {"to_par": 1, "yardage": 356},
+          {"to_par": 1, "yardage": 389},
+          {"to_par": 1, "yardage": 365},
+          {"to_par": 0, "yardage": 395},
+          {"to_par": 0, "yardage": 372},
+          {"to_par": 1, "yardage": 360},
+          {"to_par": 0, "yardage": 392},
+          {"to_par": 1, "yardage": 381},
+          {"to_par": 0, "yardage": 366},
+          {"to_par": 1, "yardage": 389},
+          {"to_par": 2, "yardage": 378},
+          {"to_par": 1, "yardage": 356},
+          {"to_par": 0, "yardage": 389},
+          {"to_par": 1, "yardage": 365},
+          {"to_par": 1, "yardage": 395},
+          {"to_par": 1, "yardage": 378},
+          {"to_par": 0, "yardage": 356},
+          {"to_par": 1, "yardage": 389},
+          {"to_par": 2, "yardage": 365},
+          {"to_par": 2, "yardage": 395},
+          {"to_par": 0, "yardage": 385},
+          {"to_par": 1, "yardage": 362},
+          {"to_par": 1, "yardage": 380},
+          {"to_par": 1, "yardage": 372},
+          {"to_par": 1, "yardage": 395},
+          {"to_par": 0, "yardage": 365},
+          {"to_par": 2, "yardage": 378},
+          {"to_par": 0, "yardage": 356},
+          {"to_par": 0, "yardage": 389},
+          {"to_par": 0, "yardage": 365},
+          {"to_par": 1, "yardage": 395},
+          {"to_par": 1, "yardage": 372},
+          {"to_par": 0, "yardage": 360},
+          {"to_par": 1, "yardage": 392},
+          {"to_par": 0, "yardage": 381},
+          {"to_par": 0, "yardage": 366},
+          {"to_par": 1, "yardage": 389},
+          {"to_par": 1, "yardage": 378},
+          {"to_par": 2, "yardage": 356},
+          {"to_par": 1, "yardage": 389},
+          {"to_par": 0, "yardage": 365},
+          {"to_par": 1, "yardage": 395},
+          {"to_par": 0, "yardage": 378},
+          {"to_par": 2, "yardage": 356},
+          {"to_par": 0, "yardage": 389},
+          {"to_par": 0, "yardage": 365},
+          {"to_par": -1, "yardage": 395},
+          {"to_par": 1, "yardage": 385},
+          {"to_par": 0, "yardage": 362},
+          {"to_par": 0, "yardage": 380},
+          {"to_par": 0, "yardage": 372},
+          {"to_par": 0, "yardage": 395},
+          {"to_par": 1, "yardage": 365},
+          {"to_par": 0, "yardage": 378},
+          {"to_par": 1, "yardage": 356},
+          {"to_par": 1, "yardage": 389},
+          {"to_par": 1, "yardage": 365},
+          {"to_par": 0, "yardage": 395},
+          {"to_par": 0, "yardage": 372},
+          {"to_par": 1, "yardage": 360},
+          {"to_par": 0, "yardage": 392},
+          {"to_par": 1, "yardage": 381},
+          {"to_par": 1, "yardage": 366},
+          {"to_par": 1, "yardage": 389},
+          {"to_par": -1, "yardage": 378},
+          {"to_par": 0, "yardage": 356},
+          {"to_par": 0, "yardage": 389},
+          {"to_par": 1, "yardage": 365},
+          {"to_par": 2, "yardage": 395},
+          {"to_par": 0, "yardage": 378},
+          {"to_par": 1, "yardage": 356},
+          {"to_par": 1, "yardage": 389},
+          {"to_par": -1, "yardage": 365},
+          {"to_par": 0, "yardage": 395},
+          {"to_par": 0, "yardage": 385},
+          {"to_par": 1, "yardage": 362},
+          {"to_par": 1, "yardage": 380},
+          {"to_par": 0, "yardage": 372},
+          {"to_par": -1, "yardage": 395},
+          {"to_par": 0, "yardage": 365},
+          {"to_par": 1, "yardage": 378},
+          {"to_par": 0, "yardage": 356},
+          {"to_par": 0, "yardage": 389},
+          {"to_par": 1, "yardage": 365},
+          {"to_par": 0, "yardage": 395},
+          {"to_par": 1, "yardage": 378},
+          {"to_par": 0, "yardage": 356},
+          {"to_par": 0, "yardage": 389},
+          {"to_par": -1, "yardage": 365},
+          {"to_par": 0, "yardage": 395},
+          {"to_par": 0, "yardage": 372},
+          {"to_par": 0, "yardage": 360},
+          {"to_par": 1, "yardage": 392},
+          {"to_par": 2, "yardage": 381},
+          {"to_par": 0, "yardage": 366},
+          {"to_par": 0, "yardage": 389},
+          {"to_par": 0, "yardage": 378},
+          {"to_par": 0, "yardage": 356},
+          {"to_par": 0, "yardage": 389},
+          {"to_par": 1, "yardage": 365},
+          {"to_par": 1, "yardage": 395}
+        ],
+        "sample_size": 129,
+        "score_mix": {"birdie": 4.65, "bogey": 40.31, "double": 12.4, "eagle": 0.0, "par": 42.64, "quad": 0.0, "triple": 0.0},
+        "worst": false
+      },
+      {
+        "average_strokes": 4.556603773584905,
+        "average_to_par": 0.5566037735849056,
+        "bucket_label": "400\u2013449",
+        "bucket_order": 2,
+        "gir_percentage": 31.132075471698112,
+        "par": 4,
+        "raw_scores": [
+          {"to_par": -1, "yardage": 431},
+          {"to_par": 1, "yardage": 402},
+          {"to_par": 1, "yardage": 418},
+          {"to_par": 1, "yardage": 441},
+          {"to_par": 0, "yardage": 410},
+          {"to_par": 1, "yardage": 431},
+          {"to_par": 1, "yardage": 402},
+          {"to_par": 1, "yardage": 418},
+          {"to_par": 1, "yardage": 441},
+          {"to_par": 1, "yardage": 410},
+          {"to_par": 0, "yardage": 425},
+          {"to_par": 1, "yardage": 410},
+          {"to_par": 2, "yardage": 401},
+          {"to_par": 2, "yardage": 431},
+          {"to_par": 1, "yardage": 402},
+          {"to_par": 0, "yardage": 418},
+          {"to_par": 0, "yardage": 441},
+          {"to_par": 0, "yardage": 410},
+          {"to_par": 1, "yardage": 401},
+          {"to_par": 1, "yardage": 428},
+          {"to_par": 3, "yardage": 418},
+          {"to_par": 1, "yardage": 412},
+          {"to_par": 0, "yardage": 431},
+          {"to_par": 1, "yardage": 402},
+          {"to_par": 0, "yardage": 418},
+          {"to_par": 0, "yardage": 441},
+          {"to_par": -1, "yardage": 410},
+          {"to_par": 0, "yardage": 425},
+          {"to_par": 1, "yardage": 410},
+          {"to_par": 1, "yardage": 401},
+          {"to_par": 1, "yardage": 431},
+          {"to_par": 2, "yardage": 402},
+          {"to_par": 1, "yardage": 418},
+          {"to_par": 0, "yardage": 441},
+          {"to_par": -1, "yardage": 410},
+          {"to_par": 0, "yardage": 431},
+          {"to_par": 0, "yardage": 402},
+          {"to_par": 0, "yardage": 418},
+          {"to_par": 0, "yardage": 441},
+          {"to_par": 0, "yardage": 410},
+          {"to_par": 2, "yardage": 401},
+          {"to_par": 1, "yardage": 428},
+          {"to_par": 1, "yardage": 418},
+          {"to_par": 0, "yardage": 412},
+          {"to_par": 1, "yardage": 431},
+          {"to_par": 2, "yardage": 402},
+          {"to_par": 2, "yardage": 418},
+          {"to_par": 0, "yardage": 441},
+          {"to_par": 1, "yardage": 410},
+          {"to_par": 1, "yardage": 425},
+          {"to_par": 1, "yardage": 410},
+          {"to_par": 0, "yardage": 401},
+          {"to_par": 2, "yardage": 431},
+          {"to_par": 0, "yardage": 402},
+          {"to_par": 1, "yardage": 418},
+          {"to_par": 0, "yardage": 441},
+          {"to_par": 0, "yardage": 410},
+          {"to_par": 0, "yardage": 431},
+          {"to_par": 0, "yardage": 402},
+          {"to_par": 0, "yardage": 418},
+          {"to_par": 0, "yardage": 441},
+          {"to_par": 1, "yardage": 410},
+          {"to_par": 1, "yardage": 401},
+          {"to_par": 1, "yardage": 428},
+          {"to_par": 1, "yardage": 418},
+          {"to_par": 1, "yardage": 412},
+          {"to_par": 1, "yardage": 431},
+          {"to_par": 1, "yardage": 402},
+          {"to_par": 1, "yardage": 418},
+          {"to_par": 0, "yardage": 441},
+          {"to_par": 1, "yardage": 410},
+          {"to_par": 0, "yardage": 425},
+          {"to_par": 1, "yardage": 410},
+          {"to_par": 0, "yardage": 401},
+          {"to_par": 1, "yardage": 431},
+          {"to_par": 1, "yardage": 402},
+          {"to_par": 0, "yardage": 418},
+          {"to_par": 1, "yardage": 441},
+          {"to_par": 0, "yardage": 410},
+          {"to_par": 0, "yardage": 431},
+          {"to_par": 0, "yardage": 402},
+          {"to_par": 1, "yardage": 418},
+          {"to_par": -1, "yardage": 441},
+          {"to_par": 0, "yardage": 410},
+          {"to_par": 0, "yardage": 401},
+          {"to_par": 1, "yardage": 428},
+          {"to_par": 1, "yardage": 418},
+          {"to_par": 1, "yardage": 412},
+          {"to_par": 1, "yardage": 431},
+          {"to_par": 0, "yardage": 402},
+          {"to_par": 0, "yardage": 418},
+          {"to_par": 0, "yardage": 441},
+          {"to_par": 0, "yardage": 410},
+          {"to_par": 0, "yardage": 431},
+          {"to_par": 1, "yardage": 402},
+          {"to_par": 0, "yardage": 418},
+          {"to_par": 0, "yardage": 441},
+          {"to_par": 0, "yardage": 410},
+          {"to_par": 0, "yardage": 425},
+          {"to_par": 1, "yardage": 410},
+          {"to_par": 1, "yardage": 401},
+          {"to_par": 0, "yardage": 431},
+          {"to_par": 0, "yardage": 402},
+          {"to_par": 1, "yardage": 418},
+          {"to_par": -1, "yardage": 441},
+          {"to_par": 0, "yardage": 410}
+        ],
+        "sample_size": 106,
+        "score_mix": {"birdie": 4.72, "bogey": 44.34, "double": 6.6, "eagle": 0.0, "par": 43.4, "quad": 0.0, "triple": 0.94},
+        "worst": false
+      },
+      {
+        "average_strokes": 6.103448275862069,
+        "average_to_par": 1.103448275862069,
+        "bucket_label": "< 500",
+        "bucket_order": 0,
+        "gir_percentage": 27.586206896551722,
+        "par": 5,
+        "raw_scores": [
+          {"to_par": 0, "yardage": 498},
+          {"to_par": 1, "yardage": 498},
+          {"to_par": 3, "yardage": 498},
+          {"to_par": 1, "yardage": 489},
+          {"to_par": 1, "yardage": 498},
+          {"to_par": 2, "yardage": 498},
+          {"to_par": 2, "yardage": 498},
+          {"to_par": 1, "yardage": 498},
+          {"to_par": 1, "yardage": 489},
+          {"to_par": 0, "yardage": 498},
+          {"to_par": 0, "yardage": 498},
+          {"to_par": 1, "yardage": 498},
+          {"to_par": 0, "yardage": 498},
+          {"to_par": 1, "yardage": 498},
+          {"to_par": 2, "yardage": 489},
+          {"to_par": 2, "yardage": 498},
+          {"to_par": 1, "yardage": 498},
+          {"to_par": 1, "yardage": 498},
+          {"to_par": 1, "yardage": 498},
+          {"to_par": 3, "yardage": 498},
+          {"to_par": 0, "yardage": 489},
+          {"to_par": 2, "yardage": 498},
+          {"to_par": 1, "yardage": 498},
+          {"to_par": 2, "yardage": 498},
+          {"to_par": 1, "yardage": 498},
+          {"to_par": 0, "yardage": 498},
+          {"to_par": 1, "yardage": 498},
+          {"to_par": 1, "yardage": 489},
+          {"to_par": 0, "yardage": 498}
+        ],
+        "sample_size": 29,
+        "score_mix": {"birdie": 0.0, "bogey": 48.28, "double": 20.69, "eagle": 0.0, "par": 24.14, "quad": 0.0, "triple": 6.9},
+        "worst": true
+      },
+      {
+        "average_strokes": 5.432835820895522,
+        "average_to_par": 0.43283582089552236,
+        "bucket_label": "500\u2013549",
+        "bucket_order": 1,
+        "gir_percentage": 41.7910447761194,
+        "par": 5,
+        "raw_scores": [
+          {"to_par": 0, "yardage": 512},
+          {"to_par": 2, "yardage": 520},
+          {"to_par": 0, "yardage": 531},
+          {"to_par": 0, "yardage": 512},
+          {"to_par": 0, "yardage": 520},
+          {"to_par": 0, "yardage": 531},
+          {"to_par": 0, "yardage": 505},
+          {"to_par": 1, "yardage": 527},
+          {"to_par": 1, "yardage": 512},
+          {"to_par": -1, "yardage": 520},
+          {"to_par": 0, "yardage": 531},
+          {"to_par": 0, "yardage": 515},
+          {"to_par": 0, "yardage": 530},
+          {"to_par": 0, "yardage": 505},
+          {"to_par": 1, "yardage": 512},
+          {"to_par": 0, "yardage": 520},
+          {"to_par": 1, "yardage": 531},
+          {"to_par": 1, "yardage": 505},
+          {"to_par": 2, "yardage": 527},
+          {"to_par": 1, "yardage": 512},
+          {"to_par": 0, "yardage": 520},
+          {"to_par": 1, "yardage": 531},
+          {"to_par": 0, "yardage": 512},
+          {"to_par": 0, "yardage": 520},
+          {"to_par": 1, "yardage": 531},
+          {"to_par": 0, "yardage": 515},
+          {"to_par": 1, "yardage": 530},
+          {"to_par": 0, "yardage": 505},
+          {"to_par": 1, "yardage": 512},
+          {"to_par": 1, "yardage": 520},
+          {"to_par": 1, "yardage": 531},
+          {"to_par": 2, "yardage": 505},
+          {"to_par": -1, "yardage": 527},
+          {"to_par": 1, "yardage": 512},
+          {"to_par": 2, "yardage": 520},
+          {"to_par": 1, "yardage": 531},
+          {"to_par": 0, "yardage": 512},
+          {"to_par": 0, "yardage": 520},
+          {"to_par": 1, "yardage": 531},
+          {"to_par": 1, "yardage": 515},
+          {"to_par": 0, "yardage": 530},
+          {"to_par": 1, "yardage": 505},
+          {"to_par": 1, "yardage": 512},
+          {"to_par": 1, "yardage": 520},
+          {"to_par": 1, "yardage": 531},
+          {"to_par": -1, "yardage": 505},
+          {"to_par": -1, "yardage": 527},
+          {"to_par": 0, "yardage": 512},
+          {"to_par": 0, "yardage": 520},
+          {"to_par": 0, "yardage": 531},
+          {"to_par": 1, "yardage": 512},
+          {"to_par": 0, "yardage": 520},
+          {"to_par": -1, "yardage": 531},
+          {"to_par": 0, "yardage": 515},
+          {"to_par": 0, "yardage": 530},
+          {"to_par": 1, "yardage": 505},
+          {"to_par": 0, "yardage": 512},
+          {"to_par": 0, "yardage": 520},
+          {"to_par": 0, "yardage": 531},
+          {"to_par": 0, "yardage": 512},
+          {"to_par": 0, "yardage": 520},
+          {"to_par": 0, "yardage": 531},
+          {"to_par": 2, "yardage": 505},
+          {"to_par": 1, "yardage": 527},
+          {"to_par": 0, "yardage": 512},
+          {"to_par": 1, "yardage": 520},
+          {"to_par": 0, "yardage": 531}
+        ],
+        "sample_size": 67,
+        "score_mix": {"birdie": 7.46, "bogey": 35.82, "double": 7.46, "eagle": 0.0, "par": 49.25, "quad": 0.0, "triple": 0.0},
+        "worst": false
+      }
+    ],
+    "three_putts_trend": [
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "three_putt_count": 0, "three_putt_percentage": 0.0},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111},
+      {"costly": true, "holes_with_putt_data": 18, "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638", "round_index": 3, "three_putt_count": 4, "three_putt_percentage": 22.22222222222222},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "2579c7a3-a3b3-5d82-b538-61d2128a6e1f", "round_index": 4, "three_putt_count": 1, "three_putt_percentage": 5.555555555555555},
+      {"costly": true, "holes_with_putt_data": 18, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "three_putt_count": 3, "three_putt_percentage": 16.666666666666664},
+      {"costly": true, "holes_with_putt_data": 18, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 6, "three_putt_count": 5, "three_putt_percentage": 27.77777777777778},
+      {"costly": true, "holes_with_putt_data": 18, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "round_index": 7, "three_putt_count": 4, "three_putt_percentage": 22.22222222222222},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "round_index": 8, "three_putt_count": 0, "three_putt_percentage": 0.0},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "round_index": 9, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111},
+      {"costly": true, "holes_with_putt_data": 18, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "three_putt_count": 5, "three_putt_percentage": 27.77777777777778},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "round_index": 11, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111},
+      {"costly": true, "holes_with_putt_data": 18, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "round_index": 12, "three_putt_count": 4, "three_putt_percentage": 22.22222222222222},
+      {"costly": true, "holes_with_putt_data": 18, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "round_index": 13, "three_putt_count": 4, "three_putt_percentage": 22.22222222222222},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "round_index": 14, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "round_index": 16, "three_putt_count": 1, "three_putt_percentage": 5.555555555555555},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "round_index": 17, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111},
+      {"costly": true, "holes_with_putt_data": 18, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "round_index": 18, "three_putt_count": 3, "three_putt_percentage": 16.666666666666664},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "round_index": 19, "three_putt_count": 1, "three_putt_percentage": 5.555555555555555},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "three_putt_count": 1, "three_putt_percentage": 5.555555555555555},
+      {"costly": true, "holes_with_putt_data": 18, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "round_index": 21, "three_putt_count": 3, "three_putt_percentage": 16.666666666666664},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "three_putt_count": 1, "three_putt_percentage": 5.555555555555555},
+      {"costly": true, "holes_with_putt_data": 18, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "three_putt_count": 3, "three_putt_percentage": 16.666666666666664},
+      {"costly": false, "holes_with_putt_data": 18, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111}
+    ],
+    "tour_short_game": {"scrambling_percentage": 57.0, "up_and_down_percentage": 50.0}
+  },
+  "analyticsByCourse": {
+    "3e9094df-7893-5663-8230-0334b2d440ec": {
+      "gir_trend": [
+        {"gir_percentage": 22.22222222222222, "holes_played": 18, "rolling_average": 22.2, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "total_gir": 4},
+        {"gir_percentage": 33.33333333333333, "holes_played": 18, "rolling_average": 27.8, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "total_gir": 6},
+        {"gir_percentage": 16.666666666666664, "holes_played": 18, "rolling_average": 24.1, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "total_gir": 3},
+        {"gir_percentage": 44.44444444444444, "holes_played": 18, "rolling_average": 29.2, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "total_gir": 8}
+      ],
+      "gir_vs_non_gir": [
+        {"birdie": 9.523809523809524, "bogey": 28.57142857142857, "bucket": "GIR", "double_bogey": 0.0, "eagle": 0.0, "holes_counted": 21, "par": 61.904761904761905, "quad_bogey": 0.0, "triple_bogey": 0.0},
+        {"birdie": 0.0, "bogey": 56.86274509803921, "bucket": "No GIR", "double_bogey": 15.686274509803921, "eagle": 0.0, "holes_counted": 51, "par": 25.49019607843137, "quad_bogey": 0.0, "triple_bogey": 1.9607843137254901}
+      ],
+      "handicap_trend": [
+        {"differential": 16.4, "differential_status": "out", "handicap_index": 8.7, "hi_threshold": 9.5, "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "used_in_hi": false},
+        {"differential": 12.9, "differential_status": "out", "handicap_index": 9.2, "hi_threshold": 9.5, "in_window": true, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "used_in_hi": false},
+        {"differential": 10.2, "differential_status": "close", "handicap_index": 9.0, "hi_threshold": 9.5, "in_window": true, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "used_in_hi": false},
+        {"differential": 8.5, "differential_status": "counting", "handicap_index": 8.4, "hi_threshold": 9.5, "in_window": true, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "used_in_hi": true}
+      ],
+      "headline": [
+        {
+          "change": null,
+          "metric": "scoring_average",
+          "trend": [90.0, 88.0, 86.3, 85.0],
+          "value": 85.0,
+          "verdict": null
+        },
+        {
+          "change": null,
+          "metric": "gir_percentage",
+          "trend": [22.2, 27.8, 24.1, 29.2],
+          "value": 29.2,
+          "verdict": null
+        },
+        {
+          "change": null,
+          "metric": "average_putts",
+          "trend": [34.0, 34.5, 33.0, 33.0],
+          "value": 33.0,
+          "verdict": null
+        },
+        {
+          "change": null,
+          "metric": "scrambling_percentage",
+          "trend": [14.3, 19.6, 26.4, 24.8],
+          "value": 24.8,
+          "verdict": null
+        },
+        {
+          "change": null,
+          "metric": "three_putt_rate",
+          "trend": [16.7, 22.2, 18.5, 15.3],
+          "value": 15.3,
+          "verdict": null
+        }
+      ],
+      "kpis": {"average_putts": 33.0, "best_round": 81, "best_round_course": "Half Moon Bay Golf Links", "best_round_id": "fab7f282-178f-506b-9713-9764f5104099", "gir_percentage": 29.2, "handicap_index": 7.0, "putts_per_gir": 2.19, "scoring_average": 85.0, "scrambling_percentage": 24.8, "three_putt_rate": 15.3, "three_putts_per_round": 2.8, "total_rounds": 4, "up_and_down_percentage": 40.5},
+      "net_score_trend": [
+        {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 90, "net_score": 83, "rolling_average": 83.0, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "to_par": 18},
+        {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 86, "net_score": 79, "rolling_average": 81.0, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "to_par": 14},
+        {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 83, "net_score": 76, "rolling_average": 79.3, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "to_par": 11},
+        {"course_handicap": 7, "course_name": "Half Moon Bay Golf Links", "gross_score": 81, "net_score": 74, "rolling_average": 78.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "to_par": 9}
+      ],
+      "next_level_handicap": 5,
+      "notable_achievements": {
+        "best_performance_streaks": {
+          "lifetime": {"longest_2_putt_or_less_streak": 21, "longest_birdie_streak": 1, "longest_par_streak": 4, "most_gir_in_a_row": 3},
+          "one_year": {"longest_2_putt_or_less_streak": 21, "longest_birdie_streak": 1, "longest_par_streak": 4, "most_gir_in_a_row": 3}
+        },
+        "best_performance_streaks_events": {
+          "lifetime": {
+            "longest_2_putt_or_less_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "longest_birdie_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "longest_par_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_gir_in_a_row": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+          },
+          "one_year": {
+            "longest_2_putt_or_less_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "longest_birdie_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "longest_par_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_gir_in_a_row": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+          }
+        },
+        "career_totals": {
+          "lifetime": {"total_3_putts": 11, "total_birdies": 2, "total_bogeys": 35, "total_double_bogeys": 8, "total_eagles": 0, "total_gir": 21, "total_hole_in_ones": 0, "total_holes_played": 72, "total_pars": 26, "total_quad_bogeys_plus": 0, "total_rounds_played": 4, "total_triple_bogeys": 1},
+          "one_year": {"birdies": 2, "double_bogeys": 8, "eagles": 0, "gir": 21, "hole_in_ones": 0, "quad_bogeys_plus": 0, "rounds_played": 4, "three_putts": 11, "triple_bogeys": 1}
+        },
+        "gir_milestones": {
+          "lifetime": {
+            "gir_breaks": [
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 3
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "in_window": true, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"},
+                "threshold": 6
+              },
+              {"achievement": null, "threshold": 9},
+              {"achievement": null, "threshold": 12},
+              {"achievement": null, "threshold": 15},
+              {"achievement": null, "threshold": 18}
+            ],
+            "highest_gir_percentage_in_round": 44.44444444444444,
+            "most_gir_in_round": 8
+          },
+          "one_year": {
+            "best_gir_in_round": 8,
+            "best_gir_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "gir_milestones_achieved_from_lifetime_set": 2,
+            "highest_gir_percentage": 44.44444444444444
+          }
+        },
+        "gir_milestones_events": {
+          "lifetime": {
+            "highest_gir_percentage_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+          },
+          "one_year": {
+            "best_gir_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "highest_gir_percentage": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+          }
+        },
+        "home_course_records": {
+          "lifetime": {"home_course_name": null, "lowest_score_on_home_course": null, "most_rounds_played_at_home_course": 0},
+          "one_year": {"home_course_name": null, "lowest_score_on_home_course": null}
+        },
+        "home_course_records_events": {
+          "lifetime": {"lowest_score_on_home_course": null},
+          "one_year": {"lowest_score_on_home_course": null}
+        },
+        "putting_milestones": {
+          "lifetime": {
+            "fewest_putts_in_round": 30,
+            "most_1_putts_in_round": 8,
+            "most_3_putts_in_round": 5,
+            "putt_breaks": [
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 45
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 42
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 39
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 36
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "in_window": true, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+                "threshold": 33
+              },
+              {"achievement": null, "threshold": 30},
+              {"achievement": null, "threshold": 27},
+              {"achievement": null, "threshold": 24},
+              {"achievement": null, "threshold": 21}
+            ]
+          },
+          "one_year": {"fewest_putts_in_round": 30, "most_1_putts_in_round": 8, "most_3_putts_in_round": 5, "putting_milestones_achieved_from_lifetime_set": 5}
+        },
+        "putting_milestones_events": {
+          "lifetime": {
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_1_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_3_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+          },
+          "one_year": {
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_1_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "most_3_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+          }
+        },
+        "round_milestones": {
+          "lifetime": {
+            "first_eagle": null,
+            "first_hole_in_one": null,
+            "first_round_under_par": null,
+            "score_breaks": [
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 120
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 110
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 100
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+                "threshold": 95
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "in_window": true, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"},
+                "threshold": 90
+              },
+              {
+                "achievement": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "in_window": true, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+                "threshold": 85
+              },
+              {"achievement": null, "threshold": 80},
+              {"achievement": null, "threshold": 75},
+              {"achievement": null, "threshold": 70},
+              {"achievement": null, "threshold": 65},
+              {"achievement": null, "threshold": 60}
+            ],
+            "under_par_position": 8
+          },
+          "one_year": {"new_personal_records_achieved_count": 6}
+        },
+        "scoring_records": {
+          "lifetime": {"fewest_putts_in_round": 30, "highest_round": 90, "lowest_9_holes": 40, "lowest_round": 81, "most_birdies_in_round": 1, "most_eagles_in_round": 0, "most_gir_in_round": 8},
+          "one_year": {"fewest_putts_in_round": 30, "lowest_round": 81, "most_birdies_in_round": 1, "most_gir_in_round": 8}
+        },
+        "scoring_records_events": {
+          "lifetime": {
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "highest_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "lowest_9_holes": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "lowest_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "most_birdies_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "most_eagles_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+          },
+          "one_year": {
+            "fewest_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/25", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49"},
+            "lowest_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+            "most_birdies_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/3/18", "round_id": "90d024a6-751b-5a66-90da-db249dc124d7"},
+            "most_gir_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"}
+          }
+        },
+        "window_days": 365
+      },
+      "par_types": [
+        {"average_to_par": 0.625, "benchmark_to_par": 0.2, "gap": 0.43, "par": 3, "verdict": "behind"},
+        {"average_to_par": 0.7999999999999998, "benchmark_to_par": 0.5, "gap": 0.3, "par": 4, "verdict": "behind"},
+        {"average_to_par": 0.625, "benchmark_to_par": 0.55, "gap": 0.07, "par": 5, "verdict": "behind"}
+      ],
+      "peak_game": {
+        "average": 83.3,
+        "impacts": [
+          {"average": 0.5, "kind": "birdies", "peak": 0.33, "strokes": -0.17},
+          {"average": 8.75, "kind": "bogeys", "peak": 9.67, "strokes": -0.92},
+          {"average": 2.25, "kind": "doubles", "peak": 1.0, "strokes": 2.5}
+        ],
+        "rounds": [
+          {"course_name": "Half Moon Bay Golf Links", "round_id": "fab7f282-178f-506b-9713-9764f5104099", "score": 81},
+          {"course_name": "Half Moon Bay Golf Links", "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "score": 83},
+          {"course_name": "Half Moon Bay Golf Links", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "score": 86}
+        ]
+      },
+      "putts_per_hole": {"holes": 72, "one_or_fewer": 31.94, "three_or_more": 15.28, "two": 52.78},
+      "putts_trend": [
+        {"holes_played": 18, "rolling_average": 34.0, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "total_putts": 34},
+        {"holes_played": 18, "rolling_average": 34.5, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "total_putts": 35},
+        {"holes_played": 18, "rolling_average": 33.0, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "total_putts": 30},
+        {"holes_played": 18, "rolling_average": 33.0, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "total_putts": 33}
+      ],
+      "score_mix": {"birdie": 2.78, "bogey": 48.61, "double": 11.11, "eagle": 0.0, "par": 36.11, "quad": 0.0, "triple": 1.39},
+      "score_trend": [
+        {
+          "course_name": "Half Moon Bay Golf Links",
+          "par": 72,
+          "rolling_average": 90.0,
+          "round_id": "90d024a6-751b-5a66-90da-db249dc124d7",
+          "round_index": 1,
+          "score_counts": {"birdie": 1, "bogey": 6, "double": 5, "eagle": 0, "par": 5, "quad": 0, "triple": 1},
+          "to_par": 18,
+          "total_score": 90
+        },
+        {
+          "course_name": "Half Moon Bay Golf Links",
+          "par": 72,
+          "rolling_average": 88.0,
+          "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d",
+          "round_index": 2,
+          "score_counts": {"birdie": 0, "bogey": 10, "double": 2, "eagle": 0, "par": 6, "quad": 0, "triple": 0},
+          "to_par": 14,
+          "total_score": 86
+        },
+        {
+          "course_name": "Half Moon Bay Golf Links",
+          "par": 72,
+          "rolling_average": 86.3,
+          "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49",
+          "round_index": 3,
+          "score_counts": {"birdie": 0, "bogey": 11, "double": 0, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+          "to_par": 11,
+          "total_score": 83
+        },
+        {
+          "course_name": "Half Moon Bay Golf Links",
+          "par": 72,
+          "rolling_average": 85.0,
+          "round_id": "fab7f282-178f-506b-9713-9764f5104099",
+          "round_index": 4,
+          "score_counts": {"birdie": 1, "bogey": 8, "double": 1, "eagle": 0, "par": 8, "quad": 0, "triple": 0},
+          "to_par": 9,
+          "total_score": 81
+        }
+      ],
+      "scoring_by_handicap": [
+        {"average_to_par": 1.0, "handicap": 1, "hardest": false, "sample_size": 4},
+        {"average_to_par": 0.25, "handicap": 2, "hardest": false, "sample_size": 4},
+        {"average_to_par": 0.25, "handicap": 3, "hardest": false, "sample_size": 4},
+        {"average_to_par": 1.5, "handicap": 4, "hardest": true, "sample_size": 4},
+        {"average_to_par": 0.25, "handicap": 5, "hardest": false, "sample_size": 4},
+        {"average_to_par": 0.5, "handicap": 6, "hardest": false, "sample_size": 4},
+        {"average_to_par": 1.5, "handicap": 7, "hardest": true, "sample_size": 4},
+        {"average_to_par": 0.5, "handicap": 8, "hardest": false, "sample_size": 4},
+        {"average_to_par": 1.0, "handicap": 9, "hardest": false, "sample_size": 4},
+        {"average_to_par": 0.25, "handicap": 10, "hardest": false, "sample_size": 4},
+        {"average_to_par": 1.0, "handicap": 11, "hardest": false, "sample_size": 4},
+        {"average_to_par": 0.75, "handicap": 12, "hardest": false, "sample_size": 4},
+        {"average_to_par": 1.0, "handicap": 13, "hardest": false, "sample_size": 4},
+        {"average_to_par": 0.75, "handicap": 14, "hardest": false, "sample_size": 4},
+        {"average_to_par": 0.0, "handicap": 15, "hardest": false, "sample_size": 4},
+        {"average_to_par": 1.25, "handicap": 16, "hardest": true, "sample_size": 4},
+        {"average_to_par": 0.25, "handicap": 17, "hardest": false, "sample_size": 4},
+        {"average_to_par": 1.0, "handicap": 18, "hardest": false, "sample_size": 4}
+      ],
+      "scoring_by_par": [
+        {"average_strokes": 3.625, "average_to_par": 0.625, "par": 3, "sample_size": 16},
+        {"average_strokes": 4.8, "average_to_par": 0.7999999999999998, "par": 4, "sample_size": 40},
+        {"average_strokes": 5.625, "average_to_par": 0.625, "par": 5, "sample_size": 16}
+      ],
+      "scoring_by_yardage": [
+        {
+          "average_strokes": 4.25,
+          "average_to_par": 1.25,
+          "bucket_label": "< 150",
+          "bucket_order": 0,
+          "gir_percentage": 0.0,
+          "par": 3,
+          "raw_scores": [
+            {"to_par": 2, "yardage": 149},
+            {"to_par": 1, "yardage": 149},
+            {"to_par": 1, "yardage": 149},
+            {"to_par": 1, "yardage": 149}
+          ],
+          "sample_size": 4,
+          "score_mix": {"birdie": 0.0, "bogey": 75.0, "double": 25.0, "eagle": 0.0, "par": 0.0, "quad": 0.0, "triple": 0.0},
+          "worst": true
+        },
+        {
+          "average_strokes": 3.4166666666666665,
+          "average_to_par": 0.4166666666666667,
+          "bucket_label": "150\u2013199",
+          "bucket_order": 1,
+          "gir_percentage": 41.66666666666667,
+          "par": 3,
+          "raw_scores": [
+            {"to_par": -1, "yardage": 158},
+            {"to_par": 0, "yardage": 172},
+            {"to_par": 1, "yardage": 181},
+            {"to_par": 1, "yardage": 158},
+            {"to_par": 0, "yardage": 172},
+            {"to_par": 2, "yardage": 181},
+            {"to_par": 0, "yardage": 158},
+            {"to_par": 1, "yardage": 172},
+            {"to_par": 0, "yardage": 181},
+            {"to_par": 0, "yardage": 158},
+            {"to_par": 0, "yardage": 172},
+            {"to_par": 1, "yardage": 181}
+          ],
+          "sample_size": 12,
+          "score_mix": {"birdie": 8.33, "bogey": 33.33, "double": 8.33, "eagle": 0.0, "par": 50.0, "quad": 0.0, "triple": 0.0},
+          "worst": false
+        },
+        {
+          "average_strokes": 4.625,
+          "average_to_par": 0.625,
+          "bucket_label": "350\u2013399",
+          "bucket_order": 1,
+          "gir_percentage": 25.0,
+          "par": 4,
+          "raw_scores": [
+            {"to_par": 0, "yardage": 385},
+            {"to_par": 2, "yardage": 362},
+            {"to_par": 2, "yardage": 380},
+            {"to_par": 1, "yardage": 372},
+            {"to_par": 1, "yardage": 395},
+            {"to_par": 2, "yardage": 365},
+            {"to_par": 0, "yardage": 385},
+            {"to_par": 1, "yardage": 362},
+            {"to_par": 1, "yardage": 380},
+            {"to_par": 1, "yardage": 372},
+            {"to_par": 1, "yardage": 395},
+            {"to_par": 0, "yardage": 365},
+            {"to_par": 1, "yardage": 385},
+            {"to_par": 0, "yardage": 362},
+            {"to_par": 0, "yardage": 380},
+            {"to_par": 0, "yardage": 372},
+            {"to_par": 0, "yardage": 395},
+            {"to_par": 1, "yardage": 365},
+            {"to_par": 0, "yardage": 385},
+            {"to_par": 1, "yardage": 362},
+            {"to_par": 1, "yardage": 380},
+            {"to_par": 0, "yardage": 372},
+            {"to_par": -1, "yardage": 395},
+            {"to_par": 0, "yardage": 365}
+          ],
+          "sample_size": 24,
+          "score_mix": {"birdie": 4.17, "bogey": 41.67, "double": 12.5, "eagle": 0.0, "par": 41.67, "quad": 0.0, "triple": 0.0},
+          "worst": false
+        },
+        {
+          "average_strokes": 5.0625,
+          "average_to_par": 1.0625,
+          "bucket_label": "400\u2013449",
+          "bucket_order": 2,
+          "gir_percentage": 25.0,
+          "par": 4,
+          "raw_scores": [
+            {"to_par": 1, "yardage": 401},
+            {"to_par": 1, "yardage": 428},
+            {"to_par": 3, "yardage": 418},
+            {"to_par": 1, "yardage": 412},
+            {"to_par": 2, "yardage": 401},
+            {"to_par": 1, "yardage": 428},
+            {"to_par": 1, "yardage": 418},
+            {"to_par": 0, "yardage": 412},
+            {"to_par": 1, "yardage": 401},
+            {"to_par": 1, "yardage": 428},
+            {"to_par": 1, "yardage": 418},
+            {"to_par": 1, "yardage": 412},
+            {"to_par": 0, "yardage": 401},
+            {"to_par": 1, "yardage": 428},
+            {"to_par": 1, "yardage": 418},
+            {"to_par": 1, "yardage": 412}
+          ],
+          "sample_size": 16,
+          "score_mix": {"birdie": 0.0, "bogey": 75.0, "double": 6.25, "eagle": 0.0, "par": 12.5, "quad": 0.0, "triple": 6.25},
+          "worst": true
+        },
+        {
+          "average_strokes": 6.5,
+          "average_to_par": 1.5,
+          "bucket_label": "< 500",
+          "bucket_order": 0,
+          "gir_percentage": 25.0,
+          "par": 5,
+          "raw_scores": [
+            {"to_par": 2, "yardage": 498},
+            {"to_par": 1, "yardage": 498},
+            {"to_par": 1, "yardage": 498},
+            {"to_par": 2, "yardage": 498}
+          ],
+          "sample_size": 4,
+          "score_mix": {"birdie": 0.0, "bogey": 50.0, "double": 50.0, "eagle": 0.0, "par": 0.0, "quad": 0.0, "triple": 0.0},
+          "worst": true
+        },
+        {
+          "average_strokes": 5.333333333333333,
+          "average_to_par": 0.3333333333333333,
+          "bucket_label": "500\u2013549",
+          "bucket_order": 1,
+          "gir_percentage": 41.66666666666667,
+          "par": 5,
+          "raw_scores": [
+            {"to_par": 0, "yardage": 515},
+            {"to_par": 0, "yardage": 530},
+            {"to_par": 0, "yardage": 505},
+            {"to_par": 0, "yardage": 515},
+            {"to_par": 1, "yardage": 530},
+            {"to_par": 0, "yardage": 505},
+            {"to_par": 1, "yardage": 515},
+            {"to_par": 0, "yardage": 530},
+            {"to_par": 1, "yardage": 505},
+            {"to_par": 0, "yardage": 515},
+            {"to_par": 0, "yardage": 530},
+            {"to_par": 1, "yardage": 505}
+          ],
+          "sample_size": 12,
+          "score_mix": {"birdie": 0.0, "bogey": 33.33, "double": 0.0, "eagle": 0.0, "par": 66.67, "quad": 0.0, "triple": 0.0},
+          "worst": false
+        }
+      ],
+      "three_putts_trend": [
+        {"costly": true, "holes_with_putt_data": 18, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 1, "three_putt_count": 3, "three_putt_percentage": 16.666666666666664},
+        {"costly": true, "holes_with_putt_data": 18, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 2, "three_putt_count": 5, "three_putt_percentage": 27.77777777777778},
+        {"costly": false, "holes_with_putt_data": 18, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 3, "three_putt_count": 2, "three_putt_percentage": 11.11111111111111},
+        {"costly": false, "holes_with_putt_data": 18, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 4, "three_putt_count": 1, "three_putt_percentage": 5.555555555555555}
+      ],
+      "tour_short_game": {"scrambling_percentage": 57.0, "up_and_down_percentage": 50.0}
+    }
+  },
+  "benchmarks": {
+    "handicap:0": {
+      "against": "handicap",
+      "benchmark": {"gir_percentage": 61.0, "par3_to_par": -0.025, "par4_to_par": 0.175, "par5_to_par": 0.0, "putts_per_gir": 1.84, "scrambling_percentage": 47.0},
+      "handicap": 0,
+      "par_types": [
+        {"average_to_par": 0.625, "benchmark_to_par": -0.025, "gap": 0.65, "par": 3, "verdict": "behind"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 0.175, "gap": 0.41, "par": 4, "verdict": "behind"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 0.0, "gap": 0.64, "par": 5, "verdict": "behind"}
+      ],
+      "verdicts": {"gir_percentage": "behind", "par3_to_par": "behind", "par4_to_par": "behind", "par5_to_par": "behind", "putts_per_gir": "behind", "scrambling_percentage": "behind"}
+    },
+    "handicap:10": {
+      "against": "handicap",
+      "benchmark": {"gir_percentage": 36.0, "par3_to_par": 0.375, "par4_to_par": 0.65, "par5_to_par": 0.725, "putts_per_gir": 2.04, "scrambling_percentage": 31.0},
+      "handicap": 10,
+      "par_types": [
+        {"average_to_par": 0.625, "benchmark_to_par": 0.375, "gap": 0.25, "par": 3, "verdict": "behind"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 0.65, "gap": -0.06, "par": 4, "verdict": "ahead"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 0.725, "gap": -0.09, "par": 5, "verdict": "ahead"}
+      ],
+      "verdicts": {"gir_percentage": "behind", "par3_to_par": "behind", "par4_to_par": "ahead", "par5_to_par": "ahead", "putts_per_gir": "ahead", "scrambling_percentage": "ahead"}
+    },
+    "handicap:15": {
+      "against": "handicap",
+      "benchmark": {"gir_percentage": 24.0, "par3_to_par": 0.6, "par4_to_par": 1.025, "par5_to_par": 1.1, "putts_per_gir": 2.1, "scrambling_percentage": 21.0},
+      "handicap": 15,
+      "par_types": [
+        {"average_to_par": 0.625, "benchmark_to_par": 0.6, "gap": 0.03, "par": 3, "verdict": "behind"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 1.025, "gap": -0.44, "par": 4, "verdict": "ahead"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 1.1, "gap": -0.46, "par": 5, "verdict": "ahead"}
+      ],
+      "verdicts": {"gir_percentage": "ahead", "par3_to_par": "behind", "par4_to_par": "ahead", "par5_to_par": "ahead", "putts_per_gir": "ahead", "scrambling_percentage": "ahead"}
+    },
+    "handicap:20": {
+      "against": "handicap",
+      "benchmark": {"gir_percentage": 17.0, "par3_to_par": 0.775, "par4_to_par": 1.275, "par5_to_par": 1.425, "putts_per_gir": 2.18, "scrambling_percentage": 20.0},
+      "handicap": 20,
+      "par_types": [
+        {"average_to_par": 0.625, "benchmark_to_par": 0.775, "gap": -0.15, "par": 3, "verdict": "ahead"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 1.275, "gap": -0.69, "par": 4, "verdict": "ahead"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 1.425, "gap": -0.79, "par": 5, "verdict": "ahead"}
+      ],
+      "verdicts": {"gir_percentage": "ahead", "par3_to_par": "ahead", "par4_to_par": "ahead", "par5_to_par": "ahead", "putts_per_gir": "ahead", "scrambling_percentage": "ahead"}
+    },
+    "handicap:25": {
+      "against": "handicap",
+      "benchmark": {"gir_percentage": 10.0, "par3_to_par": 0.975, "par4_to_par": 1.85, "par5_to_par": 2.0, "putts_per_gir": 2.18, "scrambling_percentage": 18.0},
+      "handicap": 25,
+      "par_types": [
+        {"average_to_par": 0.625, "benchmark_to_par": 0.975, "gap": -0.35, "par": 3, "verdict": "ahead"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 1.85, "gap": -1.26, "par": 4, "verdict": "ahead"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 2.0, "gap": -1.36, "par": 5, "verdict": "ahead"}
+      ],
+      "verdicts": {"gir_percentage": "ahead", "par3_to_par": "ahead", "par4_to_par": "ahead", "par5_to_par": "ahead", "putts_per_gir": "ahead", "scrambling_percentage": "ahead"}
+    },
+    "handicap:5": {
+      "against": "handicap",
+      "benchmark": {"gir_percentage": 44.0, "par3_to_par": 0.2, "par4_to_par": 0.5, "par5_to_par": 0.55, "putts_per_gir": 1.94, "scrambling_percentage": 41.0},
+      "handicap": 5,
+      "par_types": [
+        {"average_to_par": 0.625, "benchmark_to_par": 0.2, "gap": 0.43, "par": 3, "verdict": "behind"},
+        {"average_to_par": 0.5875000000000004, "benchmark_to_par": 0.5, "gap": 0.09, "par": 4, "verdict": "behind"},
+        {"average_to_par": 0.635416666666667, "benchmark_to_par": 0.55, "gap": 0.09, "par": 5, "verdict": "behind"}
+      ],
+      "verdicts": {"gir_percentage": "behind", "par3_to_par": "behind", "par4_to_par": "behind", "par5_to_par": "behind", "putts_per_gir": "behind", "scrambling_percentage": "behind"}
+    }
+  },
+  "dashboard": {
+    "best_round": 75,
+    "best_round_course": "Presidio Golf Course",
+    "best_round_date": "2026-05-25T09:00:00",
+    "best_round_id": "8d412153-b640-567c-b361-5eb47ecb4efd",
+    "best_round_to_par": 3,
+    "handicap_change": {"this_month": 0.0, "this_month_verdict": "neutral"},
+    "handicap_index": 7.0,
+    "handicap_trend": [
+      {"differential": 16.4, "differential_status": "out", "handicap_index": 8.7, "hi_threshold": 9.5, "in_window": true, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "used_in_hi": false},
+      {"differential": 11.2, "differential_status": "close", "handicap_index": 8.9, "hi_threshold": 9.5, "in_window": true, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 6, "used_in_hi": false},
+      {"differential": 17.0, "differential_status": "out", "handicap_index": 9.9, "hi_threshold": 9.5, "in_window": true, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "round_index": 7, "used_in_hi": false},
+      {"differential": 10.4, "differential_status": "close", "handicap_index": 9.5, "hi_threshold": 9.5, "in_window": true, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "round_index": 8, "used_in_hi": false},
+      {"differential": 8.7, "differential_status": "counting", "handicap_index": 9.2, "hi_threshold": 9.5, "in_window": true, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "round_index": 9, "used_in_hi": true},
+      {"differential": 12.9, "differential_status": "out", "handicap_index": 9.2, "hi_threshold": 9.5, "in_window": true, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "used_in_hi": false},
+      {"differential": 10.4, "differential_status": "close", "handicap_index": 9.2, "hi_threshold": 9.5, "in_window": true, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "round_index": 11, "used_in_hi": false},
+      {"differential": 9.6, "differential_status": "close", "handicap_index": 9.3, "hi_threshold": 9.5, "in_window": true, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "round_index": 12, "used_in_hi": false},
+      {"differential": 13.8, "differential_status": "out", "handicap_index": 9.3, "hi_threshold": 9.5, "in_window": true, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "round_index": 13, "used_in_hi": false},
+      {"differential": 7.8, "differential_status": "counting", "handicap_index": 8.7, "hi_threshold": 9.5, "in_window": true, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "round_index": 14, "used_in_hi": true},
+      {"differential": 10.2, "differential_status": "close", "handicap_index": 9.0, "hi_threshold": 9.5, "in_window": true, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "used_in_hi": false},
+      {"differential": 12.1, "differential_status": "out", "handicap_index": 9.0, "hi_threshold": 9.5, "in_window": true, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "round_index": 16, "used_in_hi": false},
+      {"differential": 9.6, "differential_status": "close", "handicap_index": 9.1, "hi_threshold": 9.5, "in_window": true, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "round_index": 17, "used_in_hi": false},
+      {"differential": 9.5, "differential_status": "counting", "handicap_index": 9.0, "hi_threshold": 9.5, "in_window": true, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "round_index": 18, "used_in_hi": true},
+      {"differential": 4.4, "differential_status": "counting", "handicap_index": 8.3, "hi_threshold": 9.5, "in_window": true, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "round_index": 19, "used_in_hi": true},
+      {"differential": 8.5, "differential_status": "counting", "handicap_index": 8.4, "hi_threshold": 9.5, "in_window": true, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "used_in_hi": true},
+      {"differential": 7.0, "differential_status": "counting", "handicap_index": 8.1, "hi_threshold": 9.5, "in_window": true, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "round_index": 21, "used_in_hi": true},
+      {"differential": 3.6, "differential_status": "counting", "handicap_index": 7.4, "hi_threshold": 9.5, "in_window": true, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "used_in_hi": true},
+      {"differential": 9.6, "differential_status": "close", "handicap_index": 7.4, "hi_threshold": 9.5, "in_window": true, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "used_in_hi": false},
+      {"differential": 7.0, "differential_status": "counting", "handicap_index": 7.0, "hi_threshold": 9.5, "in_window": true, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "used_in_hi": true}
+    ],
+    "recent_rounds": [
+      {
+        "back_nine": 38,
+        "best_rank": null,
+        "course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4",
+        "course_name": "Presidio Golf Course",
+        "date": "2026-05-31T09:00:00",
+        "front_nine": 41,
+        "hole_scores": [
+          {"hole_number": 1, "kind": "par", "running_to_par": 0, "strokes": 4},
+          {"hole_number": 2, "kind": "par", "running_to_par": 0, "strokes": 5},
+          {"hole_number": 3, "kind": "par", "running_to_par": 0, "strokes": 4},
+          {"hole_number": 4, "kind": "bogey", "running_to_par": 1, "strokes": 4},
+          {"hole_number": 5, "kind": "par", "running_to_par": 1, "strokes": 4},
+          {"hole_number": 6, "kind": "par", "running_to_par": 1, "strokes": 4},
+          {"hole_number": 7, "kind": "double", "running_to_par": 3, "strokes": 5},
+          {"hole_number": 8, "kind": "bogey", "running_to_par": 4, "strokes": 5},
+          {"hole_number": 9, "kind": "bogey", "running_to_par": 5, "strokes": 6},
+          {"hole_number": 10, "kind": "par", "running_to_par": 5, "strokes": 4},
+          {"hole_number": 11, "kind": "birdie", "running_to_par": 4, "strokes": 3},
+          {"hole_number": 12, "kind": "bogey", "running_to_par": 5, "strokes": 4},
+          {"hole_number": 13, "kind": "bogey", "running_to_par": 6, "strokes": 5},
+          {"hole_number": 14, "kind": "par", "running_to_par": 6, "strokes": 5},
+          {"hole_number": 15, "kind": "par", "running_to_par": 6, "strokes": 3},
+          {"hole_number": 16, "kind": "par", "running_to_par": 6, "strokes": 4},
+          {"hole_number": 17, "kind": "bogey", "running_to_par": 7, "strokes": 5},
+          {"hole_number": 18, "kind": "par", "running_to_par": 7, "strokes": 5}
+        ],
+        "id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed",
+        "score_counts": {"birdie": 1, "bogey": 6, "double": 1, "eagle": 0, "par": 10, "quad": 0, "triple": 0},
+        "tee_box": "Blue",
+        "to_par": 7,
+        "total_putts": 34,
+        "total_score": 79,
+        "worst_rank": null
+      },
+      {
+        "back_nine": 42,
+        "best_rank": null,
+        "course_id": "fac0bc48-11c1-5a79-aa30-de0149ea5302",
+        "course_name": "Sharp Park Golf Course",
+        "date": "2026-05-28T09:00:00",
+        "front_nine": 39,
+        "hole_scores": [
+          {"hole_number": 1, "kind": "par", "running_to_par": 0, "strokes": 4},
+          {"hole_number": 2, "kind": "double", "running_to_par": 2, "strokes": 7},
+          {"hole_number": 3, "kind": "par", "running_to_par": 2, "strokes": 4},
+          {"hole_number": 4, "kind": "par", "running_to_par": 2, "strokes": 3},
+          {"hole_number": 5, "kind": "par", "running_to_par": 2, "strokes": 4},
+          {"hole_number": 6, "kind": "par", "running_to_par": 2, "strokes": 4},
+          {"hole_number": 7, "kind": "bogey", "running_to_par": 3, "strokes": 6},
+          {"hole_number": 8, "kind": "birdie", "running_to_par": 2, "strokes": 2},
+          {"hole_number": 9, "kind": "bogey", "running_to_par": 3, "strokes": 5},
+          {"hole_number": 10, "kind": "double", "running_to_par": 5, "strokes": 6},
+          {"hole_number": 11, "kind": "bogey", "running_to_par": 6, "strokes": 4},
+          {"hole_number": 12, "kind": "bogey", "running_to_par": 7, "strokes": 5},
+          {"hole_number": 13, "kind": "bogey", "running_to_par": 8, "strokes": 6},
+          {"hole_number": 14, "kind": "par", "running_to_par": 8, "strokes": 4},
+          {"hole_number": 15, "kind": "birdie", "running_to_par": 7, "strokes": 2},
+          {"hole_number": 16, "kind": "par", "running_to_par": 7, "strokes": 4},
+          {"hole_number": 17, "kind": "bogey", "running_to_par": 8, "strokes": 6},
+          {"hole_number": 18, "kind": "bogey", "running_to_par": 9, "strokes": 5}
+        ],
+        "id": "c96b797b-8476-55e3-93d3-feca94cdc806",
+        "score_counts": {"birdie": 2, "bogey": 7, "double": 2, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+        "tee_box": "Blue",
+        "to_par": 9,
+        "total_putts": 35,
+        "total_score": 81,
+        "worst_rank": null
+      },
+      {
+        "back_nine": 36,
+        "best_rank": null,
+        "course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4",
+        "course_name": "Presidio Golf Course",
+        "date": "2026-05-25T09:00:00",
+        "front_nine": 39,
+        "hole_scores": [
+          {"hole_number": 1, "kind": "bogey", "running_to_par": 1, "strokes": 5},
+          {"hole_number": 2, "kind": "par", "running_to_par": 1, "strokes": 5},
+          {"hole_number": 3, "kind": "par", "running_to_par": 1, "strokes": 4},
+          {"hole_number": 4, "kind": "bogey", "running_to_par": 2, "strokes": 4},
+          {"hole_number": 5, "kind": "bogey", "running_to_par": 3, "strokes": 5},
+          {"hole_number": 6, "kind": "par", "running_to_par": 3, "strokes": 4},
+          {"hole_number": 7, "kind": "par", "running_to_par": 3, "strokes": 3},
+          {"hole_number": 8, "kind": "par", "running_to_par": 3, "strokes": 4},
+          {"hole_number": 9, "kind": "par", "running_to_par": 3, "strokes": 5},
+          {"hole_number": 10, "kind": "par", "running_to_par": 3, "strokes": 4},
+          {"hole_number": 11, "kind": "par", "running_to_par": 3, "strokes": 4},
+          {"hole_number": 12, "kind": "bogey", "running_to_par": 4, "strokes": 4},
+          {"hole_number": 13, "kind": "birdie", "running_to_par": 3, "strokes": 3},
+          {"hole_number": 14, "kind": "par", "running_to_par": 3, "strokes": 5},
+          {"hole_number": 15, "kind": "par", "running_to_par": 3, "strokes": 3},
+          {"hole_number": 16, "kind": "par", "running_to_par": 3, "strokes": 4},
+          {"hole_number": 17, "kind": "par", "running_to_par": 3, "strokes": 4},
+          {"hole_number": 18, "kind": "par", "running_to_par": 3, "strokes": 5}
+        ],
+        "id": "8d412153-b640-567c-b361-5eb47ecb4efd",
+        "score_counts": {"birdie": 1, "bogey": 4, "double": 0, "eagle": 0, "par": 13, "quad": 0, "triple": 0},
+        "tee_box": "Blue",
+        "to_par": 3,
+        "total_putts": 32,
+        "total_score": 75,
+        "worst_rank": null
+      },
+      {
+        "back_nine": 39,
+        "best_rank": null,
+        "course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4",
+        "course_name": "Presidio Golf Course",
+        "date": "2026-05-21T09:00:00",
+        "front_nine": 40,
+        "hole_scores": [
+          {"hole_number": 1, "kind": "bogey", "running_to_par": 1, "strokes": 5},
+          {"hole_number": 2, "kind": "par", "running_to_par": 1, "strokes": 5},
+          {"hole_number": 3, "kind": "bogey", "running_to_par": 2, "strokes": 5},
+          {"hole_number": 4, "kind": "bogey", "running_to_par": 3, "strokes": 4},
+          {"hole_number": 5, "kind": "par", "running_to_par": 3, "strokes": 4},
+          {"hole_number": 6, "kind": "par", "running_to_par": 3, "strokes": 4},
+          {"hole_number": 7, "kind": "bogey", "running_to_par": 4, "strokes": 4},
+          {"hole_number": 8, "kind": "par", "running_to_par": 4, "strokes": 4},
+          {"hole_number": 9, "kind": "par", "running_to_par": 4, "strokes": 5},
+          {"hole_number": 10, "kind": "par", "running_to_par": 4, "strokes": 4},
+          {"hole_number": 11, "kind": "par", "running_to_par": 4, "strokes": 4},
+          {"hole_number": 12, "kind": "par", "running_to_par": 4, "strokes": 3},
+          {"hole_number": 13, "kind": "bogey", "running_to_par": 5, "strokes": 5},
+          {"hole_number": 14, "kind": "bogey", "running_to_par": 6, "strokes": 6},
+          {"hole_number": 15, "kind": "bogey", "running_to_par": 7, "strokes": 4},
+          {"hole_number": 16, "kind": "par", "running_to_par": 7, "strokes": 4},
+          {"hole_number": 17, "kind": "par", "running_to_par": 7, "strokes": 4},
+          {"hole_number": 18, "kind": "par", "running_to_par": 7, "strokes": 5}
+        ],
+        "id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd",
+        "score_counts": {"birdie": 0, "bogey": 7, "double": 0, "eagle": 0, "par": 11, "quad": 0, "triple": 0},
+        "tee_box": "Blue",
+        "to_par": 7,
+        "total_putts": 34,
+        "total_score": 79,
+        "worst_rank": null
+      }
+    ],
+    "recent_score_mix": {"birdie": 5.555555555555555, "bogey": 35.55555555555556, "double": 4.444444444444445, "eagle": 0.0, "par": 54.44444444444444, "quad": 0.0, "triple": 0.0},
+    "rounds_this_year": 24,
+    "score_trend": [
+      {
+        "course_name": "Half Moon Bay Golf Links",
+        "par": 72,
+        "rolling_average": 90.0,
+        "round_id": "90d024a6-751b-5a66-90da-db249dc124d7",
+        "round_index": 1,
+        "score_counts": {"birdie": 1, "bogey": 6, "double": 5, "eagle": 0, "par": 5, "quad": 0, "triple": 1},
+        "to_par": 18,
+        "total_score": 90
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 87.0,
+        "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f",
+        "round_index": 2,
+        "score_counts": {"birdie": 1, "bogey": 7, "double": 3, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+        "to_par": 12,
+        "total_score": 84
+      },
+      {
+        "course_name": "Sharp Park Golf Course",
+        "par": 72,
+        "rolling_average": 87.7,
+        "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d",
+        "round_index": 3,
+        "score_counts": {"birdie": 0, "bogey": 8, "double": 3, "eagle": 0, "par": 6, "quad": 0, "triple": 1},
+        "to_par": 17,
+        "total_score": 89
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 86.5,
+        "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c",
+        "round_index": 4,
+        "score_counts": {"birdie": 2, "bogey": 9, "double": 2, "eagle": 0, "par": 5, "quad": 0, "triple": 0},
+        "to_par": 11,
+        "total_score": 83
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 85.4,
+        "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab",
+        "round_index": 5,
+        "score_counts": {"birdie": 0, "bogey": 3, "double": 3, "eagle": 0, "par": 12, "quad": 0, "triple": 0},
+        "to_par": 9,
+        "total_score": 81
+      },
+      {
+        "course_name": "Half Moon Bay Golf Links",
+        "par": 72,
+        "rolling_average": 84.6,
+        "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d",
+        "round_index": 6,
+        "score_counts": {"birdie": 0, "bogey": 10, "double": 2, "eagle": 0, "par": 6, "quad": 0, "triple": 0},
+        "to_par": 14,
+        "total_score": 86
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 84.4,
+        "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b",
+        "round_index": 7,
+        "score_counts": {"birdie": 1, "bogey": 6, "double": 3, "eagle": 0, "par": 8, "quad": 0, "triple": 0},
+        "to_par": 11,
+        "total_score": 83
+      },
+      {
+        "course_name": "Sharp Park Golf Course",
+        "par": 72,
+        "rolling_average": 82.8,
+        "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab",
+        "round_index": 8,
+        "score_counts": {"birdie": 2, "bogey": 7, "double": 2, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+        "to_par": 9,
+        "total_score": 81
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 83.6,
+        "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a",
+        "round_index": 9,
+        "score_counts": {"birdie": 0, "bogey": 7, "double": 4, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+        "to_par": 15,
+        "total_score": 87
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 83.4,
+        "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc",
+        "round_index": 10,
+        "score_counts": {"birdie": 1, "bogey": 5, "double": 2, "eagle": 0, "par": 10, "quad": 0, "triple": 0},
+        "to_par": 8,
+        "total_score": 80
+      },
+      {
+        "course_name": "Half Moon Bay Golf Links",
+        "par": 72,
+        "rolling_average": 82.8,
+        "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49",
+        "round_index": 11,
+        "score_counts": {"birdie": 0, "bogey": 11, "double": 0, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+        "to_par": 11,
+        "total_score": 83
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 83.2,
+        "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc",
+        "round_index": 12,
+        "score_counts": {"birdie": 0, "bogey": 13, "double": 0, "eagle": 0, "par": 5, "quad": 0, "triple": 0},
+        "to_par": 13,
+        "total_score": 85
+      },
+      {
+        "course_name": "Sharp Park Golf Course",
+        "par": 72,
+        "rolling_average": 83.2,
+        "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff",
+        "round_index": 13,
+        "score_counts": {"birdie": 2, "bogey": 8, "double": 0, "eagle": 0, "par": 7, "quad": 0, "triple": 1},
+        "to_par": 9,
+        "total_score": 81
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 82.2,
+        "round_id": "5ba4527d-c48a-549c-a054-9306305065af",
+        "round_index": 14,
+        "score_counts": {"birdie": 2, "bogey": 4, "double": 4, "eagle": 0, "par": 8, "quad": 0, "triple": 0},
+        "to_par": 10,
+        "total_score": 82
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 81.4,
+        "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d",
+        "round_index": 15,
+        "score_counts": {"birdie": 3, "bogey": 7, "double": 0, "eagle": 0, "par": 8, "quad": 0, "triple": 0},
+        "to_par": 4,
+        "total_score": 76
+      },
+      {
+        "course_name": "Half Moon Bay Golf Links",
+        "par": 72,
+        "rolling_average": 81.0,
+        "round_id": "fab7f282-178f-506b-9713-9764f5104099",
+        "round_index": 16,
+        "score_counts": {"birdie": 1, "bogey": 8, "double": 1, "eagle": 0, "par": 8, "quad": 0, "triple": 0},
+        "to_par": 9,
+        "total_score": 81
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 79.8,
+        "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd",
+        "round_index": 17,
+        "score_counts": {"birdie": 0, "bogey": 7, "double": 0, "eagle": 0, "par": 11, "quad": 0, "triple": 0},
+        "to_par": 7,
+        "total_score": 79
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 78.6,
+        "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd",
+        "round_index": 18,
+        "score_counts": {"birdie": 1, "bogey": 4, "double": 0, "eagle": 0, "par": 13, "quad": 0, "triple": 0},
+        "to_par": 3,
+        "total_score": 75
+      },
+      {
+        "course_name": "Sharp Park Golf Course",
+        "par": 72,
+        "rolling_average": 78.4,
+        "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806",
+        "round_index": 19,
+        "score_counts": {"birdie": 2, "bogey": 7, "double": 2, "eagle": 0, "par": 7, "quad": 0, "triple": 0},
+        "to_par": 9,
+        "total_score": 81
+      },
+      {
+        "course_name": "Presidio Golf Course",
+        "par": 72,
+        "rolling_average": 79.0,
+        "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed",
+        "round_index": 20,
+        "score_counts": {"birdie": 1, "bogey": 6, "double": 1, "eagle": 0, "par": 10, "quad": 0, "triple": 0},
+        "to_par": 7,
+        "total_score": 79
+      }
+    ],
+    "scoring_average_change": -3.3,
+    "scoring_average_l5": 79.0,
+    "scoring_average_verdict": "good",
+    "whs": {
+      "adjustment": 0.0,
+      "count_used": 8,
+      "diff_avg": 7.0625,
+      "has_rated_rounds": true,
+      "rows": [
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 7.0, "round_index": 20, "score": 79, "slope_rating": 133.0, "used": true},
+        {"course_name": "Sharp Park Golf Course", "course_rating": 70.6, "differential": 9.6, "round_index": 19, "score": 81, "slope_rating": 122.0, "used": false},
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 3.6, "round_index": 18, "score": 75, "slope_rating": 133.0, "used": true},
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 7.0, "round_index": 17, "score": 79, "slope_rating": 133.0, "used": true},
+        {"course_name": "Half Moon Bay Golf Links", "course_rating": 71.4, "differential": 8.5, "round_index": 16, "score": 81, "slope_rating": 128.0, "used": true},
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 4.4, "round_index": 15, "score": 76, "slope_rating": 133.0, "used": true},
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 9.5, "round_index": 14, "score": 82, "slope_rating": 133.0, "used": true},
+        {"course_name": "Sharp Park Golf Course", "course_rating": 70.6, "differential": 9.6, "round_index": 13, "score": 81, "slope_rating": 122.0, "used": false},
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 12.1, "round_index": 12, "score": 85, "slope_rating": 133.0, "used": false},
+        {"course_name": "Half Moon Bay Golf Links", "course_rating": 71.4, "differential": 10.2, "round_index": 11, "score": 83, "slope_rating": 128.0, "used": false},
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 7.8, "round_index": 10, "score": 80, "slope_rating": 133.0, "used": true},
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 13.8, "round_index": 9, "score": 87, "slope_rating": 133.0, "used": false},
+        {"course_name": "Sharp Park Golf Course", "course_rating": 70.6, "differential": 9.6, "round_index": 8, "score": 81, "slope_rating": 122.0, "used": false},
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 10.4, "round_index": 7, "score": 83, "slope_rating": 133.0, "used": false},
+        {"course_name": "Half Moon Bay Golf Links", "course_rating": 71.4, "differential": 12.9, "round_index": 6, "score": 86, "slope_rating": 128.0, "used": false},
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 8.7, "round_index": 5, "score": 81, "slope_rating": 133.0, "used": true},
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 10.4, "round_index": 4, "score": 83, "slope_rating": 133.0, "used": false},
+        {"course_name": "Sharp Park Golf Course", "course_rating": 70.6, "differential": 17.0, "round_index": 3, "score": 89, "slope_rating": 122.0, "used": false},
+        {"course_name": "Presidio Golf Course", "course_rating": 70.8, "differential": 11.2, "round_index": 2, "score": 84, "slope_rating": 133.0, "used": false},
+        {"course_name": "Half Moon Bay Golf Links", "course_rating": 71.4, "differential": 16.4, "round_index": 1, "score": 90, "slope_rating": 128.0, "used": false}
+      ],
+      "window_size": 20
+    }
+  },
+  "detailRounds": [
+    {
+      "back_nine": 36,
+      "course": {
+        "back_nine_par": 36,
+        "external_course_id": null,
+        "front_nine_par": 36,
+        "holes": [
+          {"handicap": 7, "number": 1, "par": 4},
+          {"handicap": 11, "number": 2, "par": 5},
+          {"handicap": 1, "number": 3, "par": 4},
+          {"handicap": 15, "number": 4, "par": 3},
+          {"handicap": 5, "number": 5, "par": 4},
+          {"handicap": 9, "number": 6, "par": 4},
+          {"handicap": 17, "number": 7, "par": 3},
+          {"handicap": 3, "number": 8, "par": 4},
+          {"handicap": 13, "number": 9, "par": 5},
+          {"handicap": 8, "number": 10, "par": 4},
+          {"handicap": 2, "number": 11, "par": 4},
+          {"handicap": 16, "number": 12, "par": 3},
+          {"handicap": 6, "number": 13, "par": 4},
+          {"handicap": 12, "number": 14, "par": 5},
+          {"handicap": 18, "number": 15, "par": 3},
+          {"handicap": 4, "number": 16, "par": 4},
+          {"handicap": 10, "number": 17, "par": 4},
+          {"handicap": 14, "number": 18, "par": 5}
+        ],
+        "id": "1b6e5c5a-2153-519c-a3da-84852bef21a4",
+        "location": "San Francisco, CA",
+        "name": "Presidio Golf Course",
+        "par": 72,
+        "tees": [
+          {
+            "back_nine_yardage": 3356,
+            "color": "Blue",
+            "course_handicap": 7,
+            "course_rating": 70.8,
+            "front_nine_yardage": 3330,
+            "hole_yardages": {"1": 378, "10": 389, "11": 441, "12": 172, "13": 365, "14": 498, "15": 155, "16": 410, "17": 395, "18": 531, "2": 512, "3": 431, "4": 165, "5": 402, "6": 356, "7": 148, "8": 418, "9": 520},
+            "slope_rating": 133.0,
+            "total_yardage": 6686
+          }
+        ],
+        "user_id": null
+      },
+      "course_handicap": 7,
+      "course_name_played": null,
+      "date": "2026-05-25T09:00:00",
+      "fairways_hit": 7,
+      "front_nine": 39,
+      "hole_scores": [
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 7, "handicap_played": null, "hole_number": 1, "kind": "bogey", "net_score": null, "par": 4, "par_played": 4, "putts": 3, "running_to_par": 1, "shots_to_green": null, "strokes": 5, "three_putt": true, "to_par": 1, "yardage": 378},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 11, "handicap_played": null, "hole_number": 2, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 2, "running_to_par": 1, "shots_to_green": null, "strokes": 5, "three_putt": false, "to_par": 0, "yardage": 512},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 1, "handicap_played": null, "hole_number": 3, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "running_to_par": 1, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 431},
+        {"fairway_hit": null, "green_in_regulation": false, "handicap": 15, "handicap_played": null, "hole_number": 4, "kind": "bogey", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "running_to_par": 2, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 1, "yardage": 165},
+        {"fairway_hit": false, "green_in_regulation": false, "handicap": 5, "handicap_played": null, "hole_number": 5, "kind": "bogey", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "running_to_par": 3, "shots_to_green": null, "strokes": 5, "three_putt": false, "to_par": 1, "yardage": 402},
+        {"fairway_hit": true, "green_in_regulation": false, "handicap": 9, "handicap_played": null, "hole_number": 6, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 1, "running_to_par": 3, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 356},
+        {"fairway_hit": null, "green_in_regulation": true, "handicap": 17, "handicap_played": null, "hole_number": 7, "kind": "par", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "running_to_par": 3, "shots_to_green": null, "strokes": 3, "three_putt": false, "to_par": 0, "yardage": 148},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 3, "handicap_played": null, "hole_number": 8, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "running_to_par": 3, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 418},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 13, "handicap_played": null, "hole_number": 9, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 2, "running_to_par": 3, "shots_to_green": null, "strokes": 5, "three_putt": false, "to_par": 0, "yardage": 520},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 8, "handicap_played": null, "hole_number": 10, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "running_to_par": 3, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 389},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 2, "handicap_played": null, "hole_number": 11, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "running_to_par": 3, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 441},
+        {"fairway_hit": null, "green_in_regulation": false, "handicap": 16, "handicap_played": null, "hole_number": 12, "kind": "bogey", "net_score": null, "par": 3, "par_played": 3, "putts": 2, "running_to_par": 4, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 1, "yardage": 172},
+        {"fairway_hit": false, "green_in_regulation": true, "handicap": 6, "handicap_played": null, "hole_number": 13, "kind": "birdie", "net_score": null, "par": 4, "par_played": 4, "putts": 1, "running_to_par": 3, "shots_to_green": null, "strokes": 3, "three_putt": false, "to_par": -1, "yardage": 365},
+        {"fairway_hit": true, "green_in_regulation": false, "handicap": 12, "handicap_played": null, "hole_number": 14, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 1, "running_to_par": 3, "shots_to_green": null, "strokes": 5, "three_putt": false, "to_par": 0, "yardage": 498},
+        {"fairway_hit": null, "green_in_regulation": false, "handicap": 18, "handicap_played": null, "hole_number": 15, "kind": "par", "net_score": null, "par": 3, "par_played": 3, "putts": 1, "running_to_par": 3, "shots_to_green": null, "strokes": 3, "three_putt": false, "to_par": 0, "yardage": 155},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 4, "handicap_played": null, "hole_number": 16, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "running_to_par": 3, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 410},
+        {"fairway_hit": true, "green_in_regulation": true, "handicap": 10, "handicap_played": null, "hole_number": 17, "kind": "par", "net_score": null, "par": 4, "par_played": 4, "putts": 2, "running_to_par": 3, "shots_to_green": null, "strokes": 4, "three_putt": false, "to_par": 0, "yardage": 395},
+        {"fairway_hit": false, "green_in_regulation": false, "handicap": 14, "handicap_played": null, "hole_number": 18, "kind": "par", "net_score": null, "par": 5, "par_played": 5, "putts": 1, "running_to_par": 3, "shots_to_green": null, "strokes": 5, "three_putt": false, "to_par": 0, "yardage": 531}
+      ],
+      "holes_played": 18,
+      "id": "8d412153-b640-567c-b361-5eb47ecb4efd",
+      "net_score": 68,
+      "nines": {
+        "back": {"gir": 5, "par": 36, "putts": 14, "to_par": 0, "yards": 3356},
+        "front": {"gir": 6, "par": 36, "putts": 18, "to_par": 3, "yards": 3330}
+      },
+      "notes": null,
+      "par": 72,
+      "score_counts": {"birdie": 1, "bogey": 4, "double": 0, "eagle": 0, "par": 13, "quad": 0, "triple": 0},
+      "tee_box": "Blue",
+      "to_par": 3,
+      "total_gir": 11,
+      "total_putts": 32,
+      "total_score": 75,
+      "user_tee": null,
+      "weather_conditions": null,
+      "worst_stretch": {"first_hole": 1, "last_hole": 4, "to_par": 2},
+      "yards": 6686
+    }
+  ],
+  "goalReport": {
+    "attempts": [
+      {"met_goal": false, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "score": 90},
+      {"met_goal": false, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "score": 84},
+      {"met_goal": false, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "score": 89},
+      {"met_goal": false, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "score": 83},
+      {"met_goal": false, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "score": 81},
+      {"met_goal": false, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "score": 86},
+      {"met_goal": false, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "score": 83},
+      {"met_goal": false, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "score": 81},
+      {"met_goal": false, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "score": 87},
+      {"met_goal": false, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "score": 80},
+      {"met_goal": false, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "score": 83},
+      {"met_goal": false, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "score": 85},
+      {"met_goal": false, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "score": 81},
+      {"met_goal": false, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "score": 82},
+      {"met_goal": true, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "score": 76},
+      {"met_goal": false, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "score": 81},
+      {"met_goal": true, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "score": 79},
+      {"met_goal": true, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "score": 75},
+      {"met_goal": false, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "score": 81},
+      {"met_goal": true, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "score": 79}
+    ],
+    "gap": 3.3,
+    "lowest_score": 75,
+    "on_track": false,
+    "peak_gap": -2.3,
+    "peak_meets_goal": true,
+    "progress_pct": 70.00000000000003,
+    "rounds_meeting_goal": 4,
+    "savers": [
+      {
+        "data": {"avg_three_putts": 2.5},
+        "detail": "2.5 a round",
+        "headline": "Cut out 3-putts",
+        "percentage_of_gap": 75.8,
+        "strokes_saved": 2.5,
+        "type": "three_putt_bleed"
+      },
+      {
+        "data": {"avg_doubles": 1.85, "avg_triples_plus": 0.15, "realistic_save": 2.15},
+        "detail": "2.0 doubles or worse a round",
+        "headline": "Turn doubles into bogeys",
+        "percentage_of_gap": 65.2,
+        "strokes_saved": 2.15,
+        "type": "blowup_holes"
+      },
+      {
+        "data": {"scrambling_percentage": 32.4},
+        "detail": "32% scrambling",
+        "headline": "Save more pars after a miss",
+        "percentage_of_gap": 52.3,
+        "strokes_saved": 1.73,
+        "type": "scrambling_opportunity"
+      },
+      {
+        "data": {"average_to_par": 0.65, "sample_size": 80},
+        "detail": "+0.7 a hole on them",
+        "headline": "Score on par 5s",
+        "percentage_of_gap": 42.4,
+        "strokes_saved": 1.4,
+        "type": "par5_opportunity"
+      },
+      {
+        "data": {"average_to_par": 1.08, "bucket_label": "< 500", "par": 5, "sample_size": 24},
+        "detail": "+1.1 a hole from there",
+        "headline": "Par 5s from < 500 yds",
+        "percentage_of_gap": 39.4,
+        "strokes_saved": 1.3,
+        "type": "achilles_heel"
+      },
+      {
+        "data": {"average_to_par": 0.87, "hole_number": 15, "sample_size": 15},
+        "detail": "+0.9 a round on it",
+        "headline": "Hole 15 at home",
+        "percentage_of_gap": 26.3,
+        "strokes_saved": 0.87,
+        "type": "home_course_demon"
+      },
+      {
+        "data": {"gir_percentage": 36.1},
+        "detail": "36% of greens",
+        "headline": "Hit more greens",
+        "percentage_of_gap": 16.2,
+        "strokes_saved": 0.53,
+        "type": "gir_opportunity"
+      }
+    ],
+    "scoring_average": 82.3,
+    "scoring_goal": 79
+  },
+  "handicapIndex": 7.0,
+  "playedCourses": [
+    {"id": "3e9094df-7893-5663-8230-0334b2d440ec", "location": "Half Moon Bay, CA", "name": "Half Moon Bay Golf Links"},
+    {"id": "1b6e5c5a-2153-519c-a3da-84852bef21a4", "location": "San Francisco, CA", "name": "Presidio Golf Course"},
+    {"id": "fac0bc48-11c1-5a79-aa30-de0149ea5302", "location": "Pacifica, CA", "name": "Sharp Park Golf Course"}
+  ],
+  "profile": {"created_at": "2026-02-20T00:00:00", "email": "sam@example.com", "friend_code": null, "handicap": 7.0, "home_course_id": "1b6e5c5a-2153-519c-a3da-84852bef21a4", "id": "1e912903-4df9-5191-b19a-6a15dc4852b5", "name": "Sam Rivera", "scoring_goal": 79},
+  "user": {"email": "sam@example.com", "email_verified": true, "name": "Sam Rivera", "user_id": "1e912903-4df9-5191-b19a-6a15dc4852b5"}
+} satisfies FakeBackendSeed;
+
+export const achievementsAYearOn = {
+  "best_performance_streaks": {
+    "lifetime": {"longest_2_putt_or_less_streak": 30, "longest_birdie_streak": 1, "longest_par_streak": 7, "most_gir_in_a_row": 5},
+    "one_year": {"longest_2_putt_or_less_streak": 25, "longest_birdie_streak": 1, "longest_par_streak": 7, "most_gir_in_a_row": 5}
+  },
+  "best_performance_streaks_events": {
+    "lifetime": {
+      "longest_2_putt_or_less_streak": {"course": "Presidio Golf Course", "date": "2026/3/5", "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243"},
+      "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+      "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026/5/28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
+      "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
+    },
+    "one_year": {
+      "longest_2_putt_or_less_streak": {"course": "Half Moon Bay Golf Links", "date": "2026/5/17", "round_id": "fab7f282-178f-506b-9713-9764f5104099"},
+      "longest_birdie_streak": {"course": "Presidio Golf Course", "date": "2026/4/11", "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b"},
+      "longest_par_streak": {"course": "Sharp Park Golf Course", "date": "2026/5/28", "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806"},
+      "most_gir_in_a_row": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"}
+    }
+  },
+  "career_totals": {
+    "lifetime": {"total_3_putts": 57, "total_birdies": 23, "total_bogeys": 171, "total_double_bogeys": 51, "total_eagles": 0, "total_gir": 143, "total_hole_in_ones": 0, "total_holes_played": 432, "total_pars": 183, "total_quad_bogeys_plus": 0, "total_rounds_played": 24, "total_triple_bogeys": 4},
+    "one_year": {"birdies": 16, "double_bogeys": 24, "eagles": 0, "gir": 108, "hole_in_ones": 0, "quad_bogeys_plus": 0, "rounds_played": 16, "three_putts": 38, "triple_bogeys": 1}
+  },
+  "gir_milestones": {
+    "lifetime": {
+      "gir_breaks": [
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 3
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/20", "in_window": false, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"},
+          "threshold": 6
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/5/21", "in_window": true, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd"},
+          "threshold": 9
+        },
+        {"achievement": null, "threshold": 12},
+        {"achievement": null, "threshold": 15},
+        {"achievement": null, "threshold": 18}
+      ],
+      "highest_gir_percentage_in_round": 61.111111111111114,
+      "most_gir_in_round": 11
+    },
+    "one_year": {
+      "best_gir_in_round": 11,
+      "best_gir_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+      "gir_milestones_achieved_from_lifetime_set": 1,
+      "highest_gir_percentage": 61.111111111111114
+    }
+  },
+  "gir_milestones_events": {
+    "lifetime": {
+      "highest_gir_percentage_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+      "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+    },
+    "one_year": {
+      "best_gir_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+      "highest_gir_percentage": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+    }
+  },
+  "home_course_records": {
+    "lifetime": {"home_course_name": "Presidio Golf Course", "lowest_score_on_home_course": 75, "most_rounds_played_at_home_course": 15},
+    "one_year": {"home_course_name": "Presidio Golf Course", "lowest_score_on_home_course": 75}
+  },
+  "home_course_records_events": {
+    "lifetime": {
+      "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+    },
+    "one_year": {
+      "lowest_score_on_home_course": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+    }
+  },
+  "putting_milestones": {
+    "lifetime": {
+      "fewest_putts_in_round": 29,
+      "most_1_putts_in_round": 9,
+      "most_3_putts_in_round": 5,
+      "putt_breaks": [
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 45
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 42
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 39
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 36
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 33
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 30
+        },
+        {"achievement": null, "threshold": 27},
+        {"achievement": null, "threshold": 24},
+        {"achievement": null, "threshold": 21}
+      ]
+    },
+    "one_year": {"fewest_putts_in_round": 29, "most_1_putts_in_round": 9, "most_3_putts_in_round": 5, "putting_milestones_achieved_from_lifetime_set": 0}
+  },
+  "putting_milestones_events": {
+    "lifetime": {
+      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+      "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026/4/14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
+      "most_3_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/20", "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f"}
+    },
+    "one_year": {
+      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+      "most_1_putts_in_round": {"course": "Sharp Park Golf Course", "date": "2026/4/14", "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab"},
+      "most_3_putts_in_round": {"course": "Half Moon Bay Golf Links", "date": "2026/4/7", "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d"}
+    }
+  },
+  "round_milestones": {
+    "lifetime": {
+      "first_eagle": null,
+      "first_hole_in_one": null,
+      "first_round_under_par": null,
+      "score_breaks": [
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 120
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 110
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 100
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 95
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 90
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/3/1", "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+          "threshold": 85
+        },
+        {
+          "achievement": {"course": "Presidio Golf Course", "date": "2026/5/13", "in_window": true, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+          "threshold": 80
+        },
+        {"achievement": null, "threshold": 75},
+        {"achievement": null, "threshold": 70},
+        {"achievement": null, "threshold": 65},
+        {"achievement": null, "threshold": 60}
+      ],
+      "under_par_position": 8
+    },
+    "one_year": {"new_personal_records_achieved_count": 1}
+  },
+  "scoring_records": {
+    "lifetime": {"fewest_putts_in_round": 29, "highest_round": 91, "lowest_9_holes": 36, "lowest_round": 75, "most_birdies_in_round": 3, "most_eagles_in_round": 0, "most_gir_in_round": 11},
+    "one_year": {"fewest_putts_in_round": 29, "lowest_round": 75, "most_birdies_in_round": 3, "most_gir_in_round": 11}
+  },
+  "scoring_records_events": {
+    "lifetime": {
+      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+      "highest_round": {"course": "Sharp Park Golf Course", "date": "2026/3/8", "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638"},
+      "lowest_9_holes": {"course": "Presidio Golf Course", "date": "2026/5/8", "round_id": "5ba4527d-c48a-549c-a054-9306305065af"},
+      "lowest_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+      "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+      "most_eagles_in_round": {"course": "Presidio Golf Course", "date": "2026/3/1", "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919"},
+      "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+    },
+    "one_year": {
+      "fewest_putts_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+      "lowest_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"},
+      "most_birdies_in_round": {"course": "Presidio Golf Course", "date": "2026/5/13", "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d"},
+      "most_gir_in_round": {"course": "Presidio Golf Course", "date": "2026/5/25", "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd"}
+    }
+  },
+  "window_days": 365
+} satisfies NotableAchievementsDto;
+
+export const handicapTrendAYearOn = [
+  {"differential": 8.7, "differential_status": "out", "handicap_index": null, "hi_threshold": 9.5, "in_window": false, "round_id": "1af632aa-5dd9-56d4-af17-659bbad5a919", "round_index": 1, "used_in_hi": false},
+  {"differential": 14.6, "differential_status": "out", "handicap_index": null, "hi_threshold": 9.5, "in_window": false, "round_id": "01601fb8-2bc9-5594-bde0-7ebc6fe33243", "round_index": 2, "used_in_hi": false},
+  {"differential": 18.9, "differential_status": "out", "handicap_index": 6.7, "hi_threshold": 9.5, "in_window": false, "round_id": "cd85180c-0b6a-5d10-aa8f-054ca4445638", "round_index": 3, "used_in_hi": false},
+  {"differential": 11.2, "differential_status": "out", "handicap_index": 7.7, "hi_threshold": 9.5, "in_window": false, "round_id": "2579c7a3-a3b3-5d82-b538-61d2128a6e1f", "round_index": 4, "used_in_hi": false},
+  {"differential": 16.4, "differential_status": "out", "handicap_index": 8.7, "hi_threshold": 9.5, "in_window": false, "round_id": "90d024a6-751b-5a66-90da-db249dc124d7", "round_index": 5, "used_in_hi": false},
+  {"differential": 11.2, "differential_status": "close", "handicap_index": 8.9, "hi_threshold": 9.5, "in_window": false, "round_id": "0eeaae44-21b6-528e-8caa-371edd83d00f", "round_index": 6, "used_in_hi": false},
+  {"differential": 17.0, "differential_status": "out", "handicap_index": 9.9, "hi_threshold": 9.5, "in_window": false, "round_id": "8b1d02ed-4b2d-54ea-89e3-73559307ac0d", "round_index": 7, "used_in_hi": false},
+  {"differential": 10.4, "differential_status": "close", "handicap_index": 9.5, "hi_threshold": 9.5, "in_window": false, "round_id": "a0e978cf-88ca-5184-8561-71c29ff4106c", "round_index": 8, "used_in_hi": false},
+  {"differential": 8.7, "differential_status": "counting", "handicap_index": 9.2, "hi_threshold": 9.5, "in_window": true, "round_id": "5967f924-b018-5cf7-97b4-d86e77f74eab", "round_index": 9, "used_in_hi": true},
+  {"differential": 12.9, "differential_status": "out", "handicap_index": 9.2, "hi_threshold": 9.5, "in_window": true, "round_id": "8af5900e-a669-5d32-80f0-f8f1f0bc1a7d", "round_index": 10, "used_in_hi": false},
+  {"differential": 10.4, "differential_status": "close", "handicap_index": 9.2, "hi_threshold": 9.5, "in_window": true, "round_id": "0f955de5-fa15-5b83-84be-b84e44163d0b", "round_index": 11, "used_in_hi": false},
+  {"differential": 9.6, "differential_status": "close", "handicap_index": 9.3, "hi_threshold": 9.5, "in_window": true, "round_id": "7be8bd1a-e259-5f86-9bd5-f08d8a6d0fab", "round_index": 12, "used_in_hi": false},
+  {"differential": 13.8, "differential_status": "out", "handicap_index": 9.3, "hi_threshold": 9.5, "in_window": true, "round_id": "d3f573ef-4529-5747-afa9-91d4d2a94d0a", "round_index": 13, "used_in_hi": false},
+  {"differential": 7.8, "differential_status": "counting", "handicap_index": 8.7, "hi_threshold": 9.5, "in_window": true, "round_id": "9738f7b0-bc48-55ed-8aff-44bf3de707dc", "round_index": 14, "used_in_hi": true},
+  {"differential": 10.2, "differential_status": "close", "handicap_index": 9.0, "hi_threshold": 9.5, "in_window": true, "round_id": "06b05b8c-d971-5e32-b8c0-a30b4d52bd49", "round_index": 15, "used_in_hi": false},
+  {"differential": 12.1, "differential_status": "out", "handicap_index": 9.0, "hi_threshold": 9.5, "in_window": true, "round_id": "8b029a4b-9d5b-5360-9d5f-06ba5eb0e4dc", "round_index": 16, "used_in_hi": false},
+  {"differential": 9.6, "differential_status": "close", "handicap_index": 9.1, "hi_threshold": 9.5, "in_window": true, "round_id": "1594ecf1-af95-55ad-8b23-2ec81c779bff", "round_index": 17, "used_in_hi": false},
+  {"differential": 9.5, "differential_status": "counting", "handicap_index": 9.0, "hi_threshold": 9.5, "in_window": true, "round_id": "5ba4527d-c48a-549c-a054-9306305065af", "round_index": 18, "used_in_hi": true},
+  {"differential": 4.4, "differential_status": "counting", "handicap_index": 8.3, "hi_threshold": 9.5, "in_window": true, "round_id": "024547fc-f399-501c-bb61-ea2dfe649c5d", "round_index": 19, "used_in_hi": true},
+  {"differential": 8.5, "differential_status": "counting", "handicap_index": 8.4, "hi_threshold": 9.5, "in_window": true, "round_id": "fab7f282-178f-506b-9713-9764f5104099", "round_index": 20, "used_in_hi": true},
+  {"differential": 7.0, "differential_status": "counting", "handicap_index": 8.1, "hi_threshold": 9.5, "in_window": true, "round_id": "9b10c525-e9f3-553c-b698-eb23d1e06bbd", "round_index": 21, "used_in_hi": true},
+  {"differential": 3.6, "differential_status": "counting", "handicap_index": 7.4, "hi_threshold": 9.5, "in_window": true, "round_id": "8d412153-b640-567c-b361-5eb47ecb4efd", "round_index": 22, "used_in_hi": true},
+  {"differential": 9.6, "differential_status": "close", "handicap_index": 7.4, "hi_threshold": 9.5, "in_window": true, "round_id": "c96b797b-8476-55e3-93d3-feca94cdc806", "round_index": 23, "used_in_hi": false},
+  {"differential": 7.0, "differential_status": "counting", "handicap_index": 7.0, "hi_threshold": 9.5, "in_window": true, "round_id": "0617bc8a-76ba-5b80-8e8d-52a19f07feed", "round_index": 24, "used_in_hi": true}
+] satisfies AnalyticsDto["handicap_trend"];

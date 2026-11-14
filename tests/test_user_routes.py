@@ -1,4 +1,5 @@
-from unittest.mock import AsyncMock
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
 import pytest
@@ -117,10 +118,7 @@ def friendship_database():
     return user_id, other_id, user, record, db
 
 
-# ================================================================
-# API domain: goals, course access and error translation
-# ================================================================
-
+# =========================================================
 
 @pytest.mark.parametrize(("field", "value"), [("scoring_goal", 18), ("scoring_goal", 270), ("scoring_goal_nine", 9), ("scoring_goal_nine", 135)])
 def test_update_user_request_accepts_domain_goal_bounds(field, value):

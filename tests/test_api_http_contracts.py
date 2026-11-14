@@ -173,11 +173,12 @@ def test_round_detail_json_is_unchanged(api):
     round_ = full_round()
     db.rounds.get_round_owner_id = AsyncMock(return_value=str(user_id))
     db.rounds.get_round = AsyncMock(return_value=round_)
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
 
     response = client.get(f"/api/rounds/{uuid4()}")
 
     assert response.status_code == 200
-    assert response.json() == round_.model_dump(mode="json")
+    assert response.json() == rounds.round_detail(round_).model_dump(mode="json")
 
 
 def test_user_profile_json_is_unchanged(api):
@@ -188,7 +189,7 @@ def test_user_profile_json_is_unchanged(api):
     response = client.get(f"/api/users/{user_id}")
 
     assert response.status_code == 200
-    assert response.json() == user.model_dump(mode="json")
+    assert response.json() == users.UserResponse.model_validate(user).model_dump(mode="json")
 
 
 def test_user_tee_list_json_is_unchanged(api):

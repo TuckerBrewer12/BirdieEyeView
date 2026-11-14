@@ -1,5 +1,5 @@
 from pydantic import Field, TypeAdapter, model_validator
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from .base import BaseGolfModel
 from .scoring import classify_score
@@ -7,6 +7,8 @@ from .scoring import classify_score
 _PAR = TypeAdapter(Annotated[int, Field(strict=True, ge=3, le=6)])
 _ALLOCATION = TypeAdapter(Annotated[int, Field(strict=True, ge=-(2**31), le=2**31 - 1)])
 
+
+ScoreKind = Literal["eagle", "birdie", "par", "bogey", "double", "triple", "quad"]
 
 class HoleScore(BaseGolfModel):
     """Represents a player's score on a single hole (raw scanned data)."""
@@ -55,3 +57,16 @@ class HoleScore(BaseGolfModel):
             return None
 
         return classify_score(relative)
+
+    def is_three_putt(self) -> bool:
+        return self.putts is not None and self.putts >= 3
+
+
+def score_kind(to_par: Optional[int]) -> Optional[ScoreKind]:
+    if to_par is None:
+        return None
+    if to_par <= -2:
+        return "eagle"
+    if to_par >= 4:
+        return "quad"
+    return {-1: "birdie", 0: "par", 1: "bogey", 2: "double", 3: "triple"}[to_par]

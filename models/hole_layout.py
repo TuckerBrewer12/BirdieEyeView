@@ -3,9 +3,11 @@ from typing import Annotated
 
 from pydantic import BeforeValidator
 
-FRONT_NINE = tuple(range(1, 10))
-BACK_NINE = tuple(range(10, 19))
-FULL_ROUND = tuple(range(1, 19))
+from .hole import HOLES_PER_NINE, HOLES_PER_ROUND
+
+FRONT_NINE = tuple(range(1, HOLES_PER_NINE + 1))
+BACK_NINE = tuple(range(HOLES_PER_NINE + 1, HOLES_PER_ROUND + 1))
+FULL_ROUND = tuple(range(1, HOLES_PER_ROUND + 1))
 
 
 def validate_coverage(value) -> tuple[int, ...]:

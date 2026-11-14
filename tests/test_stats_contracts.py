@@ -14,8 +14,16 @@ from tests.helpers import make_mock_database, make_round_summary, make_user
 
 
 def summary(score, *, complete=True, holes=18, putts=30, gir=9):
-    return {**make_round_summary(uuid4()), "total_score": score, "is_complete": complete,
-            "hole_count": holes, "total_putts": putts, "total_gir": gir}
+    from models import HoleScore, Round
+    c = course(holes)
+    scores = [HoleScore(hole_number=n, strokes=score // holes + (n <= score % holes),
+                        putts=(putts // holes + (n <= putts % holes)) if putts is not None else None,
+                        green_in_regulation=n <= gir if gir is not None else None,
+                        par_played=c.get_hole(n).par) for n in range(1, holes + 1)]
+    if not complete:
+        scores = scores[:1]
+    return Round(id=str(uuid4()), course=c, intended_holes=tuple(range(1, holes + 1)), hole_scores=scores)
+
 
 
 @pytest.mark.asyncio
@@ -24,7 +32,7 @@ async def test_dashboard_totals_complete_rounds_by_format(monkeypatch):
     db = make_mock_database()
     db.users.get_user = AsyncMock(return_value=make_user(user_id))
     db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[
-        summary(80), summary(90), summary(40, holes=9, putts=15, gir=4), summary(4, complete=False),
+        summary(80), summary(90), summary(40, holes=9, putts=15, gir=4), summary(72, complete=False),
     ])
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
 
@@ -57,8 +65,8 @@ async def test_empty_and_populated_analytics_have_the_same_keys():
     user = make_user(user_id)
     played = [par_round(round_id="r1")]
 
-    empty = await stats.get_analytics(user_id, 50, None, None, analytics_db(user, [], [], []), user)
-    populated = await stats.get_analytics(user_id, 50, None, None, analytics_db(user, played, played, played), user)
+    empty = (await stats.get_analytics(user_id, 50, None, None, analytics_db(user, [], [], []), user)).model_dump()
+    populated = (await stats.get_analytics(user_id, 50, None, None, analytics_db(user, played, played, played), user)).model_dump()
 
     assert_same_keys(empty, populated)
     assert "scoring_by_yardage" in empty
@@ -76,7 +84,7 @@ async def test_analytics_kpis_use_complete_rounds_by_format_and_every_opportunit
                           round_id="b")
     rounds = [full, nine, partial, one_of_one, zero_of_nine]
 
-    result = await stats.get_analytics(user_id, 50, None, None, analytics_db(user, rounds, rounds, rounds), user)
+    result = (await stats.get_analytics(user_id, 50, None, None, analytics_db(user, rounds, rounds, rounds), user)).model_dump()
 
     kpis = result["kpis"]
     assert (kpis["scoring_average"], kpis["scoring_average_nine"]) == (80.0, 36.0)
@@ -89,7 +97,7 @@ async def test_home_filter_without_a_home_course_matches_nothing():
     user = make_user(user_id)
     db = analytics_db(user, [par_round(round_id="elsewhere")])
 
-    result = await stats.get_analytics(user_id, 50, "home", None, db, user)
+    result = (await stats.get_analytics(user_id, 50, "home", None, db, user)).model_dump()
 
     assert result["kpis"]["total_rounds"] == 0
     # Only the unfiltered handicap history is read; no course-filtered round query runs.
@@ -103,7 +111,7 @@ async def test_achievements_use_the_full_history():
     old_best = par_round(over=-1, round_id="old", date=datetime(2020, 1, 1))
     db = analytics_db(user, [], [old_best])
 
-    result = await stats.get_analytics(user_id, 5, None, "ytd", db, user)
+    result = (await stats.get_analytics(user_id, 5, None, "ytd", db, user)).model_dump()
 
     assert result["notable_achievements"]["scoring_records"]["lifetime"]["lowest_round"] == 71
     lifetime_call = db.rounds.get_rounds_for_user.await_args_list[1]
@@ -135,14 +143,14 @@ async def test_round_comparison_finds_an_old_round_and_compares_it_with_earlier_
     target = history[1]
     db.rounds.get_rounds_for_user = AsyncMock(return_value=list(reversed(history)))  # repository: newest first
 
-    result = await stats.get_round_comparison(user_id, target.id, db, make_user(user_id))
+    result = (await stats.get_round_comparison(user_id, target.id, db, make_user(user_id))).model_dump()
 
     assert db.rounds.get_rounds_for_user.await_args.kwargs["limit"] is None
-    assert set(result) == {"score", "putts", "gir", "three_putts", "putts_per_gir", "scrambling"}
-    selected, last_five = result["score"][0], result["score"][1]
-    assert (selected["round_id"], selected["primary_value"]) == (target.id, 83)
-    # Only the two rounds up to the target (82 then 83) are in its trailing window.
-    assert (last_five["sample_size"], last_five["primary_value"]) == (2, 82.5)
+    assert set(result) == {"windows"}
+    window = result["windows"][0]
+    selected = next(m for m in window["metrics"] if m["metric"] == "score")
+    assert (selected["value"], selected["average"], window["rounds"]) == (83, 82, 1)
+
 
 
 @pytest.mark.asyncio
@@ -171,6 +179,6 @@ async def test_goal_report_works_with_only_a_nine_hole_goal():
         return_value=[par_round(holes=FRONT_NINE, course_obj=course(9), over=6, round_id="nine")]
     )
 
-    report = await stats.get_goal_report(user_id, 50, db, user)
+    report = (await stats.get_goal_report(user_id, 50, db, user)).model_dump()
 
     assert report["nine_hole"]["on_track"] is True and report["gap"] is None

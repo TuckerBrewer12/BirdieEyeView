@@ -8,6 +8,23 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>BirdieEyeView</title>
+    <script>
+      // Put the saved theme on <html> before first paint so a dark device never flashes light.
+      // ThemeProvider owns the theme after this; it resolves the same way (domain/theme.ts).
+      (function () {
+        try {
+          var keys = ["theme", "settings_theme", "public_theme"];
+          var preference = "system";
+          for (var i = 0; i < keys.length; i++) {
+            var value = localStorage.getItem(keys[i]);
+            if (value === "light" || value === "dark" || value === "system") { preference = value; break; }
+          }
+          var dark = preference === "dark" ||
+            (preference === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -70,7 +70,7 @@ You are an elite React + TypeScript UI engineer specializing in translating desi
 - Identify repeated patterns and extract them (e.g., `StatPill`, `ScoreBadge`, `SectionLabel`, `ChartCard`)
 - Props interfaces should be narrow — pass only what the component needs
 - Avoid prop-drilling more than 2 levels; lift state or use composition
-- Check `src/components/` for existing reusable components before creating new ones
+- Check the brand kit (`src/brand/components/`, `src/brand/charts/`) for existing reusable components before creating new ones
 
 ### 4. TypeScript strictness
 - All props must have explicit TypeScript interfaces (prefix with the component name, e.g., `ScoreBadgeProps`)
@@ -81,18 +81,17 @@ You are an elite React + TypeScript UI engineer specializing in translating desi
 - Interactive elements need `aria-label` when text content is ambiguous
 - Color-only information must have text alternatives
 - Use semantic HTML (`button` not `div onClick`, etc.)
-- Always check `src/lib/accessibility.ts` for `getColorBlindPalette()` when rendering score-type colors in charts
 
 ### 6. File organization
-- Pages: `src/pages/`
-- Shared/reusable components: `src/components/`
-- Feature-specific subcomponents: `src/components/[feature-name]/`
+- Pages: `src/pages/<kebab-name>/` (view, view model, repository, query hooks, `components/`, `previews/`, `tests/`)
+- Shared/reusable components: the brand kit, `src/brand/components/` and `src/brand/charts/`
+- Page-only subcomponents: `src/pages/<kebab-name>/components/`
 - Types: `src/types/` (never define shared types inside page files to avoid Fast Refresh warnings)
 
 ## Workflow
 
 1. **Understand the plan**: Read the design specification carefully. Ask clarifying questions if the layout, data shape, or interaction behavior is ambiguous before writing code.
-2. **Audit existing components**: Check `src/components/` and `src/types/` for anything reusable before building from scratch.
+2. **Audit existing components**: Check `src/brand/` and `src/domain/` for anything reusable before building from scratch.
 3. **Plan the component tree**: Sketch (in a comment or brief explanation) the component hierarchy before coding. Identify what is reusable.
 4. **Implement bottom-up**: Build the smallest leaf components first, then compose upward.
 5. **Self-review checklist** before delivering:
@@ -100,7 +99,6 @@ You are an elite React + TypeScript UI engineer specializing in translating desi
    - [ ] All components <120 lines?
    - [ ] All TypeScript interfaces explicit?
    - [ ] Design system colors/typography/motion used correctly?
-   - [ ] Color-blind palette used for score-type chart colors?
    - [ ] Reusable patterns extracted?
    - [ ] No `any` types?
 

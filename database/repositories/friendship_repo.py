@@ -4,7 +4,7 @@ import asyncpg
 from typing import List, Optional
 from uuid import UUID
 
-from database.exceptions import DuplicateError
+from database.exceptions import DuplicateError, AlreadyFriendsError, FriendRequestBlockedError
 
 
 class FriendshipRepositoryDB:
@@ -33,9 +33,9 @@ class FriendshipRepositoryDB:
             )
             if row:
                 if row["status"] == "accepted":
-                    raise DuplicateError("Users are already friends")
+                    raise AlreadyFriendsError("Users are already friends")
                 if row["status"] == "blocked":
-                    raise DuplicateError("Friend request blocked for this pair")
+                    raise FriendRequestBlockedError("Friend request blocked for this pair")
                 updated = await conn.fetchrow(
                     """UPDATE users.friendships SET requester_id=$1, addressee_id=$2, status='pending'
                        WHERE id=$3 RETURNING *""",

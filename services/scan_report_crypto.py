@@ -1,5 +1,3 @@
-"""Versioned AES-GCM envelope. File content and diagnostic fields are encrypted."""
-
 import base64
 import json
 import os
@@ -31,7 +29,6 @@ class StoredMetadata(BaseModel):
     category: FailureCategory
     stage: FailureStage
     http_status: int | None = Field(ge=100, le=599)
-    # Images are stored as JPEG; reports saved before that change hold PNG and must stay readable.
     media_type: Literal["image/jpeg", "image/png", "application/pdf"]
 
 
@@ -47,7 +44,7 @@ def decode_key(value: str) -> bytes:
         if len(key) != 32:
             raise ValueError
         return key
-    except Exception:
+    except Exception:  # noqa: BLE001
         raise ValueError("A base64-encoded 32-byte report key is required.") from None
 
 
@@ -86,5 +83,5 @@ class ReportCipher:
             if len(image) > MAX_SANITIZED_BYTES:
                 raise ValueError
             return StoredScanReport(metadata, image)
-        except Exception:
+        except Exception:  # noqa: BLE001
             raise InvalidReportEnvelope("Invalid encrypted report.") from None

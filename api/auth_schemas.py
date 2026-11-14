@@ -1,5 +1,3 @@
-"""Pydantic schemas for auth endpoints (kept separate from domain models)."""
-
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from api.input_validation import (

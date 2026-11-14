@@ -125,3 +125,17 @@ class Course(BaseGolfModel):
             tee = self.get_tee(selected_tee)
             return tee is not None and complete(tee)
         return True
+
+    def tees_by_length(self) -> List[Tee]:
+        return sorted(self.tees, key=lambda t: (-(t.get_total_yardage() or 0), (t.color or "").lower()))
+
+
+class CourseSummary(BaseGolfModel):
+    id: str
+    name: Optional[str] = None
+    external_course_id: Optional[str] = None
+    location: Optional[str] = None
+    par: Optional[int] = None
+    hole_count: int = 0
+    tee_count: int = 0
+    tee_colors: List[str] = Field(default_factory=list)

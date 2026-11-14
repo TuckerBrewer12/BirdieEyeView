@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+This file provides guidance to Codex when working with code in this repository. It is CLAUDE.md under another name: change CLAUDE.md and copy it here (`tests/test_agent_docs.py` checks they match).
 
 ## Project Overview
 
@@ -86,12 +86,18 @@ Key files:
 
 ### `api/` — FastAPI routers
 
-- `routers/scan.py` — `POST /api/scan/extract` and `POST /api/scan/save`. Save flow: looks up existing course; if not found, saves round without a course (no auto-creation). Populates `par_played` from `course_holes` param.
+- `routers/scan.py` — `POST /api/scan/extract` (typed `ScanResponse`: the card as read, per-hole confidence, fields to review) and `POST /api/scan/save`. Save flow: looks up existing course; if not found, saves round without a course (no auto-creation). Populates `par_played` from `course_holes` param.
 - `routers/courses.py` — GET/POST/PUT + clone endpoint. `user_id IS NULL` = master/global course; `user_id IS NOT NULL` = user-owned custom course.
 - `routers/rounds.py` — GET/PUT/DELETE for rounds and hole scores
-- `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`
-- `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report`
+- `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`; a user is sent as `UserResponse` (the profile, no rounds)
+- `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report` and `GET /{user_id}/benchmark`
 - `api/request_models.py` — shared Pydantic request/response models
+- `api/round_responses.py` — `round_summary()` / `round_list()` / `round_detail()`: the one place a round's response is built. Every round endpoint (list, detail, update, link-course, dashboard) returns the figures the `Round` model works out (score, par, to-par against the holes played, nine totals plus each nine's par/to-par/putts/GIR/yards, putts, GIR, yards, `holes_played`, per-hole par/handicap/yardage/to-par/`kind`/`three_putt`/`running_to_par` (a list's holes carry `kind` and `running_to_par`), `score_counts`); the frontend displays them and does not recompute them. The list carries each round's `best_rank` and `worst_rank` (full rounds by to par, best or worst first, then nines; `analytics.stats.best_round_ranks` / `worst_round_ranks`), and the detail the signed-in golfer's `course_handicap` and `net_score`.
+- `api/course_responses.py` — `course_detail()`: the one place a full course's response is built (`GET /courses/{id}` and a round's `course`). Its tees come longest first, ties by colour (`Course.tees_by_length()`, which the course list's tee colours follow too); the frontend keeps that order. It carries the figures the `Course`/`Tee` models work out: par, front/back nine par, and per tee its total and nine yardages (null until every hole in the nine has a value) and the signed-in golfer's `course_handicap` off it.
+- `api/player_handicap.py` — `player_handicap_index(db, user)`: the golfer's own index (last 20 rounds, held at the handicap they gave; `analytics.handicap.player_handicap_index`). It is the one index every screen shows: the dashboard's and analytics' `handicap_index` (analytics keeps it whatever the course or timeframe filter), and the last point of the handicap trend (`player_handicap_trend`: the index over the 20 rounds ending with each round). Every course handicap and net score starts from it — round detail, course tees, scanned tees (`POST /scan/extract`) and the analytics net-score trend — through `analytics/handicap.py` (`course_handicap`, `round_course_handicap`, `round_net_score`), so one round shows one net score everywhere. A nine has no course handicap or net score: tee ratings are for 18 holes.
+- One best round: `analytics.stats.best_round` (the round list's `best_rank` 1: full rounds by to par, a nine only without one) is the dashboard's `best_round`, analytics' `kpis.best_round`, the course page's and course list's best and Profile's peak game; `stats.worst_round` is the course page's worst. Records set by a round's total (lowest/highest round, fewest putts, most greens, score/putt/GIR breaks, first round under par, the goal report's `lowest_score`) count full rounds only (`stats.full_rounds`).
+- `api/course_analytics_responses.py` — `course_analytics()`: `GET /stats/course-analytics/{user}/{course}` as a typed `CourseAnalyticsResponse`. Carries the player's rounds at the course (newest first), their record there (`stats.course_record`: rounds played, last played, the average and its to par over full rounds, or nines when there is no full round, and the best and worst round's ids), the rounds' score trend (the rounds the record counts, with five-round averages), one row a hole (`stats.course_hole_stats`: average score and to par, its `difficulty_rank` (1 the hardest, which "Hardest first" orders by), the score's spread, greens, putts with a good/bad/neutral `putts_verdict` against two a hole, and score mix), and the average to par and greens summed by nine (`hole_to_par_front_nine`/`_back_nine`/`_total`, `gir_front_nine`/`_back_nine`/`_total`, the scorecard's Out/In/Tot). The course list (`GET /courses`, and `GET /courses/search?include_record=true`) sends each course's tee colours, longest first, and the same record's rounds, average and best score, read from the light round summaries of every round at the listed courses (`get_round_summaries_for_user(course_ids=…, limit=None)`), uncapped.
+- `api/analytics_responses.py` — `analytics_response()`: `GET /stats/analytics/{user}` as a typed `AnalyticsResponse`, one model per section (KPIs, the headline, per-round trends with five-round averages, scoring breakdowns, handicap trend with `differential_status`, notable achievements). The page's marks come from the server: each par type against the next level's benchmark (`next_level_handicap`, `par_types`), the three hardest hole handicaps (`hardest`), a round's three or more three-putts (`costly`), each par's worst yardage band (`worst`), the putts a hole (`putts_per_hole`) and the tour's short game (`tour_short_game`). The goal report, round comparison and played courses are typed too (`GoalReportResponse`, `RoundComparisonResponse`, `PlayedCourseResponse`).
 
 **API endpoints:**
 - `POST /api/scan/extract` — run LLM extraction on uploaded image
@@ -102,7 +108,8 @@ Key files:
 - `GET/PUT/DELETE /api/rounds/{id}` — round CRUD; PUT recalculates `total_score`
 - `GET/POST /api/users/{id}/tees` — list/create user tees
 - `PUT/DELETE /api/users/{id}/tees/{tee_id}` — update/delete user tees
-- `GET /api/stats/{user_id}/goal-report?limit=` — goal gap analysis + ranked savers
+- `GET /api/stats/{user_id}/goal-report?limit=` — goal gap analysis + ranked savers, and each scored round marked met or not (`attempts`)
+- `GET /api/stats/{user_id}/benchmark?against=handicap|friend&handicap=&friend_id=` — Profile's comparison: the benchmark's shape, each par type's gap and verdict against it, and each radar axis's verdict
 
 ### `database/` — Async PostgreSQL layer (asyncpg)
 
@@ -132,178 +139,107 @@ Two DB schemas: `courses` (courses, holes, tees, tee_yardages) and `users` (user
 
 ### `frontend/` — React + TypeScript + Vite
 
+Every page is MVVM on the brand kit. Under `frontend/src/`:
+
+- `pages/<kebab-name>/` — one folder per page: `<Name>Page.tsx` (the view), `use<Name>PageViewModel.ts` (screen state only), `<name>Repository.ts` (endpoint + DTO→domain mapping), `use<Thing>.ts` query/mutation hooks (server state, cache effects), `model.ts`/`present.ts` (shaping and wording), `components/` (page-only views), `previews/`, and `tests/` (screenshot specs, espresso flows through a `*.robot.ts`, view-model tests with `Fake*` doubles). `pages/rounds/` and `pages/courses/` are the models to copy.
+- `data/` — queries, mutations and repositories more than one page shares (`useUser`, `useUpdateUser`, `useGoalReport`, `useAnalytics`, `useCourseSearch`, …) and `queryKeys`.
+- `domain/` — golf types, words and formatting, and DTO→domain mapping. The one set of formatters lives here: `date.ts` (a date-only string is a calendar day, never UTC midnight), `format.ts` (`pluralize`, `formatPercent`, `formatOneDecimal`, `formatTwoDecimals`, `formatSigned`, `formatCount`, `formatScorecardFigure`), `score.ts` (`toParLabel`, `formatAverageToPar`, `formatAverageToParTenths`), `course.ts` (`formatCourseName`, `courseLabel`), `trend.ts` (`averageLine`, a trend's dashed average; `moveOf`, a figure's move as direction and amount), `benchmark.ts` (`handicapName`: 0 is "Scratch"). The server owns golf figures; the client never recomputes them.
+- `brand/` — the kit: `components/`, `charts/`, `theme/` (tokens), with a preview and screenshot spec for each.
+- `platform/` — web and native adapters (image compression, file preview, sharing, the Capacitor camera) the app passes in.
+- `lib/` — transport only: the API client (`api.ts`), its base URL, the session token and user-facing error wording.
+- `context/` — `AuthContext` and the theme provider.
+- `testing/` — `Fake*` doubles, fixtures and Playwright helpers.
+
+Shared code (`domain/`, `data/`, repositories, `*Model.ts`, view models) imports nothing from `@/brand`, `react-router` or the DOM; eslint enforces it.
+
 ---
 
 ## UI Design System
 
 ### Philosophy
-Clean, minimal, data-first. Premium/professional feel — refined spacing, subtle motion, semantic color. Not flashy; every visual element earns its place.
+Clean, minimal, data-first. Premium/professional feel — refined spacing, subtle motion, semantic colour. Not flashy; every visual element earns its place. Build from the kit in `src/brand/` before writing markup; a generic piece another page will want belongs in the kit.
 
-### Color Palette
+### Colour
+Every colour is a token in `src/brand/theme/tokens.ts`, used through its Tailwind utility. No hex, `rgb()`, `oklch()`, `color-mix()` or raw palette class (`text-gray-500`, `bg-white`) anywhere else.
 
-**Primary:** `#2d7a3a` (forest green) — used for primary buttons, accents, section tints.
+- **Surfaces and ink:** `bg-background` (page), `bg-card` + `text-card-foreground`, `text-foreground`, `text-muted-foreground` (secondary text, captions), `bg-muted`, `bg-secondary`, `bg-accent`, `border-border`, `border-input`, `ring-ring`.
+- **Brand:** `bg-primary` / `text-primary` / `text-primary-foreground` — forest green for primary actions, accents and section labels. `text-destructive` for errors and deletes.
+- **Score kinds** (`eagle`, `birdie`, `par`, `bogey`, `double`, `triple`, `quad`) encode data: `text-score-<kind>` for ink, `bg-score-<kind>-base` + `text-score-<kind>-on-base` for a fill, `bg-score-<kind>-muted` for a wash. When the kind or to-par is only known at runtime use `scoreFillClass()`, `scoreOnFillClass()` or `toParTextClass()` from `@/brand/theme` inside the kit (a chart's small mark takes `toParMarkFill()`, where level is quiet ink rather than par's pale fill, and a server verdict paints with `verdictFill()`); a verdict on text is `tone` on `StatValue` (good, bad, neutral) or `verdictTextClass()`, the same pair `StatDelta` uses; a page colours a to-par with `ToParFigure` (`size="inherit"` takes the surrounding type, `label` words it: a tenth, a sentence).
+- **Other families:** `bg-sidebar` + `text-sidebar-foreground` (the side rail), `bg-tee-<colour>` / `text-tee-<colour>-on` (through `TeeSwatch`), `bg-scan-row-<row>` (scorecard layout rows), and `tokens.color.chart.*` for chart chrome.
 
-**Score type colors** (semantic across all charts + components):
-- Eagle+: `#f59e0b` (amber)
-- Birdie: `#059669` (emerald)
-- Par: `#9ca3af` (gray)
-- Bogey: `#ef4444` (red)
-- Double: `#60a5fa` (blue)
-- Triple: `#a78bfa` (purple)
-- Quad+: `#6d28d9` (deep purple)
+### Type and measures
+- DM Sans (`font-sans`) and DM Mono (`font-mono`); the body font is set once in `index.css`.
+- Type roles, not pixel sizes: `text-caption`, `text-meta`, `text-label`, `text-body-sm`, `text-body`, `text-title`, `text-hero`, `text-eyebrow` (see Brand tokens). The figure and heading roles (`text-figure*`, `text-hero`, `text-heading`, `text-display*`) are set through `StatValue` and `PageTitle`, not in a page. `tracking-*` (`tracking-stat`, `tracking-chip`, …) sits beside Tailwind's sizes. Tailwind's scale (`text-sm`, `p-4`, `gap-2`) is fine; arbitrary values (`text-[11px]`, `w-[54px]`) are not.
+- Measures off the 4px scale are named: `rounded-card`, `rounded-surface`, `gap-tight`, `h-chart`, `w-preview`, `size-icon-xs`, `grid-cols-round-preview`, …
+- Cards rest on the page with no rule: `Card` is `rounded-surface` (22px) with `shadow-surface`, a near and a far shadow (`--surface-shadow-near` / `-far`). Other shadows follow `--shadow`: `shadow-card` for a lift on hover, `shadow-hairline` under a pinned bar. Tailwind's `shadow-sm` / `-md` / `-lg` are wired to the same token, so they lift in dark mode too.
 
-**UI semantic colors:**
-- Success/GIR: `#059669`
-- Danger: `#ef4444` / `#f87171`
-- Neutral/grid: `#e5e7eb`
-- Muted fill: `#e5e7eb`
+### Kit components
+- **Page:** `PageTitle`, `PageHeader` (the bar pinned once the title scrolls off), `AppShell`.
+- **Surfaces:** `Card` (`CardHeader`, `CardTitle`, `CardAction` (`wrap` drops it under the title in a narrow header), `CardContent`, …), `Sheet`, `ActionSheet` (a phone's list of actions, do one) and `PhotoSourceSheet` on it (Take Photo, Photo Library, Choose File; the file inputs are its own), `ActionBar` (a page's main actions: in line from `md`, pinned above the tab bar on a phone), `Dropzone` (a dashed box to drop a file on, with a button to choose one), `FileButton` (a button that opens the file picker), `Alert` (`AlertAction` sits at its end, wrapping under the message on a phone), `Collapse` / `Collapsible`.
+- **Figures:** `Stat` (a figure and its label, `sm`–`xl`), `StatTile` (a label, value, move and line: `layout` card, strip for a row of tiles in one card, center), `ToParFigure` (`figure`, `stat`, `inherit`; `label`, `empty`), `ToParPill`, `Meter`, `TeeSwatch`.
+- **Lists and controls:** `Collection` (a list with its loading and empty states), `Button` (`default`, `outline`, `secondary`, `ghost`, `destructive`, `link`, `linkMuted`; sizes up to `lg`, `toolbar` for a page's 44px bar, `inline` for a link in a line of text; `shape="pill"`), `SwatchChips` (pill chips that each carry a colour, ringed in ink when pressed so the colour reads; one or `multiple`), with `TeePicker` (the tee a round was played from, or the tee a course's card reads) and `LinePicker` (a chart's lines on and off: the score trend's score and the kinds it counts) on it, `Slider` (one number along a track, its value in words beside it), `ToggleGroup` (`segmented`, a track for a view switched in a card; `boxed`, a rounded-rectangle track with square-cornered options, for a form's choice or a page's mode; `chips`, separate pills a gap apart, the picked one filled green; `TeePicker` shares the chip but rings its pick so the swatch reads), `PickerMenu` (one of a few options: a sort, a course, a goal; a menu from `md`, a sheet on a phone; `fill` to share a phone's row), `TabBar` (a page's sections: labels over a rule, the current one underlined; scrolls on a phone, keeping it in view; not for filters), `SearchField`, `Input` and `InputGroup` (44px under a `FieldLabel`; `inline`, 40px, for a field in a row of its own or beside a button, the height of a default `Button`; one focus and invalid ring, `fieldRing`), `Field` (a 13px label in ink, help and an error with its icon under the field), `CheckChip` (a box you tick in a bordered chip), `CardFactsForm` (what's on a scorecard: the golfer's name, scores as strokes or to par, putts and shots to green, and with more than scores `CardRowOrder`, the rows dragged into the card's order with Name beside its row; the scan page and the landing page's try-it both use it, and `cardContext()` in `domain/scan.ts` words it for the scan).
+- **Golf:** `RoundPreview` (`summary` is a round on its own: course, day and tee, score and pill, two nines of pills), `CoursePreview`, `ScorecardCard` (the green bar, then all 18 across from `md` or two nines on a phone), `ScorecardGrid` (the one scorecard grid: Hole row, Out/In/Tot, rows passed in), `RoundScorecard` / `ScorecardTable` (a round's rows on them), and the charts in `brand/charts/` (a course's hole by hole is `HoleProfileChart`, average to par with its spread and the score mix, by hole or hardest first; its greens and putts is `HoleGreensPuttsChart`; both measure their card with `useChartWidth`, as `RoundFlowChart` does). A whole split into shares is `ShareBar` with its `ShareLegend` (putts a hole); a score mix is `ScoreMixBar` on it (`fold` takes triples and worse as one, `size`, `legend` figures or none) with `ScoreMixLegend` under a stack of them, its segments built once in `scoreMixEntries`; a row of plain columns with a few marked is `ColumnBars`; rounds against a goal are `ScoreGoalChart`; a figure each round is `TrendAreaChart` (a line over a fill, or `mark: "dots"` under its average's line; `counts` adds holes of a kind each round in a panel of their own under it, each a line in its score colour (`scoreMarkFill()`), never a second axis on one plot; `showSeries={false}` leaves the counts alone; `windowed` adds a slider for how many of the latest rounds show). Chart ticks and labels are body-sized in `chart.axis` (the secondary ink), a round's own dots in the same. Every chart's hover card is `ChartTooltip`; a chart drawn in columns finds the hovered one with `useColumnHover` and marks its axis with `holeAxis` (`HoleNumber`, `NineDivider`, `HoleColumn`); marks that move take `useLayoutTransition`, which holds still for reduced motion. A course's card is `ScorecardCard` + `ScorecardGrid` with its own rows, never a second table.
 
-**Backgrounds:**
-- Page: `#f8faf8` (off-white)
-- Card: `white` with `border-gray-100`
-- Scoring section: `bg-gradient-to-b from-[#eef7f0]/70 to-[#f8faf8]`
-- Putting section: `bg-gradient-to-b from-[#f0f5ff]/50 to-[#f8faf8]`
-- Short game section: `bg-gradient-to-b from-[#fdf4ff]/50 to-[#f8faf8]`
-- Sidebar: `linear-gradient(180deg, #1e3d25 0%, #152d1b 100%)`
+### Motion
+All animation is `framer-motion`, with its numbers from `tokens.motion` in `@/brand/theme`: `hoverScale` / `tapScale` on `spring` for hover and press, `entrance` for content arriving, `layout` for a block resizing, `draw` for a chart line, `duration.collapse`. Fast enough to feel snappy, slow enough to register; no raw `stiffness` or `duration` in a component.
 
-**Par badge colors** (used in distance zone lists, pills):
-- Par 3: bg `#ede9fe` / text `#6d28d9`
-- Par 4: bg `#e0f2fe` / text `#0369a1`
-- Par 5: bg `#dcfce7` / text `#15803d`
+### Charts
+Golf-native visualizations over generic chart types where possible. Every chart is SVG drawn by hand, with D3 scales (`d3-scale`, `d3-shape`) for the maths; most draw at their box's width (`useChartWidth`) so labels keep their size. SVG paint takes `tokens.color.*` (`stroke={tokens.color.chart.muted}`), and axis ticks `chartTickStyle`. Geometry is `tokens.chart`. A chart drawn in columns finds the hovered one with `useColumnHover`; one drawn as points picks with `usePointPick` (the nearest under a mouse, a tap on a phone, a second tap puts it down).
 
-### Typography
+### Brand tokens (`src/brand/`)
 
-Font: `"Inter", system-ui, -apple-system, sans-serif` with `-webkit-font-smoothing: antialiased`.
+**`src/brand/theme/tokens.ts` holds every design value.** `tokens.gen.css` is generated from it; never edit it by hand.
 
-| Role | Classes |
-|---|---|
-| Page title | `text-3xl font-extrabold tracking-tight text-gray-900` |
-| Section label | `text-[11px] font-bold text-primary/50 uppercase tracking-[0.18em]` |
-| Card title | `text-sm font-semibold text-gray-800` |
-| Subsection label | `text-xs font-medium text-gray-500 uppercase tracking-wide` |
-| Body | `text-sm text-gray-600` |
-| Caption / axis | `text-[10px] text-gray-400` |
-| Hero stat | `text-2xl font-bold` (cards) / `text-6xl font-black` (best round) |
-
-### Cards & Containers
-
-**Standard chart card:**
-```tsx
-<div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-```
-
-**Glassmorphic card / HUD:**
-```tsx
-<div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-sm">
-```
-
-**Tooltip:**
-```tsx
-<div className="bg-white/95 backdrop-blur-sm rounded-xl border border-gray-100 shadow-lg px-3 py-2.5 text-xs">
-```
-
-Rules: `rounded-2xl` for cards, `rounded-xl` for tooltips/small elements. Border always `border-gray-100`. Shadow always `shadow-sm` (heavier only on hover). Divide lists with `divide-y divide-gray-50`.
-
-### Layout
-
-- Analytics sections bleed to full width with `-mx-8 px-8 py-10` + colored `bg-gradient-to-b` backgrounds.
-- Chart grids: `grid grid-cols-1 lg:grid-cols-2 gap-5`.
-- Insight rows: `grid grid-cols-1 md:grid-cols-2 gap-3`.
-- Stat row: `grid grid-cols-2 lg:grid-cols-5 gap-4`.
-- Page-level padding: `p-5` cards, `p-6` chart cards, `px-4 py-3` list rows.
-
-### Motion & Animation
-
-All animation via `framer-motion`. Principles: fast enough to feel snappy, slow enough to register. Spring physics on hover; eased transitions for entrances.
-
-**Scroll entrance (ScrollSection):**
-```tsx
-initial={{ opacity: 0, y: 36 }}
-animate={{ opacity: 1, y: 0 }}
-transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-```
-
-**Hover spring (cards, stat pills):**
-```tsx
-whileHover={{ scale: 1.025, boxShadow: "0 10px 32px rgba(0,0,0,0.10)" }}
-transition={{ type: "spring", stiffness: 360, damping: 28 }}
-```
-
-**Tooltip fade:**
-```tsx
-initial={{ opacity: 0, scale: 0.92, y: 4 }}
-animate={{ opacity: 1, scale: 1, y: 0 }}
-transition={{ duration: 0.15 }}
-```
-
-**SVG path draw (tracers, timeline):**
-```tsx
-initial={{ pathLength: 0, opacity: 0 }}
-animate={{ pathLength: 1, opacity: 1 }}
-transition={{ duration: 1.0–1.4, ease: "easeInOut" }}
-```
-
-**Staggered dot entrance:**
-```tsx
-transition={{ delay: Math.min(i * 0.004, 1.0), duration: 0.5, ease: "easeOut" }}
-```
-
-### SVG / Data Viz
-
-Golf-native visualizations preferred over generic chart types where possible (see Range View). SVG components use `viewBox` with `overflow: visible`. D3 scales (`d3-scale`, `d3-shape`) for math; framer-motion for animation. Recharts used for trend/bar/area charts.
-
-Common SVG patterns:
-- Dashed reference lines: `strokeDasharray="4 5"`, `stroke="#e5e7eb"`
-- Glow filter on positive outliers: `feGaussianBlur stdDeviation="2"` + feMerge
-- Ground/fill gradients: `from #f1f5f9 to transparent`
-- Chart tooltip: nearest-point detection on `onMouseMove`, dismissed on `onMouseLeave`
-
-### Buttons
-
-```tsx
-// Primary (selected/active)
-"bg-primary text-white shadow-sm"
-
-// Default
-"bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
-
-// Both
-"px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-```
+- **Colours, in two layers.** `palette` holds the raw colours by hue and step (`forest[700]`, `gray[400]`, `white`); nothing else writes a colour value. `modes.light` and `modes.dark` map each semantic colour (`card`, `mutedForeground`, `score.birdie.base`) onto a palette colour, another key (`alias("foreground")`), a `mix()` or an `alpha()`. Dark is the light mapping with overrides.
+- **Generated CSS.** Run `npm run gen:tokens` after changing `tokens.ts`; CI's `check:tokens` fails if the CSS is stale. A colour's CSS name is its path in kebab case (`score.birdie.onBase` is `--score-birdie-on-base` and `text-score-birdie-on-base`); a measure is `--brand-<group>-<key>` with its utility (`h-chart`, `rounded-surface`).
+- **TypeScript reads `tokens.*`.** `tokens.color` is the semantic colours as `var()` references (`tokens.color.score[kind].base` is `"var(--score-<kind>-base)"`), so dark mode still switches in CSS. Numbers are real values: `tokens.chart`, `tokens.motion`, `tokens.space`, `tokens.type.label.size`.
+- **Where each goes.** SVG paint takes `tokens.color.*` (`stroke={tokens.color.border}`, `<Cell fill={toParFill(toPar)} />`). HTML elements use Tailwind classes (`bg-card`, `text-score-birdie`), with a lookup of full class strings when the colour is picked at runtime (`scoreFillClass()`, `toParTextClass()`), never a class built from a template. A `var()` string isn't a colour to canvas; resolve it with `getComputedStyle` there.
+- **Type roles.** `tokens.type` names each text style and bundles its size with the weight, tracking and line height that go with it: `text-caption`, `text-meta`, `text-label`, `text-body-sm`, `text-body`, `text-title`, `text-hero`, `text-eyebrow`. A class beside a role (`font-semibold`) still wins; uppercase stays a class.
+- `tokens.test.ts` fails on a raw colour anywhere outside `palette` (the token files aside), on a semantic colour that doesn't map onto the palette, on a px/rem/em literal in `src/brand`, and if `capacitor.config.ts` drifts from `primary` / `background`.
+- `frontend/eslint/` holds the repo's own lint rules (`golf/*`, `kit/*`, `specs/*`), on for the kit (`src/brand`, apart from `brand/theme`), the app shell and every page. Each rule's message names the kit piece, token or `domain/` helper to use instead, and each plugin's `*.test.js` shows what it flags. Their homes are `brand/theme/` for words, paint, measures and motion, and `domain/` or the server for rules and figures. `eslint.config.js` also bans API types in components, view-model work in JSX (sorting, chained array steps, `!`, number formatting, reading the clock), raw `<button>`/`<input>`/`<select>` outside the kit, `vi.fn`/`vi.mock` in Vitest tests, and look checks in espresso specs. A rule lands with the fixes for what it finds: no `eslint-disable` without a reason, no exemption lists. `scripts/ci/check_frontend_conventions.py` checks that every kit component has a preview and screenshot spec, every page has a robot plus screenshot and espresso specs, every view model has a test, and every kit component is used by something other than its own preview and tests. On the backend, `scripts/ci/check_backend_conventions.py` flags exception text sent to clients and hard-coded hole counts, and `tests/test_package_exports.py` fails on a name `analytics`, `api` or `services` re-exports that nothing imports.
 
 ### Dark Mode
 
-Implemented via `:root.dark` in `index.css`. Card bg: `#18191A`, borders: `#2a2d30`, text: `#f1f5f9` → `#9aa4b2`. Color-blind palette support via `getStoredColorBlindMode()` / `getColorBlindPalette()` in `src/lib/accessibility.ts` — always use `colorBlindPalette` overrides when rendering score colors in charts.
+Implemented via `modes.dark` in `brand/theme/tokens.ts`, generated as a `:root.dark` block that redeclares only the values that change; aliases follow them. Score, tee and scan-row colours, `--primary` and the sidebar are the same in both modes. Views take their dark look from the tokens and `dark:` variants; `useTheme()` is only for reading and setting the preference.
 
 ---
 
 Key files:
-- `src/App.tsx` — routing + scan state (lifted here to persist across navigation)
+- `src/App.tsx` — routing; wraps the app in `ScanSessionProvider` so a scan in progress outlives navigation
+- `src/types/api.gen.ts` — generated from the backend's OpenAPI schema (`frontend/openapi.json`); never edit by hand. After changing an API model run `python scripts/dump_openapi.py` then `npm run gen:api`; CI fails if either is stale. `src/types/api.ts` names the generated types (`RoundDto`, `RoundSummaryDto`, …).
+- `src/domain/round.ts` — the frontend `Round`: plain data mapped from the API (`Round.fromDto`; lists get the leaner `RoundSummary` from `Round.fromSummary`, which `Round` extends), plus `Round.previewEdits` / `Round.fromScan`, the only frontend golf math (live totals while editing or reviewing a scan, following the server's rules, replaced by the saved response).
 - `src/lib/api.ts` — API client (`updateRound`, `cloneCourse`, `getCourses`, `searchCourses`, `getGoalReport`, `updateUser` with `scoring_goal`, etc.)
-- `src/types/scan.ts` — shared scan types/constants (kept out of ScanPage to avoid Fast Refresh warning)
-- `src/types/analytics.ts` — analytics types including `GoalReport` and `GoalSaver`
-- `src/pages/ScanPage.tsx` — upload → process → review scan flow; passes `result.round.course?.holes` as `course_holes` on save
-- `src/pages/RoundDetailPage.tsx` — round detail view with editing
-- `src/pages/CoursesPage.tsx` — course browser with clone/edit
-- `src/pages/SuggestionsPage.tsx` — Peer Comparison page; hosts Goal Selector (7 thresholds: 100/95/90/85/80/75/72), GoalReportSection (saver bento grid), and peer comparison stats. Goals section is below the comparison UI.
-- `src/pages/DashboardPage.tsx` — dashboard bento grid; includes goal widget (`lg:col-span-2`) showing progress bar + top saver insight
-- `src/components/round-detail/ScorecardGrid.tsx` — horizontal scorecard with To Par row; uses `effectivePar = hole?.par ?? score?.par_played`
-- `src/components/goals/GoalSaverCard.tsx` — bento card for a single goal saver (icon, stroke savings, gap%, headline, detail)
+- `src/types/` holds only `api.gen.ts` and `api.ts`: every response the frontend reads is typed by a backend `response_model` and used by its `*Dto` name. Request shapes the frontend builds live in `domain/` (`AnalyticsFilters` in `domain/analyticsFilters.ts`).
+- `src/domain/course.ts` / `src/domain/courseAnalytics.ts` — `CourseSummary` (list and search results) and `CourseAnalytics` (a golfer's figures at one course, with the per-hole rows the kit's hole charts take), mapped from the DTOs in the repositories. Kit components take these domain types, never DTOs.
+- `src/pages/scan/` — Photo or By hand. Photo: on a computer the drop zone (with the course), then the photo beside the course and `CardFactsForm` (`CardFacts` in the session, sent as the scan's note by `cardContext`); on a phone that form first and the photo from `PhotoSourceSheet`. A failed read's banner offers another photo at its end. Read card → processing (`ScanProgress`) → review (the photo beside the course, tee and date, the scorecard with unsure scores ringed amber; Save and Start over by the title, pinned on a phone) → saved (the round's holes, View round, Share, Scan another). By hand: the course, tee and date, then a blank card. Passes the course's holes as `course_holes` on save
+- `src/pages/rounds/` — the list (scope, course and named sorts; link under the row or in a phone sheet) and `round-details/` (summary, scorecard, round flow and "vs your average"; edit picks the course and tee)
+- `src/pages/courses/` — the list (a row per course: its tees and the golfer's record there) and `course-details/` (Course: the scorecard off the picked tee with the golfer's average to par and greens per hole, their record (best and worst open the round) and recent rounds, or a prompt to scan one; My performance, once played: the score trend, hole by hole, greens and putts)
+- `src/pages/analytics/` — the headline figures over five sections on a `TabBar`: Profile (The Lab, folded in: the goal and its last twelve scores, the shape on the radar against the next level up from the golfer's index, a handicap or a friend, each area ahead or behind in its own figures, where to find the strokes to the goal, the peak game; over the last 20 rounds, read once Profile opens), Scoring (the score trend: the score and the holes of each kind each round, every line turned on or off, `score_trend` rows carrying `score_counts`), Ball striking, Putting, Approach. `/the-lab` lands on Profile (`?tab=profile`).
+- `src/brand/components/RoundScorecard.tsx` — the round's scorecard (read-only and editable) with the To Par row, on `ScorecardCard` and `ScorecardGrid`, as the course page's card is
 
 **Confidence display:** only `strokes` fields count as actionable review items (not putts/fairway/gir). Null putts shows N/A when putts weren't recorded on the card.
 
 **Goal Engine design:**
 - `scoring_goal` is stored as the threshold value (e.g. `89` means "break 90")
 - "Achieved" = any single round with score ≤ `scoring_goal` (not average-based)
-- `goal_report` returns `gap` (avg - goal), `on_track` bool, and ranked `savers[]`
-- Each saver has: `type`, `strokes_saved`, `percentage_of_gap`, `headline`, `detail`, `data`
+- `goal_report` returns `gap` (avg - goal), `on_track` bool, `rounds_meeting_goal`, `lowest_score` (the lowest full round), `peak_gap` (peak game average - goal), and ranked `savers[]`
+
+- The frontend caches one goal report per goal (`queryKeys.goalReport(user, goal)`), so a newly picked goal shows no figures until its own report loads rather than the last goal's
+- Each saver has: `type`, `strokes_saved`, `percentage_of_gap`, `headline` (a short title: "Cut out 3-putts"), `detail` (the golfer's figure as it stands: "2.5 a round"), `data`
 
 ### `analytics/` — Player stats and visualizations
 
 Implemented. Exposes per-player analytics via `api/routers/stats.py`.
 
 - `analytics/stats.py` — all per-player stat functions (GIR, putting, scrambling, yardage buckets, score type distribution, course difficulty profile, etc.)
-- `analytics/goals.py` — `goal_report(rounds, scoring_goal, home_course_rounds)` — computes gap to goal and ranks highest-ROI improvement areas ("savers"): three-putt bleed, blowup holes, achilles heel yardage zone, home course demon hole, GIR opportunity, scrambling opportunity, par 5 opportunity
+- `analytics/dashboard.py` — the dashboard's figures: the L5 scoring average and its change against the last 20, the last five rounds' score mix, the handicap's move this month (`handicap_change`, with its verdict), rounds this calendar year, and the WHS breakdown. `GET /stats/dashboard/{id}` sends them typed with the best round, the four newest rounds (their holes carry `running_to_par`, the last round's line) and the last 20's score and handicap trends; the frontend only formats and colours them, and the dashboard never fetches the analytics payload.
+- `analytics/verdicts.py` — `change_verdict()`: the one good/bad/neutral call (`ChangeVerdict`) the dashboard, analytics, round comparison and a hole's `putts_verdict` (`stats.putts_verdict`, against two a hole) all colour by.
+- `analytics/headline.py` — the analytics page's five headline figures (scoring average, greens, putts a round, scrambling, three-putt rate): each with its move (the last five rounds' average less every round's, over the rounds that have it; null under five), the move's verdict, and its five-round line (`AnalyticsResponse.headline`). The scoring average's move is the headline's alone: the KPIs don't carry one.
+- `analytics/peak.py` — Profile's peak game: the best three full rounds (two at least, ranked by `best_round_ranks`), their average, and birdies/bogeys/doubles a round against every round with the strokes each difference is worth (`AnalyticsResponse.peak_game`); `peak_gap` and `peak_meets_goal` against a goal for the goal report.
+- `analytics/goals.py` — `goal_report(rounds, scoring_goal, home_course_rounds)` — computes gap to goal, rounds meeting it, each scored round marked met or not, the peak game's gap to it, and ranks highest-ROI improvement areas ("savers"): three-putt bleed, blowup holes, achilles heel yardage zone, home course demon hole, GIR opportunity, scrambling opportunity, par 5 opportunity
+- `analytics/benchmarks.py` — the benchmarks Profile and Scoring compare with: one table of amateur shapes by goal (and the handicap each stands for) in golf units (GIR%, scrambling%, putts per GIR, par 3/4/5 average to par); the next level up from an index (`next_level_handicap`); the tour's short game; a friend's shape from their rounds; and each par type's gap and ahead/even/behind verdict against a benchmark. `GET /stats/{id}/benchmark` sends it as `BenchmarkComparisonResponse`.
+- `analytics/round_comparison.py` — round detail's "vs your average": a round against its average over the rounds before it (the last 5, the last 20, all), per figure (score, putts, greens, 3-putts, putts per GIR, scrambling) its value, the average, the difference and a good/bad/neutral verdict. `GET /stats/compare/{user}/{round}` sends it as `RoundComparisonResponse`.
+- The analytics page's Profile reads `AnalyticsResponse` at limit 20 (`kpis.three_putts_per_round`, `three_putt_rate`, `average_putts`, `peak_game`, `next_level_handicap`), the goal report and the benchmark comparison. Only the radar's 0–100 drawing scale stays in `frontend/src/domain/radar.ts`.
 
 ## Imports
 
@@ -313,5 +249,3 @@ from database import DatabaseManager, DatabasePool, SyncCourseRepositoryAdapter
 from llm import extract_scorecard, ExtractionStrategy, CourseRepository
 from services.scan_service import resolve_course, build_hole_scores
 ```
-
-## Imported Claude Cowork project instructions

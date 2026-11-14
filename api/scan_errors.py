@@ -1,5 +1,3 @@
-"""Safe scan failure categories, separate from internal exception details."""
-
 from fastapi import HTTPException
 
 from services.scan_report_service import FailureCategory, FailureStage

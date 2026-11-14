@@ -1,10 +1,15 @@
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi import HTTPException
+from pydantic import ValidationError
 
-from api.routers import courses
+from analytics import handicap as hcap
+from api.main import app
+from api.round_responses import round_summary
+from api.routers import ai_insights, courses, rounds, stats, users
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from tests.helpers import make_course, make_mock_database, make_user
 
@@ -21,7 +26,7 @@ async def test_list_courses_requires_user_for_private_filter():
 async def test_course_search_uses_provider_only_without_local_results(monkeypatch):
     user_id = uuid4()
     db = make_mock_database()
-    db.courses.search_courses = AsyncMock(return_value=[])
+    db.courses.search_course_summaries = AsyncMock(return_value=[])
     external_service = MagicMock()
     external_service.search_external_courses = AsyncMock(
         return_value=[
@@ -37,7 +42,7 @@ async def test_course_search_uses_provider_only_without_local_results(monkeypatc
     )
     monkeypatch.setattr(courses, "GolfCourseAPIService", lambda: external_service)
 
-    results = await courses.search_courses("Pebble", user_id, True, db, make_user(user_id))
+    results = await courses.search_courses("Pebble", user_id, True, False, db, make_user(user_id))
 
     assert [(result.external_course_id, result.name) for result in results] == [
         ("ext-1", "Pebble Beach"),
@@ -49,16 +54,17 @@ async def test_course_search_uses_provider_only_without_local_results(monkeypatc
 @pytest.mark.asyncio
 async def test_course_search_skips_provider_when_database_has_matches(monkeypatch):
     user_id = uuid4()
-    local = make_course(uuid4())
+    from models.course import CourseSummary
+    local = CourseSummary(id=str(uuid4()), name="Pebble Beach")
     db = make_mock_database()
-    db.courses.search_courses = AsyncMock(return_value=[local])
+    db.courses.search_course_summaries = AsyncMock(return_value=[local])
     external_service = MagicMock()
     external_service.search_external_courses = AsyncMock(
         return_value=[{"external_course_id": "ext-1", "name": local.name}]
     )
     monkeypatch.setattr(courses, "GolfCourseAPIService", lambda: external_service)
 
-    results = await courses.search_courses("Pebble", user_id, True, db, make_user(user_id))
+    results = await courses.search_courses("Pebble", user_id, True, False, db, make_user(user_id))
 
     assert [(result.id, result.external_course_id) for result in results] == [(local.id, None)]
     external_service.search_external_courses.assert_not_awaited()
@@ -67,7 +73,7 @@ async def test_course_search_skips_provider_when_database_has_matches(monkeypatc
 @pytest.mark.asyncio
 async def test_external_course_search_requires_authentication():
     with pytest.raises(HTTPException) as raised:
-        await courses.search_courses("Pebble", None, True, make_mock_database(), None)
+        await courses.search_courses("Pebble", None, True, False, make_mock_database(), None)
 
     assert raised.value.status_code == 401
 
@@ -75,7 +81,7 @@ async def test_external_course_search_requires_authentication():
 @pytest.mark.asyncio
 async def test_course_search_rejects_unsafe_query():
     with pytest.raises(HTTPException) as raised:
-        await courses.search_courses("x --", None, False, make_mock_database(), None)
+        await courses.search_courses("x --", None, False, False, make_mock_database(), None)
 
     assert raised.value.status_code == 422
 

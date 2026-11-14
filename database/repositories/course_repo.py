@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 
 from models import Course, Hole, Tee
+from models.course import CourseSummary
 from database.connection import write_transaction
 from database.converters import course_from_rows, course_to_row, tee_yardages_to_rows, tee_to_row, tee_ratings_to_rows
 from database.exceptions import ConflictError, DuplicateError, IntegrityError, NotFoundError
@@ -618,7 +619,7 @@ class CourseRepositoryDB:
                 rows = await conn.fetch(
                     """SELECT * FROM courses.courses
                        WHERE user_id IS NULL OR user_id = $3
-                       ORDER BY name LIMIT $1 OFFSET $2""",
+                       ORDER BY (user_id IS NULL), name LIMIT $1 OFFSET $2""",
                     limit,
                     offset,
                     UUID(user_id),
@@ -626,7 +627,7 @@ class CourseRepositoryDB:
             else:
                 rows = await conn.fetch(
                     """SELECT * FROM courses.courses WHERE user_id IS NULL
-                       ORDER BY name LIMIT $1 OFFSET $2""",
+                       ORDER BY (user_id IS NULL), name LIMIT $1 OFFSET $2""",
                     limit,
                     offset,
                 )
@@ -649,7 +650,7 @@ class CourseRepositoryDB:
                     """SELECT * FROM courses.courses
                        WHERE (name ILIKE $1 OR location ILIKE $1)
                          AND user_id IS NULL
-                       ORDER BY name LIMIT 20""",
+                       ORDER BY (user_id IS NULL), name LIMIT 20""",
                     f"%{query}%",
                 )
             return [await self._assemble(conn, r) for r in rows]
@@ -909,3 +910,77 @@ class CourseRepositoryDB:
                 return result == "DELETE 1"
         except asyncpg.ForeignKeyViolationError as error:
             raise ConflictError("Course is referenced by saved records") from error
+
+    async def search_course_summaries(
+        self, query: str, *, user_id: Optional[str] = None
+    ) -> List[CourseSummary]:
+        uid = UUID(user_id) if user_id else None
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(
+                """SELECT c.id, c.name, c.external_course_id, c.location,
+                          (SELECT CASE WHEN COUNT(h.par)=0 THEN c.par
+                                       WHEN COUNT(*)=COALESCE(c.total_holes,18) AND COUNT(h.par)=COUNT(*) THEN SUM(h.par)
+                                  END FROM courses.holes h WHERE h.course_id=c.id) AS par,
+                          (SELECT COUNT(*) FROM courses.holes h WHERE h.course_id = c.id) AS hole_count,
+                          (SELECT COUNT(*) FROM courses.tees t WHERE t.course_id = c.id) AS tee_count,
+                          ARRAY(
+                              SELECT t.color FROM courses.tees t
+                              WHERE t.course_id = c.id
+                              ORDER BY (SELECT COALESCE(SUM(y.yardage), 0) FROM courses.tee_yardages y
+                                        WHERE y.tee_id = t.id) DESC, lower(t.color)
+                          ) AS tee_colors
+                   FROM (
+                       SELECT * FROM courses.courses
+                       WHERE (name ILIKE $1 OR location ILIKE $1)
+                         AND (user_id IS NULL OR user_id = $2)
+                       ORDER BY (user_id IS NULL), name LIMIT 20
+                   ) c
+                   ORDER BY (c.user_id IS NULL), c.name""",
+                f"%{query}%", uid,
+            )
+            return [_summary_from_row(r) for r in rows]
+
+    async def list_course_summaries(
+        self,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+        user_id: Optional[str] = None,
+    ) -> List[CourseSummary]:
+        uid = UUID(user_id) if user_id else None
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(
+                """SELECT c.id, c.name, c.external_course_id, c.location,
+                          (SELECT CASE WHEN COUNT(h.par)=0 THEN c.par
+                                       WHEN COUNT(*)=COALESCE(c.total_holes,18) AND COUNT(h.par)=COUNT(*) THEN SUM(h.par)
+                                  END FROM courses.holes h WHERE h.course_id=c.id) AS par,
+                          (SELECT COUNT(*) FROM courses.holes h WHERE h.course_id = c.id) AS hole_count,
+                          (SELECT COUNT(*) FROM courses.tees t WHERE t.course_id = c.id) AS tee_count,
+                          ARRAY(
+                              SELECT t.color FROM courses.tees t
+                              WHERE t.course_id = c.id
+                              ORDER BY (SELECT COALESCE(SUM(y.yardage), 0) FROM courses.tee_yardages y
+                                        WHERE y.tee_id = t.id) DESC, lower(t.color)
+                          ) AS tee_colors
+                   FROM (
+                       SELECT * FROM courses.courses
+                       WHERE user_id IS NULL OR user_id = $3
+                       ORDER BY (user_id IS NULL), name LIMIT $1 OFFSET $2
+                   ) c
+                   ORDER BY (c.user_id IS NULL), c.name""",
+                limit, offset, uid,
+            )
+            return [_summary_from_row(r) for r in rows]
+
+
+def _summary_from_row(row) -> CourseSummary:
+    return CourseSummary(
+        id=str(row["id"]),
+        name=row["name"],
+        external_course_id=row["external_course_id"],
+        location=row["location"],
+        par=row["par"],
+        hole_count=row["hole_count"],
+        tee_count=row["tee_count"],
+        tee_colors=list(row["tee_colors"] or []),
+    )
