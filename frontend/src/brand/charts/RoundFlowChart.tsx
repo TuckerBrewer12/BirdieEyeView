@@ -19,21 +19,11 @@ interface RoundFlowChartProps {
   round: Round;
 }
 
-/** A hole on the flow: scored, classified, and with the round's to par after it, all the server's. */
 type FlowHole = HoleScore & { strokes: number; toPar: number; kind: ScoreKind; runningToPar: number };
 
-/**
- * How a round went, as a running score: the server's total to par after each hole, drawn as a
- * step that climbs on a bad hole and falls on a good one. Each hole's own score is marked under
- * its step, the way the scorecard marks it, and the server's worst four-hole stretch is bracketed.
- * It fills its card; narrower than a phone allows, the plot scrolls sideways rather than shrinking its labels.
- */
 export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const { width, minWidth, height: H, pad: PAD, stroke, dot, labelGap, chip, bracket } = tokens.chart.flow;
-  // The plot is drawn at the width it has, so its labels keep their size: a wide card spreads the
-  // holes, a narrow one packs them down to `minWidth` and then scrolls.
   const [W, measure] = useChartWidth(width, minWidth);
-  // The strip's marks are square, a `hole-h` side.
   const holeW = tokens.size["hole-h"];
   const holeH = tokens.size["hole-h"];
   const reduceMotion = useStillMotion();
@@ -51,10 +41,8 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   const hovered = steps.find((step) => step.hole === hoveredHole) ?? null;
 
   const bottom = H - PAD.bottom;
-  // Each hole owns a column from x(hole) to x(hole + 1).
   const x = scaleLinear().domain([first, last + 1]).range([PAD.left, W - PAD.right]);
   const mid = (hole: number) => x(hole + 0.5);
-  // The line starts at level, so level is always on the scale, with a stroke of room either side.
   const y = scaleLinear()
     .domain(paddedExtent([0, ...steps.map((step) => step.runningToPar)], 1)!)
     .range([bottom, PAD.top]);
@@ -142,7 +130,6 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
               stroke={tokens.color.foreground}
               strokeWidth={stroke}
               strokeLinejoin="round"
-              // Reduced motion starts at the end state, so there is nothing left to animate.
               initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: 1 }}
               transition={tokens.motion.draw}
@@ -184,7 +171,6 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
 
             {steps.map((step) => (
               <g key={step.hole}>
-                {/* The scorecard's own hole mark, so a score reads the same here as on the card. */}
                 <foreignObject x={mid(step.hole) - holeW / 2} y={chipTop} width={holeW} height={holeH} pointerEvents="none">
                   <div className="pointer-events-none flex">
                     <HoleShape hole={step} square />
@@ -238,7 +224,6 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
   );
 }
 
-/** The round's to par out, in and in total, as the server sent them: what the flow ends on, for its card's header. */
 export function RoundFlowFigures({ round }: RoundFlowChartProps) {
   const figures = [
     { label: "Out", toPar: round.frontNine.toPar },

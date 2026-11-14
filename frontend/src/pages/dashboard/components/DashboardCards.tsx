@@ -7,19 +7,16 @@ import { hasScoreMix, type BestRound, type ChangeVerdict, type GoalProgress } fr
 import { MoveDelta } from "./MoveDelta";
 import { bestLabel, bestWhere, goalSeasonLine, goalStatusLabel } from "../present";
 
-/** Inside a figure card: the soft card's spacing at the size the dashboard's figures sit. */
 const CARD = { wide: "gap-1.5 px-5", phone: "gap-1 px-4" } as const;
 
 interface ScoringAverageCardProps {
   average: number | null;
   change: number | null;
   verdict: ChangeVerdict | null;
-  /** Each round's five-round average, oldest first. The wide card draws it. */
   line: (number | null)[];
   compact?: boolean;
 }
 
-/** The scoring average over the last five rounds, its move, and on a wide screen its line. */
 export function ScoringAverageCard({ average, change, verdict, line, compact = false }: ScoringAverageCardProps) {
   return (
     <Card data-slot="scoring-average-card" size={compact ? "default" : "lg"} className={compact ? CARD.phone : CARD.wide}>
@@ -35,7 +32,6 @@ export function ScoringAverageCard({ average, change, verdict, line, compact = f
   );
 }
 
-/** The best round: its score in its to-par's colour, and where and when. Opens the round. */
 export function BestRoundCard({ best, compact = false }: { best: BestRound | null; compact?: boolean }) {
   const body = (
     <>
@@ -70,12 +66,10 @@ export function BestRoundCard({ best, compact = false }: { best: BestRound | nul
 
 interface ScoreMixCardProps {
   mix: ScoreMix;
-  /** The phone's: the mix as one bar across the card. */
   compact?: boolean;
   className?: string;
 }
 
-/** How the last five rounds' holes split across score kinds: a ring on a wide screen, a bar on a phone. */
 export function ScoreMixCard({ mix, compact = false, className }: ScoreMixCardProps) {
   return (
     <Card
@@ -98,15 +92,12 @@ export function ScoreMixCard({ mix, compact = false, className }: ScoreMixCardPr
 }
 
 interface GoalCardProps {
-  /** Null until a goal is set, which asks for one. */
   goal: GoalProgress | null;
-  /** The year's rounds, for the phone's line under the goal. */
   seasonRounds: number;
   compact?: boolean;
   className?: string;
 }
 
-/** The scoring goal as a ring of how far along, and whether it's on track. Opens Analytics' Profile. */
 export function GoalCard({ goal, seasonRounds, compact = false, className }: GoalCardProps) {
   const target = goal ? goalTargetLabel(goal.target) : "Set a scoring goal";
   return (

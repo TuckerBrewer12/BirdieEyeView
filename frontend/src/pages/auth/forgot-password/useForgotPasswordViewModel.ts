@@ -6,7 +6,6 @@ import { useRequestReset } from "../useRequestReset";
 export interface ForgotPasswordViewModel {
   email: string;
   setEmail: (email: string) => void;
-  /** The server's word that a link is on its way. */
   notice: string | null;
   error: string | null;
   submitting: boolean;

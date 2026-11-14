@@ -11,7 +11,6 @@ export default function ToParFigurePreview() {
         <ToParFigure toPar={-1} size="stat" />
         <ToParFigure toPar={4} size="stat" />
       </div>
-      {/* Inheriting a cell's type, worded to a tenth, or as a line about the to par. */}
       <div className="flex items-end gap-6 text-label font-bold">
         <ToParFigure toPar={-0.5} size="inherit" label={"−0.5"} />
         <ToParFigure toPar={0.5} size="inherit" label="+0.5" />

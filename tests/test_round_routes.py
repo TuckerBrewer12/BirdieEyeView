@@ -171,7 +171,6 @@ async def test_update_round_reports_a_missing_round_as_404_not_500():
     user = profile_user(user_id)
     db = make_mock_database()
     db.rounds.get_round_owner_id = AsyncMock(return_value=str(user_id))
-    # The round goes between the ownership check and the write.
     db.rounds.update_hole_scores = AsyncMock(return_value=None)
     db.rounds.get_round = AsyncMock(return_value=None)
 

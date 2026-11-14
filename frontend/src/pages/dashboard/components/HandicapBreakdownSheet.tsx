@@ -33,16 +33,11 @@ interface HandicapBreakdownSheetProps {
   open: boolean;
   onClose: () => void;
   handicapIndex: number | null | undefined;
-  /** How far the index moved this month, and the server's verdict on it. */
   handicapChange: number | null;
   handicapVerdict: ChangeVerdict | null;
   whs: WhsBreakdown;
 }
 
-/**
- * How the handicap index was reached: the index, the window's rounds and which of them count.
- * A panel from the right on a wide screen, a sheet from the bottom on a phone.
- */
 export function HandicapBreakdownSheet({
   open,
   onClose,
@@ -165,13 +160,11 @@ export function HandicapBreakdownSheet({
   );
 }
 
-/** One round in the window: where, its rating, its score and differential, and whether it counts. */
 function WhsRow({ row }: { row: WhsRound }) {
   return (
     <div className="flex items-center gap-3 border-t border-border py-3 first:border-t-0 md:px-0.5">
       <div className="min-w-0 flex-1">
         <div className="truncate text-body-lg font-semibold text-foreground md:text-sm">{courseLabelForWhs(row)}</div>
-        {/* The phone has no score column, so its line under the course carries the score. */}
         <div className="text-body-sm text-muted-foreground md:hidden">{scoreAndRatingForWhs(row)}</div>
         <div className="hidden text-body-sm text-muted-foreground md:block">{ratingLabelForWhs(row)}</div>
       </div>

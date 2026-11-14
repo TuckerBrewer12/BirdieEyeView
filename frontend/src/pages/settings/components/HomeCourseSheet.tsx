@@ -13,7 +13,6 @@ import type { HomeCourse } from "../model";
 interface HomeCourseSheetProps {
   open: boolean;
   onClose: () => void;
-  /** The picked course; null shows the search. */
   homeCourse: HomeCourse | null;
   query: string;
   results: CourseSummary[];
@@ -21,11 +20,9 @@ interface HomeCourseSheetProps {
   onQueryChange: (query: string) => void;
   onPick: (course: CourseSummary) => void;
   onClear: () => void;
-  /** Hosts the sheet in its parent instead of over the page, for the preview. */
   contained?: boolean;
 }
 
-/** Picks the home course from a search, or removes it: a panel on a computer, a sheet on a phone. */
 export function HomeCourseSheet({
   open,
   onClose,

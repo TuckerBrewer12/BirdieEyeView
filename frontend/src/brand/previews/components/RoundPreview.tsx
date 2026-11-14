@@ -6,7 +6,6 @@ import { populatedRounds } from "@/testing/fixtures/rounds";
 
 const [overPar, evenPar, best, unlinked] = populatedRounds.map(Round.fromSummary);
 
-/** Compose-style @Preview for RoundPreview. */
 export default function RoundPreviewPreview() {
   return (
     <>
@@ -14,7 +13,6 @@ export default function RoundPreviewPreview() {
       <RoundPreview round={evenPar} variant="highlight" onClick={() => {}} />
       <RoundPreview round={overPar} variant="highlight" onClick={() => {}} />
       <RoundPreview round={null} variant="highlight" />
-      {/* The Rounds page's rows, divided in one card; the unlinked round offers Link. */}
       <Card className="gap-0 py-0">
         <Collection
           layout="divided"
@@ -49,7 +47,6 @@ export default function RoundPreviewPreview() {
       <Card className="w-preview px-4">
         <RoundPreview variant="summary" round={overPar} />
       </Card>
-      {/* A cell a hole, in a Card that frames it: the landing page's sample round. */}
       <Card className="w-preview px-4">
         <RoundPreview variant="summary" holes="strip" frame="none" round={overPar} />
       </Card>

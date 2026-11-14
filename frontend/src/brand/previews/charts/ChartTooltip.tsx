@@ -1,6 +1,5 @@
 import { ChartTooltip } from "@/brand/charts/ChartTooltip";
 
-/** The hover card at rest: above a point on the left, flipped beside a column near the right, and the small card. */
 export default function ChartTooltipPreview() {
   return (
     <div className="flex flex-col gap-6">

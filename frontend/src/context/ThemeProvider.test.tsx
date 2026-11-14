@@ -10,7 +10,6 @@ function renderTheme() {
   return renderHook(() => useTheme(), { wrapper });
 }
 
-/** Every token flips on `dark`, so the class on <html> is the theme the page is drawn in. */
 function expectTheme(theme: "light" | "dark") {
   if (theme === "dark") expect(document.documentElement).toHaveClass("dark");
   else expect(document.documentElement).not.toHaveClass("dark");

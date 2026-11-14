@@ -1,5 +1,3 @@
-"""Scorecard scan/upload API endpoints."""
-
 import contextlib
 import hashlib
 import logging
@@ -35,7 +33,7 @@ router = APIRouter()
 OCR_LONG_EDGE_TARGET = 2000
 OCR_JPEG_QUALITY = 80
 PREPROCESS_CACHE_VERSION = "v3"
-MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 MAX_OCR_TEXT_CHARS = 300_000
 MAX_USER_CONTEXT_CHARS = 1_500
 MAX_IMAGE_PIXELS = 40_000_000
@@ -91,7 +89,6 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-# Disabled by default to avoid leaking OCR/user content into aggregated logs.
 LOG_SENSITIVE_OCR_DEBUG = _env_bool("LOG_SENSITIVE_OCR_DEBUG", False)
 
 
@@ -199,7 +196,6 @@ def _build_confidence_payload(
         )
 
     overall = present / len(hole_scores) if hole_scores else 0.0
-    # Penalize by unresolved warnings.
     overall = max(0.0, overall - min(0.5, len(fields_needing_review) * 0.02))
     return {
         "overall": overall,
@@ -223,7 +219,6 @@ def _build_round_from_parsed_rows(
     known_course = course_model is not None
     hole_count = HOLES_PER_ROUND
 
-    # Known-course metadata from DB (local course object).
     course_name = None
     course_location = None
     course_par = None
@@ -257,7 +252,6 @@ def _build_round_from_parsed_rows(
                 }
             )
     else:
-        # Unknown-course path uses parsed OCR rows.
         course_name = normalize_course_display_name(parsed.course_name) if parsed.course_name else None
         parsed_pars = list(_safe_list_attr("par_row")[:hole_count])
         while len(parsed_pars) < hole_count:
@@ -361,13 +355,10 @@ def _build_round_from_parsed_rows(
 
         gir_val = gir_vals[i - 1]
         if gir_val is None and shots_vals[i - 1] is not None and hole_par_lookup.get(i) is not None:
-            # Derive GIR from shots-to-green row when present:
-            # GIR if reached green in <= par-2 strokes.
-            par_i = hole_par_lookup[i]  # guarded above
+            par_i = hole_par_lookup[i]
             if par_i is not None:
                 gir_val = shots_vals[i - 1] <= max(1, par_i - 2)
         if gir_val is None and strokes is not None and putts is not None and hole_par_lookup.get(i) is not None:
-            # Without that row, strokes less putts is the shots it took to reach the green.
             gir_val = strokes - putts <= hole_par_lookup[i] - 2  # type: ignore[operator]
 
         shots_val = shots_vals[i - 1]
@@ -402,7 +393,6 @@ def _build_round_from_parsed_rows(
 
 
 def _rated_tees(round_payload: Dict) -> List[Dict]:
-    """The card's tees that have both ratings, when the card has a par to rate them against."""
     course = round_payload.get("course") or {}
     if course.get("par") is None:
         return []
@@ -413,8 +403,6 @@ def _rated_tees(round_payload: Dict) -> List[Dict]:
 
 
 def _add_course_handicaps(round_payload: Dict, handicap_index: Optional[float]) -> None:
-    """Gives each rated tee on the card the golfer's course handicap off it, so the review can
-    show a net score for whichever tee they pick."""
     par = (round_payload.get("course") or {}).get("par")
     for tee in _rated_tees(round_payload):
         tee["course_handicap"] = tee_course_handicap(
@@ -423,7 +411,6 @@ def _add_course_handicaps(round_payload: Dict, handicap_index: Optional[float]) 
 
 
 def _save_upload_to_temp(file: UploadFile, suffix: str) -> tuple[Path, str]:
-    """Stream upload to a temp file enforcing max size. Returns (path, sha256_hex)."""
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         hasher = hashlib.sha256()
         total_bytes = 0
@@ -441,7 +428,6 @@ def _save_upload_to_temp(file: UploadFile, suffix: str) -> tuple[Path, str]:
 
 
 async def _run_ocr_pipeline(ocr_path: Path) -> str:
-    """Mistral OCR → Gemini merge → raw markdown string."""
     svc = MistralOCRService()
     ocr_resp = await svc.ocr_file(ocr_path)
 
@@ -492,7 +478,6 @@ def _save_jpeg(path: Path, img: Image.Image) -> None:
 
 
 def _is_ocr_ready_jpeg(path: Path, img: Image.Image) -> bool:
-    """Return whether a browser-prepared JPEG can go to OCR unchanged."""
     if path.suffix.lower() not in {".jpg", ".jpeg"}:
         return False
     if img.format != "JPEG" or img.mode != "RGB":
@@ -502,8 +487,6 @@ def _is_ocr_ready_jpeg(path: Path, img: Image.Image) -> bool:
     if img.getexif():
         return False
 
-    # Canvas-created JPEGs contain only ordinary JFIF/encoding information.
-    # Re-encode anything carrying payload metadata before sending it onward.
     safe_info_keys = {
         "dpi",
         "jfif",
@@ -521,14 +504,6 @@ def _is_ocr_ready_jpeg(path: Path, img: Image.Image) -> bool:
 
 
 def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, bool]:
-    """
-    Normalize uploaded images to JPEG for faster, consistent OCR payloads.
-
-    Notes:
-    - PDF: attempts to render page 1 to JPEG, then applies the same preprocessing.
-      Falls back to original PDF if rendering is unavailable.
-    - If normalization fails (e.g., unsupported HEIC decoder), fall back to original.
-    """
     cache_path = _get_preprocess_cache_path(upload_digest) if PREPROCESS_CACHE_ENABLED else None
     is_pdf = path.suffix.lower() == ".pdf"
     t0 = time.perf_counter()
@@ -544,17 +519,14 @@ def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, boo
                 )
                 return path, False
             if is_pdf:
-                # First page only for scorecard PDFs.
                 with contextlib.suppress(EOFError):
                     img.seek(0)
-            # Honor EXIF orientation before re-encoding.
             img = ImageOps.exif_transpose(img)
             if img.mode != "RGB":
                 img = img.convert("RGB")
             t_orient = time.perf_counter()
             original_size = img.size
 
-            # Resize large images before OCR (keep aspect ratio, do not upscale).
             width, height = img.size
             long_edge = max(width, height)
             if long_edge > OCR_LONG_EDGE_TARGET:
@@ -569,7 +541,6 @@ def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, boo
             stripped.paste(img)
 
             if PREPROCESS_CACHE_ENABLED and cache_path is not None:
-                # Save into cache atomically.
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg", dir=PREPROCESS_CACHE_DIR) as out:
                     temp_cache_path = Path(out.name)
                 _save_jpeg(temp_cache_path, stripped)
@@ -613,11 +584,6 @@ async def prefetch_ocr(
     file: UploadFile = File(...),
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
-    """Run OCR on an uploaded image and return the raw markdown text.
-
-    Called immediately on file selection so the slow OCR step is already
-    complete by the time the user clicks Extract.
-    """
     suffix = _extract_upload_suffix(file)
     original_tmp_path, upload_digest = _save_upload_to_temp(file, suffix)
 
@@ -651,7 +617,6 @@ async def extract_scan(
     db: DatabaseManager = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
-    """Upload a scorecard image, run OCR extraction, return results for review."""
     request_t0 = time.perf_counter()
     logger.info(
         "Scan extract request received: filename=%s course_id=%s user_id=%s",
@@ -659,7 +624,6 @@ async def extract_scan(
         course_id,
         getattr(current_user, "id", "anonymous"),
     )
-    # Validate file type + metadata.
     try:
         suffix = _extract_upload_suffix(file)
     except HTTPException as exc:
@@ -717,10 +681,8 @@ async def extract_scan(
             (t_pre_end - t_pre_start) * 1000.0,
         )
 
-        # Scoring format is inferred from row parser + user_context hints.
         to_par_scoring: Optional[bool] = None
 
-        # Optional known course preload; extraction is always full Mistral parse.
         failure_stage = "unknown"
         course_model = None
         t_course_lookup_start = time.perf_counter()
@@ -740,7 +702,6 @@ async def extract_scan(
         failure_stage = "ocr"
         t_extract_start = time.perf_counter()
         if ocr_text:
-            # Prefetch already ran OCR + Gemini merge — use it directly.
             markdown_text = ocr_text
             logger.info("Scan using prefetched OCR text: chars=%d", len(markdown_text))
         else:
@@ -824,7 +785,6 @@ async def extract_scan(
             "Scan extract request complete: total_ms=%.1f",
             (time.perf_counter() - request_t0) * 1000.0,
         )
-        # Cache is disabled by default; remove generated OCR preprocess artifact.
         if ocr_path != original_tmp_path and (not PREPROCESS_CACHE_ENABLED or not cache_hit):
             ocr_path.unlink(missing_ok=True)
         original_tmp_path.unlink(missing_ok=True)
@@ -836,7 +796,6 @@ async def save_round(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Save a reviewed/edited round to the database."""
     try:
         req.user_id = str(current_user.id)
         logger.info(

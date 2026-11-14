@@ -28,13 +28,11 @@ export const TEST_USER = {
   email_verified: true,
 };
 
-/** An account the fake signs in, keyed by email. */
 export interface FakeAccount {
   password: string;
   verified: boolean;
 }
 
-/** The auth endpoints a seed can make fail, each with the detail the server would send. */
 export type FakeAuthEndpoint =
   | "login"
   | "register"
@@ -48,40 +46,22 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   profile?: UserDto;
   dashboard?: DashboardDto;
   analytics?: AnalyticsDto | null;
-  /**
-   * Analytics by golfer, for screens that read someone else's (a friend's).
-   * A golfer with none here gets `analytics`.
-   */
   analyticsByGolfer?: Record<string, AnalyticsDto>;
-  /** Analytics asked for this many rounds fails, as a server error would: Profile's last 20, say. */
   analyticsFailsAtLimit?: number | null;
-  /** `/api/stats/analytics/{id}?course_id=` per course. A course not here answers with no rounds. */
   analyticsByCourse?: Record<string, AnalyticsDto>;
-  /** `/api/stats/{id}/played-courses`: the courses the golfer has rounds at. */
   playedCourses?: PlayedCourseDto[];
   goalReport?: GoalReportDto | null;
-  /** `/api/stats/{id}/benchmark` by comparison: "handicap:5", "friend:{id}". One not here answers 422. */
   benchmarks?: Record<string, BenchmarkComparisonDto>;
-  /** No one is signed in — `/api/auth/me` answers 401, as the real API does. */
   signedOut?: boolean;
-  /** What `/api/scan/extract` reads off any uploaded card. Unset, extract fails. */
   scan?: ScanDto;
-  /** `/api/scan/extract` doesn't answer until `finishScan()`, so the scan can be seen running. */
   holdScan?: boolean;
-  /** `/api/scan/reports` saves a failed scan's report. Unset, it answers that reporting isn't set up. */
   reportStorage?: boolean;
-  /** Why `GET /api/users/{id}` fails; unset, it answers with the profile. */
   profileError?: string | null;
-  /** Why `PATCH /api/users/{id}` fails; unset, it saves. */
   updateUserError?: string | null;
-  /** `/api/users/me/friends`: the golfer's friendships and who a friend code finds. */
   friends?: Omit<InMemoryFriendshipsSeed, "userId">;
-  /** Accounts `/api/auth/login` accepts. Defaults to `TEST_USER` with the password `password`. */
   accounts?: Record<string, FakeAccount>;
-  /** Tokens an emailed link may carry: verification and password reset. Each works once. */
   verifyTokens?: string[];
   resetTokens?: string[];
-  /** Auth endpoints that answer 429 with this detail, as the rate limiter does. */
   authErrors?: Partial<Record<FakeAuthEndpoint, string>>;
 }
 
@@ -90,7 +70,6 @@ export interface FakeReply {
   body: unknown;
 }
 
-/** Points HTTP at InMemoryRounds. Same store FakeRoundsRepository uses. */
 export class FakeBackend {
   user: typeof TEST_USER;
   profile: UserDto | undefined;
@@ -100,7 +79,6 @@ export class FakeBackend {
   analyticsByGolfer: Partial<Record<string, AnalyticsDto>>;
   readonly analyticsByCourse: Record<string, AnalyticsDto>;
   readonly playedCourses: PlayedCourseDto[];
-  /** What each analytics request asked for, in order. */
   readonly analyticsRequests: AnalyticsFilters[] = [];
   goalReport: GoalReportDto | null | undefined;
   readonly benchmarks: Partial<Record<string, BenchmarkComparisonDto>>;
@@ -108,13 +86,11 @@ export class FakeBackend {
   reportStorage: boolean;
   profileError: string | null;
   updateUserError: string | null;
-  /** Flips to false when a sign-in or a verification link starts a session. */
   signedOut: boolean;
   readonly accounts: Partial<Record<string, FakeAccount>>;
   readonly verifyTokens: Set<string>;
   readonly resetTokens: Set<string>;
   readonly authErrors: Partial<Record<FakeAuthEndpoint, string>>;
-  /** What each auth endpoint was sent, in order. */
   readonly registrations: Record<string, unknown>[] = [];
   readonly verificationResends: string[] = [];
   readonly resetRequests: string[] = [];
@@ -179,7 +155,6 @@ export class FakeBackend {
     this.friendships = new InMemoryFriendships({ ...friends, userId: this.user.user_id });
   }
 
-  /** Mirrors `api/routers/auth.py`: the same details and status codes, without the mail. */
   private auth(endpoint: FakeAuthEndpoint, body: unknown): FakeReply {
     const limited = this.authErrors[endpoint];
     if (limited) return { status: 429, body: { detail: limited } };
@@ -214,7 +189,6 @@ export class FakeBackend {
         if (!this.verifyTokens.delete(token)) {
           return { status: 400, body: { detail: AUTH_MESSAGES.badVerifyToken } };
         }
-        // The real endpoint sets the session cookie, so the golfer is signed in from here.
         this.signedOut = false;
         return message(AUTH_MESSAGES.verified);
       case "forgot-password":
@@ -237,19 +211,15 @@ export class FakeBackend {
     return this.store.courses;
   }
 
-  /** Each `/api/scan/extract` request's text fields, oldest first: what was said about the card. */
   scanRequests: Record<string, string>[] = [];
 
-  /** Each `/api/scan/reports` request's text fields, oldest first: the report's metadata. */
   reportRequests: Record<string, string>[] = [];
 
-  /** Lets a held scan answer. */
   finishScan(): void {
     this.releaseScan?.();
     this.scanHold = null;
   }
 
-  /** Goal reports don't answer until `finishGoalReports()`, so a report on its way can be seen. */
   holdGoalReports(): void {
     this.goalReportHold = new Promise((resolve) => {
       this.releaseGoalReports = resolve;
@@ -261,7 +231,6 @@ export class FakeBackend {
     this.goalReportHold = null;
   }
 
-  /** `handle`, after waiting out a held scan or goal report. */
   async respond(method: string, url: string, body?: unknown): Promise<FakeReply> {
     if (this.scanHold && method.toUpperCase() === "POST" && url.includes("/api/scan/extract")) {
       await this.scanHold;
@@ -272,7 +241,6 @@ export class FakeBackend {
     return this.handle(method, url, body);
   }
 
-  /** The user row `/api/users/{id}` answers with: the seeded profile, or one built from the session. */
   currentProfile(): UserDto {
     return (
       this.profile ?? {
@@ -512,7 +480,6 @@ export class FakeBackend {
     return { status: 200, body: [] };
   }
 
-  /** Mirrors `GET /stats/analytics/{id}`: the seeded figures, or a course's own when one is asked for. */
   private getAnalytics(params: URLSearchParams): FakeReply {
     const timeframe = params.get("timeframe");
     const courseId = params.get("course_id") ?? "all";

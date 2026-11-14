@@ -3,7 +3,6 @@ import { CoursePreview } from "@/brand/components/CoursePreview";
 import { courseSummaryFrom } from "@/domain/course";
 import { populatedCourses } from "@/testing/fixtures/courses";
 
-/** Keyboard focus ring on a course row. */
 export default function CoursePreviewFocusPreview() {
   return (
     <Card className="py-0">

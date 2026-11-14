@@ -1,5 +1,3 @@
-"""Versioned AES-GCM envelope. File content and diagnostic fields are encrypted."""
-
 import base64
 import json
 import os
@@ -31,7 +29,6 @@ class StoredMetadata(BaseModel):
     category: FailureCategory
     stage: FailureStage
     http_status: int | None = Field(ge=100, le=599)
-    # Images are stored as JPEG; reports saved before that change hold PNG and must stay readable.
     media_type: Literal["image/jpeg", "image/png", "application/pdf"]
 
 

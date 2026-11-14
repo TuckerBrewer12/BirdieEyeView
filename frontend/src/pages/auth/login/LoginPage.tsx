@@ -6,7 +6,6 @@ import { AuthNotice } from "../components/AuthNotice";
 import { PasswordField } from "../components/PasswordField";
 import { useLoginViewModel, type LoginArrival } from "./useLoginViewModel";
 
-/** The refusal's alert, which both fields point at while it stands. */
 const ERROR_ID = "login-error";
 
 export function LoginPage() {

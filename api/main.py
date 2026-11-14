@@ -1,5 +1,3 @@
-"""FastAPI application for the Golf Scorecard API."""
-
 import asyncio
 import logging
 import os
@@ -17,7 +15,6 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s [%(name)s] %(message)s",
 )
-# Show all llm pipeline logs at DEBUG level
 logging.getLogger("llm").setLevel(logging.DEBUG)
 
 from api.security import (
@@ -46,7 +43,6 @@ from models import Round, User  # noqa: F401 — Round must be imported for User
 from database.connection import db
 from database.db_manager import DatabaseManager
 
-# Resolve forward reference (User -> Round)
 User.model_rebuild()
 
 
@@ -348,7 +344,6 @@ def create_app() -> FastAPI:
                 user_agent=user_agent,
             )
 
-        # Basic hardening headers for API responses.
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -377,7 +372,6 @@ def create_app() -> FastAPI:
     app.include_router(scan_reports.router, prefix="/api/scan", tags=["scan"])
     app.include_router(ai_insights.router, prefix="/api/ai-insights", tags=["ai-insights"])
 
-    # Uptime probes, not client API: kept out of the schema the frontend types are generated from.
     @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
     async def root_status(request: Request):
         if request.method == "HEAD":

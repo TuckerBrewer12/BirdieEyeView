@@ -3,7 +3,6 @@ import { Card, RowButton, Stat, StatLabel, StatValue, ToParFigure } from "@/bran
 import { cn } from "@/brand/cn";
 import type { RecordFigure } from "../courseDetailModel";
 
-/** A figure's to par and when, set small beside it: "+6 · Jun 15", the to par coloured. */
 function Detail({ figure }: { figure: RecordFigure }) {
   if (!figure.toPar && !figure.note) return null;
   return (
@@ -33,11 +32,6 @@ function Figure({ figure }: { figure: RecordFigure }) {
   );
 }
 
-/**
- * The golfer's record at a course: rounds played, their average, best and worst. Two by two on a wide
- * screen, each figure over its label; on a phone a list, each label beside its figure. The best and
- * worst open their round.
- */
 export function CourseRecordCard({
   figures,
   onOpenRound,
@@ -48,7 +42,6 @@ export function CourseRecordCard({
   return (
     <Card
       data-slot="course-record"
-      // Beside a taller card the record keeps its figures together at the top, rather than spread down it.
       className="gap-0 divide-y divide-border py-1 md:grid md:grid-cols-2 md:content-start md:gap-1 md:divide-y-0 md:p-2"
     >
       {figures.map((figure) => {

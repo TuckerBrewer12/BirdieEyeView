@@ -7,11 +7,9 @@ import type { UserDto } from "../../types/api";
 import type { SocialRepository } from "../../pages/social/useSocialPageViewModel";
 import { InMemoryFriendships, type InMemoryFriendshipsSeed } from "./InMemoryFriendships";
 
-/** Maps the in-memory server's rows the way the real repository maps the API's. */
 export class FakeFriendsRepository implements SocialRepository {
   readonly store: InMemoryFriendships;
   getFriendshipsCalls = 0;
-  /** The golfer's own friend code, as their profile carries it. */
   readonly myCode: string | null;
 
   constructor(seed: InMemoryFriendshipsSeed & { myCode?: string | null } = {}) {

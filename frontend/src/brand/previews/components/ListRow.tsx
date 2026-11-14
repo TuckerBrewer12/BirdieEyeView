@@ -2,7 +2,6 @@ import { ChevronRight } from "lucide-react";
 import { Card } from "@/brand/components/Card";
 import { ListRow } from "@/brand/components/ListRow";
 
-/** The shell: a two-line row at 64, and a one-line settings row at 56. */
 export default function ListRowPreview() {
   return (
     <Card className="divide-y divide-border py-0">

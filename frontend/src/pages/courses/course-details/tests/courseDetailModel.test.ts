@@ -15,7 +15,6 @@ import {
 
 const PARS = [4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5];
 
-/** Every hole 400 yards off the blue tee, so each nine is 3600. */
 const measured = courseResponse({
   id: "c1",
   name: "Measured",
@@ -107,7 +106,6 @@ describe("holesInOrder", () => {
   it("keeps the course's order, or follows the server's difficulty rank", () => {
     expect(holesInOrder(holes, "course").map((hole) => hole.hole)).toEqual(holes.map((hole) => hole.hole));
     expect(holesInOrder(holes, "hardest").map((hole) => hole.hole).slice(0, 6)).toEqual([3, 6, 9, 12, 15, 18]);
-    // The rank decides, not the figures: a hole the server ranks first leads whatever its average.
     const reranked = holes.map((hole) => ({ ...hole, difficultyRank: hole.hole === 1 ? 0 : hole.difficultyRank }));
     expect(holesInOrder(reranked, "hardest")[0]?.hole).toBe(1);
   });

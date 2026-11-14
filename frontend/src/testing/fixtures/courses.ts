@@ -4,13 +4,10 @@ import { courseSummaryResponse } from "../fakes/courseAnalyticsResponses";
 import { pebbleBeachCourse, toCourseSummary } from "./roundDetails";
 import { storedRounds } from "./rounds";
 
-/** Pebble Beach as the server lists it. */
 export const pebbleBeach = toCourseSummary(pebbleBeachCourse);
-/** Pebble Beach as a repository hands it to a page: a search result to pick. */
 export const pebbleBeachSummary = courseSummaryFrom(pebbleBeach);
 export const searchableCourses = [pebbleBeach];
 
-/** The course list: two courses the golfer has played, with their record there, and one they haven't. */
 export const populatedCourses: CourseSummaryDto[] = [
   {
     id: "course-hmb",

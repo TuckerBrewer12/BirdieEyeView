@@ -17,7 +17,6 @@ import { RecordsCard } from "./RecordsCard";
 import { ScoreMixCard } from "./ScoreMixCard";
 import { TotalsCard } from "./TotalsCard";
 
-/** Career below md: the desktop's cards in one column, with the milestone lists behind tabs. */
 export function CareerMobileLayout({ vm, career, figures, onOpenRound }: CareerLayoutProps) {
   const group = vm.milestoneGroup;
   const scoring = group === "scoring";
@@ -55,7 +54,6 @@ export function CareerMobileLayout({ vm, career, figures, onOpenRound }: CareerL
             size="sm"
             value={[group]}
             onValueChange={(values) => {
-              // Tapping the open tab would empty the group; one list is always open.
               const next = MILESTONE_GROUPS.find((option) => option === values[0]);
               if (next) vm.setMilestoneGroup(next);
             }}

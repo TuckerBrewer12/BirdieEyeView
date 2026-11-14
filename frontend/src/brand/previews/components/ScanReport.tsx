@@ -2,7 +2,6 @@ import { ScanReport } from "@/brand/components/ScanReport";
 
 const noop = () => undefined;
 
-/** ScanReport in each state: ready, sending, sent, and a report that wasn't saved. */
 export default function ScanReportPreview() {
   return (
     <div className="flex max-w-2xl flex-col gap-6">

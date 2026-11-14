@@ -47,11 +47,6 @@ function InputGroupAddon({
   );
 }
 
-/**
- * An addon that stands for its input, like a search icon: pressing it puts the caret in the input,
- * as a native label does. Keep text and buttons out of it, since a label's text joins the input's
- * accessible name.
- */
 function InputGroupAddonLabel({
   className,
   align = "inline-start",

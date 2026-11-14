@@ -5,7 +5,6 @@ import { RecentRounds } from "./RecentRounds";
 import { GreetingHeader } from "./GreetingHeader";
 import { LastRoundCard } from "./LastRoundCard";
 
-/** The phone dashboard: one column, the last round first and the rounds before it last. */
 export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
   const { data } = vm;
   if (!data) return null;

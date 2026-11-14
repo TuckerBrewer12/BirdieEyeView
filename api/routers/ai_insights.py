@@ -1,5 +1,3 @@
-"""AI Suggestions router."""
-
 import logging
 from hashlib import sha256
 from typing import Optional
@@ -16,7 +14,6 @@ from services.ai_service import AIService
 router = APIRouter()
 logger = logging.getLogger(__name__)
 ai_rate_limiter = SlidingWindowRateLimiter()
-
 
 
 @router.get("/{user_id}", response_model=AISuggestionsResponse)

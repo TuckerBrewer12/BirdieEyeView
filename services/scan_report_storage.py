@@ -1,5 +1,3 @@
-"""Private S3 storage. A report is acknowledged only after authenticated durability."""
-
 import logging
 import os
 from dataclasses import dataclass, field
@@ -128,7 +126,6 @@ class EncryptedScanReportStore:
         return report_object_key(report_id, timestamp)
 
     def object_key(self, report_id: UUID) -> str:
-        """Resolve a report UUID without creating or renaming anything."""
         legacy = report_object_key(report_id)
         if self._head(legacy) is not None:
             return legacy
@@ -167,14 +164,10 @@ class EncryptedScanReportStore:
         candidate = self.cipher.decrypt(envelope, report.retry_key)
         key = report_object_key(report.retry_key)
         if self._head(key) is None:
-            # The first create-only reservation fixes the provider timestamp for
-            # every worker/retry, including attempts interrupted before upload.
             index = report_index_key(report.retry_key)
             self._put_if_absent(index, b"")
             key = self._timestamped_key(report.retry_key, self._head(index))
         self._put_if_absent(key, envelope)
-        # Neither a reservation nor a 412 proves durability. Authenticate even a
-        # successful PUT, also recovering a previously lost acknowledgement.
         stored = self.cipher.decrypt(self._read_envelope(key), report.retry_key)
         if stored.metadata != candidate.metadata or stored.image != candidate.image:
             raise ValueError("Conflicting report retry.")
@@ -198,6 +191,5 @@ class EncryptedScanReportStore:
         reservation = self._head(index)
         if reservation is not None:
             key = self._timestamped_key(report_id, reservation)
-            # Remove the locator last so a failed deletion can be retried.
             self.client.delete_object(Bucket=self.bucket, Key=key)
             self.client.delete_object(Bucket=self.bucket, Key=index)

@@ -26,35 +26,21 @@ interface PickerOption<T extends string> {
 }
 
 interface PickerMenuProps<T extends string> {
-  /** What the menu picks: the trigger's name for screen readers and the phone sheet's title. */
   "aria-label": string;
-  /** The pick as the trigger shows it. */
   label: string;
   value: T;
   options: readonly PickerOption<T>[];
   onChange: (value: T) => void;
-  /** While a pick is saving: the menu does not open. */
   disabled?: boolean;
-  /** A quiet word before the pick on the wide trigger: "Sort" in "Sort Newest". */
   prefix?: string;
-  /** The phone trigger's words, where the pick is too long for the row: "Course" for "All courses". */
   compactLabel?: string;
-  /** Makes the phone trigger this icon alone, named "Sort by: Newest", for a title row with no room for words. */
   compactIcon?: ReactNode;
-  /** `outline` boxes the trigger, as a filter in a row of controls; `ghost` sets it in the text, as a sort. */
   variant?: "outline" | "ghost";
-  /** `default` is 40 tall, beside a page's search field; `sm` is 32, in a card or a list's header. */
   size?: "sm" | "default";
-  /** Stretch to share the row with its neighbours, the pick at the start and the chevron at the end: a phone's row of menus. */
   fill?: boolean;
   className?: string;
 }
 
-/**
- * Picks one of a few options: a sort order, a course, a goal. From `md` up the options drop down
- * under the trigger; on a phone they rise in a bottom sheet with 52px rows. One trigger either way,
- * so a page places the picker once.
- */
 function PickerMenu<T extends string>({
   "aria-label": ariaLabel,
   label,
@@ -70,7 +56,6 @@ function PickerMenu<T extends string>({
   fill = false,
   className,
 }: PickerMenuProps<T>) {
-  // Which surface the options open in, not how the trigger looks.
   const wide = useFromBreakpoint("md");
   const [sheetOpen, setSheetOpen] = useState(false);
 

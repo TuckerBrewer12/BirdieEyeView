@@ -6,7 +6,6 @@ import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { FriendsInboxRobot } from "../inbox/tests/FriendsInboxPage.robot";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
 
-/** Screen robot for /social — same idea as an Android Espresso robot. */
 export class SocialRobot {
   private readonly page: Page;
 
@@ -71,14 +70,12 @@ export class SocialRobot {
     return new FriendsInboxRobot(this.page).isOpen();
   }
 
-  /** The Requests button's count of requests waiting for an answer, or none. */
   async seesOpenRequests(count: number): Promise<this> {
     const name = count > 0 ? `Requests, ${count} new` : "Requests";
     await expect(this.page.getByRole("button", { name, exact: true })).toBeVisible();
     return this;
   }
 
-  /** Lets the page write to and read from the clipboard, as a golfer who allowed it would. */
   async allowClipboard(): Promise<this> {
     await this.page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
     return this;
@@ -95,19 +92,16 @@ export class SocialRobot {
     return this;
   }
 
-  /** The golfer's code where this width shows it: the card's header, or under the field on a phone. */
   async seesMyCode(code: string): Promise<this> {
     await expect(this.page.getByText(code, { exact: true }).filter({ visible: true })).toBeVisible();
     return this;
   }
 
-  /** The line under a friend's name: their index and when they last played. */
   async seesFriendDetail(name: string, detail: string): Promise<this> {
     await expect(this.page.locator("[data-slot=person-row]").filter({ hasText: name })).toContainText(detail);
     return this;
   }
 
-  /** Compare (the whole row on a phone) opens Profile set against the friend. */
   async tapCompare(name: string): Promise<this> {
     await this.page.getByRole("link", { name: `Compare with ${name}` }).click();
     await expect(this.page).toHaveURL(/\/analytics\?tab=profile&friend=/);

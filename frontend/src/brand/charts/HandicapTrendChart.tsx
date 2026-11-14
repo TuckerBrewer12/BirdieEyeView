@@ -10,16 +10,11 @@ import { usePointPick } from "./usePointPick";
 
 interface HandicapTrendChartProps {
   data: RoundTrendPoint[];
-  /** The phone shape: narrower. */
   compact?: boolean;
 }
 
 const L = tokens.chart.handicapTrend;
 
-/**
- * The handicap index after each round, as a step line, with its latest figure written by the
- * last dot. Hovering with a mouse or tapping on a phone picks a round.
- */
 export function HandicapTrendChart({ data, compact = false }: HandicapTrendChartProps) {
   const { active, track } = usePointPick();
 
@@ -157,7 +152,6 @@ export function HandicapTrendChart({ data, compact = false }: HandicapTrendChart
   );
 }
 
-/** A grid line's figure, right of the plot: label-sized and muted, unlike a trend's haloed `AxisLabel`. */
 function TickLabel({ x, y, children }: { x: number; y: number; children: ReactNode }) {
   return (
     <text x={x} y={y} fontSize={tokens.type.label.size} fontFamily={tokens.font.sans} fill={tokens.color.mutedForeground}>
@@ -179,7 +173,6 @@ function EmptyTrend({ compact, children }: { compact: boolean; children: ReactNo
   );
 }
 
-/** The first round, every fifth after it, and the last: 1, 5, 10, 15, 20. A fifth that would crowd the last gives way. */
 function xTickIndexes(count: number): number[] {
   const last = count - 1;
   const fifths = Array.from({ length: Math.floor(last / 5) }, (_, i) => (i + 1) * 5 - 1).filter((i) => last - i > 2);

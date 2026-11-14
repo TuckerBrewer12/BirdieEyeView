@@ -8,7 +8,6 @@ import { labAnalytics, labBenchmarks, labGoalReport, labUser } from "@/testing/f
 import { PROFILE_FILTERS, profileAnalyticsFrom } from "../profileModel";
 import { useProfileViewModel } from "../useProfileViewModel";
 
-/** The Lab's golfer, out to break 90, with friends and the server's comparisons. */
 const labGolfer: FakeAnalyticsSeed = {
   analytics: labAnalytics,
   profileAnalytics: labAnalytics,
@@ -18,7 +17,6 @@ const labGolfer: FakeAnalyticsSeed = {
   benchmarks: labBenchmarks,
 };
 
-/** The profile view model, closed until `open()`, as the page holds it until Profile's tab opens. */
 function setup(
   seed: FakeAnalyticsSeed = labGolfer,
   configure?: (repository: FakeAnalyticsRepository) => void,
@@ -40,7 +38,6 @@ function setup(
   return { repository, result, open: () => act(() => result.current.open()) };
 }
 
-/** Opened, with the profile loaded. */
 async function loaded(seed?: FakeAnalyticsSeed, configure?: (repository: FakeAnalyticsRepository) => void) {
   const view = setup(seed, configure);
   view.open();
@@ -48,7 +45,6 @@ async function loaded(seed?: FakeAnalyticsSeed, configure?: (repository: FakeAna
   return view;
 }
 
-/** The golfer with their profile, goal report and default comparison loaded. */
 async function profileLoaded(seed: FakeAnalyticsSeed = labGolfer) {
   const view = await loaded(seed);
   await waitFor(() => expect(view.result.current.goal?.average).not.toBeNull());
@@ -64,7 +60,6 @@ describe("useProfileViewModel", () => {
     open();
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(repository.requests).toEqual([PROFILE_FILTERS]);
-    // The shape and the peak game are the window's: the server's own peak average, six axes drawn.
     expect(result.current.peak?.average).toBe(labAnalytics.peak_game?.average);
     expect(result.current.radar.length).toBeGreaterThan(0);
   });
@@ -115,7 +110,6 @@ describe("useProfileViewModel", () => {
 
     act(() => result.current.setGoal(84));
     await waitFor(() => expect(result.current.goal?.target).toBe(84));
-    // The new goal's report is still on its way: no figures, rather than the last goal's.
     expect(result.current.goal?.gap).toBeNull();
     expect(result.current.goal?.attempts).toEqual([]);
     expect(result.current.peak?.gapToGoal).toBeNull();
@@ -127,7 +121,6 @@ describe("useProfileViewModel", () => {
   it("holds the shape up against the next level from the golfer's index until they pick another", async () => {
     const { repository, result } = await profileLoaded();
 
-    // A 17.8 is compared with a 15 handicap.
     expect(result.current.comparison).toBe(15);
     await waitFor(() => expect(result.current.compared).toBe(true));
     expect(repository.benchmarkRequests[0]).toBe("handicap:15");
@@ -136,7 +129,6 @@ describe("useProfileViewModel", () => {
     act(() => result.current.pickComparison(5, null));
     await waitFor(() => expect(repository.benchmarkRequests).toContain("handicap:5"));
     expect(result.current.comparison).toBe(5);
-    // Behind a 5 on every axis.
     await waitFor(() => expect(result.current.standing.ahead).toEqual([]));
   });
 

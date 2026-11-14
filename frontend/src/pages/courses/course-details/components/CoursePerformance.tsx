@@ -17,11 +17,6 @@ type CoursePerformanceProps = Pick<
   "scoreTrend" | "averageLine" | "courseHoles" | "holes" | "holeOrder" | "holeOrders" | "pickHoleOrder" | "greens"
 >;
 
-/**
- * How the golfer plays a course: their score here over time, then the holes, first by how each one
- * plays (to par, how far it swings, the mix of scores) and then by greens and putts. Every figure is
- * the server's; the charts are the kit's.
- */
 export function CoursePerformance({
   scoreTrend,
   averageLine,

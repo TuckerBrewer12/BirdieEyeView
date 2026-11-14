@@ -1,7 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { newScanSession, ScanSessionContext, type ScanSession } from "./scanSession";
 
-/** Holds the scan in progress for the whole app, so leaving `/scan` doesn't lose it. */
 export function ScanSessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<ScanSession>(() => newScanSession());
   const store = useMemo(() => ({ session, setSession }), [session]);

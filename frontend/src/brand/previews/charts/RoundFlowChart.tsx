@@ -5,7 +5,6 @@ import { overParRound } from "@/testing/fixtures/roundDetails";
 
 const overPar = Round.fromDto(overParRound);
 
-/** The whole chart in a card under its heading, at the width the round page gives it. */
 export default function RoundFlowChartPreview() {
   return (
     <div data-testid="brand-frame" className="fixed inset-0 overflow-auto bg-background p-6">

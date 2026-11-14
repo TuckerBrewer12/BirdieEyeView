@@ -129,7 +129,6 @@ test("a one-character course query clears the results instead of searching", asy
   await rounds.searchCourses("Pe");
   await rounds.seesCourseResult("Pebble Beach");
 
-  // "P" matches Pebble Beach too, so a search for it would keep the result on screen.
   await rounds.searchCourses("P");
   await rounds.doesNotSeeCourseResults();
   await rounds.doesNotSeeNoCoursesFound();

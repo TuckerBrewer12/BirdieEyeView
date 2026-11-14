@@ -10,7 +10,6 @@ import {
 
 const sortOptions = ["Date", "Score", "To Par", "Course"];
 
-/** The side panel (handicap breakdown, unsaved changes) and the phone's pick-one sheet (sort). */
 export default function SheetPreview() {
   return (
     <div className="flex flex-col gap-6">

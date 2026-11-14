@@ -43,56 +43,32 @@ const defaultRepositories: ScanPageRepositories = {
 export interface ScanPageViewModel {
   step: ScanStep;
   mode: ScanMode;
-  /** Switching starts the card over: a photo or course picked for one mode doesn't carry. */
   setMode: (mode: ScanMode) => void;
-  /** Why the last scan failed. */
   error: string | null;
-  /** Sending the failed scan's photo for debugging, when the golfer asks. */
   report: FailedScanReport;
   startOver: () => void;
 
-  // Upload
-  /** The picked photo, readied for upload. */
   photo: File | null;
   pickPhoto: (photo: File) => void;
-  /** What the golfer says is on the card: their name, how scores are written, which rows it has. */
   card: CardFacts;
   setCard: (patch: Partial<CardFacts>) => void;
-  /** Reads the picked photo. */
   extract: () => void;
-  /** A saved course to read the card against, picked before scanning. */
   presetCourse: PickedCourse | null;
-  /** Search over the golfer's saved courses, for the preset course. */
   courseSearch: CourseSearch;
   pickPresetCourse: (course: CourseSummary) => void;
   clearPresetCourse: () => void;
 
-  // Processing
-  /** Which step of reading the card is showing, from 0 to `SCAN_STEPS.length - 1`. */
   phase: number;
 
-  // Setup
-  /** Choosing the course, tee and date before typing scores in by hand. */
   setup: ScanSetupViewModel;
 
-  // Review
-  /** Checking the card, once there is one. */
   review: ScanReviewViewModel;
 
-  // Success
-  /** The round as saved, once it has loaded. */
   savedRound: RoundDetail | null;
-  /** Leaves the saved round for a fresh card. */
   scanAnother: () => void;
-  /** Ends the scan and hands the saved round's id to `open`. */
   openSavedRound: (open: (roundId: string) => void) => void;
 }
 
-/**
- * The scan screen's step machine: upload → processing → review → success, or setup → review
- * for typing scores in by hand. The card being worked on lives in the app-wide scan session,
- * so it survives leaving the page; searches and the processing phase start fresh each visit.
- */
 export function useScanPageViewModel(
   userId: string,
   repositories: ScanPageRepositories = defaultRepositories,
@@ -100,7 +76,6 @@ export function useScanPageViewModel(
   const { scan, courses, rounds, reports } = repositories;
   const { session, setSession } = useScanSession();
   const [phase, setPhase] = useState(0);
-  // A later pick wins over an earlier one still being readied.
   const latestPick = useRef(0);
 
   const courseSearch = useCourseSearch(userId, courses);
@@ -123,7 +98,6 @@ export function useScanPageViewModel(
           ? "setup"
           : "upload";
 
-  // Restarting at zero each time keeps a second scan from opening on the last phase.
   useEffect(() => {
     if (step !== "processing") return;
     const timer = setInterval(
@@ -192,7 +166,6 @@ export function useScanPageViewModel(
   const extract = useCallback(() => {
     const { photo, card, presetCourse } = session;
     if (!photo) return;
-    // Only the scan of the photo still picked may land, so starting over mid-scan sticks.
     const stillPicked = (current: typeof session) => current.photo?.id === photo.id;
     setSession((current) => ({ ...current, error: null, failedScan: null }));
     extractCard({ photo: photo.file, userContext: cardContext(card), ocrText: cardText, courseId: presetCourse?.id ?? null })
@@ -200,8 +173,6 @@ export function useScanPageViewModel(
         setSession((current) =>
           stillPicked(current) ? { ...current, review: reviewFromScan(result, todayIso()) } : current,
         );
-        // With a course picked up front, the review offers the matches for the name read off
-        // the card. Without one, a noisy name is better left out of the search.
         if (presetCourse) setReviewQuery(courseQueryFrom(result.round.course?.name));
       })
       .catch((err: unknown) => {

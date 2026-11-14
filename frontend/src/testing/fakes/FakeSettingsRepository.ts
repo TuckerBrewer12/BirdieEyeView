@@ -9,7 +9,6 @@ export interface FakeSettingsSeed {
   device?: Partial<DevicePreferences>;
 }
 
-/** One player's settings in memory: their user row, the courses to search, and device choices. */
 export class FakeSettingsRepository implements SettingsRepository {
   user: UserDto;
   courses: CourseSummaryDto[];

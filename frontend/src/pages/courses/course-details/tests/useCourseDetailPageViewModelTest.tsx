@@ -104,7 +104,6 @@ describe("useCourseDetailPageViewModel", () => {
     ]);
 
     act(() => result.current.pickHoleOrder("hardest"));
-    // Every third hole is half a stroke over, the rest half under: those come first, by hole.
     expect(result.current.holes.map((hole) => hole.hole).slice(0, 7)).toEqual([3, 6, 9, 12, 15, 18, 1]);
     expect(result.current.courseHoles.map((hole) => hole.hole).slice(0, 3)).toEqual([1, 2, 3]);
   });

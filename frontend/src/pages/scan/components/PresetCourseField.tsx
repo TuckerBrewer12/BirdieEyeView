@@ -7,7 +7,6 @@ export type PresetCourse = Pick<
   "courseSearch" | "presetCourse" | "pickPresetCourse" | "clearPresetCourse"
 >;
 
-/** A saved course to read the card against, picked before the scan: searched for, or picked and cleared. */
 export function PresetCourseField({ course, inputId }: { course: PresetCourse; inputId?: string }) {
   const { courseSearch } = course;
   return (

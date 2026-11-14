@@ -1,15 +1,4 @@
 #!/usr/bin/env python3
-"""Dedup earlier bot findings and build recheck replies.
-
-On synchronize the model often rephrases the same issue, which used to mint a
-new finding id and a second fix PR. This module matches those to comments this
-bot already left, replies ✅/❌ on the original thread, and keeps only new
-issues for comments and fix PRs.
-
-CLI:
-    previous.py collect        # COMMENTS_JSON REVIEWS_JSON -> previous findings
-    previous.py already-open   # FINDING_JSON + OPEN_PRS -> matching PR or {}
-"""
 from __future__ import annotations
 
 import json
@@ -52,7 +41,6 @@ OPEN_REPLY = "❌ This hasn't been addressed yet."
 
 
 def load_json_list(path: Path | str) -> list[Any]:
-    """Read a JSON array, or several arrays concatenated by `gh api --paginate`."""
     text = Path(path).read_text().strip() if path else ""
     if not text:
         return []
@@ -87,7 +75,6 @@ def _split_token(tok: str) -> set[str]:
 
 
 def distinctive(body: str) -> set[str]:
-    """Tokens that identify *which* issue this is, not generic review language."""
     text = body or ""
     items: set[str] = set()
     for raw in BACKTICK_RE.findall(text):
@@ -104,7 +91,6 @@ def _norm(body: str) -> str:
 
 
 def similarity(a: dict[str, Any], b: dict[str, Any], *, require_path: bool = True) -> float:
-    """0–1 score. Same path + overlapping distinctive tokens, or close prose."""
     path_a, path_b = str(a.get("path") or ""), str(b.get("path") or "")
     if require_path and path_a and path_b and path_a != path_b:
         return 0.0
@@ -145,7 +131,6 @@ def match_findings(
     previous: list[dict[str, Any]],
     current: list[dict[str, Any]],
 ) -> list[tuple[dict[str, Any], dict[str, Any]]]:
-    """Greedy unique pairs of earlier comments and current findings."""
     pairs: list[tuple[float, int, int]] = []
     for i, prev in enumerate(previous):
         for j, cur in enumerate(current):
@@ -188,7 +173,6 @@ def reply_body(status: str, sha: str, finding_id: str) -> str:
 
 
 def normalize_model_status(item: object) -> tuple[str, str] | None:
-    """Return (id, fixed|open) from one model `previous` element."""
     if not isinstance(item, dict):
         return None
     fid = str(item.get("id") or "").strip()
@@ -231,7 +215,6 @@ def collect_previous(
     reviews: list[dict[str, Any]],
     bot_name: str,
 ) -> list[dict[str, Any]]:
-    """Original findings this bot already posted, with last recheck if any."""
     previous: list[dict[str, Any]] = []
     seen_comment_ids: set[int] = set()
 
@@ -305,7 +288,6 @@ def resolve_statuses(
     *,
     used_object_format: bool,
 ) -> dict[int, str]:
-    """Map previous index → fixed|open."""
     pairs = match_findings(previous, current)
     open_idx = {id(prev) for prev, _cur in pairs}
 
@@ -331,8 +313,6 @@ def resolve_statuses(
         elif model_status.get(fid) == STATUS_OPEN or used_object_format:
             resolved[i] = STATUS_OPEN
         else:
-            # Bare array: the model was told not to repeat itself, so a miss
-            # after matching means the issue did not come back.
             resolved[i] = STATUS_FIXED
     return resolved
 
@@ -371,7 +351,6 @@ def recheck_summary_lines(
     previous: list[dict[str, Any]],
     statuses: dict[int, str],
 ) -> tuple[int, int, list[str]]:
-    """Return (fixed, open, orphan bullet lines)."""
     fixed = sum(1 for i in range(len(previous)) if statuses.get(i) == STATUS_FIXED)
     still_open = len(previous) - fixed
     orphan_lines: list[str] = []
@@ -391,7 +370,6 @@ def already_open_pr(
     prs: list[dict[str, Any]],
     pr_number: str,
 ) -> dict[str, Any] | None:
-    """An open bot-fix PR for this parent that is the same finding, even if the id drifted."""
     prefix = f"bot-fix/pr-{pr_number}/"
     best: dict[str, Any] | None = None
     best_score = 0.0

@@ -1,5 +1,3 @@
-"""Course responses, built one way from the Course model so every endpoint agrees."""
-
 from typing import Optional
 
 from analytics.handicap import tee_course_handicap
@@ -21,8 +19,6 @@ def _tee(tee: Tee, par: Optional[int], handicap_index: Optional[float]) -> TeeRe
 
 
 def course_detail(course: Course, handicap_index: Optional[float] = None) -> CourseResponse:
-    """A full course, as course details and the round editor read it. With the signed-in golfer's
-    index, each tee carries their course handicap off it."""
     par = course.get_par()
     return CourseResponse(
         id=course.id,
@@ -34,5 +30,5 @@ def course_detail(course: Course, handicap_index: Optional[float] = None) -> Cou
         front_nine_par=course.front_nine_par,
         back_nine_par=course.back_nine_par,
         holes=course.holes,
-        tees=[_tee(tee, par, handicap_index) for tee in course.tees_by_length()],  # longest first
+        tees=[_tee(tee, par, handicap_index) for tee in course.tees_by_length()],
     )

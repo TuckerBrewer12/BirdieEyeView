@@ -1,7 +1,6 @@
 import { ScoreKindLabel } from "@/brand/components/ScoreKindLabel";
 import { SCORE_KEYS } from "@/brand/theme";
 
-/** Every kind in its colour with a dot, as a total's name; then as a legend's key, square and in the line's ink. */
 export default function ScoreKindLabelPreview() {
   return (
     <div className="flex flex-col gap-3">

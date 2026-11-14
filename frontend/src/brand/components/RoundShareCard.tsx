@@ -20,7 +20,6 @@ interface ShareFigure {
   unit?: string;
 }
 
-/** Putts, greens and net under the card, each only when the round has it. */
 function shareFigures(round: Round): ShareFigure[] {
   const figures: (ShareFigure | null)[] = [
     round.putts != null ? { label: "Putts", value: round.putts.toString() } : null,
@@ -30,7 +29,6 @@ function shareFigures(round: Round): ShareFigure[] {
   return figures.filter((figure) => figure != null);
 }
 
-/** "Par 72 · 6,500 yds", from what the round knows. */
 function parAndYards(round: Round): string | null {
   const parts = [
     round.par != null ? `Par ${round.par}` : null,
@@ -39,12 +37,6 @@ function parAndYards(round: Round): string | null {
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
-/**
- * A round as an image to send: the card the app draws for a round, resting on the page with the
- * brand under it. The course, the day and tee, the score and its pill, the two nines as pills, how
- * it went hole by hole, the score mix, then putts, greens and net. A fixed width, because it is
- * captured as a PNG rather than laid out on a page.
- */
 const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
   ({ round, className, ...props }, ref) => {
     const when = roundDayAndTee(round);

@@ -3,11 +3,8 @@ import { formatPercent, formatScorecardFigure as show } from "@/domain/format";
 import type { AverageToPar, ScorecardHole, ScorecardNine } from "../courseDetailModel";
 
 interface CourseScorecardProps {
-  /** The tee the card reads, as its bar names it. */
   teeLine: string | null;
-  /** The front nine, then the back. */
   nines: ScorecardNine[];
-  /** Adds the golfer's average to par, and on a wide screen their greens, under the course's rows. */
   played: boolean;
 }
 
@@ -19,16 +16,10 @@ function ToPar({ value }: { value: AverageToPar | null }) {
 
 const SMALL = "h-7 text-caption font-medium text-muted-foreground md:text-label";
 
-/**
- * The course as a scorecard off one tee, on the kit's scorecard: yards, par and stroke index for
- * every hole (yards and stroke index when the course has them), and once the golfer has played here
- * their average to par on each hole and the greens they hit.
- */
 export function CourseScorecard({ teeLine, nines, played }: CourseScorecardProps) {
   const holes = nines.flatMap((nine) => nine.holes);
   const course = nines[1]?.course ?? null;
 
-  // A row the card has nothing for reads as a failed read, so it stays out, as on a round's card.
   const rows: (Row | false)[] = [
     holes.some((hole) => hole.yards != null) && {
       key: "yards",
@@ -62,7 +53,6 @@ export function CourseScorecard({ teeLine, nines, played }: CourseScorecardProps
       nine: (nine) => <ToPar value={nine.nine.averageToPar} />,
       tot: <ToPar value={course?.averageToPar ?? null} />,
     },
-    // A phone's nine has no room for the greens; the wide card keeps them.
     played && {
       key: "greens",
       label: "Greens",

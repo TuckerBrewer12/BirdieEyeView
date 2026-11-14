@@ -1,5 +1,3 @@
-"""Authentication endpoints: register/login/logout/me + verification/reset flows."""
-
 import hashlib
 import logging
 import os
@@ -449,7 +447,6 @@ async def forgot_password(
             request_ip,
         )
 
-    # Always generic to avoid account enumeration.
     return MessageResponse(message="If this account exists, a password reset link has been sent.")
 
 

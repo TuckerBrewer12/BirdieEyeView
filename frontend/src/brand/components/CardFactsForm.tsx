@@ -8,16 +8,9 @@ import { ToggleGroup, ToggleGroupItem } from "./ToggleGroup";
 interface CardFactsFormProps {
   card: CardFacts;
   onChange: (patch: Partial<CardFacts>) => void;
-  /** Prefix for the fields' ids, when two forms could share a page. */
   idPrefix?: string;
 }
 
-/**
- * What the golfer tells the scan about their card: their name as written on it, how the scores are
- * written, which other rows it has, and, once it has more than scores, the rows' order with the
- * name beside its row. The scan page and the landing page's try-it both ask this way; `cardContext()`
- * words it for the scan.
- */
 function CardFactsForm({ card, onChange, idPrefix = "card" }: CardFactsFormProps) {
   const rows = cardRows(card);
   return (
@@ -40,7 +33,6 @@ function CardFactsForm({ card, onChange, idPrefix = "card" }: CardFactsFormProps
           aria-label="Scores written as"
           value={[card.writtenAs]}
           onValueChange={(values) => {
-            // Pressing the chosen one again would clear it; one is always chosen.
             if (values[0] === "strokes" || values[0] === "toPar") onChange({ writtenAs: values[0] });
           }}
         >

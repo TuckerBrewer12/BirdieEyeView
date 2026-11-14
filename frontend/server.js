@@ -72,7 +72,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Fail fast for API calls accidentally sent to the frontend container.
   if (pathname === "/api" || pathname.startsWith("/api/")) {
     send(
       res,
@@ -102,12 +101,10 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    // SPA fallback
     serveFile(res, path.join(distDir, "index.html"));
   });
 });
 
 server.listen(port, host, () => {
-  // Keeping this concise helps debugging in Railway logs.
   console.log(`frontend server listening on http://${host}:${port}`);
 });

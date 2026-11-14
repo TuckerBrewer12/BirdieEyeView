@@ -2,12 +2,9 @@ import { useCallback, useRef, useState } from "react";
 import type { FailedScanAttempt, ScanReportStatus } from "@/domain/scanReport";
 import { REPORT_NOT_SAVED, scanReportRepository, type ScanReportRepository } from "./scanReportRepository";
 
-/** Sending a failed scan for debugging, once the golfer asks to. */
 export interface FailedScanReport {
-  /** Whether there is a failed scan to report. */
   available: boolean;
   status: ScanReportStatus;
-  /** Why the last report wasn't saved. */
   error: string | null;
   submit: () => void;
 }
@@ -18,10 +15,6 @@ interface Submission {
   error: string | null;
 }
 
-/**
- * Reports a failed scan only when asked, at most once per failure, and lets a failed report be
- * sent again. A report still in flight for an earlier failure can't mark a newer one sent.
- */
 export function useFailedScanReport(
   attempt: FailedScanAttempt | null,
   repository: ScanReportRepository = scanReportRepository,

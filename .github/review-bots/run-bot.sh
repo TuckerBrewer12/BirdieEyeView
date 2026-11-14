@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-# Shared review bot runner.
-# Posts a review: one inline comment per *new* finding, plus a summary.
-# Rechecks comments this bot already left (✅ fixed / ❌ still open).
-# New findings are written to GITHUB_OUTPUT so a follow-up job can open one
-# fix PR per finding against this branch.
-#
 # Per-bot env: BOT_NAME BOT_PROMPT BOT_PATHSPEC BOT_CLEAN BOT_LEAD
 set -euo pipefail
 
@@ -62,8 +56,6 @@ if not isinstance(items, list):
 prompt_path.write_text(prompt_path.read_text() + previous_mod.prompt_appendix(items))
 PY
 
-# Read-only. A CLI failure fails the check; exiting 0 here is what made a
-# dead model look like a clean review.
 if ! cursor_run ask "$WORK/prompt.txt" "$WORK/findings.json"; then
   echo "::error title=${BOT_NAME}::Cursor CLI failed; not reviewing."
   emit_no_fixes

@@ -1,5 +1,3 @@
-"""Round API endpoints."""
-
 import logging
 from uuid import UUID
 
@@ -142,10 +140,8 @@ async def update_round(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Edit an existing round's scores and/or metadata."""
     await _check_round_ownership(round_id, current_user, db)
     try:
-        # Update hole scores if provided
         if req.hole_scores:
             hole_score_models = [
                 HoleScore(
@@ -172,7 +168,6 @@ async def update_round(
         if not updated:
             raise HTTPException(404, "Round not found")
 
-        # Update metadata fields
         meta_updates = {}
         if req.notes is not None:
             meta_updates["notes"] = req.notes
@@ -208,16 +203,10 @@ async def link_course_to_round(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Link an unlinked round to an existing course.
-
-    Backfills par_played/handicap_played on hole_scores from the course,
-    and fills course holes from any par_played already on the round.
-    """
     await _check_round_ownership(round_id, current_user, db)
     try:
         await _check_course_access(req.course_id, current_user, db)
 
-        # Fill course gaps from the round's par_played values
         round_ = await db.rounds.get_round(str(round_id))
         if not round_:
             raise HTTPException(404, "Round not found")
@@ -236,8 +225,6 @@ async def link_course_to_round(
         if scan_holes and fill_destination_course:
             await db.courses.fill_course_gaps(str(req.course_id), scan_holes)
 
-        # If round carries tee details (user tee or linked course tee), merge them
-        # into the destination course before linking so tee selection remains usable.
         source_tee_name: Optional[str] = None
         source_slope: Optional[float] = None
         source_rating: Optional[float] = None

@@ -15,11 +15,6 @@ export interface LinkCoursePanelViewModel {
   selectCourse: (course: CourseSummary) => void;
 }
 
-/**
- * One round's course-link panel: search saved courses, pick one, link it.
- * The panel mounts when it opens and unmounts when it closes, so its search
- * and error start empty each time without anything resetting them.
- */
 export function useLinkCoursePanelViewModel(
   userId: string,
   roundId: string,

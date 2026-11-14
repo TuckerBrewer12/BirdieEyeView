@@ -4,10 +4,8 @@ import { tester } from "./tester.js";
 tester.run("kit/no-arbitrary-value", kit.rules["no-arbitrary-value"], {
   valid: [
     'const c = "text-body w-preview";',
-    // Variants and token-less layout values are not hardcoded measures.
     'const c = "data-[slot=card]:p-2 has-[>svg]:gap-2 grid-cols-[1fr_auto] group-data-[size=sm]/card:text-sm";',
     'const c = "gap-(--card-spacing)";',
-    // A bracketed colour is no-color-literal's to report, percentages in a mix included.
     'const c = "bg-[#eef7f0]";',
     'const c = "bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)]";',
     'import x from "./a-[1px].css";',
@@ -23,7 +21,6 @@ tester.run("kit/no-color-literal", kit.rules["no-color-literal"], {
   valid: [
     'const c = "bg-card text-muted-foreground text-score-birdie";',
     'const c = "#hole-3";',
-    // White and black only count as utilities, not as words.
     'const label = "Play from the white tee or the black tee";',
     'const c = "bg-card text-primary-foreground border-border";',
   ],
@@ -41,7 +38,6 @@ tester.run("kit/no-color-literal", kit.rules["no-color-literal"], {
       code: 'const el = <span className="bg-white text-black" />;',
       errors: [{ messageId: "whiteBlack" }, { messageId: "whiteBlack" }],
     },
-    // The opacity is no-opacity-wash's to report; the white is still white.
     {
       code: 'const c = "text-white/90 dark:border-white";',
       errors: [{ messageId: "whiteBlack" }, { messageId: "whiteBlack" }],
@@ -52,9 +48,7 @@ tester.run("kit/no-color-literal", kit.rules["no-color-literal"], {
 tester.run("kit/no-opacity-wash", kit.rules["no-opacity-wash"], {
   valid: [
     'const c = "bg-score-birdie-muted bg-muted text-muted-foreground";',
-    // A named opacity token and a font size's line height are not hand-picked washes.
     'const c = "bg-primary/wash text-sm/6 text-body/7";',
-    // Fractions and slashes outside a colour utility are other rules' business.
     'const c = "w-1/2 grid-cols-[1fr_auto] group-hover/card:text-primary";',
     'const href = "https://example.com/to-do/10";',
     'const c = "from-primary via-accent to-transparent";',
@@ -64,7 +58,6 @@ tester.run("kit/no-opacity-wash", kit.rules["no-opacity-wash"], {
     { code: 'const c = "bg-gradient-to-b from-primary/8 to-background";', errors: [{ messageId: "opacity" }] },
     { code: 'const el = <p className="text-white/70 border-border/50 ring-primary/30" />;', errors: 3 },
     { code: 'const c = "border-border/[0.5]";', errors: [{ messageId: "opacity" }] },
-    // A variant does not hide the class it guards.
     { code: 'const c = "hover:bg-primary/90 dark:bg-card/60";', errors: 2 },
     {
       code: 'const c = "from-primary from-10% to-accent to-55%";',
@@ -75,13 +68,11 @@ tester.run("kit/no-opacity-wash", kit.rules["no-opacity-wash"], {
 
 tester.run("kit/no-fraction-size", kit.rules["no-fraction-size"], {
   valid: [
-    // Halves, thirds, quarters, sixths and twelfths are the layout grid.
     'const c = "w-1/2 w-2/3 basis-3/4 w-5/6 w-7/12 w-full -translate-y-1/2 top-1/2";',
     'const c = "aspect-4/3 bg-primary/30 grid-cols-[1fr_auto]";',
     'const c = "h-profile-par w-preview";',
   ],
   invalid: [
-    // PR #315's profile bars, before they got --brand-size-profile-* tokens.
     { code: 'const c = "h-7/25";', errors: [{ messageId: "fraction" }] },
     { code: 'const el = <div className="w-3/7 basis-5/9 min-h-2/5" />;', errors: 3 },
     { code: "const c = `flex ${tall ? \"md:h-9/10\" : \"size-4/5\"}`;", errors: 2 },
@@ -99,9 +90,7 @@ tester.run("kit/no-arbitrary-value (numbers)", kit.rules["no-arbitrary-value"], 
 tester.run("kit/no-off-scale-spacing", kit.rules["no-off-scale-spacing"], {
   valid: [
     'const c = "px-5 py-4 gap-4 w-10 size-3";',
-    // Tailwind's half steps under 4 are the 2px a hairline gap or an icon nudge needs.
     'const c = "gap-0.5 py-1.5 px-2.5 size-3.5 -mt-0.5";',
-    // Named measures and fractions are other rules' business.
     'const c = "w-sparkline-card px-page-phone w-1/2";',
     'const v = "1.5 rounds";',
   ],
@@ -138,7 +127,6 @@ tester.run("kit/no-text-arrow", kit.rules["no-text-arrow"], {
   valid: [
     'const label = "View round";',
     "const el = <span>Handicap 1 (hardest) to 18 (easiest)</span>;",
-    // A comment can point however it likes.
     "// upload → review\nconst a = 1;",
   ],
   invalid: [
@@ -189,7 +177,6 @@ tester.run("kit/no-handmade-to-par-pill", kit.rules["no-handmade-to-par-pill"], 
       code: 'const c = cn("rounded-full", toParTextClass(toPar));',
       filename: "/app/src/brand/components/ToParPill.tsx",
     },
-    // A page is no-to-par-tone's to report.
     { code: 'const c = cn("rounded-full", toParTextClass(toPar));', filename: "/app/src/pages/rounds/RoundsPage.tsx" },
   ],
   invalid: [
@@ -208,10 +195,8 @@ tester.run("kit/no-handmade-to-par-pill", kit.rules["no-handmade-to-par-pill"], 
 
 tester.run("kit/no-breakpoint-styling", kit.rules["no-breakpoint-styling"], {
   valid: [
-    // Which side a sheet opens from is behaviour the CSS can't change.
     'function S() { const wide = useFromBreakpoint("md"); return <Sheet side={wide ? "right" : "bottom"} />; }',
     'function S() { const wide = useFromBreakpoint("md"); return <div className="p-4 md:p-6" />; }',
-    // Picking what to render is what it's for.
     'function S() { const wide = useFromBreakpoint("md"); return wide ? <Table /> : <><Table nine="front" /><Table nine="back" /></>; }',
   ],
   invalid: [
@@ -223,7 +208,6 @@ tester.run("kit/no-breakpoint-styling", kit.rules["no-breakpoint-styling"], {
       code: 'function S() { const wide = useFromBreakpoint("md"); const c = cn("flex", wide && "gap-4"); return c; }',
       errors: [{ messageId: "breakpoint" }],
     },
-    // Handed on to a component, which could style by it out of sight.
     {
       code: 'function S() { const wide = useFromBreakpoint("md"); return <Table wide={wide} />; }',
       errors: [{ messageId: "passThrough" }],
@@ -232,7 +216,6 @@ tester.run("kit/no-breakpoint-styling", kit.rules["no-breakpoint-styling"], {
       code: 'function S() { const wide = useFromBreakpoint("md"); return <Field focusOnOpen={!wide} />; }',
       errors: [{ messageId: "passThrough" }],
     },
-    // Words by breakpoint, outside a prop.
     {
       code: 'function S() { const wide = useFromBreakpoint("md"); return <th>{wide ? "Your avg" : "Avg"}</th>; }',
       errors: [{ messageId: "words" }],
@@ -251,7 +234,6 @@ tester.run("kit/no-raw-heading", kit.rules["no-raw-heading"], {
   valid: [
     { code: 'const el = <PageTitle size="heading">Half Moon Bay</PageTitle>;', filename: PAGE },
     { code: "const el = <CardTitle level={2}>Round flow</CardTitle>;", filename: PAGE },
-    // The kit is where headings are built.
     { code: 'const el = <h1 className="text-title" />;', filename: KIT },
   ],
   invalid: [
@@ -263,7 +245,6 @@ tester.run("kit/no-raw-heading", kit.rules["no-raw-heading"], {
 tester.run("kit/no-figure-type", kit.rules["no-figure-type"], {
   valid: [
     { code: 'const el = <StatValue size="card">78</StatValue>;', filename: PAGE },
-    // `text-figure` lives in the kit's Stat variants.
     { code: 'const el = <div className="text-figure" />;', filename: "/app/src/brand/components/Stat.tsx" },
     { code: 'const el = <span className="text-title" />;', filename: PAGE },
   ],
@@ -290,7 +271,6 @@ tester.run("kit/no-handmade-radio", kit.rules["no-handmade-radio"], {
   valid: [
     'const el = <ToggleGroup aria-label="Tee" />;',
     'const el = <div role="group" />;',
-    // A kit component's own role prop is its business.
     'const el = <Thing role="radio" />;',
   ],
   invalid: [
@@ -315,7 +295,6 @@ tester.run("kit/no-format-outside-domain", kit.rules["no-format-outside-domain"]
 tester.run("kit/no-to-par-tone", kit.rules["no-to-par-tone"], {
   valid: [
     { code: '<ToParFigure toPar={-0.5} size="inherit" label="−0.5" />;', filename: PAGE },
-    // The kit is where to-par paint is applied.
     { code: "const c = toParTextClass(toPar);", filename: KIT },
   ],
   invalid: [
@@ -335,7 +314,6 @@ tester.run("kit/no-raw-table", kit.rules["no-raw-table"], {
 tester.run("kit/no-loose-card-title", kit.rules["no-loose-card-title"], {
   valid: [
     { code: "<Card><CardHeader><CardTitle>Goal</CardTitle><CardAction><Menu /></CardAction></CardHeader></Card>;", filename: PAGE },
-    // A heading over a group of cards is the section's, not a card's.
     { code: "<section><CardTitle level={2}>Where to find 3 strokes</CardTitle><Card /></section>;", filename: PAGE },
     { code: "<Card><div><CardTitle>Kit</CardTitle></div></Card>;", filename: KIT },
   ],
@@ -369,7 +347,6 @@ tester.run("kit/no-verdict-tone", kit.rules["no-verdict-tone"], {
   valid: [
     { code: '<StatValue tone={figure.tone}>{figure.value}</StatValue>;', filename: PAGE },
     { code: '<b className={verdictTextClass(group.tone)}>{gap}</b>;', filename: PAGE },
-    // A colour that doesn't change with the data is the design's, not a verdict.
     { code: '<span className="text-score-bogey">Penalty</span>;', filename: PAGE },
     { code: 'const TONE = { good: "text-primary", bad: "text-score-bogey" };', filename: KIT },
   ],
@@ -383,7 +360,6 @@ tester.run("kit/no-verdict-tone", kit.rules["no-verdict-tone"], {
 tester.run("kit/no-percent-template", kit.rules["no-percent-template"], {
   valid: [
     { code: "<Meter aria-label={saverShareLabel(saver)} />;", filename: PAGE },
-    // In a style it's a length, not words.
     { code: "<div style={{ width: `${share}%` }} />;", filename: PAGE },
     { code: "<Meter aria-label={`${value}%`} />;", filename: KIT },
   ],
@@ -411,7 +387,6 @@ tester.run("kit/no-handmade-tee-picker", kit.rules["no-handmade-tee-picker"], {
 tester.run("kit/no-handmade-check-chip", kit.rules["no-handmade-check-chip"], {
   valid: [
     { code: '<CheckChip checked={on} onCheckedChange={setOn}>Putts</CheckChip>;', filename: PAGE },
-    // A plain checkbox and its words, as Settings lays one out.
     { code: '<label className="flex items-center gap-2"><Checkbox />Get updates</label>;', filename: PAGE },
     { code: '<label className="rounded-lg border"><Checkbox />Kit</label>;', filename: KIT },
   ],

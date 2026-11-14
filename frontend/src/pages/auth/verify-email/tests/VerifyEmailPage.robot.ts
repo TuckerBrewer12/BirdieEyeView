@@ -3,9 +3,7 @@ import { AuthScreenRobot, type AuthSeed } from "../../tests/AuthScreen.robot";
 
 export const VERIFY_TOKEN = "verify-token-from-email";
 
-/** Screen robot for `/verify-email`, opened from the emailed link. */
 export class VerifyEmailRobot extends AuthScreenRobot {
-  /** `token` is what the link carries; the backend honours `VERIFY_TOKEN` once. */
   async open(token: string | null = VERIFY_TOKEN, seed: AuthSeed = {}): Promise<this> {
     const path = token == null ? "/verify-email" : `/verify-email?token=${token}`;
     await this.visit(path, "Email verification", { verifyTokens: [VERIFY_TOKEN], ...seed });

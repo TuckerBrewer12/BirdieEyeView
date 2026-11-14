@@ -26,29 +26,19 @@ export type { ChangeVerdict, WhsBreakdown };
 
 export interface DashboardPageViewModel {
   data: DashboardDto | null;
-  /** "Good evening", for the hour it is. */
   greeting: string;
   user: UserDto | null;
   loading: boolean;
   error: Error | null;
   refetch: () => void;
-  /** The index and its move this month: the greeting's line and the phone's handicap card. */
   handicap: HandicapMonth;
-  /** The index after each of the last 20 rounds, oldest first: the phone's handicap line. */
   handicapLine: (number | null)[];
-  /** Each round's five-round average, oldest first: the scoring average's line. */
   averageLine: (number | null)[];
-  /** The newest round, the dashboard's lead. Null before the first round. */
   lastRound: RoundSummary | null;
-  /** The three rounds before it. */
   recentRounds: RoundSummary[];
-  /** Null before a scored round. */
   best: BestRound | null;
-  /** Rounds this calendar year: the phone's goal line. */
   roundsThisYear: number;
-  /** Each score kind's share of the last five rounds' holes. */
   recentMix: ScoreMix;
-  /** Null until the player sets a scoring goal. */
   goal: GoalProgress | null;
   whs: WhsBreakdown;
   handicapSheetOpen: boolean;
@@ -72,7 +62,6 @@ const RECENT_ROUNDS = 3;
 export function useDashboardPageViewModel(
   userId: string,
   repository: DashboardRepository = dashboardRepository,
-  /** The clock the greeting reads; a test pins it. */
   now: () => Date = () => new Date(),
 ): DashboardPageViewModel {
   const [handicapSheetOpen, setHandicapSheetOpen] = useState(false);

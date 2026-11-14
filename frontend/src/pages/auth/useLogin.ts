@@ -6,7 +6,6 @@ export interface Credentials {
   password: string;
 }
 
-/** Signs in. On success the session holds the golfer, so the app's signed-in screens take over. */
 export function useLogin(auth: Pick<AuthActions, "login">) {
   return useMutation({
     mutationFn: ({ email, password }: Credentials) => auth.login(email, password),

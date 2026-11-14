@@ -7,7 +7,6 @@ import type { ScanReviewViewModel } from "../useScanReviewViewModel";
 const noop = () => {};
 const draft = reviewFromScan(unsureCard, "2026-10-15");
 
-/** A scanned card with two scores to check, beside the photo it was read from. */
 const review: ScanReviewViewModel = {
   round: reviewedRound(draft, null),
   toCheck: strokesToCheck(draft.scan),

@@ -22,36 +22,29 @@ import {
 
 export type { Option, Scope, SortKey };
 
-/** The round a link sheet is for, worded: its title line and the button that keeps it as it is. */
 export interface LinkingRound {
   id: string;
-  /** "Scanned Scorecard · Mar 9 · 85". */
   line: string;
-  /** "Keep as “Scanned Scorecard”", or "Leave it unlinked" for a round with no name. */
   keepLabel: string;
 }
 
 export interface RoundsUiState {
   loading: boolean;
-  /** Why the rounds didn't load; null once they have, even if a later refresh fails. */
   loadError: string | null;
   rounds: RoundSummary[];
   filteredRounds: RoundSummary[];
   visibleRounds: RoundSummary[];
   remainingCount: number;
   search: string;
-  /** The phone keeps its search behind an icon until it is opened, or while it holds a query. */
   searchOpen: boolean;
   scope: Scope;
   scopeOptions: readonly Option<Scope>[];
   course: string;
   courseOptions: Option<string>[];
-  /** The course menu's trigger: the course picked, or "All courses". */
   courseLabel: string;
   sortKey: SortKey;
   sortLabel: string;
   sortOptions: readonly Option<SortKey>[];
-  /** The round whose course-link panel or sheet is open. */
   linking: LinkingRound | null;
 }
 
@@ -60,12 +53,10 @@ export interface RoundsPageViewModel extends RoundsUiState {
   loadMore: () => void;
   setSearch: (q: string) => void;
   toggleSearch: () => void;
-  /** The segmented control's pick. Tapping the pressed option again leaves it pressed. */
   pickScope: (value: string | undefined) => void;
   setCourse: (course: string) => void;
   selectSort: (key: SortKey) => void;
   closeLink: () => void;
-  /** Whether this round's course-link panel is the one showing. */
   isLinkOpen: (roundId: string) => boolean;
   toggleLink: (roundId: string) => void;
 }
@@ -102,8 +93,6 @@ export function useRoundsPageViewModel(
   const closeLink = useCallback(() => setLinkingRoundId(null), []);
   const isLinkOpen = useCallback((roundId: string) => linkingRoundId === roundId, [linkingRoundId]);
 
-  // Only one panel is open at a time, so tapping Link on the open row closes it and tapping any
-  // other row moves the panel there.
   const toggleLink = useCallback((roundId: string) => {
     setLinkingRoundId((open) => (open === roundId ? null : roundId));
   }, []);

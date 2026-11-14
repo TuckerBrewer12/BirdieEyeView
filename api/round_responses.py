@@ -1,5 +1,3 @@
-"""Round responses, built one way from the Round model so every endpoint agrees."""
-
 from typing import Dict, List, Optional
 
 from analytics.handicap import round_course_handicap, round_net_score
@@ -66,7 +64,6 @@ def _figures(round_: Round) -> dict:
 def round_summary(
     round_: Round, best_rank: Optional[int] = None, worst_rank: Optional[int] = None
 ) -> RoundSummaryResponse:
-    """A round for list views: only what a list draws, so a long list stays small."""
     running = round_.running_to_par()
     return RoundSummaryResponse(
         id=str(round_.id),
@@ -96,16 +93,12 @@ def round_summary(
 
 
 def round_list(rounds: List[Round]) -> List[RoundSummaryResponse]:
-    """The round list, each round placed among the others for the list's Best and Worst orders."""
     best: Dict[int, int] = best_round_ranks(rounds)
     worst: Dict[int, int] = worst_round_ranks(rounds)
     return [round_summary(r, best.get(i), worst.get(i)) for i, r in enumerate(rounds)]
 
 
 def round_detail(round_: Round, handicap_index: Optional[float] = None) -> RoundResponse:
-    """A full round, as the detail page and the edit form read it. With the signed-in golfer's
-    index it carries their course handicap and net score, worked out the way the net-score trend
-    works them out, and the course's tees carry the course handicap off each."""
     return RoundResponse(
         **_figures(round_),
         id=round_.id,

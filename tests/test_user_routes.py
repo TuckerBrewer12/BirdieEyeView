@@ -212,7 +212,6 @@ async def test_list_friendships_returns_serialized_records(friendship_database):
 
 
 def test_user_response_is_the_profile_only():
-    """A user is sent as their profile: no rounds, no account bookkeeping, and a typed schema."""
     user = profile_user(
         uuid4(),
         friend_code="BIRD-1234",
@@ -236,7 +235,6 @@ def test_user_response_is_the_profile_only():
 
     schemas = app.openapi()["components"]["schemas"]
     assert set(schemas["UserResponse"]["required"]) == set(users.UserResponse.model_fields)
-    # The golfer's index comes on the dashboard and analytics, not from an endpoint of its own.
     assert "/api/users/{user_id}/handicap" not in app.openapi()["paths"]
     for path, method in [
         ("/api/users/{user_id}", "get"),
@@ -337,7 +335,6 @@ async def test_user_tee_crud_and_friendship_flows():
         str(friendship_record["id"]), str(user_id), "accepted"
     )
 
-    # An accepted friend comes with their index and their last round's day.
     friend = User(id=str(other_id), name="Two", handicap=12.0)
     db.users.get_user = AsyncMock(return_value=friend)
     last_round = Round(date=datetime(2026, 10, 28, 9, 30, tzinfo=timezone.utc), hole_scores=[])

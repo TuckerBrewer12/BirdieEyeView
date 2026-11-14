@@ -12,30 +12,20 @@ import {
 } from "./model";
 
 export interface CareerPageViewModel {
-  /** Nothing to show yet: the first load. */
   loading: boolean;
   loadError: string | null;
   retry: () => void;
-  /** Null until the first load lands. */
   career: Career | null;
-  /** Loaded, and the golfer has no rounds yet. */
   showEmpty: boolean;
 
-  /** Every round, or only the last year's, for the records, totals and milestones. */
   timeWindow: CareerWindow;
   setTimeWindow: (timeWindow: CareerWindow) => void;
-  /** The records, totals and milestones over the picked window. */
   figures: CareerWindowFigures | null;
 
-  /** The phone's open milestone list. */
   milestoneGroup: MilestoneGroup;
   setMilestoneGroup: (group: MilestoneGroup) => void;
 }
 
-/**
- * The career page's screen state. The figures come from the shared analytics query over every
- * round; the server says where the last year starts.
- */
 export function useCareerPageViewModel(
   userId: string,
   repository: AnalyticsRepository = analyticsRepository,

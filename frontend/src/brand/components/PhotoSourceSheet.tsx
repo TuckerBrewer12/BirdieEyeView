@@ -5,11 +5,8 @@ import { ActionSheet, ActionSheetAction, ActionSheetContent, ActionSheetTrigger 
 export type PhotoSource = "camera" | "photos";
 
 interface PhotoSourceSheetProps {
-  /** Heads the sheet: what the photo is for. */
   title: string;
-  /** What opens the sheet, rendered as its trigger (a `Button`). */
   trigger: React.ReactElement;
-  /** The trigger's label. */
   children: React.ReactNode;
   onFile: (file: File) => void;
   /**
@@ -17,14 +14,9 @@ interface PhotoSourceSheetProps {
    * each opens the browser's file picker: the camera's asks for the back camera.
    */
   pickNative?: (source: PhotoSource) => Promise<File | null>;
-  /** Mime pattern for Choose File, e.g. `image/*,application/pdf`. */
   accept?: string;
 }
 
-/**
- * A phone's way to add one photo: an action sheet of Take Photo, Photo Library and Choose File.
- * The file inputs are its own, hidden beside the trigger, so the page only hears which file came.
- */
 function PhotoSourceSheet({
   title,
   trigger,
@@ -49,7 +41,6 @@ function PhotoSourceSheet({
 
   const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    // Cleared, so picking the same file again still counts.
     event.target.value = "";
     if (file) onFile(file);
   };

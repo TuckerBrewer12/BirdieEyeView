@@ -5,11 +5,9 @@ import type { RoundSummary } from "@/domain";
 
 interface RecentRoundsProps {
   rounds: RoundSummary[];
-  /** The phone's: the date under the course, no cells. */
   compact?: boolean;
 }
 
-/** The rounds before the last one, a row each, and the way to the rest. */
 export function RecentRounds({ rounds, compact = false }: RecentRoundsProps) {
   const navigate = useNavigate();
   return (

@@ -6,8 +6,6 @@ const modules = import.meta.glob(["./previews/*/*.tsx", "../pages/**/previews/*.
   eager: true,
 }) as Record<string, { default: ComponentType }>;
 
-// Stories are addressed by file name alone, so the kit and every page share
-// one namespace — a name in two places would silently shadow the other.
 const previews: Partial<Record<string, ComponentType>> = {};
 for (const [path, module] of Object.entries(modules)) {
   const story = path.slice(path.lastIndexOf("/") + 1, -".tsx".length);
@@ -15,7 +13,6 @@ for (const [path, module] of Object.entries(modules)) {
   previews[story] = module.default;
 }
 
-/** Hosts one Preview at a time — the Compose preview activity. */
 export function BrandHarness() {
   const { story } = useParams<{ story: string }>();
   const Preview = story ? previews[story] : undefined;

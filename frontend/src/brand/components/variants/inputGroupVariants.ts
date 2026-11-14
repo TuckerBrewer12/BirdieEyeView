@@ -10,7 +10,6 @@ const inputGroupVariants = cva(
     variants: {
       size: {
         default: "h-11 rounded-card",
-        /** A field that stands alone on a page, as search does: a button's height, the card's surface. */
         inline: "h-10 rounded-card bg-card",
       },
     },
@@ -51,7 +50,6 @@ const inputGroupButtonVariants = cva(
         "icon-xs":
           "size-6 rounded-control p-0 has-[>svg]:p-0",
         "icon-sm": "size-8 p-0 has-[>svg]:p-0",
-        /* The reveal button on a password field: fills the field's height. */
         "icon-lg":
           "size-10 rounded-lg p-0 text-foreground-secondary has-[>svg]:p-0",
       },

@@ -6,22 +6,17 @@ import { Avatar } from "./Avatar";
 
 interface SideNavUser {
   name: string;
-  /** Two letters for the avatar. */
   initials: string;
-  /** The line under the name, such as an email. */
   detail?: string;
 }
 
 interface SideNavProps {
   items: NavItem[];
-  /** Icon links at the foot of the rail, beside the golfer — Settings. */
   secondaryItems?: NavItem[];
   user: SideNavUser;
-  /** Shows a sign-out button on the golfer's row. */
   onSignOut?: () => void;
   signingOut?: boolean;
   renderLink?: RenderLink;
-  /** The nav landmark's name. */
   label?: string;
   className?: string;
 }
@@ -36,12 +31,6 @@ const linkClass = cn(
 
 const iconLinkClass = cn("flex size-9 shrink-0 items-center justify-center rounded-lg", linkStates);
 
-/**
- * The app's left rail: the brand at the top, the places to go, and the
- * signed-in golfer at the foot, with the secondary places (Settings) as icons
- * beside them. It fills its container; `AppShell` pins it to the left edge and
- * sets the width.
- */
 function SideNav({
   items,
   secondaryItems = [],

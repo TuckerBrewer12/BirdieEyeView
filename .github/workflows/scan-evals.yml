@@ -65,7 +65,6 @@ jobs:
           path = Path(os.environ['RUNNER_TEMP']) / 'scan-eval-report.txt'
           path.write_text(stdout + ('\n' + stderr if stderr else ''), encoding='utf-8')
 
-          # Pass only bounded numeric metrics to the PR-comment job.
           metric = re.compile(
               r'\d+ images \| \d+ cases \| \d+/\d+ numeric cells correct|'
               r'\d+/\d+ (?:were (?:100% correct|(?:90|80)% or better)|'

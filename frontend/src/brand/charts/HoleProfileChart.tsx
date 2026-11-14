@@ -14,19 +14,10 @@ import { useColumnHover } from "./useColumnHover";
 import { useLayoutTransition } from "./useLayoutTransition";
 
 interface HoleProfileChartProps {
-  /** In the order to draw them: course order, or hardest first. */
   holes: readonly HoleStats[];
-  /** The holes run hardest first rather than 1 to 18, so there are no nines to divide. */
   ranked?: boolean;
 }
 
-/**
- * How each hole of a course plays for the golfer, one column a hole: a bar from level to their
- * average to par, painted by it, with a whisker for how far their score swings there. Course order
- * shows where the trouble sits; hardest first ranks it. Hovering a hole shows its average, its
- * spread and the mix of scores on it. One chart for what the course page used to split across a
- * to-par chart, a difficulty ranking, a variance chart and a score-mix chart.
- */
 export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProps) {
   const { width, minWidth, height: H, pad: PAD, bar, corner, whisker, cap, labelGap, numberDrop, level } =
     tokens.chart.holes;
@@ -47,7 +38,6 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
     .range([bottom, PAD.top]);
   const ticks = y.ticks(4);
   const tipHole = hovered != null ? holes[hovered] : null;
-  // Course order is split at the turn, where hole 10 starts.
   const turn = ranked ? -1 : holes.findIndex((hole) => hole.hole === 10);
 
   return (
@@ -90,14 +80,12 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
 
             {holes.map((hole, i) => {
               const centre = x(i + 0.5);
-              // A hole played at level still gets a mark: a sliver centred on the level line.
               const span = Math.abs(y(hole.averageToPar) - y(0));
               const height = Math.max(level, span);
               const top = Math.min(y(0), y(hole.averageToPar)) - (height - span) / 2;
               const fill = toParMarkFill(roundAverageToParTenths(hole.averageToPar));
               return (
                 <g key={hole.hole}>
-                  {/* Keyed by hole, so switching the order slides each hole to its new place. */}
                   <motion.rect
                     width={column * bar}
                     rx={corner}

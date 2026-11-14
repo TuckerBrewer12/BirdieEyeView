@@ -1,48 +1,26 @@
-/**
- * Lint rules for styling numbers that skip the brand kit's tokens.
- *
- * kit.js reads strings: a class name or a hex. Much of the kit's styling never passes through a
- * string, though. Framer Motion takes a duration as a number, an inline style takes a font size
- * as a number, and an SVG prop takes a radius as a number. These rules catch a raw
- * number in those places and point at the token in brand/theme/tokens.ts that already holds it:
- * `tokens.motion` for motion, a Tailwind utility or `tokens.type` / `space` / `size` / `radius`
- * for measures, and `tokens.chart` for charts.
- *
- * 0 is never reported: it is the absence of a measure, not a choice of one. For motion 1 is
- * left alone too, since `scale: 1` is an element's natural size and `opacity: 1` its full self.
- */
-
-/** Packages a file imports motion from. */
 const MOTION_SOURCES = new Set(["framer-motion", "motion/react"]);
 
-/** Framer Motion props that take a target, a transition, or variants made of them. */
 const MOTION_ATTRS = new Set([
   "initial", "animate", "exit", "whileHover", "whileTap", "whileFocus", "whileInView", "transition", "variants",
 ]);
 
-/** Keys whose number is a motion choice: how long, how far it grows, how the spring feels. */
 const MOTION_KEYS = new Set([
   "duration", "scale", "scaleX", "scaleY", "damping", "stiffness", "mass", "bounce", "staggerChildren", "delayChildren",
 ]);
 
-/** A timing in a file that animates: `fadeDuration`, `{ crossfade: 0.8 }`, `caretBlink`. */
 const TIMING_KEY = /(?:duration|crossfade|fade|sweep|blink)$/i;
 
 const MEASURE_KEY =
   /^(?:fontSize|lineHeight|letterSpacing|borderRadius|width|height|minWidth|maxWidth|minHeight|maxHeight|top|right|bottom|left|inset|gap|rowGap|columnGap|margin\w*|padding\w*)$/;
 const COLOR_KEYS = new Set(["color", "background", "backgroundColor", "fill", "stroke", "borderColor", "outlineColor"]);
-/** CSS keywords a colour key can take that are not a colour choice. */
 const COLOR_KEYWORDS = new Set(["transparent", "currentcolor", "inherit", "initial", "unset", "none"]);
-/** A length written as a string: "12px", "1.5rem", "0 4px". */
 const LENGTH = /\d(?:px|rem|em)(?![a-z])/;
 
 const MEASURE_PROPS = new Set([
   "strokeWidth", "rx", "ry", "r", "fontSize", "strokeDasharray", "opacity", "stopOpacity", "fillOpacity", "strokeOpacity",
 ]);
-/** Opacity of 1 is the default, not a measure. */
 const OPACITY_PROPS = new Set(["opacity", "stopOpacity", "fillOpacity", "strokeOpacity"]);
 
-/** The number a literal holds, `-3` included, or null for anything computed. */
 function numberOf(node) {
   if (!node) return null;
   if (node.type === "Literal" && typeof node.value === "number") return node.value;
@@ -53,7 +31,6 @@ function numberOf(node) {
   return null;
 }
 
-/** The text of a string literal or a template with no `${}`, or null. `"spring" as const` reads as "spring". */
 function stringOf(node) {
   if (!node) return null;
   if (node.type === "TSAsExpression" || node.type === "TSSatisfiesExpression") return stringOf(node.expression);
@@ -69,12 +46,10 @@ function keyOf(property) {
   return null;
 }
 
-/** How a value reads in a message: the source text, so `-3` and `[1, 1.2, 1]` show as written. */
 function shown(context, node) {
   return context.sourceCode.getText(node);
 }
 
-/** The motion number a value holds that is neither 0 nor 1: a literal, or one inside a keyframe array. */
 function isRawMotion(node) {
   const n = numberOf(node);
   if (n !== null) return n !== 0 && n !== 1;
@@ -86,7 +61,6 @@ function importsFrom(program, sources) {
   return program.body.some((s) => s.type === "ImportDeclaration" && sources.has(s.source.value));
 }
 
-/** The object literals an expression may evaluate to: both sides of `a ? {…} : {…}` and `a && {…}`. */
 function objectsIn(node) {
   if (!node) return [];
   if (node.type === "ObjectExpression") return [node];
@@ -119,7 +93,6 @@ const noRawMotion = {
       });
     };
 
-    /** Every motion key in a target, transition or variants object, at any depth. */
     const checkMotionObject = (object) => {
       for (const property of object.properties) {
         const key = keyOf(property);
@@ -140,19 +113,16 @@ const noRawMotion = {
         for (const object of objectsIn(node.value.expression)) checkMotionObject(object);
       },
       CallExpression(node) {
-        // animate(el, { scale: 1.1 }, { duration: 0.3 }), from the import or from useAnimate().
         if (node.callee.type !== "Identifier" || node.callee.name !== "animate") return;
         for (const arg of node.arguments.slice(1, 3)) for (const object of objectsIn(arg)) checkMotionObject(object);
       },
       Property(node) {
         const key = keyOf(node);
         if (key === null) return;
-        // A spring is motion wherever it is written: `rowSpring: { type: "spring", damping: 15 }`.
         if (MOTION_KEYS.has(key) && node.parent.type === "ObjectExpression") {
           const isSpring = node.parent.properties.some((p) => keyOf(p) === "type" && stringOf(p.value) === "spring");
           if (isSpring && isRawMotion(node.value)) report(node);
         }
-        // A timings table in a file that animates: `{ crossfade: 0.8, sweep: 1.5 }`.
         if (animates && TIMING_KEY.test(key) && isRawMotion(node.value)) report(node);
       },
     };
@@ -182,7 +152,6 @@ const noStyleMeasure = {
         for (const object of objectsIn(node.value.expression)) {
           for (const property of object.properties) {
             const key = keyOf(property);
-            // CSS custom properties ("--bar") hand a value to a class; what it holds is the class's business.
             if (key === null || key.startsWith("--")) continue;
             const value = property.value;
             const data = { key, value: shown(context, value) };
@@ -222,7 +191,6 @@ const noMeasureProp = {
   create(context) {
     const icons = new Set();
 
-    /** The raw measure an attribute value holds: a number other than 0, or a string with a digit in it. */
     const rawValue = (value, allowOne) => {
       if (!value) return false;
       if (value.type === "JSXExpressionContainer") value = value.expression;

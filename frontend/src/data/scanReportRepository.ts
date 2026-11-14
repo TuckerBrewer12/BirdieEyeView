@@ -8,7 +8,6 @@ export interface ScanReportRepository {
 export const REPORT_NOT_SAVED = "Your report wasn't saved. Please try again.";
 export const REPORT_UNAVAILABLE = "Reporting isn't available yet. Your report wasn't saved.";
 
-/** Separate from authenticated API helpers, including on the signed-in page. */
 export function createScanReportRepository(
   send: typeof fetch = (...args) => fetch(...args),
 ): ScanReportRepository {

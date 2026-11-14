@@ -14,17 +14,14 @@ const PICKING: CourseEdit = { status: "picking" };
 export interface RoundEditorViewModel {
   editing: boolean;
   saving: boolean;
-  /** Why the last save or course pick failed; cleared when editing starts or stops. */
   error: string | null;
   scores: HoleEdits;
   teeBox: string;
   course: CourseEdit;
-  /** The course and tee the round is read against: the ones being edited in, else the round's own. */
   activeCourse: CourseDto | null;
   activeTeeBox: string | null;
   linkedName: string | undefined;
   customName: string | undefined;
-  /** The name the round was played under, offered while picking with an empty search. */
   playedNameToKeep: string | null;
   courseQuery: string;
   courseResults: CourseSummary[];
@@ -43,7 +40,6 @@ export interface RoundEditorViewModel {
   changeCourse: () => void;
 }
 
-/** Editing one round: scores, tee and course, then saving them. */
 export function useRoundEditorViewModel(
   userId: string,
   round: RoundDetail | undefined,

@@ -16,7 +16,6 @@ const requests = [
   { id: "c", name: "Sam Okafor", detail: "Sep 30", status: "Declined" },
 ];
 
-/** The friends list (a Compare button, or a chevron on a phone), and the inbox: one open request, two settled. */
 export default function PersonRowPreview() {
   return (
     <>

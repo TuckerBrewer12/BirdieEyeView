@@ -11,10 +11,6 @@ const items = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-/**
- * MoreMenu open in the bottom `Sheet` `BottomNav` raises over the page: first the four places with
- * two friend requests waiting at Social, then on a page behind More with none waiting.
- */
 export default function MoreMenuPreview() {
   return (
     <>

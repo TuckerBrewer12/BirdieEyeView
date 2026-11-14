@@ -19,7 +19,6 @@ def test_png_removes_identifiers_and_keeps_the_card_nearly_identical():
     clean, media_type = sanitizer.sanitize_scorecard(source, "image/png")
     assert media_type == "image/jpeg" and IDENTIFIER.encode() not in clean
     with Image.open(BytesIO(source)) as a, Image.open(BytesIO(clean)) as b:
-        # Stored as the scanner's JPEG: same size, not pixel-exact, visibly the same card.
         assert b.format == "JPEG" and a.size == b.size and mean_difference(a, b) < 2
         assert set(b.info) <= JPEG_HEADER_INFO_KEYS and not b.getexif()
 
@@ -68,7 +67,6 @@ def test_pdf_rebuild_removes_hidden_text_properties_attachments_and_xmp():
                 assert a.get_size() == b.get_size() == (180, 90)
                 assert text.get_text_range() == ""
                 with closing(a.render(scale=1)) as x, closing(b.render(scale=1)) as y:
-                    # Rasterization antialiasing may differ slightly; visible text still occupies the same pixels.
                     ax, by = x.to_pil().convert("L"), y.to_pil().convert("L")
                     assert sum(abs(left - right) for left, right in zip(ax.tobytes(), by.tobytes())) / (180 * 90) < 3
                     assert min(by.tobytes()) < 20
@@ -124,16 +122,16 @@ def test_phone_photo_is_stored_at_the_scanners_size_without_location():
     output = BytesIO()
     exif = Image.Exif()
     exif[315] = IDENTIFIER
-    exif[34853] = {1: "N", 2: (40.0, 1.0, 1.0)}  # GPS
-    with Image.effect_noise((4032, 3024), 40).convert("RGB") as photo:  # camera-like detail
+    exif[34853] = {1: "N", 2: (40.0, 1.0, 1.0)}
+    with Image.effect_noise((4032, 3024), 40).convert("RGB") as photo:
         photo.save(output, "JPEG", quality=92, exif=exif)
     source = output.getvalue()
     clean, media_type = sanitizer.sanitize_scorecard(source, "image/jpeg")
     assert media_type == "image/jpeg" and IDENTIFIER.encode() not in clean
     with Image.open(BytesIO(clean)) as image:
-        assert image.format == "JPEG" and image.size == (2000, 1500)  # long edge capped, aspect kept
+        assert image.format == "JPEG" and image.size == (2000, 1500)
         assert not image.getexif() and set(image.info) <= JPEG_HEADER_INFO_KEYS
-    assert len(clean) < len(source) / 2  # a lossless full-size PNG was larger than the photo itself
+    assert len(clean) < len(source) / 2
 
 
 def test_transparent_areas_become_white_paper():

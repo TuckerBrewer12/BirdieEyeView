@@ -6,7 +6,6 @@ import { updateRequestFrom } from "../roundsRepository";
 const linked = Round.detailFromDto(halfMoonBayRound);
 const unlinked = Round.detailFromDto(scannedRound);
 
-/** The edits an editor opens with: every hole as it is, the round's tee and course. */
 function untouched(round: RoundDetail): RoundEdits {
   return {
     holes: {},

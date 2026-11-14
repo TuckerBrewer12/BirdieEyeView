@@ -102,7 +102,6 @@ function AppRoutes() {
           <Route path="/courses/:courseId" element={<CourseDetailPage userId={userId} />} />
           <Route path="/scan" element={<ScanPage userId={userId} />} />
           <Route path="/analytics" element={<AnalyticsPage userId={userId} />} />
-          {/* The Lab is the analytics page's Profile now. */}
           <Route path="/the-lab" element={<Navigate to="/analytics?tab=profile" replace />} />
           <Route path="/social" element={<SocialPage userId={userId} />} />
           <Route path="/career" element={<CareerPage userId={userId} />} />

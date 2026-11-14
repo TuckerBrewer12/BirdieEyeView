@@ -5,13 +5,10 @@ import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
 import { HANDICAP_TAP, TOUR_LAYOUTS, type TourLayout } from "../components/demoTour";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
 
-// A few days after the sample golfer's last round, so "this week" reads true.
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
 
-/** How far the measured handicap may sit from HANDICAP_TAP before the tap misses it. */
 const TAP_TOLERANCE = 0.02;
 
-/** Screen robot for the hero demo's captures of the signed-in app. */
 export class DemoTourRobot {
   private readonly page: Page;
 
@@ -36,7 +33,6 @@ export class DemoTourRobot {
     return this;
   }
 
-  /** The handicap control sits where the demo's tap expects it. */
   async seesHandicapTap(layout: TourLayout): Promise<this> {
     const { width, height } = TOUR_LAYOUTS[layout];
     const box = await this.handicap().boundingBox();
@@ -59,20 +55,17 @@ export class DemoTourRobot {
     return this;
   }
 
-  /** The sample golfer's 24 rounds beside the title, so the charts have their data. */
   async seesAnalytics(): Promise<this> {
     await expect(this.page.getByText(/^24 rounds$/).locator("visible=true").first()).toBeVisible();
     return this;
   }
 
-  /** Analytics' Profile tab. */
   async openProfile(): Promise<this> {
     await this.page.goto("/analytics?tab=profile");
     await expect(this.page.getByRole("tab", { name: "Profile", selected: true }).locator("visible=true")).toBeVisible();
     return this;
   }
 
-  /** The goal card and the shape, filled in from the golfer's rounds. */
   async seesProfile(): Promise<this> {
     await expect(this.page.locator("[data-slot=shape-card]").locator("visible=true").first()).toBeVisible();
     return this;
@@ -80,7 +73,6 @@ export class DemoTourRobot {
 
   async capture(name: string): Promise<this> {
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
-    // Device scale, so the phone captures stay sharp on a phone.
     await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { scale: "device" });
     return this;

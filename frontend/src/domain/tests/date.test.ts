@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dayParts, formatDay, formatDayShort, formatWeekday, isoDay, parseDay } from "../date";
 
-// vite.config.ts runs the unit tests in Los Angeles, where UTC midnight is the
-// evening before. A date read as UTC would show a day early in every case below.
 describe("the test timezone", () => {
   it("is behind UTC, so a date read as UTC midnight would land on the day before", () => {
     expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe("America/Los_Angeles");
@@ -27,7 +25,6 @@ describe("parseDay", () => {
   });
 
   it("reads a moment with an offset as the viewer's day", () => {
-    // 03:00 UTC on the 15th is 20:00 on the 14th in Los Angeles.
     const day = parseDay("2026-06-15T03:00:00Z");
     expect(day && isoDay(day)).toBe("2026-06-14");
   });
@@ -44,7 +41,6 @@ describe("parseDay", () => {
 
 describe("isoDay", () => {
   it("writes the local calendar day, not the UTC one", () => {
-    // 20:00 on the 14th in Los Angeles is already the 15th in UTC.
     expect(isoDay(new Date(2026, 5, 14, 20))).toBe("2026-06-14");
   });
 });

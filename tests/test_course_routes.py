@@ -158,7 +158,6 @@ async def test_course_listing_lookup_and_authorization():
         return_value=[pebble_beach_summary(course_id), pebble_beach_summary(other_id)]
     )
     db.courses.get_course = AsyncMock(return_value=course)
-    # Two rounds at the first course, newest first: 82 and 78 over 18 holes of par 4.
     played = [
         Round(id=str(uuid4()), course=course, date=datetime(2026, 1, day, tzinfo=timezone.utc),
               hole_scores=[HoleScore(hole_number=n, strokes=4 + (n <= over), par_played=4) for n in range(1, 19)])
@@ -181,11 +180,9 @@ async def test_course_listing_lookup_and_authorization():
         "scoring_average": 80.0,
         "best_score": 78,
     }
-    # Every round at the listed courses, uncapped.
     assert db.rounds.get_round_summaries_for_user.await_args.kwargs == {
         "limit": None, "course_ids": [str(course_id), str(other_id)],
     }
-    # A course the golfer hasn't played carries no record.
     assert (listed[1].rounds_played, listed[1].scoring_average, listed[1].best_score) == (0, None, None)
     assert db.courses.list_course_summaries.await_args.kwargs == {
         "limit": 20, "offset": 0, "user_id": str(user_id),
@@ -223,11 +220,11 @@ async def test_course_search_merges_external_results(monkeypatch):
     assert search_results[0].external_course_id == "ext-1"
     assert search_results[1].name == "Spyglass Hill"
     assert search_results[1].source == "external"
-    assert search_results[0].rounds_played == 0  # the link search doesn't load the golfer's rounds
+    assert search_results[0].rounds_played == 0
 
     db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[])
     await courses.search_courses("Pebble", user_id, False, True, db, profile_user(user_id))
-    assert db.rounds.get_round_summaries_for_user.await_count == 1  # the course list's search does
+    assert db.rounds.get_round_summaries_for_user.await_count == 1
 
     with pytest.raises(HTTPException) as exc:
         await courses.search_courses("Pebble", None, True, False, db, None)

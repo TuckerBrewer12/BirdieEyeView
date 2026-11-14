@@ -4,11 +4,9 @@ import { useLinkCoursePanelViewModel } from "./useLinkCoursePanelViewModel";
 interface LinkCoursePanelProps {
   userId: string;
   roundId: string;
-  /** Heads the panel, with a close button beside it. */
   title?: string;
   onClose: () => void;
   onLinked: () => void;
-  /** `plain` inside the phone's sheet, which is already the surface. */
   surface?: "card" | "plain";
 }
 

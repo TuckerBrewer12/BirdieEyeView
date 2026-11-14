@@ -6,17 +6,11 @@ interface SliderProps {
   onValueChange: (value: number) => void;
   min: number;
   max: number;
-  /** What the slider sets, for screen readers. */
   "aria-label": string;
-  /** The value in words beside the track: "Last 12 of 24 rounds". */
   valueLabel?: string;
   className?: string;
 }
 
-/**
- * One number picked along a track: a green fill to the thumb, the value in words beside it. Whole
- * steps, keyboard and drag through Base UI.
- */
 function Slider({ value, onValueChange, min, max, valueLabel, className, "aria-label": ariaLabel }: SliderProps) {
   return (
     <div data-slot="slider" className={cn("flex items-center gap-4", className)}>

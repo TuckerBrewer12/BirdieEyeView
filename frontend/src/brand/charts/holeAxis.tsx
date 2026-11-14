@@ -3,10 +3,6 @@ import { motion } from "framer-motion";
 import { tokens } from "@/brand/theme";
 import { useLayoutTransition } from "./useLayoutTransition";
 
-/**
- * A hole's number under its column, darker and bolder while its column is hovered. `moving` slides
- * it when the holes reorder, as a chart sorted hardest first does.
- */
 export function HoleNumber({
   x,
   y,
@@ -40,12 +36,10 @@ export function HoleNumber({
   );
 }
 
-/** The rule at the turn, where the back nine starts. */
 export function NineDivider({ x, top, bottom }: { x: number; top: number; bottom: number }) {
   return <line x1={x} x2={x} y1={top} y2={bottom} stroke={tokens.color.border} strokeWidth={tokens.lineWidth.border} />;
 }
 
-/** The wash behind the hovered hole's column. */
 export function HoleColumn({ x, width, top, bottom }: { x: number; width: number; top: number; bottom: number }) {
   return <rect x={x} y={top} width={width} height={bottom - top} rx={tokens.chart.holes.corner} fill={tokens.color.chart.grid} />;
 }

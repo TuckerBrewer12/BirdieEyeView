@@ -2,7 +2,6 @@ import { useState } from "react";
 import { CardFactsForm } from "@/brand/components/CardFactsForm";
 import { NO_CARD_FACTS, type CardFacts } from "@/domain";
 
-/** Nothing said yet; then a name, scores to par, and putts and shots to green, ordered by drag. */
 export default function CardFactsFormPreview() {
   const [blank, setBlank] = useState<CardFacts>(NO_CARD_FACTS);
   const [filled, setFilled] = useState<CardFacts>({

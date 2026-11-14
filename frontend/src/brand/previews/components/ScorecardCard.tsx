@@ -28,7 +28,6 @@ const ROWS: ScorecardRow<PreviewHole, PreviewNine>[] = [
   },
 ];
 
-/** The green bar over the grid: all eighteen across from `md`, the two nines stacked on a phone. */
 export default function ScorecardCardPreview() {
   return (
     <ScorecardCard bar="Blue tees · 6,500 yds · 72.4 / 130">

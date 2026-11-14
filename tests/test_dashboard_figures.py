@@ -1,5 +1,3 @@
-"""The dashboard's figures come from the player's rounds, worked out on the server."""
-
 from analytics import dashboard
 from analytics.handicap import whs_window
 from models import HoleScore, Round
@@ -21,7 +19,6 @@ def test_scoring_average_over_all_or_the_last_few():
 
 def test_scoring_average_change_reads_the_last_few_against_the_window():
     rounds = [_round([5] * 18), _round([5] * 18), _round([4] * 18)]
-    # The last two average 81 against 84 over all three.
     assert dashboard.scoring_average_change(rounds, 2) == -3.0
     assert dashboard.scoring_average_change([]) is None
 
@@ -40,11 +37,10 @@ def test_whs_window_matches_the_table():
     assert whs_window(40) == (8, 0.0)
 
 
-
 def _dated(day, strokes=None):
     from datetime import datetime, time
     round_ = _round(strokes or [4] * 18)
-    round_.date = datetime.combine(day, time(12))  # naive, as the database's dates come back
+    round_.date = datetime.combine(day, time(12))
     return round_
 
 
@@ -52,11 +48,8 @@ def test_handicap_change_this_month_reads_from_the_last_round_before_the_first()
     from datetime import date
     rounds = [_dated(date(2026, 4, 18)), _dated(date(2026, 5, 2)), _dated(date(2026, 6, 3)), _dated(date(2026, 6, 15))]
     trend = [{"handicap_index": v} for v in (14.0, 13.6, 13.2, 12.4)]
-    # The index after May 2 was 13.6; it is 12.4 now.
     assert dashboard.handicap_change_this_month(rounds, trend, date(2026, 6, 20)) == -1.2
-    # Nothing before April began, so there is nothing to measure from.
     assert dashboard.handicap_change_this_month(rounds, trend, date(2026, 4, 20)) is None
-    # No round this month yet: the index hasn't moved.
     assert dashboard.handicap_change_this_month(rounds, trend, date(2026, 7, 2)) == 0.0
 
 
@@ -72,7 +65,6 @@ def test_handicap_change_is_the_move_this_month_with_its_verdict():
     rounds = [_dated(date(2026, 5, 20)), _dated(date(2026, 6, 3)), _dated(date(2026, 6, 14))]
     trend = [{"handicap_index": v} for v in (14.0, 13.2, 12.4)]
     assert dashboard.handicap_change(rounds, trend, date(2026, 6, 21)) == {"this_month": -1.6, "this_month_verdict": "good"}
-    # Nothing played before the 1st: no move to report.
     assert dashboard.handicap_change(rounds[1:], trend[1:], date(2026, 6, 21)) == {
         "this_month": None, "this_month_verdict": None,
     }

@@ -3,39 +3,23 @@ import { EmptyNote } from "@/brand/components/EmptyNote";
 import { tokens } from "@/brand/theme";
 
 interface RadarAxis {
-  /** What the axis measures: "GIR", "Par 3s". */
   label: string;
-  /** 0–100, further out being better. */
   value: number;
-  /** The comparison on the same 0–100 scale. Leave it off every axis to draw the shape alone. */
   benchmark?: number | null;
-  /** The server's verdict against the comparison: ahead reads green and behind red; even, or none, the shape's colour. */
   verdict?: "ahead" | "even" | "behind" | null;
-  /** The figure under the label: "52%", in the verdict's colour. */
   valueLabel?: string;
-  /** The comparison's figure, after "vs". */
   benchmarkLabel?: string;
 }
 
 interface RadarChartProps {
-  /** Three or more axes, drawn clockwise from the top. */
   axes: RadarAxis[];
-  /** Shown when there are fewer than three axes to draw. */
   empty?: string;
-  /** A phone's width: a narrower drawing, so the labels scale down less. */
   compact?: boolean;
-  /** The comparison's outline: quiet ink for a benchmark, the friend's blue for a friend. */
   benchmarkTone?: "benchmark" | "friend";
   className?: string;
   "aria-label"?: string;
 }
 
-/**
- * A shape across a handful of measures: one spoke each, the value plotted out from the
- * centre, joined into a lightly filled outline. A comparison, when every axis has one, is
- * drawn as a dashed outline behind it, and each dot says whether the golfer is ahead of it.
- * Each spoke is labelled with its figures, so there is no tooltip.
- */
 export function RadarChart({
   axes,
   empty = "Not enough data",
@@ -63,7 +47,6 @@ export function RadarChart({
 
   const benchmarks = axes.flatMap((axis) => (axis.benchmark != null ? [axis.benchmark] : []));
   const compared = benchmarks.length === axes.length;
-  // Ahead of the comparison reads as a birdie and behind it as a bogey; even, or no verdict, the shape's own colour.
   const toneOf = (axis: RadarAxis) =>
     axis.verdict === "ahead"
       ? tokens.color.score.birdie.text
@@ -144,8 +127,6 @@ export function RadarChart({
           const dx = x - cx;
           const dy = y - cy;
           const anchor = Math.abs(dx) < 1 ? "middle" : dx > 0 ? "start" : "end";
-          // Two lines of text, each centred on its own y. On the vertical axis they sit clear
-          // of the point (above it going up, below it going down); at the sides they straddle it.
           const lead = Math.abs(dx) < 1 ? (dy < 0 ? y - valueGap * 1.5 : y + valueGap / 2) : y - valueGap / 2;
           return (
             <g key={axis.label} fontSize={textSize} dominantBaseline="central">

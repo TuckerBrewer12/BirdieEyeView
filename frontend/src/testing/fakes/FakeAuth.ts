@@ -1,6 +1,5 @@
 import type { AuthActions, SessionCheck } from "../../pages/auth/authActions";
 
-/** The messages the real `api/routers/auth.py` answers with. */
 export const AUTH_MESSAGES = {
   registered: "Account created. Check your email to verify your account before signing in.",
   verificationSent: "If this account exists, a verification email has been sent.",
@@ -16,11 +15,6 @@ export const AUTH_MESSAGES = {
 
 type Call = keyof Omit<AuthActions, "refreshSession">;
 
-/**
- * Stands in for `useAuth()` in view model tests. Records what each call was sent, answers with
- * the server's messages, and fails a call on request. `hold` makes a call wait for `release()`,
- * so a test can see it in flight.
- */
 export class FakeAuth implements AuthActions {
   readonly logins: { email: string; password: string }[] = [];
   readonly registrations: { name: string; email: string; password: string }[] = [];
@@ -30,9 +24,7 @@ export class FakeAuth implements AuthActions {
   readonly resets: { token: string; password: string }[] = [];
   sessionChecks = 0;
 
-  /** A call's failure, as the user-facing message the server would send. */
   readonly errors: Partial<Record<Call, string>> = {};
-  /** What `refreshSession` reports. Signed out until a test says otherwise. */
   session: SessionCheck | null = null;
   private held = new Set<Call>();
   private waiting: (() => void)[] = [];

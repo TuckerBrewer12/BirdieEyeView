@@ -2,11 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useBeforeUnload, useLocation, useNavigate } from "react-router-dom";
 
 export interface LeaveGuard {
-  /** A link off the page was stopped and is waiting on the player. */
   blocked: boolean;
-  /** Stays on the page. */
   stay: () => void;
-  /** Goes where the player was heading. */
   leave: () => void;
 }
 

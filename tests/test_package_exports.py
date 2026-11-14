@@ -1,9 +1,3 @@
-"""Every name a package re-exports is imported through the package somewhere outside it.
-
-A package's `__all__` is its public face: `from models import Round`. A name kept there that no
-caller imports is dead code the linters can't see, since the re-export itself counts as a use.
-"""
-
 import ast
 import importlib
 import re
@@ -12,8 +6,6 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-# The packages the app's logic lives in. `database`, `models` and `llm` keep convenience facades
-# (`from models import Round`) whose unused names are a cleanup of their own.
 PACKAGES = ["analytics", "api", "services"]
 SOURCES = [
     path

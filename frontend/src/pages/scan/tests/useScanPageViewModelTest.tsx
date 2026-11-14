@@ -120,8 +120,6 @@ describe("useScanPageViewModel", () => {
     const doubles = fakes({ result: scannedCard, holdExtract: true });
     const client = newClient();
     const Session = wrapperFor(client);
-    // The provider stays mounted throughout, as it does above the app's routes; only the page
-    // (the view model) unmounts while the golfer is away.
     let onPage = true;
     const { result, rerender } = renderHook(() => useScanPageViewModel("user-1", doubles.repositories), {
       wrapper: ({ children }) => <Session>{onPage ? children : null}</Session>,

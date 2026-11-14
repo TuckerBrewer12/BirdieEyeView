@@ -28,7 +28,6 @@ def pebble_beach(course_id: UUID, *, owner: UUID | None = None) -> Course:
 
 
 def listed_round(round_id: UUID) -> Round:
-    """A round as the list query returns it: 18 holes of par 4 on a par-72 course, 80 strokes."""
     return Round(
         id=str(round_id),
         course=Course(id=str(uuid4()), name="Pebble Beach", location="Monterey", par=72),

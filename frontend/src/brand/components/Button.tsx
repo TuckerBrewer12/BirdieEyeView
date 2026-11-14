@@ -21,11 +21,6 @@ function Button({
   );
 }
 
-/**
- * A whole list row that opens something: no box of its own, so the row lays itself out and
- * picks its hover. Left-aligned like the text it holds, with the hover fading in. Pass `render`
- * (`<Link to=… />`) for a row that goes somewhere rather than doing something.
- */
 function RowButton({
   className,
   type = "button",
@@ -36,7 +31,6 @@ function RowButton({
     defaultTagName: "button",
     render,
     props: {
-      // A caller's data-slot (record-row, round-preview) names the row for its tests and styles.
       "data-slot": "row-button",
       ...props,
       type: render ? undefined : type,

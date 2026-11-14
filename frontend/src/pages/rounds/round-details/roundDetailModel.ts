@@ -2,7 +2,6 @@ import type { RoundComparisonDto } from "@/types/api";
 import { formatOneDecimal, formatSigned, formatTwoDecimals } from "@/domain/format";
 import type { Round } from "@/domain";
 
-/** The rounds "vs your average" averages: the last five before this one, the last twenty, or all. */
 export type ComparisonWindow = RoundComparisonDto["windows"][number]["window"];
 type ComparisonMetric = RoundComparisonDto["windows"][number]["metrics"][number]["metric"];
 type ComparisonVerdict = NonNullable<RoundComparisonDto["windows"][number]["metrics"][number]["verdict"]>;
@@ -22,10 +21,8 @@ const METRIC_LABELS: Record<ComparisonMetric, string> = {
   scrambling: "Scrambling",
 };
 
-/** Putts per green read to a hundredth; every other figure averages to a tenth. */
 const HUNDREDTHS: ReadonlySet<ComparisonMetric> = new Set(["putts_per_gir"]);
 
-/** One row of "vs your average", worded: this round, the average, and the difference coloured by the server's verdict. */
 export interface ComparisonRow {
   metric: ComparisonMetric;
   label: string;
@@ -37,7 +34,6 @@ export interface ComparisonRow {
 }
 
 export interface ComparisonWindowRows {
-  /** How many earlier rounds the window averages. None means there is nothing to compare with. */
   rounds: number;
   rows: ComparisonRow[];
 }
@@ -48,7 +44,6 @@ function figure(value: number | null, metric: ComparisonMetric, fixed: boolean):
   return fixed ? formatOneDecimal(value) : String(value);
 }
 
-/** Each window's rows, keyed by window. Figures with no average yet are left out. */
 export function comparisonFrom(dto: RoundComparisonDto): Partial<Record<ComparisonWindow, ComparisonWindowRows>> {
   const windows: Partial<Record<ComparisonWindow, ComparisonWindowRows>> = {};
   for (const window of dto.windows) {
@@ -70,15 +65,12 @@ export function comparisonFrom(dto: RoundComparisonDto): Partial<Record<Comparis
   return windows;
 }
 
-/** One figure beside the score in the summary card. */
 export interface SummaryFigure {
   label: string;
   value: string;
-  /** Read after the value, smaller: "/18" after the greens hit. */
   unit?: string;
 }
 
-/** Net (with the course handicap it came off), putts and greens, worded for the summary card. */
 export function summaryFigures(round: Round): SummaryFigure[] {
   return [
     {

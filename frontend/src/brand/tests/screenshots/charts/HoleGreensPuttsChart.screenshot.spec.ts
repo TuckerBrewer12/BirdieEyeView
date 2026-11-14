@@ -3,7 +3,6 @@ import { BrandKitRobot } from "../../BrandKit.robot";
 import { enableDark } from "../../previewScreenshot";
 
 test.describe("HoleGreensPuttsChart", () => {
-  // At the width of the course page's card.
   test.use({ viewport: { width: 820, height: 760 } });
 
   test("light", async ({ page }) => {

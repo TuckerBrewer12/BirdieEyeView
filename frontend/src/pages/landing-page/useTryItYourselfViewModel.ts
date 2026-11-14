@@ -12,23 +12,18 @@ import { NO_CARD_FACTS, SCAN_STEPS, SCAN_STEP_HOLD_MS, cardContext, scanStepAt, 
 
 export interface TryItYourselfViewModel {
   step: "upload" | "processing" | "review";
-  /** The picked photo, readied for upload. */
   photo: File | null;
   error: string | null;
-  /** Sending the failed scan's photo for debugging, when the visitor asks. */
   report: FailedScanReport;
-  /** What the golfer says is on the card. */
   card: CardFacts;
   setCard: (patch: Partial<CardFacts>) => void;
   pickPhoto: (photo: File) => void;
   extract: () => void;
   reset: () => void;
 
-  /** The step of reading the card showing, and its words. */
   phase: number;
   phaseLabel: string;
 
-  /** The scanned card as a round, its figures read the way an unsaved edit's are. */
   round: Round | null;
   hasScores: boolean;
 }
@@ -44,7 +39,6 @@ export function useTryItYourselfViewModel(
     [],
   );
   const [phase, setPhase] = useState(0);
-  // A later pick wins over an earlier one still being readied.
   const latestPick = useRef(0);
   const extraction = useExtractScorecard(repository);
   const [failedScan, setFailedScan] = useState<FailedScanAttempt | null>(null);
@@ -54,9 +48,6 @@ export function useTryItYourselfViewModel(
 
   const step = extraction.isPending ? "processing" : extraction.data ? "review" : "upload";
 
-  // The scan gives no progress events, so the phases are paced rather than
-  // reported. Restarting at zero each time keeps a second scan from opening
-  // on its last step.
   useEffect(() => {
     if (step !== "processing") return;
     const timer = setInterval(
@@ -91,7 +82,6 @@ export function useTryItYourselfViewModel(
       { photo: photo.file, userContext: cardContext(card), ocrText: cardText },
       {
         onError: (error) => {
-          // Only the scan of the photo still picked may be reported.
           if (pick === latestPick.current) setFailedScan(failedScanAttempt(photo.file, scanFailureOf(error)));
         },
       },

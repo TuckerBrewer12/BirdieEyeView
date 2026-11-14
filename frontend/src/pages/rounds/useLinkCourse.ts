@@ -8,11 +8,6 @@ export interface LinkCourseVariables {
   courseId: string;
 }
 
-/**
- * Links a round to a saved course. The cache updates live here, so every
- * caller gets them: the rounds list swaps in the updated round, then refetches
- * for the Best order its new par may move, and any cached detail for that round refetches.
- */
 export function useLinkCourse(
   userId: string,
   repository: RoundsRepository = roundsRepository,
@@ -27,7 +22,6 @@ export function useLinkCourse(
       );
       void queryClient.invalidateQueries({ queryKey: queryKeys.rounds(userId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.round(updated.id) });
-      // The round now counts toward the course's record, on the list and the course's page.
       void queryClient.invalidateQueries({ queryKey: queryKeys.allCourseLists(userId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.allCourseAnalytics(userId) });
     },

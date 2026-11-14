@@ -7,7 +7,6 @@ type CardForm = Pick<
   "card" | "setCard" | "courseSearch" | "presetCourse" | "pickPresetCourse" | "clearPresetCourse"
 >;
 
-/** What the golfer can tell the scan before it reads the card: the course, then the card's facts. */
 export function ScanCardForm({ form }: { form: CardForm }) {
   return (
     <div data-slot="scan-card-form" className="flex flex-col gap-4">

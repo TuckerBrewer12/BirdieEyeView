@@ -23,7 +23,6 @@ export type UpdateRoundBody = {
   course_name_played?: string | null;
 };
 
-/** What saving an edit sends: a course to link first, if one was picked, then the round's update. */
 export interface UpdateRequest {
   linkCourseId: string | null;
   body: UpdateRoundBody;
@@ -32,7 +31,6 @@ export interface UpdateRequest {
 export interface RoundsRepository {
   getRoundsForUser(userId: string, limit?: number): Promise<RoundSummary[]>;
   getRound(roundId: string): Promise<RoundDetail>;
-  /** Saves an edit, linking a newly picked course first, and returns the round as saved. */
   saveRound(round: RoundDetail, edits: RoundEdits): Promise<RoundDetail>;
   deleteRound(roundId: string): Promise<void>;
   linkCourse(roundId: string, courseId: string): Promise<RoundSummary>;
@@ -43,7 +41,6 @@ export interface RoundsRepository {
 
 export type CourseSearchRepository = Pick<RoundsRepository, "searchCourses">;
 
-/** The requests an edit makes. An edit left undefined keeps the hole's value; null clears it. */
 export function updateRequestFrom(round: RoundDetail, edits: RoundEdits): UpdateRequest {
   const { course } = edits;
   const linkCourseId =
@@ -62,7 +59,6 @@ export function updateRequestFrom(round: RoundDetail, edits: RoundEdits): Update
     };
   });
 
-  // A custom name is written; picking a course clears one the round had.
   let courseNamePlayed: string | null | undefined;
   if (course.status === "custom") courseNamePlayed = course.name;
   else if (round.playedName) courseNamePlayed = null;

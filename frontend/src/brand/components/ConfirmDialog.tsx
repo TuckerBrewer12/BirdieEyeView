@@ -6,40 +6,18 @@ import { SheetPortal } from "./Sheet";
 
 type ConfirmDialogProps = Pick<AlertDialogPrimitive.Root.Props, "open" | "onOpenChange"> &
   Omit<AlertDialogPrimitive.Popup.Props, "title" | "children"> & {
-    /** The question, e.g. "Delete this round?". */
     title: string;
-    /** What is at stake, e.g. "This can't be undone." */
     detail?: string;
-    /** Names the action: "Delete round", never "OK" or "Yes". */
     confirmLabel: string;
     cancelLabel?: string;
     onConfirm: () => void;
-    /**
-     * `destructive` (the default) for an action that loses something; `default` for one that keeps
-     * it, such as Save when leaving with unsaved changes.
-     */
     tone?: "destructive" | "default";
-    /**
-     * A second way through besides the confirm, such as "Discard" beside "Save": red ink with no
-     * fill (`ghostDestructive`), between Cancel and the confirm.
-     */
     alternative?: { label: string; onClick: () => void };
-    /** Why the last try failed, shown above the buttons. */
     error?: string | null;
-    /** Holds the confirm (and its label) while the action runs. */
     pending?: boolean;
-    /** Hosts the dialog inside its nearest positioned parent instead of over the page. */
     contained?: boolean;
   };
 
-/**
- * Asks before something that can't be undone. It opens over `Sheet`'s portal
- * and dim, and lays out by the room it has (a container query): under `@md`
- * it rises from the bottom with the buttons stacked, from there up it is
- * centred with the buttons in a row. The confirm is the kit's destructive
- * button (or the primary one, with `tone="default"`); Cancel is outlined beside
- * it and plain under it. An `alternative` sits between them in red ink.
- */
 function ConfirmDialog({
   open,
   onOpenChange,
@@ -72,7 +50,6 @@ function ConfirmDialog({
             )}
             {...props}
           >
-            {/* The bottom sheet's handle, as `Sheet` draws it; the centred dialog has none. */}
             <div
               aria-hidden
               data-slot="confirm-dialog-handle"
@@ -90,7 +67,6 @@ function ConfirmDialog({
               </Alert>
             )}
             <div className="mt-3.5 flex flex-col-reverse gap-2 @md:flex-row @md:justify-end">
-              {/* Outlined beside the confirm; on the sheet, under a full-width confirm, it is a plain line. */}
               <AlertDialogPrimitive.Close
                 render={
                   <Button

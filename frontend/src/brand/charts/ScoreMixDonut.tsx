@@ -5,7 +5,6 @@ import type { ScoreMix } from "@/domain/score";
 import { scoreMixEntries, type ScoreMixEntry } from "./scoreMixEntries";
 
 interface ScoreMixDonutProps {
-  /** Each kind's share of the holes. */
   mix: ScoreMix;
   className?: string;
 }
@@ -13,12 +12,10 @@ interface ScoreMixDonutProps {
 const { size, outer, inner, padAngle, corner } = tokens.chart.donut;
 const VIEW_BOX = `${-size / 2} ${-size / 2} ${size} ${size}`;
 
-/** How a player's holes split across score kinds: a ring of slices with a hollow centre, each share beside its colour. */
 export function ScoreMixDonut({ mix, className }: ScoreMixDonutProps) {
   const entries = scoreMixEntries(mix);
   if (entries.length === 0) return null;
 
-  // Slices keep score order, eagle first, clockwise from the top.
   const slices = pie<ScoreMixEntry>()
     .value((entry) => entry.value)
     .sortValues(null)
@@ -37,7 +34,6 @@ export function ScoreMixDonut({ mix, className }: ScoreMixDonutProps) {
           <path key={s.data.kind} d={slice(s) ?? ""} fill={tokens.color.score[s.data.kind].base} />
         ))}
       </svg>
-      {/* Just the shares: the dots carry the kind in the same colours as the holes, and the ring's label names them. */}
       <ul aria-hidden className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm font-semibold text-foreground">
         {entries.map((entry) => (
           <li key={entry.kind} className="flex items-center gap-1.5 whitespace-nowrap">

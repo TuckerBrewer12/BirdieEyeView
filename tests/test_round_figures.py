@@ -1,5 +1,3 @@
-"""The Round model is the one place a round's figures are worked out."""
-
 import json
 from datetime import date
 
@@ -85,7 +83,6 @@ def test_a_nine_leaves_out_figures_it_cannot_finish():
     holes = _holes([4] * 8 + [None])
     holes[0].putts = 2
     round_ = Round(hole_scores=holes)
-    # Hole 9 is unplayed, so the nine has a par but no score; hole 2 is scored without putts.
     assert round_.nine_par(1, 9) == 36
     assert round_.nine_to_par(1, 9) is None
     assert round_.nine_putts(1, 9) is None
@@ -106,7 +103,6 @@ def test_round_detail_sends_the_scorecard_figures():
 
 
 def test_running_to_par_skips_holes_it_cannot_read():
-    # Holes 1-5 on par 4s: a bogey, a par, a blank, a double, a birdie. Hole 6 has no par.
     round_ = Round(hole_scores=[
         *_holes([5, 4, None, 6, 3]),
         HoleScore(hole_number=6, strokes=5),
@@ -115,12 +111,9 @@ def test_running_to_par_skips_holes_it_cannot_read():
 
 
 def test_worst_stretch_is_the_costliest_four_holes_in_a_row():
-    # +1 0 +1 +1 +1 0 -1 +2 +1 0: holes 1-4, 2-5 and 3-6 are each +3, and the earliest wins.
     round_ = Round(hole_scores=_holes([5, 4, 5, 5, 5, 4, 3, 6, 5, 4]))
     assert round_.worst_stretch() == {"first_hole": 1, "last_hole": 4, "to_par": 3}
-    # Nothing two over in any four straight holes.
     assert Round(hole_scores=_holes([5, 4, 4, 4, 5, 3, 4, 4])).worst_stretch() is None
-    # A gap breaks the run: no four straight holes past the blank 4th lose two.
     gapped = Round(hole_scores=_holes([4, 4, 6, None, 6, 4, 4, 3]))
     assert gapped.worst_stretch() is None
 

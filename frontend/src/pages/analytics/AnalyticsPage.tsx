@@ -54,7 +54,6 @@ export function AnalyticsPage({ userId }: AnalyticsPageProps) {
 function AnalyticsBody({ vm, analytics }: { vm: AnalyticsPageViewModel; analytics: Analytics }) {
   return (
     <>
-      {/* A phone keeps the headline to Scoring; the desktop has room for it over every section. */}
       <HeadlineStrip figures={analytics.headline} className={vm.tab === "scoring" ? undefined : "max-md:hidden"} />
       <TabBar
         aria-label="Analytics sections"

@@ -77,7 +77,6 @@ test("edit mode", async ({ roundDetail }) => {
   await roundDetail.capture("round-detail-edit.png");
 });
 
-
 test("edit mode on a course with no tees", async ({ roundDetail }) => {
   await roundDetail.open(scannedRound);
   await roundDetail.tapEdit();

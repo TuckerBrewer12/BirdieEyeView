@@ -22,7 +22,6 @@ export default function CardPreview() {
         <CardContent>Four tees · Par 72</CardContent>
       </Card>
 
-      {/* A narrow header drops a wide action under its title. */}
       <Card size="sm" className="max-w-xs">
         <CardHeader>
           <CardTitle>Player profile</CardTitle>
@@ -43,7 +42,6 @@ export default function CardPreview() {
         <div className="text-name">Half Moon Bay</div>
       </Card>
 
-      {/* A card that heads a section: its title is a heading. */}
       <Card size="lg">
         <CardHeader>
           <CardTitle level={2} className="text-body-lg font-semibold">
@@ -53,7 +51,6 @@ export default function CardPreview() {
         </CardHeader>
       </Card>
 
-      {/* surface="none": the card's spacing with no surface, as inside a sheet. */}
       <div className="rounded-xl bg-muted p-3">
         <Card surface="none" size="sm">
           <CardHeader>

@@ -1,28 +1,10 @@
-/**
- * Dates as the app reads and writes them. A round's date is a calendar day: the
- * server sends "2026-06-15T00:00:00", fixtures and forms use "2026-06-15", career
- * events "2026/6/15". Each names the same day in every timezone.
- *
- * `new Date("2026-06-15")` is UTC midnight, which is the evening before in the
- * Americas, so a date-only string never goes to `Date` here. A string with an
- * offset ("…Z", "…+00:00") is a moment, and reads as the viewer's day.
- *
- * Every formatter takes a string or a `Date`, and gives null for a missing or
- * unreadable date rather than "Invalid Date" on screen.
- */
-
 const DAY_PATTERN = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T ](.*))?$/;
 const OFFSET_PATTERN = /(?:Z|[+-]\d{2}(?::?\d{2})?)$/i;
 
-/** Noon, so a day never slips across midnight when the clocks change. */
 function localNoon(year: number, monthIndex: number, day: number): Date {
   return new Date(year, monthIndex, day, 12);
 }
 
-/**
- * The calendar day a date string names, as local noon on that day. Null when it
- * can't be read, including a day the month doesn't have (2026-02-31).
- */
 export function parseDay(value: string | null | undefined): Date | null {
   if (!value) return null;
   const match = DAY_PATTERN.exec(value.trim());
@@ -44,7 +26,6 @@ function toDay(input: DayInput): Date | null {
   return parseDay(input);
 }
 
-/** "2026-06-15": the local calendar day, as the API and the activity grid key it. */
 export function isoDay(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -52,22 +33,16 @@ export function isoDay(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-/** "Jun 15": compact date on dashboard tickets. */
 export function formatDayShort(input: DayInput): string | null {
   const day = toDay(input);
   return day ? day.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
 }
 
-/** "Jun 15, 2026": round history rows, career records, a friend request's last update. */
 export function formatDay(input: DayInput): string | null {
   const day = toDay(input);
   return day ? day.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
 }
 
-/**
- * A day with its weekday: "Mon, Jun 15, 2026" over a round's course name and on its share card;
- * without the year, "Sun, Jun 15", a day this year.
- */
 export function formatWeekday(input: DayInput, { year = true }: { year?: boolean } = {}): string | null {
   const day = toDay(input);
   return day
@@ -76,15 +51,11 @@ export function formatWeekday(input: DayInput, { year = true }: { year?: boolean
 }
 
 export interface DayParts {
-  /** "JUN" */
   month: string;
-  /** "15" */
   day: string;
-  /** "'26" */
   year: string;
 }
 
-/** The three lines of a calendar tile, as on a round list card. */
 export function dayParts(input: DayInput): DayParts | null {
   const day = toDay(input);
   if (!day) return null;

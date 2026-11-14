@@ -1,5 +1,3 @@
-"""Allowlisted report metadata; never accept arbitrary diagnostic text."""
-
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, UUID4

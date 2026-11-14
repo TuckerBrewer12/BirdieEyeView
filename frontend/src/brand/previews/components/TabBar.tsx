@@ -20,10 +20,6 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-/**
- * The tab bar fills a window as wide as its board, so every tab fits; the phone's row sits in
- * a narrow box, where it scrolls.
- */
 export default function TabBarPreview() {
   return (
     <div data-testid="brand-frame" className="fixed inset-0 flex flex-col gap-5 bg-background p-6">

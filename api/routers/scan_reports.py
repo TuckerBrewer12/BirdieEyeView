@@ -1,5 +1,3 @@
-"""Reporting is anonymous even when called from the signed-in scan screen."""
-
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -19,7 +17,6 @@ router = APIRouter()
 
 
 def get_scan_report_store() -> ScanReportStore | None:
-    """Application setup overrides this when private durable storage is configured."""
     return None
 
 

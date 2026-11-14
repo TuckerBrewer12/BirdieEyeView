@@ -11,24 +11,17 @@ export interface ResetPasswordViewModel {
   setPassword: (password: string) => void;
   confirm: string;
   setConfirm: (confirm: string) => void;
-  /** Why a field can't be sent, from the last submit; editing a field clears its own. */
   fieldErrors: NewPasswordErrors;
 
-  /** The server's confirmation once the password has changed. */
   notice: string | null;
-  /** The link carried no token, so there is nothing to reset with. */
   tokenMissing: boolean;
-  /** The server's refusal, such as an expired link. */
   error: string | null;
-  /** Without a token there is nothing to send, so the form stays shut. */
   canSubmit: boolean;
   submitting: boolean;
   submit: () => void;
-  /** The password changed; the way on is signing in with it. */
   done: boolean;
 }
 
-/** `token` is the one-time token from the emailed link, blank when the link had none. */
 export function useResetPasswordViewModel(
   auth: Pick<AuthActions, "resetPassword">,
   token: string,

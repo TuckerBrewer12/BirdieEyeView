@@ -34,7 +34,6 @@ describe("Round.fromSummary", () => {
 const yardsFrom = (base: number) =>
   Object.fromEntries(Array.from({ length: 18 }, (_, i) => [i + 1, base + i]));
 
-/** Half Moon Bay with hole yardages on both tees, played from the blues. */
 const measuredCourse = courseResponse({
   ...halfMoonBayCourse,
   tees: [
@@ -89,10 +88,8 @@ describe("Round.previewEdits", () => {
     const round = Round.fromDto(halfMoonBayRound);
     const preview = Round.previewEdits(round, { 1: { strokes: 4 }, 2: { strokes: null } });
     expect(preview.score).toBe(73);
-    // Against the 17 holes still scored (par 68), the way the server reads a round cut short.
     expect(preview.toPar).toBe(5);
     expect(preview.frontNine.total).toBeNull();
-    // Tee ratings are for 18 holes, so a blanked hole takes the net score away until it is filled.
     expect(preview).toMatchObject({ holesPlayed: 17, courseHandicap: null, netScore: null });
     expect(preview.holes[0]).toMatchObject({ strokes: 4, toPar: 0, kind: "par" });
     expect(preview.scoreCounts.par).toBe(round.scoreCounts.par);

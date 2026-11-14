@@ -3,15 +3,6 @@ import { Dialog as ActionSheetPrimitive } from "@base-ui/react/dialog";
 import { cn } from "@/brand/cn";
 import { SheetPortal } from "./Sheet";
 
-/**
- * A mobile list of actions where the player does one. It rises from the
- * bottom as two floating cards: the actions under a title, and a Cancel
- * apart from them. It is a dialog of plain buttons (Tab moves between them,
- * Escape cancels), and choosing an action closes it.
- *
- * `Sheet side="bottom"` is the sibling for picking one option from a list.
- */
-
 function ActionSheet(props: ActionSheetPrimitive.Root.Props) {
   return <ActionSheetPrimitive.Root data-slot="action-sheet" {...props} />;
 }
@@ -27,9 +18,7 @@ function ActionSheetContent({
   contained = false,
   ...props
 }: Omit<ActionSheetPrimitive.Popup.Props, "title"> & {
-  /** What the actions are for. Shown above them and read as the dialog's name. */
   title: string;
-  /** Hosts the sheet inside its nearest positioned parent instead of over the page. */
   contained?: boolean;
 }) {
   return (
@@ -63,7 +52,6 @@ function ActionSheetContent({
   );
 }
 
-/** One action: an icon and a label in the primary colour. Choosing it closes the sheet. */
 function ActionSheetAction({
   className,
   children,

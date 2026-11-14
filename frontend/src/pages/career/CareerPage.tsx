@@ -43,7 +43,6 @@ export function CareerPage({ userId }: { userId: string }) {
   return (
     <>
       <PageHeader title="Career" subtitle={PAGE_SUBTITLE} revealAt={100} />
-      {/* CSS picks the layout, so the page renders the same on the server and the first paint. */}
       <div className="md:hidden">
         <CareerMobileLayout {...layout} />
       </div>

@@ -4,17 +4,6 @@ import { Check, X } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { Button } from "./Button";
 
-/**
- * A drawer with shadcn's slot tree (Trigger / Content / Header / Title /
- * Description / Footer) so pages compose the same way.
- *
- * `side="bottom"` is the mobile sheet for picking one option: a grab handle,
- * a title with a round close button, then `SheetOptions` rows with a check on
- * the chosen one. `side="right"` (the default) is the wide panel the handicap
- * breakdown uses. `contained` lets the brand preview host the panel inside
- * the stage instead of portaling over the page.
- */
-
 type SheetSide = "right" | "bottom";
 
 const SheetSideContext = React.createContext<SheetSide>("right");
@@ -43,11 +32,6 @@ function SheetClose(props: SheetPrimitive.Close.Props) {
   return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
 }
 
-/**
- * The portal and dim overlay a sheet opens over. `contained` keeps both inside
- * the nearest positioned parent (the brand preview) instead of over the page.
- * Children position themselves with `absolute` when contained, `fixed` when not.
- */
 function SheetPortal({ contained = false, children }: { contained?: boolean; children: React.ReactNode }) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const position = contained ? "absolute" : "fixed";
@@ -163,7 +147,6 @@ function SheetDescription({
   );
 }
 
-/** The rows of a bottom sheet, one of which is chosen. Tab moves between them. */
 function SheetOptions({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -174,10 +157,6 @@ function SheetOptions({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-/**
- * One row of `SheetOptions`: a button that picks it. The chosen row is
- * pressed, heavier and checked.
- */
 function SheetOption({
   selected = false,
   className,

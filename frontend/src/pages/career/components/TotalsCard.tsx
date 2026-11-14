@@ -10,7 +10,6 @@ interface TotalsCardProps {
   className?: string;
 }
 
-/** Counts over the window: rounds, each kind of score (named in its colour), greens and three-putts. */
 export function TotalsCard({ title, totals, className }: TotalsCardProps) {
   return (
     <Card data-slot="totals-card" className={cn("@container", className)}>

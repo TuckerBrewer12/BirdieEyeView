@@ -5,7 +5,6 @@ import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
 
-/** Screen robot for /courses — same idea as an Android Espresso robot. */
 export class CoursesRobot {
   private readonly page: Page;
 
@@ -72,7 +71,6 @@ export class CoursesRobot {
     return this;
   }
 
-  /** A course's row, with what it says of the golfer's rounds there: "75.0", "Not played". */
   async seesRecord(name: string, record: string): Promise<this> {
     await expect(this.page.getByRole("button", { name: new RegExp(`^${name}.*${record}`) })).toBeVisible();
     return this;

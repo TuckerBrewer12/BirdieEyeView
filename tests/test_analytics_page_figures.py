@@ -1,5 +1,3 @@
-"""The analytics page's own figures: the headline moves, and the holes, bands and rounds it marks."""
-
 from datetime import datetime, timezone
 
 from analytics import benchmarks
@@ -9,7 +7,6 @@ from models import Course, Hole, HoleScore, Round
 
 
 def test_a_headline_figure_moves_by_the_last_five_against_every_round():
-    # Scores falling from 90 to 80: the last five average 82, every round 85.
     scores = [90, 88, 86, 84, 82, 82, 82, 82, 80, 84]
     figure = headline_figure("scoring_average", 84.0, scores, lower_is_better=True, digits=1)
     assert figure["change"] == -2.0
@@ -21,7 +18,6 @@ def test_a_headline_figure_skips_rounds_without_it_and_waits_for_five():
     figure = headline_figure("gir_percentage", 40.0, [30, None, 40, None, 50], lower_is_better=False, digits=0)
     assert (figure["change"], figure["verdict"]) == (None, None)
     assert figure["trend"] == [30.0, 35.0, 40.0]
-    # Greens rising is for the better.
     risen = headline_figure("gir_percentage", 40.0, [20, 20, 30, 40, 50, 60], lower_is_better=False, digits=0)
     assert (risen["change"], risen["verdict"]) == (3.0, "good")
 
@@ -37,12 +33,11 @@ def _course(pars):
 
 def test_the_three_hardest_holes_by_handicap_are_marked():
     course = _course([4] * 18)
-    over = {5: 2, 9: 3, 12: 2, 2: 1}  # hole number: strokes over par
+    over = {5: 2, 9: 3, 12: 2, 2: 1}
     round_ = Round(course=course, date=datetime(2026, 1, 1, tzinfo=timezone.utc), hole_scores=[
         HoleScore(hole_number=n, strokes=4 + over.get(n, 0)) for n in range(1, 19)
     ])
     rows = analytics.scoring_vs_hole_handicap([round_])
-    # Holes 9, then 5 and 12 tied (the harder handicap first); hole 2 misses out.
     assert [row["handicap"] for row in rows if row["hardest"]] == [5, 9, 12]
 
 
@@ -74,7 +69,6 @@ def test_the_next_level_is_the_benchmark_a_step_better():
 
 
 def test_greens_count_only_the_rounds_that_recorded_them():
-    """A round with no greens recorded says nothing about them, so its holes aren't misses."""
     hit_half = Round(id="g", hole_scores=[
         HoleScore(hole_number=n, strokes=4, par_played=4, green_in_regulation=n <= 9) for n in range(1, 19)
     ])

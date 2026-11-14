@@ -399,7 +399,6 @@
         "type": "object"
       },
       "AnalyticsResponse": {
-        "description": "The analytics page's figures over the rounds asked for. Every per-round series is oldest first.",
         "properties": {
           "gir_trend": {
             "items": {
@@ -593,7 +592,6 @@
         "type": "object"
       },
       "BenchmarkComparisonResponse": {
-        "description": "The player's last rounds held up against a benchmark, and which benchmark it was.",
         "properties": {
           "against": {
             "enum": [
@@ -646,7 +644,6 @@
         "type": "object"
       },
       "BenchmarkShape": {
-        "description": "A golfer's shape in golf terms: the Lab radar's axes. Null where they have no figure.",
         "properties": {
           "gir_percentage": {
             "anyOf": [
@@ -727,7 +724,6 @@
         "type": "object"
       },
       "BenchmarkVerdicts": {
-        "description": "Each radar axis against the benchmark: ahead, even or behind. Null without both figures.",
         "properties": {
           "gir_percentage": {
             "anyOf": [
@@ -934,7 +930,6 @@
         "type": "object"
       },
       "ComparisonFigure": {
-        "description": "One figure of a round against its average: the round's value, the average, this less that,\nand whether the difference is good, bad or neutral for the golfer.",
         "properties": {
           "average": {
             "anyOf": [
@@ -1009,7 +1004,6 @@
         "type": "object"
       },
       "ComparisonWindowResponse": {
-        "description": "The rounds before this one that a window averages: the last five, twenty, or all.",
         "properties": {
           "metrics": {
             "items": {
@@ -1041,7 +1035,6 @@
         "type": "object"
       },
       "CourseAnalyticsResponse": {
-        "description": "The player's figures at one course. Every figure is worked out here, not on the client.",
         "properties": {
           "best_round_id": {
             "anyOf": [
@@ -1259,7 +1252,6 @@
         "type": "object"
       },
       "CourseHoleStatsRow": {
-        "description": "How one hole of a course plays for the golfer (`stats.course_hole_stats`).",
         "properties": {
           "average_putts": {
             "anyOf": [
@@ -1355,7 +1347,6 @@
         "type": "object"
       },
       "CourseResponse": {
-        "description": "A full course, with the figures the Course model works out.",
         "properties": {
           "back_nine_par": {
             "anyOf": [
@@ -1476,7 +1467,6 @@
         "type": "object"
       },
       "CourseSummaryResponse": {
-        "description": "Course for card/list views.",
         "properties": {
           "best_score": {
             "anyOf": [
@@ -1719,7 +1709,6 @@
         "type": "object"
       },
       "DashboardResponse": {
-        "description": "What the dashboard shows. Every figure is worked out here, not on the client.",
         "properties": {
           "best_round": {
             "anyOf": [
@@ -1884,7 +1873,6 @@
         "type": "object"
       },
       "FieldConfidence": {
-        "description": "How sure the scan is of one reading.",
         "properties": {
           "final_confidence": {
             "title": "Final Confidence",
@@ -2158,7 +2146,6 @@
         "type": "object"
       },
       "GirVsNonGirRow": {
-        "description": "Percent of GIR (or missed-green) holes in each score type.",
         "properties": {
           "birdie": {
             "title": "Birdie",
@@ -2216,7 +2203,6 @@
         "type": "object"
       },
       "GoalAttempt": {
-        "description": "One scored round in the window, and whether it met the goal (at or under it).",
         "properties": {
           "met_goal": {
             "title": "Met Goal",
@@ -2247,7 +2233,6 @@
         "type": "object"
       },
       "GoalReportResponse": {
-        "description": "How far the player's average is from their goal, with the savers worth the most strokes first.",
         "properties": {
           "attempts": {
             "items": {
@@ -2361,7 +2346,6 @@
         "type": "object"
       },
       "GoalSaver": {
-        "description": "One place to find strokes, with the server's wording for it.",
         "properties": {
           "data": {
             "additionalProperties": true,
@@ -2460,7 +2444,6 @@
         "type": "object"
       },
       "HandicapTrendRow": {
-        "description": "The golfer's index after one round, oldest first: over the 20 rounds ending with it and off\nthe handicap they gave, so the last round's is the index every screen shows. With where the\nround's differential stands against the current index.",
         "properties": {
           "differential": {
             "anyOf": [
@@ -2552,7 +2535,6 @@
         "type": "object"
       },
       "HeadlineFigure": {
-        "description": "One of the analytics page's headline figures over the rounds asked for: its value, how far the\nlast five rounds' average sits from every round's (null under five rounds with it), whether that\nmove is for the better, and its five-round average after each round, oldest first.",
         "properties": {
           "change": {
             "anyOf": [
@@ -2622,7 +2604,6 @@
         "type": "object"
       },
       "Hole": {
-        "description": "Represents a single hole on a golf course.",
         "properties": {
           "handicap": {
             "anyOf": [
@@ -2673,7 +2654,6 @@
         "type": "object"
       },
       "HoleConfidence": {
-        "description": "How sure the scan is of one hole.",
         "properties": {
           "fields": {
             "$ref": "#/components/schemas/HoleFieldConfidence"
@@ -2707,7 +2687,6 @@
         "type": "object"
       },
       "HoleFieldConfidence": {
-        "description": "How sure the scan is of each reading on a hole.",
         "properties": {
           "green_in_regulation": {
             "anyOf": [
@@ -2905,7 +2884,6 @@
         "type": "object"
       },
       "HoleScoreResponse": {
-        "description": "One hole as played, with its par resolved and how it scored.",
         "properties": {
           "fairway_hit": {
             "anyOf": [
@@ -3216,7 +3194,6 @@
         "type": "object"
       },
       "HoleSummaryResponse": {
-        "description": "One hole in a round list: what was taken, how it scored and where the round stood after it.",
         "properties": {
           "hole_number": {
             "title": "Hole Number",
@@ -3847,7 +3824,6 @@
         "type": "object"
       },
       "MilestoneAchievement": {
-        "description": "The round a milestone was first reached in.",
         "properties": {
           "course": {
             "title": "Course",
@@ -3884,7 +3860,6 @@
         "type": "object"
       },
       "MilestoneEvent": {
-        "description": "The round a record or milestone was set in. `date` reads 2026/5/28.",
         "properties": {
           "course": {
             "title": "Course",
@@ -3915,7 +3890,6 @@
         "type": "object"
       },
       "NetScoreTrendRow": {
-        "description": "Gross less the course handicap the current index gives on the tee played. Null without ratings.",
         "properties": {
           "course_handicap": {
             "anyOf": [
@@ -4013,7 +3987,6 @@
         "type": "object"
       },
       "NineFigures": {
-        "description": "What one nine adds up to, for a scorecard's OUT and IN columns. The strokes are front_nine/back_nine.",
         "properties": {
           "gir": {
             "anyOf": [
@@ -4098,7 +4071,6 @@
         "type": "object"
       },
       "NotableAchievements": {
-        "description": "Records, totals, streaks and milestones over the rounds sent, and over the last `window_days`.",
         "properties": {
           "best_performance_streaks": {
             "$ref": "#/components/schemas/WindowedPerformanceStreaks"
@@ -4161,7 +4133,6 @@
         "type": "object"
       },
       "OcrTextResponse": {
-        "description": "`POST /scan/ocr`: the card's text, read ahead so extract can skip that step.",
         "properties": {
           "ocr_text": {
             "title": "Ocr Text",
@@ -4520,7 +4491,6 @@
         "type": "object"
       },
       "ParTypeComparison": {
-        "description": "One par type's average to par, the player's against the benchmark's.",
         "properties": {
           "average_to_par": {
             "anyOf": [
@@ -4592,7 +4562,6 @@
         "type": "object"
       },
       "PeakGame": {
-        "description": "The player's best three rounds, lowest first (the older on a tie), and what they did differently.",
         "properties": {
           "average": {
             "title": "Average",
@@ -4622,7 +4591,6 @@
         "type": "object"
       },
       "PeakImpact": {
-        "description": "One kind of hole, a round, in the peak rounds against every round, each to a hundredth.\n`doubles` counts double bogeys and worse.",
         "properties": {
           "average": {
             "title": "Average",
@@ -4656,7 +4624,6 @@
         "type": "object"
       },
       "PeakRound": {
-        "description": "One of the player's best rounds.",
         "properties": {
           "course_name": {
             "anyOf": [
@@ -4694,7 +4661,6 @@
         "type": "object"
       },
       "PerformanceStreakEvents": {
-        "description": "The round each streak reached its length in.",
         "properties": {
           "longest_2_putt_or_less_streak": {
             "anyOf": [
@@ -4747,7 +4713,6 @@
         "type": "object"
       },
       "PerformanceStreaks": {
-        "description": "Longest runs of holes. A par streak counts par or better.",
         "properties": {
           "longest_2_putt_or_less_streak": {
             "default": 0,
@@ -4780,7 +4745,6 @@
         "type": "object"
       },
       "PlayedCourseResponse": {
-        "description": "A course the player has a round linked to.",
         "properties": {
           "id": {
             "title": "Id",
@@ -4891,7 +4855,6 @@
         "type": "object"
       },
       "PuttsPerHole": {
-        "description": "How the holes with putts recorded split: one putt or none, two, three or more. Shares to a hundredth.",
         "properties": {
           "holes": {
             "default": 0,
@@ -5085,7 +5048,6 @@
         "type": "object"
       },
       "RoundComparisonResponse": {
-        "description": "A round against the golfer's average over the rounds before it, one entry per window.",
         "properties": {
           "windows": {
             "items": {
@@ -5118,7 +5080,6 @@
         "type": "object"
       },
       "RoundResponse": {
-        "description": "A full round: the stored round, its figures, and its hole scores.",
         "properties": {
           "back_nine": {
             "anyOf": [
@@ -5387,7 +5348,6 @@
         "type": "object"
       },
       "RoundSummaryResponse": {
-        "description": "A round for list views: where and when, the figures a list shows, and a mark per hole.",
         "properties": {
           "back_nine": {
             "anyOf": [
@@ -5547,7 +5507,6 @@
       },
       "SaveRoundRequest": {
         "additionalProperties": false,
-        "description": "Request to save a reviewed/edited round.",
         "properties": {
           "all_tees": {
             "anyOf": [
@@ -5724,7 +5683,6 @@
         "type": "object"
       },
       "SaveScanResponse": {
-        "description": "`POST /scan/save`: the new round's id and total.",
         "properties": {
           "id": {
             "title": "Id",
@@ -5750,7 +5708,6 @@
         "type": "object"
       },
       "ScanConfidence": {
-        "description": "How sure the scan is of the card as a whole, and of each hole.",
         "properties": {
           "hole_scores": {
             "items": {
@@ -5783,7 +5740,6 @@
         "type": "object"
       },
       "ScanResponse": {
-        "description": "`POST /scan/extract`: the card as read, how sure the scan is, and what to check before saving.",
         "properties": {
           "confidence": {
             "$ref": "#/components/schemas/ScanConfidence"
@@ -5808,7 +5764,6 @@
         "type": "object"
       },
       "ScannedCourse": {
-        "description": "The course a scan read the card against.",
         "properties": {
           "holes": {
             "items": {
@@ -5869,7 +5824,6 @@
         "type": "object"
       },
       "ScannedHole": {
-        "description": "A hole as read off the card, or taken from the course the golfer picked.",
         "properties": {
           "handicap": {
             "anyOf": [
@@ -5907,7 +5861,6 @@
         "type": "object"
       },
       "ScannedHoleScore": {
-        "description": "One hole's score as read off the card. Anything the scan couldn't read is null.",
         "properties": {
           "fairway_hit": {
             "anyOf": [
@@ -5981,7 +5934,6 @@
         "type": "object"
       },
       "ScannedRound": {
-        "description": "A round as read off a card, before the golfer checks and saves it.",
         "properties": {
           "course": {
             "anyOf": [
@@ -6045,7 +5997,6 @@
         "type": "object"
       },
       "ScannedTee": {
-        "description": "A tee row read off the card, or one of the picked course's tees. Yardages are keyed by hole number.",
         "properties": {
           "color": {
             "anyOf": [
@@ -6110,7 +6061,6 @@
         "type": "object"
       },
       "ScoreCounts": {
-        "description": "How many holes landed in each score bucket.",
         "properties": {
           "birdie": {
             "default": 0,
@@ -6161,7 +6111,6 @@
         "type": "object"
       },
       "ScoreMix": {
-        "description": "Percent of classified holes in each score bucket.",
         "properties": {
           "birdie": {
             "default": 0.0,
@@ -6212,7 +6161,6 @@
         "type": "object"
       },
       "ScoreTrendRow": {
-        "description": "One round's score, oldest first, with its average over it and the four rounds before it.",
         "properties": {
           "course_name": {
             "anyOf": [
@@ -6491,7 +6439,6 @@
         "type": "object"
       },
       "TeeResponse": {
-        "description": "A tee with its yardage figures worked out.",
         "properties": {
           "back_nine_yardage": {
             "anyOf": [
@@ -6592,7 +6539,6 @@
         "type": "object"
       },
       "ThreePuttsTrendRow": {
-        "description": "Three-putts in a round, as a share of the holes with putts recorded (0 without any).",
         "properties": {
           "costly": {
             "default": false,
@@ -6639,7 +6585,6 @@
         "type": "object"
       },
       "ThresholdMilestone": {
-        "description": "The first round to get past `threshold`, or null until one does.",
         "properties": {
           "achievement": {
             "anyOf": [
@@ -6664,7 +6609,6 @@
         "type": "object"
       },
       "TourShortGame": {
-        "description": "What tour players average around the green, for the short-game bars' marks.",
         "properties": {
           "scrambling_percentage": {
             "title": "Scrambling Percentage",
@@ -6944,7 +6888,6 @@
         "type": "object"
       },
       "UserResponse": {
-        "description": "A golfer's profile, as `GET`/`PATCH /users/{id}` send it. Their rounds are fetched separately.",
         "properties": {
           "created_at": {
             "anyOf": [
@@ -7043,7 +6986,6 @@
         "type": "object"
       },
       "UserTee": {
-        "description": "A user-owned tee configuration, optionally linked to a master course.",
         "properties": {
           "course_id": {
             "anyOf": [
@@ -7191,7 +7133,6 @@
         "type": "object"
       },
       "WhsBreakdown": {
-        "description": "The rounds in the handicap window, newest first, and which differentials count.",
         "properties": {
           "adjustment": {
             "default": 0.0,
@@ -7355,7 +7296,6 @@
         "type": "object"
       },
       "WorstStretch": {
-        "description": "The four holes in a row that lost the most to par, when they lost two or more.",
         "properties": {
           "first_hole": {
             "title": "First Hole",
@@ -7379,7 +7319,6 @@
         "type": "object"
       },
       "YardageScore": {
-        "description": "One hole played in a yardage bucket.",
         "properties": {
           "to_par": {
             "title": "To Par",
@@ -8009,7 +7948,6 @@
         ]
       },
       "post": {
-        "description": "Create a custom course for a user.",
         "operationId": "create_course_api_courses_post",
         "parameters": [
           {
@@ -8215,7 +8153,6 @@
         ]
       },
       "put": {
-        "description": "Update a custom course. Only the owner can edit; master courses are protected.",
         "operationId": "update_course_api_courses__course_id__put",
         "parameters": [
           {
@@ -8272,7 +8209,6 @@
     },
     "/api/courses/{course_id}/clone": {
       "post": {
-        "description": "Clone a master course as a user-owned custom course.",
         "operationId": "clone_course_api_courses__course_id__clone_post",
         "parameters": [
           {
@@ -8479,7 +8415,6 @@
         ]
       },
       "put": {
-        "description": "Edit an existing round's scores and/or metadata.",
         "operationId": "update_round_api_rounds__round_id__put",
         "parameters": [
           {
@@ -8538,7 +8473,6 @@
     },
     "/api/rounds/{round_id}/link-course": {
       "post": {
-        "description": "Link an unlinked round to an existing course.\n\nBackfills par_played/handicap_played on hole_scores from the course,\nand fills course holes from any par_played already on the round.",
         "operationId": "link_course_to_round_api_rounds__round_id__link_course_post",
         "parameters": [
           {
@@ -8597,7 +8531,6 @@
     },
     "/api/scan/extract": {
       "post": {
-        "description": "Upload a scorecard image, run OCR extraction, return results for review.",
         "operationId": "extract_scan_api_scan_extract_post",
         "requestBody": {
           "content": {
@@ -8644,7 +8577,6 @@
     },
     "/api/scan/ocr": {
       "post": {
-        "description": "Run OCR on an uploaded image and return the raw markdown text.\n\nCalled immediately on file selection so the slow OCR step is already\ncomplete by the time the user clicks Extract.",
         "operationId": "prefetch_ocr_api_scan_ocr_post",
         "requestBody": {
           "content": {
@@ -8730,7 +8662,6 @@
     },
     "/api/scan/save": {
       "post": {
-        "description": "Save a reviewed/edited round to the database.",
         "operationId": "save_round_api_scan_save_post",
         "requestBody": {
           "content": {
@@ -9037,7 +8968,6 @@
     },
     "/api/stats/milestones/{user_id}": {
       "get": {
-        "description": "Return a flat, sorted list of lifetime milestone events for the user.",
         "operationId": "get_milestones_api_stats_milestones__user_id__get",
         "parameters": [
           {
@@ -9096,7 +9026,6 @@
     },
     "/api/stats/{user_id}/benchmark": {
       "get": {
-        "description": "The player's last `limit` rounds against a handicap's shape or a friend's last `limit` rounds.",
         "operationId": "get_benchmark_comparison_api_stats__user_id__benchmark_get",
         "parameters": [
           {
@@ -9263,7 +9192,6 @@
     },
     "/api/stats/{user_id}/played-courses": {
       "get": {
-        "description": "Return distinct courses the user has rounds linked to.",
         "operationId": "get_played_courses_api_stats__user_id__played_courses_get",
         "parameters": [
           {
@@ -9363,7 +9291,6 @@
     },
     "/api/users/me/friends": {
       "get": {
-        "description": "List friendships for the current user. An accepted friend carries their handicap index and\nthe day of their last round, as the friends list shows them.",
         "operationId": "list_friendships_api_users_me_friends_get",
         "parameters": [
           {
@@ -9421,7 +9348,6 @@
         ]
       },
       "post": {
-        "description": "Send (or re-open) a friend request to another user.",
         "operationId": "send_friend_request_api_users_me_friends_post",
         "requestBody": {
           "content": {
@@ -9468,7 +9394,6 @@
     },
     "/api/users/me/friends/{friendship_id}": {
       "patch": {
-        "description": "Accept/decline/block a friendship request.",
         "operationId": "update_friendship_status_api_users_me_friends__friendship_id__patch",
         "parameters": [
           {
@@ -9631,7 +9556,6 @@
     },
     "/api/users/{user_id}/tees": {
       "get": {
-        "description": "List a user's custom tee configurations.",
         "operationId": "get_user_tees_api_users__user_id__tees_get",
         "parameters": [
           {
@@ -9699,7 +9623,6 @@
         ]
       },
       "post": {
-        "description": "Create a user tee configuration.",
         "operationId": "create_user_tee_api_users__user_id__tees_post",
         "parameters": [
           {
@@ -9758,7 +9681,6 @@
     },
     "/api/users/{user_id}/tees/{tee_id}": {
       "delete": {
-        "description": "Delete a user tee configuration.",
         "operationId": "delete_user_tee_api_users__user_id__tees__tee_id__delete",
         "parameters": [
           {
@@ -9808,7 +9730,6 @@
         ]
       },
       "put": {
-        "description": "Update a user tee configuration.",
         "operationId": "update_user_tee_api_users__user_id__tees__tee_id__put",
         "parameters": [
           {

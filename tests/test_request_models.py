@@ -133,7 +133,6 @@ def test_user_request_validation():
 
 
 def test_friendship_status_is_typed():
-    """The friendship status is a fixed set, so the generated client gets a union, not a string."""
     response_status = users.FriendshipResponse.model_json_schema()["properties"]["status"]
     assert response_status["enum"] == ["pending", "accepted", "declined", "blocked"]
 

@@ -26,10 +26,6 @@ const failed = {
   report: { ...blank.report, available: true },
 };
 
-/**
- * A computer's: the drop zone, then a photo beside the form after a failed read. A phone's: the
- * form with its photo row and the error, its button pinned (here in line, at the preview's width).
- */
 export default function ScanPhotoStepPreview() {
   return (
     <div className="flex max-w-4xl flex-col gap-6">

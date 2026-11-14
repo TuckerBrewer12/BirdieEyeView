@@ -1,34 +1,4 @@
 #!/usr/bin/env python3
-"""Structural checks on the frontend's kit and refactored pages.
-
-The brand kit and the MVVM pages only stay trustworthy if every piece comes
-with its coverage: a kit component with no preview or screenshot spec can
-change its look without failing anything, a page with no robot/screenshot/
-espresso trio has no pinned look or behaviour, and a view model with no
-Vitest test has no pinned logic. Reviews kept catching these one PR at a time
-(#148, #185, #188, #287), along with Playwright specs that don't say whether
-they test look or behaviour, and a second kit file exporting a component name
-that already existed (#332). They are cheap to check from the file tree.
-
-Checks:
-  1. Every kit component brand/components/X.tsx and chart brand/charts/X.tsx
-     (a PascalCase .tsx file, not a test) has brand/previews/<kind>/X.tsx and
-     brand/tests/screenshots/<kind>/X.screenshot.spec.ts.
-  2. Every refactored page src/pages/<dir>/**/XPage.tsx has a sibling tests/
-     folder with XPage.robot.ts, XPage.screenshot.spec.ts and
-     XPage.espresso.spec.ts. (Legacy top-level src/pages/*.tsx are skipped.)
-  3. Every src/pages/**/useXViewModel.ts(x) has a Vitest test named
-     useXViewModelTest.ts(x) or useXViewModel.test.ts(x) in the same page
-     folder (src/pages/<dir>/**).
-  4. Every *.spec.ts(x) under src/ is a .screenshot.spec.ts (look), an
-     .espresso.spec.ts (behaviour) or a .capture.spec.ts (the landing demo's
-     captures); no Playwright project matches anything else.
-  5. No two files under src/brand/ export a component with the same name.
-  6. Every kit component and chart is used: its name appears in a file other
-     than its own, its preview, its tests and the kit's index. A piece kept
-     only for its preview is dead code knip can't see, since the preview
-     imports it.
-"""
 from __future__ import annotations
 
 import re
@@ -44,8 +14,6 @@ PAGE_FILE_RE = re.compile(r"^[A-Z][A-Za-z0-9]*Page\.tsx$")
 VIEW_MODEL_FILE_RE = re.compile(r"^(use[A-Z][A-Za-z0-9]*ViewModel)\.tsx?$")
 SPEC_KINDS = (".screenshot.spec.ts", ".espresso.spec.ts", ".capture.spec.ts")
 
-# A component name: starts upper-case and has a lower-case letter, so
-# SCREAMING_CASE constants are not counted.
 COMPONENT_NAME_RE = re.compile(r"^[A-Z](?=.*[a-z])[A-Za-z0-9]*$")
 COMMENT_RE = re.compile(r"/\*.*?\*/|//[^\n]*", re.DOTALL)
 DECLARED_EXPORT_RE = re.compile(

@@ -2,24 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { Tabs } from "@base-ui/react/tabs";
 import { cn } from "@/brand/cn";
 
-// The share of the row the end fade covers; a tab scrolled into view stops short of it.
 const FADE_SHARE = 0.15;
 
 interface TabBarProps {
   tabs: readonly { key: string; label: string }[];
   value: string;
   onValueChange: (key: string) => void;
-  /** What the tabs switch between, for screen readers. */
   "aria-label": string;
   className?: string;
 }
 
-/**
- * Tabs for the sections of one page: a row of labels over a rule, the current one inked and
- * underlined in the brand colour. Where the labels fit they sit side by side; where they do
- * not the row scrolls sideways, keeps the current tab in view, and fades out at the end that
- * has more. Not for filters: those are a segmented control.
- */
 function TabBar({ tabs, value, onValueChange, "aria-label": ariaLabel, className }: TabBarProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const [more, setMore] = useState(false);
@@ -44,7 +36,6 @@ function TabBar({ tabs, value, onValueChange, "aria-label": ariaLabel, className
     if (!list || !tab) return;
     const start = tab.offsetLeft;
     const end = start + tab.offsetWidth;
-    // Keep clear of the fade at the right end, so the current tab never sits under it.
     const margin = list.clientWidth * FADE_SHARE;
     if (start < list.scrollLeft) list.scrollLeft = start;
     else if (end > list.scrollLeft + list.clientWidth - margin) {

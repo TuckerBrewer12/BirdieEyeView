@@ -22,7 +22,6 @@ export function ScanPage({ userId }: { userId: string }) {
   const navigate = useNavigate();
   const viewModel = useScanPageViewModel(userId);
   const previewUrl = useFilePreview(viewModel.photo);
-  // A computer drops the photo first; a phone says what's on the card, then takes the photo.
   const wide = useFromBreakpoint("md");
 
   switch (viewModel.step) {
@@ -81,7 +80,6 @@ export function ScanPage({ userId }: { userId: string }) {
               className="md:w-fit"
               value={[viewModel.mode]}
               onValueChange={(values) => {
-                // Pressing the chosen mode again would clear it; one is always chosen.
                 if (values[0] === "scan" || values[0] === "manual") viewModel.setMode(values[0]);
               }}
             >

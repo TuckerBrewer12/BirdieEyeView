@@ -10,7 +10,6 @@ import {
 } from "../present";
 import { SectionCard } from "./SectionCard";
 
-/** Ball striking: greens hit each round, the short game against the tour's, and how holes go when the green is hit or missed. */
 export function BallStrikingSection({ analytics, shown, onShownChange }: { analytics: Analytics } & TrendWindow) {
   return (
     <div data-slot="ball-striking-section" className="flex flex-col gap-4">

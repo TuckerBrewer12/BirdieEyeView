@@ -4,17 +4,12 @@ import type { HoleSummary, RoundSummary } from "@/domain";
 
 interface HoleScoreShapesProps {
   round: RoundSummary;
-  /** Puts each hole's number above its shape. */
   numbered?: boolean;
 }
 
 const { width, height: VB_H, circle: r, dot, stroke, strokeThin, corner, inset, hatch, squareHatch } =
   tokens.chart.holeShape;
 
-/**
- * One hole drawn the way a scorecard marks it: circles under par, boxes over. A scorecard cell is
- * wider than tall; `square` draws the boxes square, as the round flow's strip and the scorecard show them.
- */
 const SQUARE_BOX = {
   default: "size-hole-h",
   lg: "size-hole-lg",
@@ -28,16 +23,11 @@ export function HoleShape({
 }: {
   hole: HoleSummary;
   square?: boolean;
-  /**
-   * `lg` is a scorecard's score cell, where the mark is the figure; `scorecard` is the same cell
-   * that a phone's nine draws at the default size. Square marks only.
-   */
   size?: "default" | "lg" | "scorecard";
 }) {
   const VB_W = square ? VB_H : width;
   const cx = VB_W / 2;
   const cy = VB_H / 2;
-  /** A box `by` in from every edge of the mark. */
   const boxInset = (by: number) => ({ x: by, y: by, width: VB_W - 2 * by, height: VB_H - 2 * by });
   const box = square ? SQUARE_BOX[size] : "h-hole-h w-hole-w";
   const kind = hole.kind;
@@ -102,7 +92,6 @@ export function HoleShape({
   );
 }
 
-/** The round's holes as marked shapes, one row per nine. */
 export function HoleScoreShapes({ round, numbered = false }: HoleScoreShapesProps) {
   const nines = [round.frontNine, round.backNine].filter((nine) => nine.holes.length > 0);
   if (nines.length === 0) return null;

@@ -1,5 +1,3 @@
-"""Course API endpoints."""
-
 import logging
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -121,7 +119,6 @@ def _summarize_course(c) -> CourseSummaryResponse:
 
 
 def _summary_response(s: CourseSummary, record: Optional[dict] = None) -> CourseSummaryResponse:
-    """A course for the list, with the signed-in golfer's record there when they have one."""
     best = record["best_round"] if record else None
     return CourseSummaryResponse(
         id=s.id,
@@ -142,14 +139,9 @@ def _summary_response(s: CourseSummary, record: Optional[dict] = None) -> Course
 async def _summary_responses(
     db: DatabaseManager, summaries: List[CourseSummary], user: Optional[User]
 ) -> List[CourseSummaryResponse]:
-    """The courses for the list, each with the golfer's record there (`stats.course_record`).
-
-    The record reads the light round summaries (strokes and pars, no tees) of every round the
-    golfer has at the listed courses, with no cap, so a long history still counts in full.
-    """
     if not user or not summaries:
         return [_summary_response(s) for s in summaries]
-    rounds = await db.rounds.get_round_summaries_for_user(  # newest first
+    rounds = await db.rounds.get_round_summaries_for_user(
         str(user.id), limit=None, course_ids=[s.id for s in summaries]
     )
     by_course: Dict[str, List[Round]] = {}
@@ -179,7 +171,6 @@ def _summarize_external_course(item: dict) -> CourseSummaryResponse:
         total_holes=0,
         tee_count=0,
     )
-
 
 
 @router.get("", response_model=List[CourseSummaryResponse])
@@ -230,7 +221,6 @@ async def search_courses(
     if not include_external:
         return out
 
-    # Enrich with external fallback without breaking existing local-first behavior.
     try:
         ext_items = await GolfCourseAPIService().search_external_courses(q, limit=20)
     except Exception as exc:  # noqa: BLE001
@@ -260,7 +250,6 @@ async def search_courses(
 
     for item in ext_items:
         ext_summary = _summarize_external_course(item)
-        # External selections must carry a stable provider ID.
         if not ext_summary.external_course_id:
             continue
         ext_key = (
@@ -272,13 +261,11 @@ async def search_courses(
         if ext_summary.external_course_id and ext_summary.external_course_id in seen_local_external_ids:
             continue
         if ext_key in seen_local_keys:
-            # Enrich existing local hit with provider ID when missing.
             idx = local_index_by_key.get(ext_key)
             if idx is not None and not out[idx].external_course_id:
                 out[idx].external_course_id = ext_summary.external_course_id
                 seen_local_external_ids.add(ext_summary.external_course_id)
             continue
-        # Fallback: when locations differ/missing, match by name-only to backfill local rows.
         if ext_name_key in local_indices_by_name:
             for idx in local_indices_by_name[ext_name_key]:
                 if not out[idx].external_course_id:
@@ -286,7 +273,6 @@ async def search_courses(
                     seen_local_external_ids.add(ext_summary.external_course_id)
                     break
             continue
-        # Fallback: normalized name similarity for slight naming differences.
         if ext_norm_name:
             matched = False
             if ext_norm_name in local_indices_by_norm_name:
@@ -337,7 +323,6 @@ async def create_course(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Create a custom course for a user."""
     holes = [Hole(number=h.number, par=h.par, handicap=h.handicap) for h in req.holes]
     tees = [
         Tee(
@@ -376,7 +361,6 @@ async def update_course(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Update a custom course. Only the owner can edit; master courses are protected."""
     existing = await db.courses.get_course(str(course_id))
     if not existing:
         raise HTTPException(404, "Course not found")
@@ -396,7 +380,6 @@ async def clone_course(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Clone a master course as a user-owned custom course."""
     try:
         source = await db.courses.get_course(str(course_id))
         if not source:

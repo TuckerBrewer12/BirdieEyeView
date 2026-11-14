@@ -56,7 +56,6 @@ async function postJSON<T>(path: string, body: unknown, fallback?: string): Prom
   return parseJsonResponse<T>(res, fallback);
 }
 
-/** A multipart POST: a scorecard photo and the fields sent with it. */
 async function postForm(path: string, fields: Record<string, string | File>, fallback?: string): Promise<Response> {
   const form = new FormData();
   for (const [name, value] of Object.entries(fields)) form.append(name, value);
@@ -95,7 +94,6 @@ async function patchJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 export const api = {
-  /** The signed-in user, or null when the session has ended (401 or 403). */
   getAuthSession: async (): Promise<AuthUserDto | null> => {
     const res = await fetchWithUserFacingError(apiUrl("/api/auth/me"), {
       credentials: "include",
@@ -108,7 +106,6 @@ export const api = {
     return parseJsonResponse<AuthUserDto>(res, USER_FACING_ERRORS.account);
   },
 
-  /** The card's text, read ahead of the scan. Null when the server could not read it. */
   readScanText: async (photo: File): Promise<string | null> => {
     const res = await postForm("/scan/ocr", { file: photo });
     if (!res.ok) return null;
@@ -116,8 +113,6 @@ export const api = {
     return body.ocr_text || null;
   },
 
-  /** Reads a scorecard photo. `fields` carries the photo as `file` and the optional context fields. */
-  /** Throws a ScanFailedError carrying the safe diagnostics a failed-scan report may send. */
   extractScan: async (fields: Record<string, string | File>): Promise<ScanDto> => {
     let res: Response;
     try {
@@ -183,7 +178,6 @@ export const api = {
     return fetchJSON<CourseSummaryDto[]>(`/courses?${params}`);
   },
 
-  /** `includeRecord` adds the golfer's record at each course, as the course list shows it. */
   searchCourses: (query: string, userId?: string, includeExternal = false, includeRecord = false) => {
     const params = new URLSearchParams({ q: query });
     if (userId) params.set("user_id", userId);
@@ -217,7 +211,6 @@ export const api = {
     return fetchJSON<AnalyticsDto>(`/stats/analytics/${userId}?${p}`);
   },
 
-  /** The golfer's last `limit` rounds held up against a handicap's shape or a friend's. */
   getBenchmarkComparison: (userId: string, target: BenchmarkTarget, limit = 20) => {
     const p = new URLSearchParams({ against: target.against, limit: String(limit) });
     if (target.against === "handicap") p.set("handicap", String(target.handicap));

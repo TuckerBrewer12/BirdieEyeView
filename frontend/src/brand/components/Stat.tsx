@@ -4,13 +4,6 @@ import { cn } from "@/brand/cn";
 import { Sparkline, type SparklineTone } from "@/brand/charts/Sparkline";
 import { statDeltaVariants, statLabelVariants, statValueVariants, statVariants } from "./variants";
 
-/**
- * A figure and what it measures: the scoring average, a handicap, a rate.
- *
- * The parts compose like `Card`, so a caller can put the label above the
- * value or under it. The caller formats the value; this owns the type.
- * `StatTile` sets them as a KPI tile.
- */
 function Stat({
   className,
   align = "start",
@@ -40,7 +33,6 @@ function StatValue({
   );
 }
 
-/** A unit after the value, set smaller and quieter: the `%` in 38%, the `HCP` after 12.4. */
 function StatUnit({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
@@ -51,7 +43,6 @@ function StatUnit({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
-/** What a change is measured against: the "last 5 vs all" after a delta. */
 function StatNote({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
@@ -63,16 +54,10 @@ function StatNote({ className, ...props }: React.ComponentProps<"span">) {
 }
 
 type StatDirection = "up" | "down" | "flat";
-/** Whether the move was for the better: the server's verdict (`good`, `bad`, `neutral`). */
 type StatTone = "good" | "bad" | "neutral";
 
 const DIRECTION_GLYPHS = { up: "▲", down: "▼", flat: "–" } as const;
 
-/**
- * Which way a figure moved: a triangle, and the amount beside it as children.
- * The arrow is the direction; the colour is `tone`, the server's verdict on
- * whether that move is for the better. `pill` sets it on a wash of its tone.
- */
 function StatDelta({
   direction,
   tone,
@@ -84,7 +69,6 @@ function StatDelta({
 }: React.ComponentProps<"span"> & VariantProps<typeof statDeltaVariants> & {
   direction: StatDirection | null;
   tone: StatTone;
-  /** Leave the triangle off where the amount's sign already says which way, as in "−2.4". */
   glyph?: boolean;
 }) {
   if (direction == null) return null;
@@ -105,26 +89,16 @@ function StatDelta({
 interface StatTileProps extends Omit<React.ComponentProps<"div">, "children"> {
   label: React.ReactNode;
   value: React.ReactNode;
-  /** The figure across recent rounds, oldest first: drawn as a small line in the tile. */
   trend?: (number | null)[] | null;
-  /** The amount it moved, beside the triangle. */
   delta?: React.ReactNode;
   direction?: StatDirection | null;
-  /** The server's verdict on the move: colours the delta and the trend line. */
   tone?: StatTone;
-  /** What the delta is against ("last 5 vs all"), or a quiet line under the figure. */
   note?: React.ReactNode;
-  /**
-   * `card`: the line beside the value, the delta under it, as a KPI card holds it. `strip`: the delta
-   * beside the value, the line across the tile under it, for a row of tiles in one card. `center`:
-   * the value over its label and delta, centred, no line.
-   */
   layout?: "card" | "strip" | "center";
 }
 
 const TREND_TONE: Record<StatTone, SparklineTone> = { good: "good", bad: "bad", neutral: "primary" };
 
-/** A figure with its label, how it moved, and its line: the inside of a KPI tile, framed by whatever holds it. */
 function StatTile({
   label,
   value,

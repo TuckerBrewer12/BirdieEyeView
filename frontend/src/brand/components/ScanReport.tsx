@@ -5,7 +5,6 @@ import type { ScanReportStatus } from "@/domain/scanReport";
 
 interface ScanReportProps {
   status: ScanReportStatus;
-  /** Why the last report wasn't saved. */
   error: string | null;
   onReport: () => void;
   className?: string;
@@ -18,10 +17,6 @@ const BUTTON_LABEL: Record<ScanReportStatus, string> = {
   sent: "Report sent",
 };
 
-/**
- * Under a failed read: what a report sends, the button that sends it, and how it went. Nothing
- * is sent until the golfer asks, and a sent report can't be sent again.
- */
 function ScanReport({ status, error, onReport, className }: ScanReportProps) {
   return (
     <div

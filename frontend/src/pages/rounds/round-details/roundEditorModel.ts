@@ -2,7 +2,6 @@ import { chooseCompatibleTee, teeColors } from "@/domain/course";
 import type { CourseEdit, HoleEdits, RoundDetail, RoundEdits } from "@/domain";
 import type { CourseDto } from "@/types/api";
 
-/** Edits exist only while editing, so a closed editor cannot hold stale scores. */
 export type RoundEditor = { editing: false } | ({ editing: true } & RoundEdits);
 
 export type OpenRoundEditor = Extract<RoundEditor, { editing: true }>;
@@ -32,7 +31,6 @@ function holesFrom(round: RoundDetail): HoleEdits {
   return holes;
 }
 
-/** Keep the tee if the new course has a matching one, take its only tee, or leave it for the golfer to pick. */
 function teeOnCourse(current: string, course: CourseDto): string {
   const tees = teeColors(course);
   if (tees.length === 0) return current;

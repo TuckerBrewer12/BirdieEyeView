@@ -74,29 +74,22 @@ export const pebbleBeachCourse: CourseDto = courseResponse({
 
 const [hmbRound, , , scanned] = storedRounds;
 
-/** Round 1 with its full course, as GET /rounds/{id} returns it. */
 export const halfMoonBayRound: RoundDto = roundResponse({ ...hmbRound, course: halfMoonBayCourse });
 
-/** Round 4: a scanned card with no linked course. */
 export const scannedRound: RoundDto = roundResponse(scanned);
 
-/** A course as the server sends it to a golfer with an index: each tee carries their course handicap off it. */
 function withCourseHandicaps(course: CourseDto, handicaps: number[]): CourseDto {
   return { ...course, tees: course.tees.map((tee, i) => ({ ...tee, course_handicap: handicaps[i] ?? null })) };
 }
 
-/** Half Moon Bay for a golfer whose index is 10.4: Blue 10.4 × 130 / 113 + 0.4 = 12, White 9. */
 export const ratedHalfMoonBayCourse: CourseDto = withCourseHandicaps(halfMoonBayCourse, [12, 9]);
 
-/** Pebble Beach for the same golfer: 10.4 × 145 / 113 + 3 = 16. */
 export const ratedPebbleBeachCourse: CourseDto = withCourseHandicaps(pebbleBeachCourse, [16]);
 
-/** Round 1 for the same golfer: off the Blue tee's 12, net 66. */
 export const ratedHalfMoonBayRound: RoundDto = roundResponse({ ...hmbRound, course: ratedHalfMoonBayCourse });
 
 type ComparisonFigureDto = RoundComparisonDto["windows"][number]["metrics"][number];
 
-/** This round's figure against an average, with the difference and verdict the server works out. */
 function figure(
   metric: ComparisonFigureDto["metric"],
   value: number,
@@ -128,7 +121,6 @@ function window(
   };
 }
 
-/** Round detail's "vs your average" for the redesign board's round: the last 5, 20 and all before it. */
 export const roundComparison: RoundComparisonDto = {
   windows: [
     window("l5", 5, [81.4, 33.6, 5.8, 1.8, 1.9, 3.2]),
@@ -137,7 +129,6 @@ export const roundComparison: RoundComparisonDto = {
   ],
 };
 
-/** The first round a golfer saved: nothing before it to compare with. */
 export const firstRoundComparison: RoundComparisonDto = {
   windows: (["l5", "l20", "all"] as const).map((name) => ({
     window: name,
@@ -148,15 +139,11 @@ export const firstRoundComparison: RoundComparisonDto = {
 
 const [flowTemplate, , flowBest] = storedRounds;
 const FLOW_PAR = [4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5];
-// The strokes on the redesign board's card: over par from the first hole, a rough stretch at
-// holes 4 to 7, and a birdie to finish.
 const FLOW_STROKES = [5, 4, 3, 6, 5, 4, 4, 4, 5, 4, 5, 3, 6, 4, 4, 4, 4, 4];
 
-/** A round that runs over par, with a worst stretch to bracket: the round flow board's round. */
 export const overParRound: RoundDto = roundResponse({
   ...flowTemplate,
   hole_scores: flowTemplate.hole_scores.map((hole, i) => ({ ...hole, par_played: FLOW_PAR[i], strokes: FLOW_STROKES[i] })),
 });
 
-/** Under par for most of the round, with one blow-up at the end. */
 export const underParRound: RoundDto = roundResponse(flowBest);

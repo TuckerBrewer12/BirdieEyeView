@@ -6,20 +6,14 @@ interface GoalCardProps {
   goal: GoalStanding | null;
   onGoalChange: (target: number) => void;
   saving: boolean;
-  /** Why the last pick didn't save; the card keeps showing the goal that did. */
   saveError: string | null;
 }
 
-/**
- * The golfer's scoring goal: the menu to set it, their average, best and what's left to go, how far
- * along they are, and their last twelve scores against it.
- */
 export function GoalCard({ goal, onGoalChange, saving, saveError }: GoalCardProps) {
   const label = goalLabel(goal?.target ?? null);
   return (
     <Card size="lg" data-slot="goal-card" className="grid grid-cols-1 gap-5 px-(--card-spacing) md:grid-cols-analytics-goal md:gap-7">
       <div className="flex flex-col gap-3.5">
-        {/* The card's own padding holds the columns, so the header takes none of its own. */}
         <CardHeader className="items-center px-0">
           <CardTitle level={2} className="text-body-lg font-semibold">
             {GOAL_COPY.title}

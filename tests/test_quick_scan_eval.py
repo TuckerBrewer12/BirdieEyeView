@@ -48,7 +48,6 @@ def make_result(case_id, matched, total=10, *, error=None):
     "manifest_path", quick_eval.SUITE_MANIFEST_PATHS.values(), ids=tuple(quick_eval.SUITE_MANIFEST_PATHS),
 )
 def test_every_committed_case_loads_with_its_image_and_full_hole_coverage(manifest_path):
-    # Growth-proof: adding scorecards to the manifest needs no change here.
     cases = load_cases(manifest_path)
 
     assert cases and len({case.case_id for case in cases}) == len(cases)
@@ -178,7 +177,7 @@ def test_notes_stay_out_of_the_scan_and_known_gaps_load(tmp_path):
     [case] = load_cases(manifest_path, scorecard_dir=scorecard_dir)
 
     assert case.known_gap == "No score row."
-    assert "Initial" not in case.user_context  # notes are for people, never sent to the scanner
+    assert "Initial" not in case.user_context
 
 
 @pytest.mark.parametrize("field", ["notes", "known_gap"])

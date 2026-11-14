@@ -8,7 +8,6 @@ interface ApproachSectionProps {
   onParChange: (par: ApproachPar) => void;
 }
 
-/** Approach: one card a yardage band of the picked par, its average to par, greens, and score mix. */
 export function ApproachSection({ analytics, par, onParChange }: ApproachSectionProps) {
   const cards = bucketCards(analytics.yardageBuckets, par);
   return (
@@ -49,7 +48,6 @@ export function ApproachSection({ analytics, par, onParChange }: ApproachSection
               </div>
               <div className="flex items-baseline gap-5">
                 <div className="flex flex-col gap-1.5">
-                  {/* The band the golfer scores worst from, as the server marked it, reads red. */}
                   <StatValue size="card-sm" tone={card.tone}>
                     {card.toPar}
                   </StatValue>

@@ -5,7 +5,6 @@ import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { fontsLoaded } from "../../../../testing/fontsLoaded";
 
-/** Screen robot for /courses/:courseId — same idea as an Android Espresso robot. */
 export class CourseDetailRobot {
   private readonly page: Page;
   private backend: FakeBackend | null = null;
@@ -40,7 +39,6 @@ export class CourseDetailRobot {
     return this;
   }
 
-  /** The golfer's record at the course and their latest rounds there. */
   async seesRecord(average: string): Promise<this> {
     const record = this.page.locator("[data-slot=course-record]");
     await expect(record.getByText("Average")).toBeVisible();
@@ -49,13 +47,11 @@ export class CourseDetailRobot {
     return this;
   }
 
-  /** The scorecard's row of the golfer's average to par per hole. */
   async seesAverageRow(): Promise<this> {
     await expect(this.page.getByRole("rowheader", { name: /^Avg$/ }).first()).toBeVisible();
     return this;
   }
 
-  /** Best or Worst in the record, which opens that round. */
   async tapRecord(label: "Best" | "Worst"): Promise<this> {
     await this.page.locator("[data-slot=course-record]").getByRole("button", { name: new RegExp(`^${label}`) }).click();
     return this;
@@ -66,7 +62,6 @@ export class CourseDetailRobot {
     return this;
   }
 
-  /** The performance view: the score trend and both hole charts. */
   async seesPerformance(): Promise<this> {
     await expect(this.page.getByRole("heading", { name: "Score trend" })).toBeVisible();
     await expect(this.page.getByRole("img", { name: "Average to par on each hole" })).toBeVisible();
@@ -84,7 +79,6 @@ export class CourseDetailRobot {
     return this;
   }
 
-  /** The golfer's record here failed to load: an error with Retry, not the prompt to scan. */
   async seesRecordError(): Promise<this> {
     await expect(this.page.locator("[data-slot=record-error]")).toBeVisible();
     await expect(this.page.locator("[data-slot=not-played]")).toHaveCount(0);
@@ -122,7 +116,6 @@ export class CourseDetailRobot {
     return this;
   }
 
-  /** The scorecard's bar, naming the tee it reads. */
   async seesTeeLine(line: string): Promise<this> {
     await expect(this.page.locator("[data-slot=course-scorecard]").getByText(line, { exact: true })).toBeVisible();
     return this;
@@ -153,7 +146,6 @@ export class CourseDetailRobot {
     return this;
   }
 
-  /** The error a course id with no course behind it gets, in place of the course. */
   async seesNotFound(): Promise<this> {
     await expect(this.page.getByRole("alert")).toBeVisible();
     return this;

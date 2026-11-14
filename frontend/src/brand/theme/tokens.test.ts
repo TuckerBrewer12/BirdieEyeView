@@ -11,18 +11,15 @@ const themeDir = join(brandDir, "theme");
 
 const TOKENS_TS = join(themeDir, "tokens.ts");
 const TOKENS_CSS = join(themeDir, "tokens.gen.css");
-/** Writes tokens.ts out as CSS, so it spells `color-mix()` for a mixed token. */
 const TOKENS_GENERATOR = join(themeDir, "tokensCss.ts");
 const API_TYPES = join(srcDir, "types", "api.gen.ts");
 
 const read = (path: string) => readFileSync(path, "utf8");
 
-/** Drop comments so docs can mention `#fff` or `9px` without failing the test. */
 function withoutComments(src: string): string {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 }
 
-/** Every .ts, .tsx and .css file under `dir`, minus test folders when asked. */
 function sources(dir: string, { skipTests }: { skipTests: boolean }, found: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
@@ -35,11 +32,9 @@ function sources(dir: string, { skipTests }: { skipTests: boolean }, found: stri
   return found;
 }
 
-/** Hex literals, rgb()/hsl()/oklch()/color-mix(), and raw Tailwind palette utilities. */
 const COLOR_LITERAL =
   /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch|color-mix)\(|\b(?:bg|text|border|ring|fill|stroke|from|via|to|divide|shadow|outline|placeholder|accent|decoration)-(?:white|black)\b|\b(?:bg|text|border|ring|fill|stroke|from|via|to|divide|shadow|outline|placeholder|accent|decoration)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/g;
 
-/** Raw lengths. Tailwind scale classes (p-4, text-sm) do not match. */
 const UNIT_LITERAL = /[-+]?\d+(?:\.\d+)?(?:px|rem|em)\b/g;
 
 function offenders(files: string[], pattern: RegExp, allowed: Set<string>) {
@@ -53,13 +48,11 @@ function offenders(files: string[], pattern: RegExp, allowed: Set<string>) {
 
 describe("brand tokens", () => {
   it("are the only place in the app holding a colour", () => {
-    // A colour belongs in tokens.ts, reached through its utility or tokens.color.
     const allowed = new Set([TOKENS_TS, TOKENS_GENERATOR, TOKENS_CSS, API_TYPES]);
     expect(offenders(sources(srcDir, { skipTests: false }), COLOR_LITERAL, allowed)).toEqual([]);
   });
 
   it("hold raw colours only in the palette", () => {
-    // tokens.ts writes its colours once, in `palette`; the modes map onto it.
     const source = withoutComments(read(TOKENS_TS));
     const block = source.match(/export const palette = \{[\s\S]*?\n\} as const;/)?.[0];
     expect(block, "the palette block in tokens.ts").toBeDefined();
@@ -88,7 +81,6 @@ describe("brand tokens", () => {
     const declared = new Set(css.match(/^\s*(--[\w-]+):/gm)?.map((d) => d.trim().slice(0, -1)));
     const referenced = [...css.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]);
 
-    // A typo or a deleted token would silently render as no value at all.
     expect([...new Set(referenced)].filter((name) => !declared.has(name))).toEqual([]);
   });
 

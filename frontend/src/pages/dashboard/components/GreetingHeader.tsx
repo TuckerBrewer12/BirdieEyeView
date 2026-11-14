@@ -4,18 +4,14 @@ import type { HandicapMonth } from "../model";
 import { MoveDelta } from "./MoveDelta";
 
 interface GreetingHeaderProps {
-  /** "Good evening". */
   greeting: string;
   name: string;
   handicap: HandicapMonth;
-  /** The index after each round, oldest first: the phone card's line. */
   handicapLine: (number | null)[];
   onHandicapClick: () => void;
-  /** The phone's: the name under the greeting, the handicap as a card beside it. */
   compact?: boolean;
 }
 
-/** The dashboard's top: who it's for, and the handicap index that opens its breakdown. */
 export function GreetingHeader({ greeting, name, handicap, handicapLine, onHandicapClick, compact = false }: GreetingHeaderProps) {
   const move = moveOf(handicap.change);
   const index = formatHandicapIndex(handicap.index);

@@ -4,7 +4,6 @@ import { ScanSuccessStep } from "../components/ScanSuccessStep";
 
 const noop = () => {};
 
-/** Two saved rounds, each with its score against par. */
 export default function ScanSuccessStepPreview() {
   return (
     <div className="flex flex-col gap-4">

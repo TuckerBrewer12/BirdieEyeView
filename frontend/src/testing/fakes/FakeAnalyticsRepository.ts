@@ -15,21 +15,16 @@ import { analyticsForCourse } from "./analyticsResponses";
 import { InMemoryFriendships, type InMemoryFriendshipsSeed } from "./InMemoryFriendships";
 
 export interface FakeAnalyticsSeed {
-  /** Every course's rounds. */
   analytics: AnalyticsDto;
-  /** A course's own response, keyed by course id. A course not here answers with no rounds. */
   analyticsByCourse?: Record<string, AnalyticsDto>;
-  /** The profile's last 20 rounds, when they differ from `analytics`. */
   profileAnalytics?: AnalyticsDto;
   playedCourses?: PlayedCourseDto[];
   user?: Partial<UserDto>;
   goalReport?: GoalReportDto | null;
   friends?: InMemoryFriendshipsSeed;
-  /** The server's comparisons, keyed by {@link benchmarkKey}. One not here fails, as a 403 or 422 does. */
   benchmarks?: Record<string, BenchmarkComparisonDto>;
 }
 
-/** How a comparison is keyed in the seed: "handicap:5", "friend:user-avery". */
 export function benchmarkKey(target: BenchmarkTarget): string {
   return target.against === "handicap" ? `handicap:${target.handicap}` : `friend:${target.friendId}`;
 }
@@ -45,11 +40,8 @@ const DEFAULT_USER: UserDto = {
   scoring_goal: null,
 };
 
-/** The analytics page's reads and its one write, answered from seeded responses as the server sends them. */
 export class FakeAnalyticsRepository implements AnalyticsRepository {
-  /** What each analytics load asked for, in order. */
   readonly requests: AnalyticsFilters[] = [];
-  /** The comparisons asked for, keyed as the seed is, in order. */
   readonly benchmarkRequests: string[] = [];
   readonly updates: UserChangesDto[] = [];
   goalReportRequests = 0;
@@ -73,7 +65,6 @@ export class FakeAnalyticsRepository implements AnalyticsRepository {
     this.friendships = new InMemoryFriendships(seed.friends ?? {});
   }
 
-  /** Analytics loads wait until `finish()`, so a load in flight can be seen. */
   hold(): void {
     this.held = new Promise((resolve) => {
       this.release = resolve;
@@ -85,7 +76,6 @@ export class FakeAnalyticsRepository implements AnalyticsRepository {
     this.held = null;
   }
 
-  /** Goal report reads wait until `finishGoalReport()`. */
   holdGoalReport(): void {
     this.heldReport = new Promise((resolve) => {
       this.releaseReport = resolve;
@@ -97,7 +87,6 @@ export class FakeAnalyticsRepository implements AnalyticsRepository {
     this.heldReport = null;
   }
 
-  /** Comparison reads wait until `finishBenchmark()`. */
   holdBenchmark(): void {
     this.heldBenchmark = new Promise((resolve) => {
       this.releaseBenchmark = resolve;
@@ -113,7 +102,6 @@ export class FakeAnalyticsRepository implements AnalyticsRepository {
     this.requests.push(filters);
     if (this.held) await this.held;
     if (this.loadError) throw this.loadError;
-    // The profile asks for the last 20 at every course.
     if (filters.limit === 20 && filters.courseId === "all" && this.seed.profileAnalytics) return this.seed.profileAnalytics;
     return analyticsForCourse(
       {
@@ -140,7 +128,6 @@ export class FakeAnalyticsRepository implements AnalyticsRepository {
     return this.user;
   }
 
-  /** The seeded report, for whatever goal the golfer has saved, as the server reads it. */
   async getGoalReport(): Promise<GoalReportDto> {
     this.goalReportRequests += 1;
     const goal = this.user.scoring_goal;

@@ -2,7 +2,6 @@ import { HoleGreensPuttsChart } from "@/brand/charts/HoleGreensPuttsChart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand/components/Card";
 import { homeCourseHoles } from "@/testing/fixtures/courseHoles";
 
-/** A home course's greens and putts, in a card at the width the course page gives it. */
 export default function HoleGreensPuttsChartPreview() {
   return (
     <div data-testid="brand-frame" className="fixed inset-0 overflow-auto bg-background p-6">

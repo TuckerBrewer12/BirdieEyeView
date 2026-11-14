@@ -8,15 +8,10 @@ import { countNoun, lastRoundLabel, ninesAndTee } from "../present";
 
 interface LastRoundCardProps {
   round: RoundSummary;
-  /** The phone's card: the score beside the course, the round as one strip, a shorter line. */
   compact?: boolean;
   className?: string;
 }
 
-/**
- * The dashboard's lead: the newest round, its score, its holes at a glance, how it went hole by
- * hole and what it was made of. Opens the round.
- */
 export function LastRoundCard({ round, compact = false, className }: LastRoundCardProps) {
   const toPar = toParDisplay(round.toPar);
   const score = round.score ?? "—";
@@ -75,7 +70,6 @@ export function LastRoundCard({ round, compact = false, className }: LastRoundCa
   );
 }
 
-/** "1 birdie 10 pars 7 bogeys", each count in its kind's colour, and the way into the round. */
 function ScoreCounts({ round, action, className }: { round: RoundSummary; action: string; className?: string }) {
   return (
     <div className={cn("flex flex-wrap text-body text-foreground-secondary", className)}>

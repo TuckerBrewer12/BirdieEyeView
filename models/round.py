@@ -9,13 +9,11 @@ from .hole_score import HoleScore, ScoreKind, score_kind
 from .tee import Tee
 from .user_tee import UserTee
 
-# A round's worst stretch: this many holes in a row, losing at least this many strokes to par.
 STRETCH_HOLES = 4
 STRETCH_LEAST = 2
 
 
 class Round(BaseGolfModel):
-    """Represents a round of golf played by a user."""
     id: Optional[str] = None
     course: Optional[Course] = None
     tee_box: Optional[str] = None
@@ -23,15 +21,13 @@ class Round(BaseGolfModel):
     hole_scores: List[HoleScore] = Field(default_factory=list)
     weather_conditions: Optional[str] = None
     notes: Optional[str] = None
-    course_name_played: Optional[str] = None  # denormalized name when no master course
-    user_tee: Optional[UserTee] = None        # user-owned tee config (yardages etc.)
+    course_name_played: Optional[str] = None
+    user_tee: Optional[UserTee] = None
 
-    # Optional summary totals - can be provided directly or calculated
     total_putts: Optional[int] = None
     total_gir: Optional[int] = None
 
     def get_tee(self) -> Optional[Union[Tee, UserTee]]:
-        """Get the tee used for this round — course tee first, user_tee as fallback."""
         if self.course and self.tee_box:
             tee = self.course.get_tee(self.tee_box)
             if tee is not None:
@@ -41,8 +37,6 @@ class Round(BaseGolfModel):
         return None
 
     def get_total_putts(self) -> Optional[int]:
-        """Get total putts - uses provided value or calculates from holes.
-        Returns None if any scored hole is missing putts (partial sums are misleading)."""
         if self.total_putts is not None:
             return self.total_putts
         scored = [s for s in self.hole_scores if s.strokes is not None]
@@ -51,7 +45,6 @@ class Round(BaseGolfModel):
         return sum(s.putts for s in scored)  # type: ignore[misc]
 
     def get_total_gir(self) -> Optional[int]:
-        """Get total GIR - uses provided value or calculates from holes."""
         if self.total_gir is not None:
             return self.total_gir
         girs = [s.green_in_regulation for s in self.hole_scores
@@ -59,12 +52,10 @@ class Round(BaseGolfModel):
         return sum(girs) if girs else None
 
     def calculate_total_score(self) -> Optional[int]:
-        """Calculate total strokes for the round."""
         strokes = [s.strokes for s in self.hole_scores if s.strokes is not None]
         return sum(strokes) if strokes else None
 
     def _nine_total(self, first: int, last: int) -> Optional[int]:
-        """A nine's strokes, once all nine of its holes are scored."""
         strokes = [
             s.strokes for s in self.hole_scores
             if s.hole_number is not None and first <= s.hole_number <= last and s.strokes is not None
@@ -75,52 +66,42 @@ class Round(BaseGolfModel):
         return [s for s in self.hole_scores if s.hole_number is not None and first <= s.hole_number <= last]
 
     def nine_par(self, first: int, last: int) -> Optional[int]:
-        """A nine's par, once every one of its holes has one."""
         pars = [self.get_hole_par(n) for n in range(first, last + 1)]
         return None if any(p is None for p in pars) else sum(pars)  # type: ignore[arg-type]
 
     def nine_to_par(self, first: int, last: int) -> Optional[int]:
-        """A nine's strokes against its par, once both are known."""
         strokes = self._nine_total(first, last)
         par = self.nine_par(first, last)
         return strokes - par if strokes is not None and par is not None else None
 
     def nine_putts(self, first: int, last: int) -> Optional[int]:
-        """A nine's putts. None if any scored hole is missing putts, as for the round."""
         scored = [s for s in self._scores_on(first, last) if s.strokes is not None]
         if not scored or any(s.putts is None for s in scored):
             return None
         return sum(s.putts for s in scored)  # type: ignore[misc]
 
     def nine_gir(self, first: int, last: int) -> Optional[int]:
-        """Greens hit on a nine, across the holes that recorded it."""
         girs = [s.green_in_regulation for s in self._scores_on(first, last) if s.green_in_regulation is not None]
         return sum(girs) if girs else None
 
     def nine_yardage(self, first: int, last: int) -> Optional[int]:
-        """A nine's length from the tee played, once every hole has a yardage."""
         yards = [self.get_hole_yardage(n) for n in range(first, last + 1)]
         return None if any(y is None for y in yards) else sum(yards)  # type: ignore[arg-type]
 
     def calculate_front_nine(self) -> Optional[int]:
-        """Total strokes for holes 1-9, once all nine are scored."""
         return self._nine_total(1, 9)
 
     def calculate_back_nine(self) -> Optional[int]:
-        """Total strokes for holes 10-18, once all nine are scored."""
         return self._nine_total(10, 18)
 
     def holes_played(self) -> int:
-        """How many holes have a score: 18 for a full round, 9 for a nine, fewer for one cut short."""
         return sum(1 for s in self.hole_scores if s.strokes is not None)
 
     def get_fairways_hit(self) -> Optional[int]:
-        """Fairways hit across the holes that recorded it."""
         fairways = [s.fairway_hit for s in self.hole_scores if s.fairway_hit is not None]
         return sum(fairways) if fairways else None
 
     def is_complete(self) -> bool:
-        """Check if all holes have scores."""
         if not self.hole_scores:
             return False
         expected = HOLES_PER_ROUND if len(self.hole_scores) > HOLES_PER_NINE else HOLES_PER_NINE
@@ -128,11 +109,9 @@ class Round(BaseGolfModel):
         return len(valid_scores) == expected
 
     def get_hole_score(self, hole_number: int) -> Optional[HoleScore]:
-        """Get score for a specific hole."""
         return next((s for s in self.hole_scores if s.hole_number == hole_number), None)
 
     def get_hole_par(self, hole_number: int) -> Optional[int]:
-        """Get par for a specific hole — the course's hole, else par_played on the hole score."""
         if self.course:
             hole = self.course.get_hole(hole_number)
             if hole and hole.par is not None:
@@ -141,7 +120,6 @@ class Round(BaseGolfModel):
         return score.par_played if score else None
 
     def get_hole_handicap(self, hole_number: int) -> Optional[int]:
-        """Stroke index for a hole — the course's hole, else handicap_played on the hole score."""
         if self.course:
             hole = self.course.get_hole(hole_number)
             if hole and hole.handicap is not None:
@@ -150,12 +128,10 @@ class Round(BaseGolfModel):
         return score.handicap_played if score else None
 
     def get_hole_yardage(self, hole_number: int) -> Optional[int]:
-        """Yardage for a hole from the tee played."""
         tee = self.get_tee()
         return tee.hole_yardages.get(hole_number) if tee else None
 
     def get_total_yardage(self) -> Optional[int]:
-        """The tee played's length: its stated total, else its hole yardages added up."""
         tee = self.get_tee()
         if isinstance(tee, Tee):
             return tee.get_total_yardage()
@@ -164,14 +140,12 @@ class Round(BaseGolfModel):
         return None
 
     def get_par(self) -> Optional[int]:
-        """Get course par — from course, or calculated from par_played on hole scores."""
         if self.course:
             return self.course.get_par()
         pars = [hs.par_played for hs in self.hole_scores if hs.par_played is not None]
         return sum(pars) if pars else None
 
     def score_to_par(self, hole_number: int) -> Optional[int]:
-        """Get score relative to par for a specific hole."""
         score = self.get_hole_score(hole_number)
         par = self.get_hole_par(hole_number)
         if score and par:
@@ -179,11 +153,9 @@ class Round(BaseGolfModel):
         return None
 
     def get_score_kind(self, hole_number: int) -> Optional[ScoreKind]:
-        """Which of the app's seven score buckets a hole landed in."""
         return score_kind(self.score_to_par(hole_number))
 
     def get_score_counts(self) -> Dict[ScoreKind, int]:
-        """How many holes landed in each score bucket. Holes that cannot be classified are left out."""
         counts: Dict[ScoreKind, int] = {}
         for s in self.hole_scores:
             kind = self.get_score_kind(s.hole_number) if s.hole_number is not None else None
@@ -192,7 +164,6 @@ class Round(BaseGolfModel):
         return counts
 
     def get_score_type(self, hole_number: int) -> Optional[str]:
-        """Get score name (eagle, birdie, par, bogey, etc.) for a hole."""
         score = self.get_hole_score(hole_number)
         par = self.get_hole_par(hole_number)
         if score and par:
@@ -200,7 +171,6 @@ class Round(BaseGolfModel):
         return None
 
     def played_par(self) -> Optional[int]:
-        """The par of the holes that have a score, or None if any of them has no par."""
         pars = [self.get_hole_par(s.hole_number) for s in self.hole_scores
                 if s.strokes is not None and s.hole_number is not None]
         if not pars or any(p is None for p in pars):
@@ -208,17 +178,12 @@ class Round(BaseGolfModel):
         return sum(pars)  # type: ignore[arg-type]
 
     def scored_par(self) -> Optional[int]:
-        """The par `total_to_par` reads against: the par of the holes played, or the course's
-        par for a full round whose holes have none."""
         par = self.played_par()
         if par is None and self.holes_played() >= HOLES_PER_ROUND:
             par = self.get_par()
         return par
 
     def total_to_par(self) -> Optional[int]:
-        """Strokes against the par of the holes played, so a nine or a round cut short reads
-        against its own holes rather than the full course. A full round whose holes have no par
-        falls back to the course's par."""
         total = self.calculate_total_score()
         par = self.scored_par()
         if total is None or par is None:
@@ -226,8 +191,6 @@ class Round(BaseGolfModel):
         return total - par
 
     def running_to_par(self) -> Dict[int, int]:
-        """The round's score to par after each hole, by hole number. A hole without a to par (no
-        score, or no par) is left out and moves nothing, rather than reading as level."""
         running: Dict[int, int] = {}
         total = 0
         for s in sorted(self.hole_scores, key=lambda s: s.hole_number or 0):
@@ -239,8 +202,6 @@ class Round(BaseGolfModel):
         return running
 
     def worst_stretch(self) -> Optional[Dict[str, int]]:
-        """The STRETCH_HOLES straight holes that lost the most to par, when they lost
-        STRETCH_LEAST or more: the first and last hole and the strokes over. The earliest wins a tie."""
         to_par = {
             s.hole_number: self.score_to_par(s.hole_number)
             for s in self.hole_scores if s.hole_number is not None

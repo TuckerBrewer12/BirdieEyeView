@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""Backend conventions ruff can't express, each from a mistake that shipped.
-
-1. Exception text in HTTPException detail. `detail=str(e)` or an f-string that
-   interpolates the caught exception sends internal error text (SQL, file
-   paths, library messages) to the client (f2092b9, #147). Raise a fixed,
-   user-facing message and log the exception server-side instead.
-
-2. Hard-coded hole counts. Comparing a hole count against 9/18, assigning
-   `hole_count = 18`, or looping `range(1, 19)` bakes in "every round is 18
-   holes"; that broke 9-hole scorecards (PR #284). Use a named constant and
-   handle both round lengths.
-"""
 from __future__ import annotations
 
 import ast
@@ -20,7 +8,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCAN_DIRS = ["api", "services", "database", "analytics", "models"]
-# Standalone demo/plotting scripts that fabricate 18-hole sample data.
 SKIP_GLOBS = ["analytics/demo.py", "analytics/visualize*.py"]
 
 HOLE_COUNTS = {9, 18}
@@ -29,16 +16,12 @@ CONSTANT_HINT = (
     "rounds still work (PR #284)"
 )
 
-# (start, stop) pairs for range() that walk a nine or a full round of holes.
 HOLE_RANGES = {
     (0, 9), (1, 10), (9, 18), (10, 19),
     (0, 18), (1, 19),
 }
 
 Finding = tuple[int, str]
-
-
-# --- 1. exception text leaked through HTTPException ------------------------
 
 
 def _is_http_exception(call: ast.Call) -> bool:
@@ -56,7 +39,6 @@ def _detail_arg(call: ast.Call) -> ast.expr | None:
 
 
 def _root_name(expr: ast.expr) -> str | None:
-    """`e` for `e`, `e.args`, `e.args[0]`, `e.message`."""
     while isinstance(expr, (ast.Attribute, ast.Subscript)):
         expr = expr.value
     return expr.id if isinstance(expr, ast.Name) else None
@@ -67,7 +49,6 @@ def _references(expr: ast.expr, names: set[str]) -> bool:
 
 
 def _leaks_exception(detail: ast.expr, exc_names: set[str]) -> bool:
-    """True if `detail` contains str(e)/repr(e) or an f-string field using e."""
     for node in ast.walk(detail):
         if (
             isinstance(node, ast.Call)
@@ -83,8 +64,6 @@ def _leaks_exception(detail: ast.expr, exc_names: set[str]) -> bool:
 
 
 class _LeakVisitor(ast.NodeVisitor):
-    """Walks except blocks, tracking the `as <name>` bindings in scope."""
-
     def __init__(self) -> None:
         self.exc_names: list[str] = []
         self.findings: list[Finding] = []
@@ -109,9 +88,6 @@ class _LeakVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-# --- 2. hard-coded hole counts ----------------------------------------------
-
-
 def _int_const(expr: ast.expr) -> int | None:
     if isinstance(expr, ast.Constant) and type(expr.value) is int:
         return expr.value
@@ -119,7 +95,6 @@ def _int_const(expr: ast.expr) -> int | None:
 
 
 def _mentions_hole(expr: ast.expr) -> bool:
-    """A name/attribute about holes, a call to one (`r.holes_played()`), or len(<anything>)."""
     if isinstance(expr, ast.Name):
         return "hole" in expr.id.lower()
     if isinstance(expr, ast.Attribute):
@@ -132,8 +107,6 @@ def _mentions_hole(expr: ast.expr) -> bool:
 
 def _hole_count_findings(tree: ast.AST) -> Iterator[Finding]:
     for node in ast.walk(tree):
-        # Comparisons: `holes_played == 18`, `r.holes_played() < 18`, `len(self.holes) != 18`,
-        # `1 <= hole_num <= 18`.
         if isinstance(node, ast.Compare):
             operands = [node.left, *node.comparators]
             counts = [_int_const(op) for op in operands]
@@ -143,8 +116,6 @@ def _hole_count_findings(tree: ast.AST) -> Iterator[Finding]:
                 literal = next(c for c in counts if c in HOLE_COUNTS)
                 yield node.lineno, f"comparison against hard-coded hole count {literal}; {CONSTANT_HINT}."
 
-        # Assignments: `hole_count = 18`, `num_holes: int = 9`. Defining the named constant
-        # itself (`HOLES_PER_NINE = 9`) is what this check asks for, so it passes.
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
             targets = node.targets if isinstance(node, ast.Assign) else [node.target]
             value = _int_const(node.value) if node.value is not None else None
@@ -153,7 +124,6 @@ def _hole_count_findings(tree: ast.AST) -> Iterator[Finding]:
             ):
                 yield node.lineno, f"hole count hard-coded as {value}; {CONSTANT_HINT}."
 
-        # Loops over holes: `range(18)`, `range(1, 19)`, `range(10, 19)`.
         elif (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Name)
@@ -166,9 +136,6 @@ def _hole_count_findings(tree: ast.AST) -> Iterator[Finding]:
             if (len(args) == 1 and args[0] in HOLE_COUNTS) or (len(args) == 2 and tuple(args) in HOLE_RANGES):
                 shown = ", ".join(str(a) for a in args)
                 yield node.lineno, f"range({shown}) walks a hard-coded set of holes; {CONSTANT_HINT}."
-
-
-# --- driver -----------------------------------------------------------------
 
 
 def check_source(source: str, filename: str = "<string>") -> list[Finding]:

@@ -9,7 +9,6 @@ import { fontsLoaded } from "../../../testing/fontsLoaded";
 
 type ThemeLabel = "Light" | "Dark" | "System";
 
-/** A golfer with a friend code, a handicap and a home course. */
 export function settingsProfile(overrides: Partial<UserDto> = {}): UserDto {
   return {
     id: TEST_USER.user_id,
@@ -24,7 +23,6 @@ export function settingsProfile(overrides: Partial<UserDto> = {}): UserDto {
   };
 }
 
-/** Screen robot for /settings. */
 export class SettingsRobot {
   private readonly page: Page;
   private backend: FakeBackend | null = null;
@@ -53,7 +51,6 @@ export class SettingsRobot {
     return this.page.getByLabel("Handicap index");
   }
 
-  /** Save, in the bar pinned at the foot while there are changes. */
   private saveButton() {
     return this.page.getByRole("button", { name: /^(Save|Saving…)$/ });
   }
@@ -62,7 +59,6 @@ export class SettingsRobot {
     return this.page.getByRole("alertdialog", { name: "Save changes before leaving?" });
   }
 
-  /** The Golf group's Home course row, which shows the course and opens its sheet. */
   private homeCourseRow() {
     return this.page.locator("[data-slot=settings-row]").filter({ hasText: /^Home course/ });
   }
@@ -77,7 +73,6 @@ export class SettingsRobot {
     await expect(this.homeCourseSheet()).toBeVisible();
   }
 
-  /** Starts the player on Dark; init scripts rerun on reload, so a later pick is left alone. */
   async dark(): Promise<this> {
     await this.page.addInitScript(() => {
       if (localStorage.getItem("theme") === null) localStorage.setItem("theme", "dark");
@@ -109,14 +104,12 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Settings failed to load: an error with a way to try again, in place of the form. */
   async seesLoadError(): Promise<this> {
     await expect(this.page.getByRole("alert")).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Try again" })).toBeVisible();
     return this;
   }
 
-  /** The next load of settings succeeds, as the API would once the failure has cleared. */
   nextLoadSucceeds(): this {
     if (this.backend) this.backend.profileError = null;
     return this;
@@ -127,7 +120,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** The failed-load alert is gone and the settings form is on screen. */
   async seesForm(): Promise<this> {
     await expect(this.page.getByRole("alert")).toHaveCount(0);
     await expect(this.themeControl()).toBeVisible();
@@ -141,7 +133,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** The next save fails with this message, as the API would answer. */
   failSavesWith(detail: string): this {
     if (this.backend) this.backend.updateUserError = detail;
     return this;
@@ -172,7 +163,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Lets the page write to and read from the clipboard, as a player who allowed it would. */
   async allowClipboard(): Promise<this> {
     await this.page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
     return this;
@@ -221,14 +211,12 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Opens the home course's sheet and searches in it. */
   async searchHomeCourse(query: string): Promise<this> {
     await this.openHomeCourse();
     await this.homeCourseSheet().getByPlaceholder("Search courses…").fill(query);
     return this;
   }
 
-  /** Picks a result, which closes the sheet. */
   async pickHomeCourse(name: string): Promise<this> {
     await this.homeCourseSheet().getByRole("option", { name: new RegExp(name) }).click();
     await expect(this.homeCourseSheet()).toHaveCount(0);
@@ -240,7 +228,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Opens the sheet, removes the course and closes the sheet again. */
   async removeHomeCourse(): Promise<this> {
     await this.openHomeCourse();
     await this.homeCourseSheet().getByRole("button", { name: "Remove home course" }).click();
@@ -259,7 +246,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Discard in the bar at the foot: the form goes back to what is saved. */
   async discard(): Promise<this> {
     await this.page.locator("[data-slot=action-bar]").getByRole("button", { name: "Discard" }).click();
     await expect(this.saveButton()).toHaveCount(0);
@@ -271,7 +257,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Signed out, the app falls back to the landing page at /. */
   async seesSignedOut(): Promise<this> {
     await expect(this.page).toHaveURL(/\/$/);
     await expect.poll(() => this.backend?.signedOut).toBe(true);
@@ -293,7 +278,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Changes are waiting: Save is on screen and can be pressed. */
   async seesUnsaved(): Promise<this> {
     await expect(this.saveButton()).toBeEnabled();
     return this;
@@ -309,7 +293,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Back to /settings through the nav, keeping the same backend. */
   async returnToSettings(): Promise<this> {
     await this.leaveTo("Settings");
     await expect(this.themeControl()).toBeVisible();
@@ -321,7 +304,6 @@ export class SettingsRobot {
     return this;
   }
 
-  /** The unsaved-changes prompt shows why the save failed. */
   async seesLeavePromptError(message: string): Promise<this> {
     await expect(this.leavePrompt().getByRole("alert").filter({ hasText: message })).toBeVisible();
     return this;
@@ -343,14 +325,12 @@ export class SettingsRobot {
     return this;
   }
 
-  /** Left without stopping on the unsaved-changes prompt, or after answering it. */
   async isAt(path: string): Promise<this> {
     await expect(this.leavePrompt()).toHaveCount(0);
     await expect.poll(() => new URL(this.page.url()).pathname).toBe(path);
     return this;
   }
 
-  /** Still on this path; the unsaved-changes prompt may still be open. */
   async staysAt(path: string): Promise<this> {
     await expect.poll(() => new URL(this.page.url()).pathname).toBe(path);
     return this;

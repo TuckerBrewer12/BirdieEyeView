@@ -3,18 +3,14 @@ import { tokens } from "@/brand/theme";
 import { formatPercent } from "@/domain/format";
 
 interface ProgressRingProps {
-  /** Percent of the way, 0–100. Null draws the empty track. */
   value: number | null;
-  /** The phone's heavier stroke, for a ring drawn smaller. */
   thick?: boolean;
-  /** What the ring measures, for a screen reader: "Progress to break 80". */
   label: string;
   className?: string;
 }
 
 const G = tokens.chart.progressRing;
 
-/** How far along a goal is, as a ring filling clockwise from the top. */
 export function ProgressRing({ value, thick = false, label, className }: ProgressRingProps) {
   const pct = Math.min(100, Math.max(0, value ?? 0));
   const circumference = 2 * Math.PI * G.radius;

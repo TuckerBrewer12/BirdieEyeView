@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Keep .env.example in sync with the env vars the code actually reads.
-
-The app has ~50 tunable env vars (rate limits, cookie flags, DB guardrails).
-A var read in code but missing from .env.example is a deployment footgun: it
-silently falls back to a default nobody documented.
-"""
 from __future__ import annotations
 
 import ast
@@ -14,7 +8,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCAN_DIRS = ["api", "services", "database", "analytics", "models"]
 
-# Vars supplied by the platform or CI, never by .env.example.
 EXEMPT = {
     "PORT",
     "PATH",
@@ -25,11 +18,9 @@ EXEMPT = {
     "LOAD_DOTENV",
     # Injected by Railway at runtime.
     "RAILWAY_ENVIRONMENT_ID",
-    # Lowercase case-insensitive alias for GOLFCOURSE_API_KEY.
     "golfcourse_api_key",
 }
 
-# Module-local wrappers that read an env var by name as their first argument.
 ENV_HELPERS = {
     "_env_int", "_env_bool", "_env_float", "_env_str", "_env_list",
     "env_int", "env_bool", "env_float", "env_str", "env_list",
@@ -37,7 +28,6 @@ ENV_HELPERS = {
 
 
 def env_keys_in_code() -> dict[str, str]:
-    """Map env var name -> "path:line" of first read."""
     found: dict[str, str] = {}
 
     for directory in SCAN_DIRS:
@@ -57,8 +47,6 @@ def env_keys_in_code() -> dict[str, str]:
 
 
 def _env_key_from_node(node: ast.AST) -> str | None:
-    """Extract the key from os.getenv("X") / os.environ.get("X") / os.environ["X"]."""
-    # os.environ["X"] lookups
     if isinstance(node, ast.Subscript):
         target = node.value
         if (
@@ -70,7 +58,6 @@ def _env_key_from_node(node: ast.AST) -> str | None:
             return node.slice.value
         return None
 
-    # os.getenv("X") / os.environ.get("X") / local _env_int("X", default) helpers
     if isinstance(node, ast.Call) and node.args:
         func = node.func
         is_getenv = isinstance(func, ast.Attribute) and func.attr == "getenv"
@@ -92,17 +79,12 @@ def _env_key_from_node(node: ast.AST) -> str | None:
 
 
 def keys_in_example() -> set[str]:
-    """Keys in .env.example, including commented-out ones.
-
-    A `# SOME_VAR=example` line still documents the variable, so it counts.
-    """
     keys: set[str] = set()
     for raw in (ROOT / ".env.example").read_text().splitlines():
         line = raw.strip().lstrip("#").strip()
         if "=" not in line:
             continue
         key = line.split("=", 1)[0].strip()
-        # Skip prose in comments that happens to contain "=".
         if key and key.replace("_", "").isalnum() and " " not in key:
             keys.add(key)
     return keys
@@ -126,8 +108,6 @@ def main() -> int:
 
     stale = sorted(documented - set(in_code) - EXEMPT)
     if stale:
-        # Informational only: a var may legitimately be read by the frontend,
-        # a deploy script, or infrastructure rather than Python.
         print(f"note: in .env.example but not read in Python: {', '.join(stale)}")
 
     print(f"OK: all {len(in_code)} env vars read in code are documented.")

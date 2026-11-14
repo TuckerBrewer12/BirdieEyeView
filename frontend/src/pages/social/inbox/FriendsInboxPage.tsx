@@ -69,7 +69,6 @@ export function FriendsInboxPage({ userId }: FriendsInboxPageProps) {
         {STATUS_LABELS[request.status]}
       </span>
     );
-    // A request's answers sit at the row's end from md, and under it, full width, on a phone.
     return (
       <div>
         <PersonRow

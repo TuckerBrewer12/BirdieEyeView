@@ -1,5 +1,3 @@
-"""API-specific response models for list views and aggregated data."""
-
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, Dict, List, Literal, Optional
@@ -10,12 +8,10 @@ from models.hole_score import ScoreKind
 
 
 class ResponseModel(BaseModel):
-    # A field with a default is always present in the response, so the API schema marks it required.
     model_config = ConfigDict(json_schema_serialization_defaults_required=True)
 
 
 class ScoreCounts(ResponseModel):
-    """How many holes landed in each score bucket."""
     eagle: int = 0
     birdie: int = 0
     par: int = 0
@@ -26,33 +22,30 @@ class ScoreCounts(ResponseModel):
 
 
 class TeeResponse(ResponseModel):
-    """A tee with its yardage figures worked out."""
     color: Optional[str] = None
     slope_rating: Optional[float] = None
     course_rating: Optional[float] = None
     hole_yardages: Dict[int, int] = Field(default_factory=dict)
-    total_yardage: Optional[int] = None       # stored, else the sum of the holes
-    front_nine_yardage: Optional[int] = None  # null until all nine holes have a yardage
+    total_yardage: Optional[int] = None
+    front_nine_yardage: Optional[int] = None
     back_nine_yardage: Optional[int] = None
-    course_handicap: Optional[int] = None  # the signed-in golfer's strokes off this tee; null without an index or ratings
+    course_handicap: Optional[int] = None
 
 
 class CourseResponse(ResponseModel):
-    """A full course, with the figures the Course model works out."""
     id: Optional[str] = None
     name: Optional[str] = None
     external_course_id: Optional[str] = None
     location: Optional[str] = None
     user_id: Optional[str] = None
-    par: Optional[int] = None             # stored, else the sum of all 18 holes
-    front_nine_par: Optional[int] = None  # null until all nine holes have a par
+    par: Optional[int] = None
+    front_nine_par: Optional[int] = None
     back_nine_par: Optional[int] = None
     holes: List[Hole] = Field(default_factory=list)
-    tees: List[TeeResponse] = Field(default_factory=list)  # longest first, ties by colour (Course.tees_by_length)
+    tees: List[TeeResponse] = Field(default_factory=list)
 
 
 class HoleScoreResponse(ResponseModel):
-    """One hole as played, with its par resolved and how it scored."""
     hole_number: int
     strokes: Optional[int] = None
     net_score: Optional[int] = None
@@ -62,22 +55,21 @@ class HoleScoreResponse(ResponseModel):
     green_in_regulation: Optional[bool] = None
     par_played: Optional[int] = None
     handicap_played: Optional[int] = None
-    par: Optional[int] = None  # the course's par for the hole, else par_played
-    handicap: Optional[int] = None  # the course's stroke index for the hole, else handicap_played
-    yardage: Optional[int] = None  # from the tee played
+    par: Optional[int] = None
+    handicap: Optional[int] = None
+    yardage: Optional[int] = None
     to_par: Optional[int] = None
     kind: Optional[ScoreKind] = None
-    three_putt: bool = False  # three or more putts; false when putts weren't kept
-    running_to_par: Optional[int] = None  # the round's to par after this hole; null when it has none
+    three_putt: bool = False
+    running_to_par: Optional[int] = None
 
 
 class NineFigures(ResponseModel):
-    """What one nine adds up to, for a scorecard's OUT and IN columns. The strokes are front_nine/back_nine."""
-    par: Optional[int] = None  # null until every hole has a par
-    to_par: Optional[int] = None  # null until the nine is scored and has a par
-    putts: Optional[int] = None  # null if any scored hole is missing putts
+    par: Optional[int] = None
+    to_par: Optional[int] = None
+    putts: Optional[int] = None
     gir: Optional[int] = None
-    yards: Optional[int] = None  # null until every hole has a yardage
+    yards: Optional[int] = None
 
 
 class Nines(ResponseModel):
@@ -86,31 +78,28 @@ class Nines(ResponseModel):
 
 
 class RoundFigures(ResponseModel):
-    """What a round's hole scores add up to. Computed by the Round model, never stored."""
     total_score: Optional[int] = None
     par: Optional[int] = None
     to_par: Optional[int] = None
-    front_nine: Optional[int] = None  # null until all nine holes are scored
-    back_nine: Optional[int] = None   # null until all nine holes are scored
+    front_nine: Optional[int] = None
+    back_nine: Optional[int] = None
     total_putts: Optional[int] = None
     total_gir: Optional[int] = None
     fairways_hit: Optional[int] = None
     nines: Nines = Field(default_factory=Nines)
-    yards: Optional[int] = None  # the tee played's length
+    yards: Optional[int] = None
     score_counts: ScoreCounts = Field(default_factory=ScoreCounts)
-    holes_played: int = 0  # holes with a score: what GIR is out of
+    holes_played: int = 0
 
 
 class HoleSummaryResponse(ResponseModel):
-    """One hole in a round list: what was taken, how it scored and where the round stood after it."""
     hole_number: int
     strokes: Optional[int] = None
     kind: Optional[ScoreKind] = None
-    running_to_par: Optional[int] = None  # the round's to par after this hole; null when it has none
+    running_to_par: Optional[int] = None
 
 
 class RoundSummaryResponse(ResponseModel):
-    """A round for list views: where and when, the figures a list shows, and a mark per hole."""
     id: str
     course_id: Optional[str] = None
     course_name: Optional[str] = None
@@ -118,27 +107,22 @@ class RoundSummaryResponse(ResponseModel):
     date: Optional[datetime] = None
     total_score: Optional[int] = None
     to_par: Optional[int] = None
-    front_nine: Optional[int] = None  # null until all nine holes are scored
-    back_nine: Optional[int] = None   # null until all nine holes are scored
+    front_nine: Optional[int] = None
+    back_nine: Optional[int] = None
     total_putts: Optional[int] = None
     score_counts: ScoreCounts = Field(default_factory=ScoreCounts)
     hole_scores: List[HoleSummaryResponse] = Field(default_factory=list)
-    # Place among the rounds listed with it, best first: full rounds by to par, then nines and
-    # rounds cut short. Null for a round with no to par, and outside the round list.
     best_rank: Optional[int] = None
-    # The same, worst first: full rounds furthest over par, then nines and rounds cut short.
     worst_rank: Optional[int] = None
 
 
 class WorstStretch(ResponseModel):
-    """The four holes in a row that lost the most to par, when they lost two or more."""
     first_hole: int
     last_hole: int
     to_par: int
 
 
 class RoundResponse(RoundFigures):
-    """A full round: the stored round, its figures, and its hole scores."""
     id: Optional[str] = None
     course: Optional[CourseResponse] = None
     tee_box: Optional[str] = None
@@ -148,14 +132,12 @@ class RoundResponse(RoundFigures):
     course_name_played: Optional[str] = None
     user_tee: Optional[UserTee] = None
     hole_scores: List[HoleScoreResponse] = Field(default_factory=list)
-    # Off the signed-in golfer's index and the tee played. Null without ratings, and for a nine.
     course_handicap: Optional[int] = None
     net_score: Optional[int] = None
     worst_stretch: Optional[WorstStretch] = None
 
 
 class ScoreMix(ResponseModel):
-    """Percent of classified holes in each score bucket."""
     eagle: float = 0.0
     birdie: float = 0.0
     par: float = 0.0
@@ -166,7 +148,6 @@ class ScoreMix(ResponseModel):
 
 
 class HandicapChange(ResponseModel):
-    # Since this month began: the newest index less the one after the last round before the 1st.
     this_month: Optional[float] = None
     this_month_verdict: Optional[ChangeVerdict] = None
 
@@ -182,7 +163,6 @@ class WhsRound(ResponseModel):
 
 
 class WhsBreakdown(ResponseModel):
-    """The rounds in the handicap window, newest first, and which differentials count."""
     rows: List[WhsRound] = Field(default_factory=list)
     window_size: int = 0
     count_used: int = 0
@@ -195,80 +175,63 @@ DifferentialStatus = Literal["counting", "close", "out", "unrated"]
 
 
 class ScoreTrendRow(ResponseModel):
-    """One round's score, oldest first, with its average over it and the four rounds before it."""
     round_index: int
     round_id: Optional[str] = None
     total_score: Optional[int] = None
     to_par: Optional[int] = None
-    par: Optional[int] = None  # the par to_par reads against: the holes played
+    par: Optional[int] = None
     course_name: Optional[str] = None
-    rolling_average: Optional[float] = None  # to a tenth; rounds without a score are skipped
-    score_counts: ScoreCounts = Field(default_factory=ScoreCounts)  # the round's holes of each kind
+    rolling_average: Optional[float] = None
+    score_counts: ScoreCounts = Field(default_factory=ScoreCounts)
 
 
 class HandicapTrendRow(ResponseModel):
-    """The golfer's index after one round, oldest first: over the 20 rounds ending with it and off
-    the handicap they gave, so the last round's is the index every screen shows. With where the
-    round's differential stands against the current index."""
     round_index: int
     round_id: Optional[str] = None
-    handicap_index: Optional[float] = None  # null until there are three rated rounds or a handicap they gave
+    handicap_index: Optional[float] = None
     differential: Optional[float] = None
-    used_in_hi: Optional[bool] = None  # null without a differential
-    hi_threshold: Optional[float] = None  # the highest differential that still counts
+    used_in_hi: Optional[bool] = None
+    hi_threshold: Optional[float] = None
     differential_status: DifferentialStatus = "unrated"
-    in_window: bool = False  # the round falls in the records' last year (`notable_achievements.window_days`)
+    in_window: bool = False
 
 
 class DashboardResponse(ResponseModel):
-    """What the dashboard shows. Every figure is worked out here, not on the client."""
-    # The best round, the one the round list's Best puts first (`analytics.stats.best_round`):
-    # lowest to par among full rounds, a nine only without one. Its score, id, course, to par and day.
     best_round: Optional[int] = None
     best_round_id: Optional[str] = None
     best_round_course: Optional[str] = None
     best_round_to_par: Optional[int] = None
     best_round_date: Optional[datetime] = None
-    handicap_index: Optional[float] = None  # the golfer's own index (`api/player_handicap.py`)
-    # The newest rounds, newest first: the last round the page leads with and the ones before it.
+    handicap_index: Optional[float] = None
     recent_rounds: List[RoundSummaryResponse]
     scoring_average_l5: Optional[float] = None
-    # L5 minus L20, to a tenth: negative when the recent rounds came in lower.
     scoring_average_change: Optional[float] = None
     scoring_average_verdict: Optional[ChangeVerdict] = None
     handicap_change: HandicapChange = Field(default_factory=HandicapChange)
-    recent_score_mix: ScoreMix = Field(default_factory=ScoreMix)  # the last five rounds' holes
+    recent_score_mix: ScoreMix = Field(default_factory=ScoreMix)
     whs: WhsBreakdown = Field(default_factory=WhsBreakdown)
-    # Per round over the last 20, oldest first: the scoring average's and the handicap's lines.
     score_trend: List[ScoreTrendRow] = Field(default_factory=list)
     handicap_trend: List[HandicapTrendRow] = Field(default_factory=list)
-    rounds_this_year: int = 0  # the goal card's "rounds this season"
+    rounds_this_year: int = 0
 
 
 class AnalyticsKpis(ResponseModel):
     scoring_average: Optional[float] = None
     gir_percentage: Optional[float] = None
     putts_per_gir: Optional[float] = None
-    scrambling_percentage: Optional[float] = None  # the average of each round's rate
+    scrambling_percentage: Optional[float] = None
     up_and_down_percentage: Optional[float] = None
-    # The golfer's own index (`api/player_handicap.py`), whatever the filter: a course or a
-    # timeframe narrows the rounds, not the golfer's handicap.
     handicap_index: Optional[float] = None
     total_rounds: int = 0
-    # The best of the rounds asked for, ranked as the round list's Best ranks them
-    # (`analytics.stats.best_round`): its score, id and course. Null without a scored round.
     best_round: Optional[int] = None
     best_round_id: Optional[str] = None
     best_round_course: Optional[str] = None
-    average_putts: Optional[float] = None  # per round, over the rounds with putts recorded; to a tenth
-    # Over the rounds with putts recorded, to a tenth: three-putts a round, and each round's rate averaged.
+    average_putts: Optional[float] = None
     three_putts_per_round: Optional[float] = None
     three_putt_rate: Optional[float] = None
-    # The scoring average's move is the headline's (`AnalyticsResponse.headline`), worked out once there.
 
 
 class NetScoreTrendRow(ResponseModel):
-    """Gross less the course handicap the current index gives on the tee played. Null without ratings."""
     round_index: int
     round_id: Optional[str] = None
     gross_score: Optional[int] = None
@@ -276,7 +239,7 @@ class NetScoreTrendRow(ResponseModel):
     net_score: Optional[int] = None
     course_name: Optional[str] = None
     to_par: Optional[int] = None
-    rolling_average: Optional[float] = None  # the net score over it and the four rated rounds before it, to a tenth
+    rolling_average: Optional[float] = None
 
 
 class GirTrendRow(ResponseModel):
@@ -285,7 +248,7 @@ class GirTrendRow(ResponseModel):
     total_gir: Optional[int] = None
     holes_played: int
     gir_percentage: Optional[float] = None
-    rolling_average: Optional[float] = None  # over it and the four rounds before it with greens, to a tenth
+    rolling_average: Optional[float] = None
 
 
 class PuttsTrendRow(ResponseModel):
@@ -293,17 +256,16 @@ class PuttsTrendRow(ResponseModel):
     round_id: Optional[str] = None
     total_putts: Optional[int] = None
     holes_played: int
-    rolling_average: Optional[float] = None  # over it and the four rounds before it with putts, to a tenth
+    rolling_average: Optional[float] = None
 
 
 class ThreePuttsTrendRow(ResponseModel):
-    """Three-putts in a round, as a share of the holes with putts recorded (0 without any)."""
     round_index: int
     round_id: Optional[str] = None
     three_putt_count: int
     holes_with_putt_data: int
     three_putt_percentage: float
-    costly: bool = False  # three or more three-putts: the rounds the page marks
+    costly: bool = False
 
 
 class ScoringByParRow(ResponseModel):
@@ -314,7 +276,6 @@ class ScoringByParRow(ResponseModel):
 
 
 class YardageScore(ResponseModel):
-    """One hole played in a yardage bucket."""
     to_par: int
     yardage: int
 
@@ -327,20 +288,19 @@ class ScoringByYardageRow(ResponseModel):
     average_strokes: float
     gir_percentage: Optional[float] = None
     sample_size: int
-    score_mix: ScoreMix = Field(default_factory=ScoreMix)  # each score kind's share of the band's holes, to a hundredth
+    score_mix: ScoreMix = Field(default_factory=ScoreMix)
     raw_scores: List[YardageScore] = Field(default_factory=list)
-    worst: bool = False  # the band of its par the golfer scores worst from, when the par has two or more
+    worst: bool = False
 
 
 class ScoringByHandicapRow(ResponseModel):
     handicap: int
     average_to_par: float
     sample_size: int
-    hardest: bool = False  # among the three the golfer scores worst on, against par
+    hardest: bool = False
 
 
 class GirVsNonGirRow(ResponseModel):
-    """Percent of GIR (or missed-green) holes in each score type."""
     bucket: Literal["GIR", "No GIR"]
     holes_counted: int
     eagle: float
@@ -353,15 +313,13 @@ class GirVsNonGirRow(ResponseModel):
 
 
 class MilestoneEvent(ResponseModel):
-    """The round a record or milestone was set in. `date` reads 2026/5/28."""
     date: str
     course: str
     round_id: Optional[str] = None
 
 
 class MilestoneAchievement(MilestoneEvent):
-    """The round a milestone was first reached in."""
-    in_window: bool = False  # reached within the last `window_days`
+    in_window: bool = False
 
 
 class UnderParEvent(MilestoneAchievement):
@@ -369,7 +327,6 @@ class UnderParEvent(MilestoneAchievement):
 
 
 class ThresholdMilestone(ResponseModel):
-    """The first round to get past `threshold`, or null until one does."""
     threshold: int
     achievement: Optional[MilestoneAchievement] = None
 
@@ -451,7 +408,6 @@ class CareerTotals(ResponseModel):
 
 
 class PerformanceStreaks(ResponseModel):
-    """Longest runs of holes. A par streak counts par or better."""
     longest_birdie_streak: int = 0
     longest_par_streak: int = 0
     most_gir_in_a_row: int = 0
@@ -464,7 +420,6 @@ class WindowedPerformanceStreaks(ResponseModel):
 
 
 class PerformanceStreakEvents(ResponseModel):
-    """The round each streak reached its length in."""
     longest_birdie_streak: Optional[MilestoneEvent] = None
     longest_par_streak: Optional[MilestoneEvent] = None
     most_gir_in_a_row: Optional[MilestoneEvent] = None
@@ -505,7 +460,7 @@ class LifetimePuttingMilestones(ResponseModel):
     fewest_putts_in_round: Optional[int] = None
     most_1_putts_in_round: Optional[int] = None
     most_3_putts_in_round: Optional[int] = None
-    putt_breaks: List[ThresholdMilestone] = Field(default_factory=list)  # first round under each putt count
+    putt_breaks: List[ThresholdMilestone] = Field(default_factory=list)
 
 
 class OneYearPuttingMilestones(ResponseModel):
@@ -532,7 +487,7 @@ class PuttingMilestoneEvents(ResponseModel):
 
 
 class LifetimeGirMilestones(ResponseModel):
-    gir_breaks: List[ThresholdMilestone] = Field(default_factory=list)  # first round with each GIR count
+    gir_breaks: List[ThresholdMilestone] = Field(default_factory=list)
     highest_gir_percentage_in_round: Optional[float] = None
     most_gir_in_round: Optional[int] = None
 
@@ -565,8 +520,7 @@ class GirMilestoneEvents(ResponseModel):
 
 
 class LifetimeRoundMilestones(ResponseModel):
-    score_breaks: List[ThresholdMilestone] = Field(default_factory=list)  # first round under each score
-    # How many score breaks come before a round under par: those above the par the golfer usually plays.
+    score_breaks: List[ThresholdMilestone] = Field(default_factory=list)
     under_par_position: int = 0
     first_round_under_par: Optional[UnderParEvent] = None
     first_eagle: Optional[MilestoneAchievement] = None
@@ -574,7 +528,7 @@ class LifetimeRoundMilestones(ResponseModel):
 
 
 class OneYearRoundMilestones(ResponseModel):
-    new_personal_records_achieved_count: int = 0  # score milestones first reached in the window
+    new_personal_records_achieved_count: int = 0
 
 
 class RoundMilestones(ResponseModel):
@@ -583,7 +537,6 @@ class RoundMilestones(ResponseModel):
 
 
 class NotableAchievements(ResponseModel):
-    """Records, totals, streaks and milestones over the rounds sent, and over the last `window_days`."""
     scoring_records: ScoringRecords = Field(default_factory=ScoringRecords)
     scoring_records_events: ScoringRecordEvents = Field(default_factory=ScoringRecordEvents)
     career_totals: CareerTotals = Field(default_factory=CareerTotals)
@@ -602,32 +555,25 @@ class NotableAchievements(ResponseModel):
 
 
 class PeakRound(ResponseModel):
-    """One of the player's best rounds."""
     round_id: Optional[str] = None
     course_name: Optional[str] = None
     score: int
 
 
 class PeakImpact(ResponseModel):
-    """One kind of hole, a round, in the peak rounds against every round, each to a hundredth.
-    `doubles` counts double bogeys and worse."""
     kind: Literal["birdies", "bogeys", "doubles"]
     peak: float
     average: float
-    strokes: float  # what the difference is worth a round: positive when the peak rounds gain strokes
+    strokes: float
 
 
 class PeakGame(ResponseModel):
-    """The player's best three rounds, lowest first (the older on a tie), and what they did differently."""
     rounds: List[PeakRound] = Field(default_factory=list)
-    average: float  # to a tenth
-    impacts: List[PeakImpact] = Field(default_factory=list)  # birdies, bogeys, doubles; empty without pars
+    average: float
+    impacts: List[PeakImpact] = Field(default_factory=list)
 
 
 class HeadlineFigure(ResponseModel):
-    """One of the analytics page's headline figures over the rounds asked for: its value, how far the
-    last five rounds' average sits from every round's (null under five rounds with it), whether that
-    move is for the better, and its five-round average after each round, oldest first."""
     metric: Literal["scoring_average", "gir_percentage", "average_putts", "scrambling_percentage", "three_putt_rate"]
     value: Optional[float] = None
     change: Optional[float] = None
@@ -636,7 +582,6 @@ class HeadlineFigure(ResponseModel):
 
 
 class PuttsPerHole(ResponseModel):
-    """How the holes with putts recorded split: one putt or none, two, three or more. Shares to a hundredth."""
     holes: int = 0
     one_or_fewer: float = 0.0
     two: float = 0.0
@@ -644,13 +589,11 @@ class PuttsPerHole(ResponseModel):
 
 
 class TourShortGame(ResponseModel):
-    """What tour players average around the green, for the short-game bars' marks."""
     scrambling_percentage: float
     up_and_down_percentage: float
 
 
 class AnalyticsResponse(ResponseModel):
-    """The analytics page's figures over the rounds asked for. Every per-round series is oldest first."""
     kpis: AnalyticsKpis = Field(default_factory=AnalyticsKpis)
     score_trend: List[ScoreTrendRow] = Field(default_factory=list)
     net_score_trend: List[NetScoreTrendRow] = Field(default_factory=list)
@@ -663,28 +606,22 @@ class AnalyticsResponse(ResponseModel):
     gir_vs_non_gir: List[GirVsNonGirRow] = Field(default_factory=list)
     handicap_trend: List[HandicapTrendRow] = Field(default_factory=list)
     notable_achievements: NotableAchievements = Field(default_factory=NotableAchievements)
-    score_mix: ScoreMix = Field(default_factory=ScoreMix)  # each score kind's share of every counted hole, to a hundredth
-    peak_game: Optional[PeakGame] = None  # null under two scored rounds
-    headline: List[HeadlineFigure] = Field(default_factory=list)  # scoring, greens, putts, scrambling, 3-putts
+    score_mix: ScoreMix = Field(default_factory=ScoreMix)
+    peak_game: Optional[PeakGame] = None
+    headline: List[HeadlineFigure] = Field(default_factory=list)
     putts_per_hole: PuttsPerHole = Field(default_factory=PuttsPerHole)
     tour_short_game: Optional[TourShortGame] = None
-    # The benchmark handicap a step better than the golfer's index: what the page compares with
-    # until they pick another. Null without an index.
     next_level_handicap: Optional[int] = None
-    # Each par type against the next level's benchmark (none without an index): the scoring tab's ticks.
     par_types: List["ParTypeComparison"] = Field(default_factory=list)
 
 
 class PlayedCourseResponse(ResponseModel):
-    """A course the player has a round linked to."""
     id: str
     name: Optional[str] = None
     location: Optional[str] = None
 
 
 class ComparisonFigure(ResponseModel):
-    """One figure of a round against its average: the round's value, the average, this less that,
-    and whether the difference is good, bad or neutral for the golfer."""
     metric: Literal["score", "putts", "greens", "three_putts", "putts_per_gir", "scrambling"]
     value: Optional[float] = None
     average: Optional[float] = None
@@ -693,14 +630,12 @@ class ComparisonFigure(ResponseModel):
 
 
 class ComparisonWindowResponse(ResponseModel):
-    """The rounds before this one that a window averages: the last five, twenty, or all."""
     window: Literal["l5", "l20", "all"]
     rounds: int
     metrics: List[ComparisonFigure] = Field(default_factory=list)
 
 
 class RoundComparisonResponse(ResponseModel):
-    """A round against the golfer's average over the rounds before it, one entry per window."""
     windows: List[ComparisonWindowResponse] = Field(default_factory=list)
 
 
@@ -716,39 +651,35 @@ GoalSaverType = Literal[
 
 
 class GoalSaver(ResponseModel):
-    """One place to find strokes, with the server's wording for it."""
     type: GoalSaverType
     strokes_saved: float
     percentage_of_gap: float
     headline: str
     detail: str
-    data: Dict[str, Any] = Field(default_factory=dict)  # the figures behind the saver; its keys vary by type
+    data: Dict[str, Any] = Field(default_factory=dict)
 
 
 class GoalAttempt(ResponseModel):
-    """One scored round in the window, and whether it met the goal (at or under it)."""
     round_id: Optional[str] = None
     score: int
     met_goal: bool
 
 
 class GoalReportResponse(ResponseModel):
-    """How far the player's average is from their goal, with the savers worth the most strokes first."""
     scoring_average: Optional[float] = None
-    lowest_score: Optional[int] = None  # the lowest full round in the window
+    lowest_score: Optional[int] = None
     scoring_goal: int
-    gap: Optional[float] = None  # average less goal; at or below 0 is on track
+    gap: Optional[float] = None
     on_track: bool = False
-    progress_pct: Optional[float] = None  # from the window's first round toward the goal, 0-100
-    rounds_meeting_goal: int = 0  # rounds in the window scored at or under the goal
-    peak_gap: Optional[float] = None  # the peak game's average less the goal, to a tenth; null without a peak
-    peak_meets_goal: Optional[bool] = None  # the peak game's average at or under the goal; null without a peak
-    attempts: List[GoalAttempt] = Field(default_factory=list)  # every scored round in the window, oldest first
+    progress_pct: Optional[float] = None
+    rounds_meeting_goal: int = 0
+    peak_gap: Optional[float] = None
+    peak_meets_goal: Optional[bool] = None
+    attempts: List[GoalAttempt] = Field(default_factory=list)
     savers: List[GoalSaver] = Field(default_factory=list)
 
 
 class BenchmarkShape(ResponseModel):
-    """A golfer's shape in golf terms: the Lab radar's axes. Null where they have no figure."""
     gir_percentage: Optional[float] = None
     scrambling_percentage: Optional[float] = None
     putts_per_gir: Optional[float] = None
@@ -758,21 +689,17 @@ class BenchmarkShape(ResponseModel):
 
 
 class ParTypeComparison(ResponseModel):
-    """One par type's average to par, the player's against the benchmark's."""
     par: Literal[3, 4, 5]
-    average_to_par: Optional[float] = None  # null with no holes of this par
+    average_to_par: Optional[float] = None
     benchmark_to_par: Optional[float] = None
-    # The player's less the benchmark's, to a hundredth: negative is fewer strokes. Null without both.
     gap: Optional[float] = None
     verdict: Optional[Literal["ahead", "even", "behind"]] = None
 
 
-# The analytics page's par types read the class above, which sits with the benchmark models.
 AnalyticsResponse.model_rebuild()
 
 
 class BenchmarkVerdicts(ResponseModel):
-    """Each radar axis against the benchmark: ahead, even or behind. Null without both figures."""
     gir_percentage: Optional[Literal["ahead", "even", "behind"]] = None
     scrambling_percentage: Optional[Literal["ahead", "even", "behind"]] = None
     putts_per_gir: Optional[Literal["ahead", "even", "behind"]] = None
@@ -782,49 +709,38 @@ class BenchmarkVerdicts(ResponseModel):
 
 
 class BenchmarkComparisonResponse(ResponseModel):
-    """The player's last rounds held up against a benchmark, and which benchmark it was."""
     against: Literal["handicap", "friend"]
-    handicap: Optional[int] = None  # the handicap compared with
-    # Null when the friend has no rounds.
+    handicap: Optional[int] = None
     benchmark: Optional[BenchmarkShape] = None
-    par_types: List[ParTypeComparison] = Field(default_factory=list)  # par 3, 4 and 5
-    verdicts: BenchmarkVerdicts = Field(default_factory=BenchmarkVerdicts)  # the radar's axes
+    par_types: List[ParTypeComparison] = Field(default_factory=list)
+    verdicts: BenchmarkVerdicts = Field(default_factory=BenchmarkVerdicts)
 
 
 class CourseHoleStatsRow(ResponseModel):
-    """How one hole of a course plays for the golfer (`stats.course_hole_stats`)."""
     hole_number: int
     par: int
-    sample_size: int  # the rounds they've scored it in
+    sample_size: int
     average_score: float
     average_to_par: float
-    difficulty_rank: int  # 1 is the hardest by average to par, ties by hole (stats.course_difficulty_profile_by_hole)
-    score_std_dev: Optional[float] = None  # how far the score swings; null under two rounds
-    gir_percentage: Optional[float] = None  # null when no green was recorded
-    average_putts: Optional[float] = None  # null when no putts were recorded
-    # Against two putts a hole, to a tenth: fewer is good, more is bad. Null with no putts recorded.
+    difficulty_rank: int
+    score_std_dev: Optional[float] = None
+    gir_percentage: Optional[float] = None
+    average_putts: Optional[float] = None
     putts_verdict: Optional[ChangeVerdict] = None
-    score_mix: ScoreMix  # the share of each kind of score, 0-100
+    score_mix: ScoreMix
 
 
 class CourseAnalyticsResponse(ResponseModel):
-    """The player's figures at one course. Every figure is worked out here, not on the client."""
     course_id: str
     rounds_played: int
     last_played: Optional[datetime] = None
-    # Over the full rounds, or the nines when there is no full round (`stats.course_record`).
     scoring_average: Optional[float] = None
     scoring_average_to_par: Optional[float] = None
-    # The rounds the list ranks best and worst; both are in `rounds`.
     best_round_id: Optional[str] = None
     worst_round_id: Optional[str] = None
-    rounds: List[RoundSummaryResponse] = Field(default_factory=list)  # newest first
-    # The rounds the record counts (full rounds, or nines without one), oldest first, with each
-    # one's five-round average.
+    rounds: List[RoundSummaryResponse] = Field(default_factory=list)
     score_trend: List[ScoreTrendRow] = Field(default_factory=list)
-    holes: List[CourseHoleStatsRow] = Field(default_factory=list)  # in course order
-    # The scorecard's Out, In and Total for the golfer's rows: the holes' averages to par summed,
-    # and the greens hit over each nine as a share. Null for a nine with nothing recorded.
+    holes: List[CourseHoleStatsRow] = Field(default_factory=list)
     hole_to_par_front_nine: Optional[float] = None
     hole_to_par_back_nine: Optional[float] = None
     hole_to_par_total: Optional[float] = None
@@ -834,17 +750,15 @@ class CourseAnalyticsResponse(ResponseModel):
 
 
 class CourseSummaryResponse(ResponseModel):
-    """Course for card/list views."""
     id: str
     name: Optional[str] = None
     external_course_id: Optional[str] = None
-    source: Literal["local", "external"] = "local"  # external = found through GolfCourseAPI, not saved yet
+    source: Literal["local", "external"] = "local"
     location: Optional[str] = None
     par: Optional[int] = None
     total_holes: int = 0
     tee_count: int = 0
-    tees: List[str] = Field(default_factory=list)  # the tee colours, longest first (Course.tees_by_length)
-    # The signed-in golfer's record here (`stats.course_record`); 0 and null when they haven't played it.
+    tees: List[str] = Field(default_factory=list)
     rounds_played: int = 0
     scoring_average: Optional[float] = None
     best_score: Optional[int] = None
@@ -852,24 +766,24 @@ class CourseSummaryResponse(ResponseModel):
 
 class AIComparisonItem(ResponseModel):
     metric: str
-    category: str           # "Ball Striking" | "Short Game" | "Putting"
+    category: str
     player_value: Optional[float] = None
     benchmark_value: float
-    unit: str               # "%" | " strokes" | " putts"
+    unit: str
     lower_is_better: bool
     has_data: bool
 
 
 class AIInsightItem(ResponseModel):
     category: str
-    category_group: str  # "Ball Striking" | "Short Game" | "Putting" | "Mental"
+    category_group: str
     title: str
     description: str
-    priority_score: float  # 0–10
+    priority_score: float
     key_metric: Optional[float] = None
     metric_label: str
     benchmark: Optional[float] = None
-    trend_direction: str  # "improving" | "declining" | "stable"
+    trend_direction: str
     drill_tips: List[str]
     what_if: Optional[str] = None
 
@@ -894,12 +808,7 @@ class AISuggestionsResponse(ResponseModel):
     generated_at: str
 
 
-# ================================================================
-# Users
-# ================================================================
-
 class UserResponse(ResponseModel):
-    """A golfer's profile, as `GET`/`PATCH /users/{id}` send it. Their rounds are fetched separately."""
     id: str
     friend_code: Optional[str] = None
     name: Optional[str] = None
@@ -910,32 +819,25 @@ class UserResponse(ResponseModel):
     scoring_goal: Optional[int] = None
 
 
-# ================================================================
-# Scan
-# ================================================================
-
 ConfidenceLevel = Literal["high", "medium", "low", "very_low"]
 """How sure the scan is of a reading, from its 0-1 confidence."""
 
 
 class ScannedHole(ResponseModel):
-    """A hole as read off the card, or taken from the course the golfer picked."""
     number: int
     par: Optional[int] = None
     handicap: Optional[int] = None
 
 
 class ScannedTee(ResponseModel):
-    """A tee row read off the card, or one of the picked course's tees. Yardages are keyed by hole number."""
     color: Optional[str] = None
     slope_rating: Optional[float] = None
     course_rating: Optional[float] = None
     hole_yardages: Dict[str, int] = Field(default_factory=dict)
-    course_handicap: Optional[int] = None  # the signed-in golfer's strokes off this tee; null without an index or ratings
+    course_handicap: Optional[int] = None
 
 
 class ScannedCourse(ResponseModel):
-    """The course a scan read the card against."""
     name: Optional[str] = None
     location: Optional[str] = None
     par: Optional[int] = None
@@ -944,7 +846,6 @@ class ScannedCourse(ResponseModel):
 
 
 class ScannedHoleScore(ResponseModel):
-    """One hole's score as read off the card. Anything the scan couldn't read is null."""
     hole_number: int
     strokes: Optional[int] = None
     putts: Optional[int] = None
@@ -954,7 +855,6 @@ class ScannedHoleScore(ResponseModel):
 
 
 class ScannedRound(ResponseModel):
-    """A round as read off a card, before the golfer checks and saves it."""
     course: Optional[ScannedCourse] = None
     tee_box: Optional[str] = None
     date: Optional[str] = None
@@ -963,21 +863,18 @@ class ScannedRound(ResponseModel):
 
 
 class FieldConfidence(ResponseModel):
-    """How sure the scan is of one reading."""
     final_confidence: float
     level: ConfidenceLevel
     validation_flags: List[str] = Field(default_factory=list)
 
 
 class HoleFieldConfidence(ResponseModel):
-    """How sure the scan is of each reading on a hole."""
     strokes: Optional[FieldConfidence] = None
     putts: Optional[FieldConfidence] = None
     green_in_regulation: Optional[FieldConfidence] = None
 
 
 class HoleConfidence(ResponseModel):
-    """How sure the scan is of one hole."""
     hole_number: int
     fields: HoleFieldConfidence
     overall: float
@@ -985,25 +882,21 @@ class HoleConfidence(ResponseModel):
 
 
 class ScanConfidence(ResponseModel):
-    """How sure the scan is of the card as a whole, and of each hole."""
     overall: float
     level: ConfidenceLevel
     hole_scores: List[HoleConfidence] = Field(default_factory=list)
 
 
 class ScanResponse(ResponseModel):
-    """`POST /scan/extract`: the card as read, how sure the scan is, and what to check before saving."""
     round: ScannedRound
     confidence: ScanConfidence
     fields_needing_review: List[str] = Field(default_factory=list)
 
 
 class OcrTextResponse(ResponseModel):
-    """`POST /scan/ocr`: the card's text, read ahead so extract can skip that step."""
     ocr_text: str
 
 
 class SaveScanResponse(ResponseModel):
-    """`POST /scan/save`: the new round's id and total."""
     id: str
     total_score: Optional[int] = None

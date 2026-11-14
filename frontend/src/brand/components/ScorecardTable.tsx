@@ -17,25 +17,16 @@ export interface ScorecardEdits {
 
 interface ScorecardTableProps {
   round: Round;
-  /** The tee played, which names the yardage row. */
   teeBox?: string | null;
-  /** Makes scores, putts and greens editable. The round shown should already carry the edits. */
   edits?: ScorecardEdits;
-  /** Holes whose score is in doubt, like one a scan couldn't read for sure. Their score cell is ringed. */
   toCheck?: readonly number[];
-  /**
-   * Draws one nine, closed by its own total, as a phone shows the card: two of these stacked, front
-   * then back, in place of the one wide table. Left out, every hole is across with Out, In and Tot.
-   */
   nine?: "front" | "back";
   className?: string;
 }
 
-/** Row heights by what the row holds: the score's marks get the most room, the reference rows the least. */
 const ROW = { figures: "h-8", small: "h-7", score: "h-11" } as const;
 const SMALL = cn(ROW.small, "text-label font-medium text-muted-foreground");
 
-/** "" clears a cell; anything that isn't a number leaves it as it was. */
 function parseCount(text: string): number | null | undefined {
   if (text === "") return null;
   const value = Number.parseInt(text, 10);
@@ -54,7 +45,6 @@ const GIR_WORD = new Map<boolean | null, string>([
   [null, "not recorded"],
 ]);
 
-/** A green or fairway: filled when hit, ringed when missed, a dash when the card didn't say. */
 function HitMark({ hit, className }: { hit: boolean | null; className?: string }) {
   if (hit == null) return <span className="text-muted-foreground">–</span>;
   return (
@@ -89,13 +79,11 @@ function CountInput({
         const parsed = parseCount(e.target.value);
         if (parsed !== undefined) onChange(parsed);
       }}
-      // Block, so it centres under the hole number like the rest of the column.
       className={cn("mx-auto block h-7 w-7 rounded-lg px-0 text-center text-sm font-semibold md:text-sm", className)}
     />
   );
 }
 
-/** Rings a score cell whose score is in doubt. */
 const CHECK_RING = "ring-2 ring-status-warning ring-offset-1 ring-offset-card";
 
 function ScoreCell({
@@ -108,16 +96,13 @@ function ScoreCell({
   check: boolean;
 }) {
   if (!edits) {
-    // The one hole mark the kit draws, so a score reads the same here as on the round flow.
     return (
       <span className={cn("inline-flex align-middle", check && cn("rounded-md", CHECK_RING))}>
-        {/* A phone's nine is too narrow for the large mark. */}
         <HoleShape hole={hole} square size="scorecard" />
       </span>
     );
   }
   return (
-    // The fill sits behind a clear input: an input's own dark background would cover it.
     <div className={cn("mx-auto w-7 rounded-lg", hole.kind && scoreFillClass(hole.kind))}>
       <CountInput
         label={check ? `Hole ${hole.hole} strokes, to check` : `Hole ${hole.hole} strokes`}
@@ -134,15 +119,6 @@ function ScoreCell({
   );
 }
 
-/**
- * A round as one scorecard: every hole across, with Out, In and Tot where the nines close. Par, the
- * score marked the way a card marks it, to par, and the totals. Every figure is the server's, or
- * Round.previewEdits' while editing or before a scan is saved.
- *
- * Yards, handicap, putts, greens, fairways and shots-to-green appear only when a hole has them (putts
- * and greens always do while editing), because a scanned card often has none, and a row of dashes
- * reads as a failed scan rather than a card that never held the data.
- */
 function ScorecardTable({ round, teeBox, edits, toCheck, nine, className }: ScorecardTableProps) {
   const { frontNine, backNine } = round;
   const shown = nine === "front" ? [frontNine] : nine === "back" ? [backNine] : [frontNine, backNine];
@@ -168,7 +144,6 @@ function ScorecardTable({ round, teeBox, edits, toCheck, nine, className }: Scor
       nine: (part) => show(part.yards),
       tot: show(round.yards),
     },
-    // A phone's nine has no room for the stroke index; the wide card keeps it.
     optional.handicap && {
       key: "handicap",
       label: "Hcp",
@@ -275,11 +250,6 @@ function ScorecardTable({ round, teeBox, edits, toCheck, nine, className }: Scor
 
 export { ScorecardTable };
 
-/**
- * The tee row's label: the tee's swatch and name, with a rating and slope read off the card ("BLUE
- * 70.8/123") on a line under the name from `md`, and left off a phone's nine, rather than running
- * into the first hole.
- */
 function TeeLabel({ teeBox }: { teeBox: string }) {
   const { name, rating } = teeNameParts(teeBox);
   return (
@@ -287,7 +257,6 @@ function TeeLabel({ teeBox }: { teeBox: string }) {
       <TeeSwatch color={teeBox} className="size-2 shrink-0 rounded-full" />
       <span className="flex flex-col leading-tight">
         <span>{name}</span>
-        {/* A phone's nine has no room for it beside the first hole; the wide card has. */}
         {rating && <span className="hidden text-caption font-medium text-muted-foreground md:block">{rating}</span>}
       </span>
     </span>

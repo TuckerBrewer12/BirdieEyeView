@@ -4,7 +4,6 @@ import { Card, CardTitle, Meter } from "@/brand";
 import type { GoalStanding, Saver } from "../profileModel";
 import { saverShareLabel, saverStrokes, saversGoalNote, saversHeading } from "../profilePresent";
 
-/** Each kind of saver's mark. */
 const SAVER_ICON: Record<Saver["kind"], ComponentType<{ className?: string }>> = {
   three_putt_bleed: Flag,
   blowup_holes: TrendingDown,
@@ -15,10 +14,6 @@ const SAVER_ICON: Record<Saver["kind"], ComponentType<{ className?: string }>> =
   par5_opportunity: CircleDot,
 };
 
-/**
- * Where the golfer can find the strokes between their average and their goal, biggest first, as
- * the server ranked them: three across, or a list on a phone.
- */
 export function SaversCard({ goal, id }: { goal: GoalStanding; id: string }) {
   const heading = saversHeading(goal);
   const savers = goal.savers;

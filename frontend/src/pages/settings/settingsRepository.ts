@@ -14,7 +14,6 @@ export interface SettingsRepository extends Pick<UserRepository, "updateUser">, 
   saveDevicePreferences(preferences: DevicePreferences): void;
 }
 
-/** The user as Settings shows it, with the home course's name read separately. */
 export function settingsFrom(user: UserDto, homeCourseName: string | null): Settings {
   return {
     friendCode: user.friend_code || null,
@@ -23,7 +22,6 @@ export function settingsFrom(user: UserDto, homeCourseName: string | null): Sett
   };
 }
 
-/** Reads stored device choices, falling back to the defaults for anything unset or unknown. */
 export function devicePreferencesFrom(getUpdates: string | null): DevicePreferences {
   return { getUpdates: getUpdates !== "false" };
 }

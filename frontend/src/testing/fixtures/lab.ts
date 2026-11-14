@@ -13,7 +13,6 @@ import { avery, jordan } from "./friendships";
 import { sampleGolfer } from "./sampleGolfer";
 import { countsFor } from "./scoreCounts";
 
-/** A 17.8 out to break 90: met it once in twelve rounds, three-putts the worst leak. */
 export const labUser: UserDto = {
   id: "user-1",
   name: "Test Golfer",
@@ -30,26 +29,18 @@ const SCORES = [97, 93, 91, 95, 90, 89, 94, 92, 91, 96, 90, 92];
 const THREE_PUTTS = [3, 2, 2, 3, 1, 1, 2, 2, 1, 3, 2, 2];
 const PUTTS = [36, 35, 34, 37, 33, 32, 35, 34, 33, 36, 34, 35];
 
-/** Which of those rounds the server marks as meeting each goal: only the 89 breaks 90; nine of them break 95. */
 const MET_BREAKING_90 = SCORES.map((_, i) => i === 5);
 export const MET_BREAKING_95 = [false, true, true, false, true, true, true, true, true, false, true, true];
 export const MET_NONE = SCORES.map(() => false);
 
-/** The twelve rounds as the goal report sends them, each marked met or not. */
 export function labAttempts(met: boolean[]): GoalAttemptDto[] {
   return SCORES.map((score, i) => ({ round_id: `lab-${i + 1}`, score, met_goal: met[i] }));
 }
 
 const pct = (holes: number) => Math.round((holes / 18) * 1000) / 10;
 
-/** The server's response with every series empty; each golfer below fills in what The Lab reads. */
 const NO_ROUNDS = withoutRounds(sampleGolfer.analytics);
 
-/**
- * The figures the server works out from those rounds. Holes of each kind a round (birdies,
- * bogeys, doubles or worse): 1, 8 and 3 in the best three (lab-6, lab-5, lab-11), against
- * 9, 110 and 41 holes over all twelve.
- */
 export const labAnalytics: AnalyticsDto = {
   ...NO_ROUNDS,
   kpis: {
@@ -60,14 +51,12 @@ export const labAnalytics: AnalyticsDto = {
     up_and_down_percentage: 30,
     putts_per_gir: 2.05,
     total_rounds: SCORES.length,
-    // The 89, the best of the twelve.
     best_round: 89,
     best_round_id: "lab-6",
     best_round_course: "Half Moon Bay",
     average_putts: 34.5,
     three_putts_per_round: 2,
     three_putt_rate: 11.1,
-    // The last five average 92.2 against 91.67 over all twelve.
   },
   peak_game: {
     rounds: [
@@ -119,11 +108,9 @@ export const labAnalytics: AnalyticsDto = {
     holes_played: 18,
     rolling_average: null,
   })),
-  // A step better than 17.8.
   next_level_handicap: 15,
 };
 
-/** Avery plays to about 81: more greens, better par 3s. Jordan has no rounds. */
 export const averyLabAnalytics: AnalyticsDto = {
   ...NO_ROUNDS,
   kpis: {
@@ -148,7 +135,6 @@ export const averyLabAnalytics: AnalyticsDto = {
   ],
 };
 
-/** Analytics by golfer, as FakeBackend serves them. */
 export const labAnalyticsByGolfer: Record<string, AnalyticsDto> = {
   "user-1": labAnalytics,
   [avery.id]: averyLabAnalytics,
@@ -162,7 +148,6 @@ export const labGoalReport: GoalReportDto = {
   on_track: false,
   progress_pct: 64,
   rounds_meeting_goal: 1,
-  // The best three average 89.67, two thirds of a stroke over the goal.
   peak_gap: 0.7,
   peak_meets_goal: false,
   attempts: labAttempts(MET_BREAKING_90),
@@ -194,7 +179,6 @@ export const labGoalReport: GoalReportDto = {
   ],
 };
 
-/** The server's shapes: a 15 handicap breaks 90, a 5 breaks 80, and Avery's own figures. */
 export const breaks90Shape: BenchmarkShapeDto = {
   gir_percentage: 24,
   scrambling_percentage: 21,
@@ -222,7 +206,6 @@ const averyShape: BenchmarkShapeDto = {
   par5_to_par: 0.3,
 };
 
-/** The golfer's par 3s, 4s and 5s (+0.92, +1.12, +0.85) against a shape's, as the server judged them. */
 function parTypes(
   shape: BenchmarkShapeDto | null,
   judged: [number, ParTypeComparisonDto["verdict"]][],
@@ -239,10 +222,6 @@ function parTypes(
 
 type Verdict = ParTypeComparisonDto["verdict"];
 
-/**
- * The radar's axes as the server judged them: GIR, scrambling and putts per GIR (the golfer's
- * 28%, 22% and 2.05 against the shape's), then each par type's verdict from its row.
- */
 function verdicts(rates: [Verdict, Verdict, Verdict], parRows: ParTypeComparisonDto[]): BenchmarkVerdictsDto {
   const [par3, par4, par5] = parRows.map((row) => row.verdict);
   return {
@@ -257,7 +236,6 @@ function verdicts(rates: [Verdict, Verdict, Verdict], parRows: ParTypeComparison
 
 const BREAKS_90_JUDGED: [number, ParTypeComparisonDto["verdict"]][] = [[0.32, "behind"], [0.1, "behind"], [-0.25, "ahead"]];
 
-/** `GET /stats/{id}/benchmark` for each comparison The Lab's tests make, keyed as FakeBackend looks them up. */
 export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
   "handicap:15": {
     against: "handicap",
@@ -286,7 +264,6 @@ export const labBenchmarks: Record<string, BenchmarkComparisonDto> = {
       parTypes(averyShape, [[0.57, "behind"], [0.57, "behind"], [0.55, "behind"]]),
     ),
   },
-  // Jordan has no rounds: nothing to draw or compare with.
   [`friend:${jordan.id}`]: {
     against: "friend",
     handicap: null,

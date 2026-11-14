@@ -2,7 +2,6 @@ import { HoleProfileChart } from "@/brand/charts/HoleProfileChart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/brand/components/Card";
 import { homeCourseHoles, homeCourseHolesHardestFirst } from "@/testing/fixtures/courseHoles";
 
-/** A home course hole by hole, in a card at the width the course page gives it, then hardest first. */
 export default function HoleProfileChartPreview() {
   return (
     <div data-testid="brand-frame" className="fixed inset-0 flex flex-col gap-6 overflow-auto bg-background p-6">

@@ -41,7 +41,6 @@ export const TOTAL_LABEL: Record<TotalKind, string> = {
   "hole-in-ones": "Hole-in-Ones",
 };
 
-/** The kind of hole a total counts, for its colour: birdies green, bogeys red. Rounds, greens and 3-putts have none. */
 export const TOTAL_SCORE_KIND: Partial<Record<TotalKind, ScoreKind>> = {
   eagles: "eagle",
   birdies: "birdie",
@@ -50,7 +49,6 @@ export const TOTAL_SCORE_KIND: Partial<Record<TotalKind, ScoreKind>> = {
   doubles: "double",
   triples: "triple",
   quads: "quad",
-  // An ace is the rarest score there is, so it takes the eagle's gold.
   "hole-in-ones": "eagle",
 };
 
@@ -73,7 +71,6 @@ export function milestoneLabel(milestone: Milestone): string {
     case "putt-break":
       return `Break ${milestone.threshold} Putts`;
     case "gir-break":
-      // The server reaches greens milestones on full rounds only, so a nine never claims one.
       return `${milestone.threshold}/18 GIR`;
     case "under-par":
       return "Round Under Par";
@@ -84,12 +81,10 @@ export function milestoneLabel(milestone: Milestone): string {
   }
 }
 
-/** A stable key for a milestone in its list. */
 export function milestoneKey(milestone: Milestone): string {
   return "threshold" in milestone ? `${milestone.kind}-${milestone.threshold}` : milestone.kind;
 }
 
-/** Where and when a record was set: "May 25, 2026 · Presidio Golf Course". */
 export function eventDetail(event: CareerEvent | null): string | null {
   if (!event) return null;
   return [formatDay(event.date) ?? event.date, event.course].filter(Boolean).join(" · ");
@@ -99,12 +94,10 @@ export function recordValue(value: number | null): string {
   return value != null ? String(value) : "—";
 }
 
-/** The note over the last year's score milestones. */
 export function newRecordsNote(count: number, windowDays: number): string {
   return `${count} new personal ${pluralNoun(count, "record")} in the last ${windowDays} days.`;
 }
 
-/** The handicap trend over a window with no rounds in it. */
 export function noRoundsInWindow(windowDays: number): string {
   return `No rounds in the last ${windowDays} days.`;
 }
@@ -115,7 +108,6 @@ export const PAGE_SUBTITLE = "Player achievement records";
 
 export const EMPTY_MESSAGE ="Play some rounds to start your career record.";
 
-/** The radar's spokes: the golfer's own shape, labelled with their figures. */
 export function profileAxes(profile: RadarEntry[]): RadarAxis[] {
   return profile.map((entry) => ({ label: entry.axis, value: entry.value, valueLabel: entry.userRaw }));
 }

@@ -37,20 +37,14 @@ type PhotoStep = Pick<
 
 interface ScanPhotoStepProps {
   step: PhotoStep;
-  /** The picked photo, as an image. */
   previewUrl: string | null;
 }
 
 const ACCEPT = "image/*,application/pdf";
 const ANOTHER_PHOTO = "Try another photo";
 
-/** Reads the picked photo with what the form says now; after a failure, with whatever was changed. */
 const READ_CARD = "Read card";
 
-/**
- * Why the read failed: "Couldn't read this card." in bold with what to try beside it (under it on a
- * phone), and the way to another photo at the end. Under it, the way to report the failed scan.
- */
 function ScanFailed({ step, action }: { step: PhotoStep; action: ReactNode }) {
   if (!step.error) return null;
   const { title, detail } = scanFailure(step.error);
@@ -69,11 +63,6 @@ function ScanFailed({ step, action }: { step: PhotoStep; action: ReactNode }) {
   );
 }
 
-/**
- * A computer's scan: a drop zone with the course under it, then once a photo is picked, the photo
- * beside what's on the card, and the button that reads it. Another photo comes from the button
- * under the photo, or from the failed read's banner.
- */
 export function ScanPhotoStepWide({ step, previewUrl }: ScanPhotoStepProps) {
   const { photo } = step;
 
@@ -135,11 +124,6 @@ export function ScanPhotoStepWide({ step, previewUrl }: ScanPhotoStepProps) {
   );
 }
 
-/**
- * A phone's scan: what's on the card first, then the photo from the camera, the library or a
- * file, which shows above the form with the button that reads it. Retake opens the same sheet,
- * from the photo's row or the failed read's banner.
- */
 export function ScanPhotoStepPhone({
   step,
   previewUrl,

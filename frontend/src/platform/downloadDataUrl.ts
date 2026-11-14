@@ -1,4 +1,3 @@
-/** Save a data URL through a temporary anchor. Web-only download fallback for share. */
 export function downloadDataUrl(dataUrl: string, filename: string): void {
   const a = document.createElement("a");
   a.href = dataUrl;

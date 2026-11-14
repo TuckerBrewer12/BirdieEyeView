@@ -48,13 +48,11 @@ describe("filterRounds", () => {
   });
 
   it("Worst score follows the server's order, a full round ahead of a nine, unplaced rounds last", () => {
-    // The nine is furthest over par, but the server ranks every full round ahead of it.
     const rounds = [round("A", null), round("Nine", 20, undefined, 3, 3), round("B", 18, undefined, 2, 1), round("C", 8, undefined, 1, 2)];
     expect(filterRounds(rounds, query({ sort: "worst" })).map((r) => r.course?.name)).toEqual(["B", "C", "Nine", "A"]);
   });
 
   it("Best score follows the server's order, unplaced rounds last", () => {
-    // A nine at +2 is the lowest to par, but the server ranks every full round ahead of it.
     const rounds = [round("A", 13, undefined, 2), round("Nine", 2, undefined, 3), round("B", 2, undefined, 1), round("C", null)];
     expect(filterRounds(rounds, query({ sort: "best" })).map((r) => r.course?.name)).toEqual(["B", "A", "Nine", "C"]);
   });

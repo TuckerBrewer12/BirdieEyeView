@@ -14,9 +14,7 @@ export interface RoundActionsProps {
   confirmDelete: boolean;
   deleting: boolean;
   sharing: boolean;
-  /** The round as the delete dialog names it: "Half Moon Bay · Jun 15 · 78". */
   deleteLine: string;
-  /** Offers "Link to a course" in the More menu, for a round with no course behind it. */
   canLink: boolean;
   onEdit: () => void;
   onSave: () => void;
@@ -29,13 +27,6 @@ export interface RoundActionsProps {
   onBack: () => void;
 }
 
-/**
- * The bar above a round: back to the list, then Share, Edit and More (which holds Delete), or Cancel
- * and Save while editing. On a phone Share and Edit are icons alone.
- *
- * This lives with the page rather than in the kit because it is all intent and no data: callbacks
- * and flags, none of which describe a round. The kit supplies the Button, the menu and the dialog.
- */
 export function RoundActions({
   editMode,
   saving,

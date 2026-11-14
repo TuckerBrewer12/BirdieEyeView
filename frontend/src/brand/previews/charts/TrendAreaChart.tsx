@@ -23,7 +23,6 @@ export default function TrendAreaChartPreview() {
   const [shown, setShown] = useState<number | null>(null);
   return (
     <>
-      {/* One figure over a fill, against its average, with the slider for how many rounds show. */}
       <TrendAreaChart
         shown={shown}
         onShownChange={setShown}
@@ -32,7 +31,6 @@ export default function TrendAreaChartPreview() {
         format={percent}
         reference={{ value: 36, label: "Avg 36%" }}
       />
-      {/* Two figures side by side, with a gap where a round has none. */}
       <TrendAreaChart
         points={scrambling.map((rate, i) => round(i, [rate, upAndDown[i]]))}
         series={[
@@ -42,7 +40,6 @@ export default function TrendAreaChartPreview() {
         format={percent}
         domain={[0, 100]}
       />
-      {/* Scores under their average, with birdies and doubles each round in a panel of their own under them. */}
       <TrendAreaChart
         points={scores.map((score, i) => round(i, [score, fives[i]]))}
         series={[

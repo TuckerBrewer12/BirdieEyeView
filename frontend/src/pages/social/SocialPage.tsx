@@ -54,7 +54,6 @@ export function SocialPage({ userId }: SocialPageProps) {
         }
       />
     );
-    // On a phone the whole row opens the comparison, as a list of people does there.
     if (wide) return row;
     return (
       <RowButton
@@ -87,7 +86,6 @@ export function SocialPage({ userId }: SocialPageProps) {
         <Card>
           <CardHeader>
             <CardTitle level={2}>Add a friend</CardTitle>
-            {/* Your code sits in the header from md, under the field on a phone. */}
             <CardAction className="hidden self-center md:block">
               <YourCode code={viewModel.myCode} />
             </CardAction>

@@ -45,7 +45,6 @@ def client_for(store=None):
     app = create_app()
     if store is not None:
         app.dependency_overrides[scan_reports.get_scan_report_store] = lambda: store
-    # No lifespan/database initialization or provider credentials needed.
     return TestClient(app, base_url="http://localhost", raise_server_exceptions=False)
 
 
@@ -78,7 +77,7 @@ def test_app_configuration_wires_real_encryption_and_sanitation_without_database
     restored = store.retrieve(UUID(values["retry_key"]))
     assert restored.metadata.category == values["category"]
     assert set(restored.metadata.model_dump()) == {"schema_version", "retry_key", "category", "stage", "http_status", "media_type"}
-    assert len(store.client.objects) == 2  # One private reservation and one encrypted report.
+    assert len(store.client.objects) == 2
     assert sum(key.endswith(".bev") for key in store.client.objects) == 1
 
 
@@ -176,7 +175,6 @@ def test_report_limit_is_independent_of_extraction_and_cannot_be_bypassed_with_a
     monkeypatch.setenv("API_SCAN_REPORT_LIMIT_MAX_REQUESTS", "1")
     monkeypatch.setenv("API_SCAN_LIMIT_MAX_UNAUTH_REQUESTS", "1")
     client = client_for()
-    # Even an invalid extraction consumes the scan budget, but not the report budget.
     client.post("/api/scan/extract")
     assert send_report(client).status_code == 503
     limited = send_report(client, headers={"authorization": "Bearer secret", "user-agent": "private-device"})

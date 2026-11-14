@@ -10,7 +10,6 @@ import { useScannerDemoViewModel } from "./useScannerDemoViewModel";
 
 const DEMO_MOTION = tokens.motion.demo;
 
-/** What the demo says is on its card: a name, scores written to par, putts and shots to green. */
 const DEMO_FACTS: CardFacts = {
   name: "T",
   writtenAs: "toPar",
@@ -22,7 +21,6 @@ const DEMO_FACTS: CardFacts = {
 
 const noop = () => {};
 
-/** The setup the scan asks for before reading, as the scan page shows it, filled in. */
 function SetupPanel() {
   return (
     <motion.div
@@ -41,7 +39,6 @@ function SetupPanel() {
   );
 }
 
-/** The round the scan reads back, as the app shows a saved one. */
 function ReadRound() {
   return (
     <motion.div
@@ -60,7 +57,6 @@ function ReadRound() {
   );
 }
 
-/** One capture of the app, wide or narrow to match the frame. Decorative, so no alt text. */
 function TourPicture({ screen }: { screen: TourScreen }) {
   return (
     <picture>
@@ -72,7 +68,6 @@ function TourPicture({ screen }: { screen: TourScreen }) {
 
 const percent = (share: number) => `${share * 100}%`;
 
-/** The handicap's place in each capture, for the tap to land on. */
 const TAP_POSITION = {
   "--tap-x": percent(HANDICAP_TAP.narrow.x),
   "--tap-y": percent(HANDICAP_TAP.narrow.y),
@@ -80,7 +75,6 @@ const TAP_POSITION = {
   "--tap-y-wide": percent(HANDICAP_TAP.wide.y),
 } as CSSProperties;
 
-/** A finger pressing the dashboard's handicap. */
 function HandicapTap() {
   return (
     <div
@@ -100,10 +94,6 @@ function HandicapTap() {
   );
 }
 
-/**
- * The app the scan lands in. Each capture is pinned to the frame's top edge in its
- * own aspect, so the tap's percentages line up with the picture underneath.
- */
 function AppScreen({ screen, tapping }: { screen: TourScreen; tapping: boolean }) {
   return (
     <motion.div
@@ -161,7 +151,6 @@ export function ScannerDemo() {
         {screen && <AppScreen key="app" screen={screen} tapping={tapping} />}
       </AnimatePresence>
 
-      {/* Fetched while the round is on show, so the tour never waits on a download. */}
       {tourPrimed && (
         <div hidden>
           {TOUR_SCREENS.map((tourScreen) => (

@@ -24,11 +24,7 @@ permissions:
 
 jobs:
   screenshots:
-    # Pairs with "Frontend (espresso)" in tests.yml: that one gates behavior,
-    # this one gates look.
     name: Frontend visual regression
-    # macos-latest matches the committed *-darwin.png baselines. The repo is
-    # public, so these runner minutes are free.
     runs-on: macos-latest
     defaults:
       run:

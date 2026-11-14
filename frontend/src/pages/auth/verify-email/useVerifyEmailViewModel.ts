@@ -6,11 +6,9 @@ export type VerifyEmailStatus = "missing" | "verifying" | "verified" | "failed";
 
 export interface VerifyEmailViewModel {
   status: VerifyEmailStatus;
-  /** The server's word once it has answered; null while there is no answer to show. */
   serverMessage: string | null;
 }
 
-/** Where the emailed link's token stands: absent, being spent, spent, or refused. */
 export function useVerifyEmailViewModel(
   auth: Pick<AuthActions, "verifyEmail">,
   token: string,

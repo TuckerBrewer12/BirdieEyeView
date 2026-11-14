@@ -1,5 +1,3 @@
-"""Course handicaps and net scores are worked out once, on the server, off the golfer's own index."""
-
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
@@ -21,7 +19,7 @@ from api.routers.scan import _add_course_handicaps
 from models import Course, Hole, HoleScore, Round, Tee, User
 from tests.helpers import make_mock_database
 
-PARS = [4, 5, 4, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5, 3, 4, 4, 5]  # par 72
+PARS = [4, 5, 4, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5, 3, 4, 4, 5]
 
 
 def _course(rating: float = 72.4, slope: float = 130) -> Course:
@@ -39,7 +37,6 @@ def _course(rating: float = 72.4, slope: float = 130) -> Course:
 
 
 def _round(course: Course, over: int, holes: int = 18, played: datetime | None = None) -> Round:
-    """A round `over` par on the first `holes` holes: one stroke over on each of the first `over`."""
     return Round(
         id=str(uuid4()),
         course=course,
@@ -53,11 +50,8 @@ def _round(course: Course, over: int, holes: int = 18, played: datetime | None =
 
 
 def test_course_handicap_is_the_whs_formula_to_the_nearest_stroke():
-    # 10.4 × 130 / 113 + (72.4 − 72) = 12.36
     assert course_handicap(10.4, 130, 72.4, 72) == 12
-    # A half goes up, the way golfers round it: 0 × 113 / 113 + (72.5 − 72) = 0.5 → 1.
     assert course_handicap(0, 113, 72.5, 72) == 1
-    # A plus index: −2 × 113 / 113 + (71.5 − 72) = −2.5 → −2, a plus 2.
     assert course_handicap(-2, 113, 71.5, 72) == -2
 
 
@@ -77,7 +71,6 @@ def test_a_round_nets_its_gross_less_the_course_handicap_off_the_tee_played():
 
 
 def test_a_nine_has_no_course_handicap_or_net_score():
-    """Tee ratings are for 18 holes, so a nine read against them would net 30-odd under par."""
     nine = _round(_course(), over=3, holes=9)
     assert round_course_handicap(nine, 10.4) is None
     assert round_net_score(nine, 10.4) is None
@@ -94,8 +87,6 @@ def test_the_round_page_and_the_net_score_trend_give_a_round_the_same_net_score(
 
 @pytest.mark.asyncio
 async def test_the_round_endpoint_and_analytics_net_a_round_off_the_same_index():
-    """The round page and the analytics trend both read the golfer's own index, so one round
-    shows one net score, even for a golfer whose index still leans on the handicap they gave."""
     user_id = uuid4()
     user = User(id=str(user_id), name="Sam", email="sam@example.com", handicap=6.0)
     course = _course()
@@ -131,7 +122,6 @@ async def test_a_course_sends_the_signed_in_golfers_course_handicap_per_tee():
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
 
     signed_in = await courses.get_course(UUID(course.id), db, user)
-    # No tee has yardages, so they list by colour: Blue, Red, White. 10.4 × 124 / 113 + (70.1 − 72) = 9.51
     assert [t.color for t in signed_in.tees] == ["Blue", "Red", "White"]
     assert [t.course_handicap for t in signed_in.tees] == [12, None, 10]
 
@@ -154,7 +144,6 @@ def test_a_scanned_card_gives_each_rated_tee_a_course_handicap():
         }
     }
     _add_course_handicaps(payload, 10)
-    # (10 × 133 / 113) + (73.4 − 72) = 13.17
     assert [t.get("course_handicap") for t in payload["course"]["tees"]] == [13, None]
 
 
@@ -168,7 +157,6 @@ def test_a_hole_marks_three_putts_and_a_round_counts_the_holes_played():
 
 
 def test_a_nine_reads_to_par_against_its_own_holes():
-    """Linked to an 18-hole course, a nine one over par is +1, not 35 under."""
     nine = _round(_course(), over=1, holes=9)
     assert nine.total_to_par() == 1
     assert _round(_course(), over=4).total_to_par() == 4
@@ -180,25 +168,24 @@ def test_best_puts_full_rounds_first_by_to_par_then_nines():
         par=70,
         holes=[Hole(number=i + 1, par=p) for i, p in enumerate([4, 4, 4, 3, 4, 4, 3, 4, 4] * 2)],
     )
-    seventy_five_at_par_72 = _round(_course(), over=3)  # +3
+    seventy_five_at_par_72 = _round(_course(), over=3)
     seventy_four_at_par_70 = Round(
         id="74-at-70",
         course=par_70,
         hole_scores=[HoleScore(hole_number=h.number, strokes=h.par + (1 if h.number <= 4 else 0)) for h in par_70.holes],
-    )  # +4
+    )
     level_par_nine = _round(_course(), over=0, holes=9)
     unrated = Round(id="no-par", hole_scores=[HoleScore(hole_number=1, strokes=4)])
     listed = [level_par_nine, seventy_four_at_par_70, unrated, seventy_five_at_par_72]
 
     assert [r.best_rank for r in round_list(listed)] == [3, 2, None, 1]
-    # Worst first, a full round is still ahead of the nine.
     assert [r.worst_rank for r in round_list(listed)] == [3, 1, None, 2]
 
 
 def test_a_round_under_par_reads_after_the_score_breaks_above_the_golfers_usual_par():
     thresholds = [120, 110, 100, 95, 90, 85, 80, 75, 70, 65, 60]
-    assert stats.under_par_position(thresholds, 72) == 8  # after breaking 75
-    assert stats.under_par_position(thresholds, 70) == 9  # breaking 70 is the same mark
+    assert stats.under_par_position(thresholds, 72) == 8
+    assert stats.under_par_position(thresholds, 70) == 9
     assert stats.under_par_position(thresholds, 64) == 10
 
     assert stats.usual_par([]) == 72

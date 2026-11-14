@@ -7,13 +7,11 @@ import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
 import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
 
-// A few days after the sample golfer's last round, the way the analytics and dashboard robots see them.
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
 
 type WindowLabel = "Lifetime" | "Last 365 Days";
 type MilestoneTab = "Career" | "Putting" | "GIR";
 
-/** Screen robot for /career. */
 export class CareerRobot {
   private readonly page: Page;
   private backend: FakeBackend | null = null;
@@ -22,10 +20,6 @@ export class CareerRobot {
     this.page = page;
   }
 
-  /**
-   * The page renders its phone and desktop layouts and CSS shows one, so every lookup takes
-   * the copy on screen.
-   */
   private shown(selector: string) {
     return this.page.locator(selector).filter({ visible: true });
   }
@@ -45,27 +39,23 @@ export class CareerRobot {
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
   }
 
-  /** The sample golfer's season: 24 rounds over three courses. */
   async open(seed: FakeBackendSeed = {}): Promise<this> {
     await this.install(seed);
     await this.seesCareer();
     return this;
   }
 
-  /** The same golfer ten months after their last round, when the server's last year starts after their March rounds. */
   async openLater(): Promise<this> {
     await this.install({ analytics: sampleAnalyticsAYearOn });
     await this.seesCareer();
     return this;
   }
 
-  /** How many rounds the handicap trend draws: its card's "24 rounds". */
   async seesTrendRounds(text: string): Promise<this> {
     await expect(this.page.locator("[data-slot=handicap-trend-card]:visible")).toContainText(text);
     return this;
   }
 
-  /** A total's name reads in its score's colour: Birdies green, Bogeys red. */
   async seesTotalInColour(label: string, kind: string): Promise<this> {
     const tile = this.page.locator("[data-slot=totals-card]:visible [data-slot=stat]").filter({ hasText: label });
     await expect(tile).toHaveAttribute("data-kind", kind);
@@ -82,7 +72,6 @@ export class CareerRobot {
     return this;
   }
 
-  /** The next load succeeds, as the API would once the failure has cleared. */
   nextLoadSucceeds(): this {
     if (this.backend) this.backend.analytics = sampleGolfer.analytics;
     return this;
@@ -108,7 +97,6 @@ export class CareerRobot {
     return this;
   }
 
-  /** The career asked the server for these filters. */
   async askedFor(filters: Partial<AnalyticsFilters>): Promise<this> {
     await expect.poll(() => this.backend?.analyticsRequests.at(-1)).toMatchObject(filters);
     return this;
@@ -135,7 +123,6 @@ export class CareerRobot {
     return this;
   }
 
-  /** A total's tile: its label, then its count. */
   async seesTotal(label: string, value: string): Promise<this> {
     const tile = this.totals().locator("[data-slot=stat]").filter({ hasText: label });
     await expect(tile.locator("[data-slot=stat-label]")).toHaveText(label);
@@ -148,13 +135,11 @@ export class CareerRobot {
     return this;
   }
 
-  /** Taps one of the phone's milestone tabs. */
   async tapMilestoneTab(label: MilestoneTab): Promise<this> {
     await this.shown("[data-slot=milestone-tabs]").getByRole("button", { name: label, exact: true }).tap();
     return this;
   }
 
-  /** The milestone card holding this title; on a phone, the one card under the tabs. */
   private milestones(title: string) {
     return this.shown("[data-slot=milestones-card]").filter({ hasText: title });
   }
@@ -164,7 +149,6 @@ export class CareerRobot {
     return this;
   }
 
-  /** A milestone's row, reached or not. */
   async seesMilestone(title: string, label: string, achieved: boolean): Promise<this> {
     const row = this.milestones(title).locator("[data-slot=milestone-row]").filter({ hasText: label });
     await expect(row).toHaveCount(1);
@@ -184,7 +168,6 @@ export class CareerRobot {
     return this;
   }
 
-  /** A record's row: its label, where and when it was set, and the figure. */
   async seesRecord(label: string, value: string): Promise<this> {
     const row = this.shown("[data-slot=records-card]").locator("[data-slot=record-row]").filter({ hasText: label });
     await expect(row).toContainText(value);
@@ -202,7 +185,6 @@ export class CareerRobot {
   }
 
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
-    // A tap lower down scrolls the page; back at the top the fixed shell sits where it belongs.
     await this.page.evaluate(() => window.scrollTo(0, 0));
     await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
@@ -218,9 +200,7 @@ export const test = base.extend<{ career: CareerRobot }>({
 
 const events = sampleGolfer.analytics.notable_achievements;
 
-/** The round the server marks lowest in the sample golfer's season. */
 export const LOWEST_ROUND_ID = events.scoring_records_events.lifetime.lowest_round!.round_id!;
 
-/** The round the sample golfer first broke 80 in. */
 export const BREAK_80_ROUND_ID = events.round_milestones.lifetime.score_breaks.find((row) => row.threshold === 80)!
   .achievement!.round_id!;

@@ -32,8 +32,6 @@ interface RoundsPageProps { userId: string; }
 export function RoundsPage({ userId }: RoundsPageProps) {
   const navigate = useNavigate();
   const viewModel = useRoundsPageViewModel(userId);
-  // What the screen holds, not how it looks: a wide screen keeps the search out and links under the
-  // row; a phone opens the search from an icon and links in a sheet.
   const linkInline = useFromBreakpoint("md");
 
   if (viewModel.loading) {
@@ -58,11 +56,6 @@ export function RoundsPage({ userId }: RoundsPageProps) {
       <PageHeader title="Rounds" subtitle={pluralize(viewModel.filteredRounds.length, "round")} revealAt={100} />
 
       <div className="flex flex-col gap-3.5 pb-6 md:gap-4">
-        {/*
-          One row of controls that wraps: on a phone the title shares its line with the search and
-          sort icons and the filters wrap under it; from md the title takes a line of its own and
-          the sort moves to the end of the filters. Order, not a second copy, places the sort.
-        */}
         <div className="flex flex-wrap items-center gap-x-1 gap-y-3.5 md:gap-x-2.5 md:gap-y-4">
           <div className="order-1 flex min-w-0 flex-1 items-baseline gap-2.5 md:basis-full">
             <PageTitle>Rounds</PageTitle>
@@ -94,7 +87,6 @@ export function RoundsPage({ userId }: RoundsPageProps) {
             size="default"
             className="order-3 md:order-6 md:ml-auto"
           />
-          {/* A phone opens the search from its icon, and the field takes the caret as it appears. */}
           {(linkInline || viewModel.searchOpen) && (
             <SearchField
               placeholder="Search"

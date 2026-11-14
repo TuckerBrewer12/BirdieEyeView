@@ -12,19 +12,16 @@ import { roundShareMessage } from "@/domain/share";
 import { useShareRound } from "@/platform/useShareRound";
 
 interface ScanSuccessStepProps {
-  /** The round as saved. */
   round: Round;
   onView: () => void;
   onScanAnother: () => void;
 }
 
-/** The card is saved: the round as a row of its holes, with it to open, share, or a new card to scan. */
 export function ScanSuccessStep({ round, onView, onScanAnother }: ScanSuccessStepProps) {
   const { cardRef, share, sharing } = useShareRound();
 
   return (
     <div className="flex justify-center md:pt-14">
-      {/* Rendered just off the right edge, so Share can capture it as an image. */}
       <div aria-hidden className="pointer-events-none fixed top-0 left-full">
         <RoundShareCard ref={cardRef} round={round} />
       </div>

@@ -5,13 +5,11 @@ import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 import { indexScale, knownValues, lastKnownIndex, paddedExtent } from "./scales";
 
-/** `good` and `bad` carry the server's verdict on the move the line shows; `index` is the handicap's blue. */
 type SparklineTone = "primary" | "contrast" | "good" | "bad" | "index";
 
 const STROKE: Record<SparklineTone, string> = {
   primary: tokens.color.primary,
   contrast: tokens.color.score.triple.text,
-  // A good move is the brand's green, as StatDelta draws the verdict beside it.
   good: tokens.color.primary,
   bad: tokens.color.score.bogey.text,
   index: tokens.color.chart.series2,
@@ -26,34 +24,22 @@ const SWATCH: Record<SparklineTone, string> = {
 };
 
 interface SparklineSeries {
-  /** One value per round, oldest first. Null leaves a gap. */
   values: (number | null)[];
   tone?: SparklineTone;
-  /** Shown in a legend under the line once any series has one. */
   label?: string;
 }
 
 interface SparklineProps {
   series: SparklineSeries[];
-  /** The value range to draw against. Defaults to the data's own range, padded. */
   domain?: [number, number];
-  /** Shade under the first series. */
   fill?: boolean;
-  /** A dashed line at this value: the average the server worked out for the line. None without it. */
   reference?: number | null;
-  /**
-   * `compact` is the squatter 96 x 32 box beside a KPI tile's figure; `card` the flat 150 x 30
-   * line under a card's lead figure, with no end dot; `mini` the 44 x 30 one beside a figure in a
-   * phone's header card, its end dot filled. Each is drawn at its own size so its stroke holds.
-   */
   size?: "default" | "compact" | "card" | "mini";
   className?: string;
 }
 
-// The card and mini lines are drawn at the size they show, so they keep it rather than fill the row.
 const OWN_WIDTH = { card: "w-sparkline-card", mini: "w-sparkline-mini shrink-0" } as const;
 
-/** Which way a figure has been heading: a small line, no axes, the latest value marked. */
 export function Sparkline({
   series,
   domain,
@@ -65,7 +51,6 @@ export function Sparkline({
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
   const { sparkline } = tokens.chart;
   const { width: W, height: H } = size === "default" ? sparkline : sparkline[size];
-  // The card and mini lines sit on a card with no rim to clear, so a dot they draw is filled.
   const own = size === "card" || size === "mini" ? sparkline[size] : null;
   const filled = own != null;
   const pad = own?.pad ?? sparkline.pad;
@@ -76,7 +61,6 @@ export function Sparkline({
   const all = series.flatMap((s) => s.values);
   if (length < 2 || knownValues(all).length < 2) return null;
 
-  // 15% headroom either side keeps the line off the edge.
   const x = indexScale(length, pad, W - pad);
   const y = scaleLinear()
     .domain(domain ?? paddedExtent(all, { ratio: 0.15 })!)

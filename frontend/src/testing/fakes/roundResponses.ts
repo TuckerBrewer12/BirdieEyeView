@@ -1,11 +1,6 @@
 import type { HoleScoreDto, RoundDto, RoundSummaryDto, ScoreCountsDto, UserTeeDto } from "../../types/api";
 import { coursePar, courseResponse, type StoredCourse } from "./courseResponses";
 
-/**
- * The fake backend's copy of api/round_responses.py and models/round.py: a round is stored as
- * facts, and every response carries the figures the real server works out from them.
- */
-
 export interface StoredHole {
   hole_number: number;
   strokes: number | null;
@@ -42,7 +37,6 @@ function holeHandicap(round: StoredRound, hole: StoredHole): number | null {
   return round.course?.holes.find((h) => h.number === hole.hole_number)?.handicap ?? hole.handicap_played;
 }
 
-/** The course's tee for the round's tee box, else the user's own tee. */
 function teePlayed(
   round: StoredRound,
 ): { total_yardage?: number | null; hole_yardages: Record<string, number>; course_handicap?: number | null } | null {
@@ -80,7 +74,6 @@ function holesPlayed(round: StoredRound): number {
   return round.hole_scores.filter((h) => h.strokes != null).length;
 }
 
-/** Strokes against the par of the holes played; a full round whose holes have no par reads against the course's. */
 function toPar(round: StoredRound, total: number | null): number | null {
   if (total == null) return null;
   const pars = round.hole_scores.filter((h) => h.strokes != null).map((h) => holePar(round, h));
@@ -89,7 +82,6 @@ function toPar(round: StoredRound, total: number | null): number | null {
   return par != null ? total - par : null;
 }
 
-/** The tee's course handicap, for a full round: tee ratings are for 18 holes. */
 function courseHandicap(round: StoredRound): number | null {
   return holesPlayed(round) >= 18 ? (teePlayed(round)?.course_handicap ?? null) : null;
 }
@@ -138,7 +130,6 @@ function holeToPar(round: StoredRound, hole: StoredHole): number | null {
   return hole.strokes != null && par != null ? hole.strokes - par : null;
 }
 
-/** Round.running_to_par: the round's to par after each hole, skipping holes without one. */
 function runningToPar(round: StoredRound): Map<number, number> {
   const running = new Map<number, number>();
   let total = 0;
@@ -151,7 +142,6 @@ function runningToPar(round: StoredRound): Map<number, number> {
   return running;
 }
 
-/** Round.worst_stretch: four straight holes that lost the most, two or more; the earliest on a tie. */
 function worstStretch(round: StoredRound): RoundDto["worst_stretch"] {
   const toPar = new Map(round.hole_scores.map((hole) => [hole.hole_number, holeToPar(round, hole)]));
   let worst: RoundDto["worst_stretch"] = null;
@@ -221,11 +211,6 @@ export function roundResponse(round: StoredRound): RoundDto {
   };
 }
 
-/**
- * Each round's place in the list's Best and Worst orders, as `analytics.stats.best_round_ranks`
- * and `worst_round_ranks` give them: full rounds by to par, best or worst first, then nines and
- * rounds cut short the same way. Ties keep the list's order.
- */
 export function listRanks(rounds: StoredRound[]): { best: number | null; worst: number | null }[] {
   const keyed = rounds.map((round, i) => {
     const scored = round.hole_scores.filter((h) => h.strokes != null);

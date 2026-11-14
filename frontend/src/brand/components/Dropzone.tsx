@@ -5,23 +5,13 @@ import { FileButton } from "./FileButton";
 
 interface DropzoneProps {
   title: string;
-  /** A line under the title: what can be dropped. */
   hint?: string;
-  /** The button that opens the file picker. */
   actionLabel?: string;
-  /** Mime pattern for the file input, e.g. `image/*,application/pdf`. */
   accept?: string;
   onFile: (file: File) => void;
   className?: string;
 }
 
-/**
- * The drag-and-drop target for picking one file: a dashed box with a camera, a line saying what to
- * drop, and a button that opens the file picker.
- *
- * Owns only the drop plumbing; the button is a `FileButton`. Which file was picked and what happens
- * to it belong to the caller. The box lights up while a file is held over it.
- */
 function Dropzone({
   title,
   hint,

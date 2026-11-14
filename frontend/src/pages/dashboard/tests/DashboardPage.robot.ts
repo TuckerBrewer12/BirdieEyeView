@@ -12,7 +12,6 @@ import { fontsLoaded } from "../../../testing/fontsLoaded";
 
 const FROZEN_NOW = "2026-06-15T18:00:00.000Z";
 
-/** Screen robot for / — same idea as an Android Espresso robot. */
 export class DashboardRobot {
   private readonly page: Page;
 
@@ -45,7 +44,6 @@ export class DashboardRobot {
     return this;
   }
 
-  /** "Good evening, Test" on a wide screen; the name under the greeting on a phone. */
   async seesGreeting(): Promise<this> {
     await expect(this.page.getByRole("heading", { name: /Test$/ }).locator("visible=true")).toBeVisible();
     await expect(this.page.getByText(/^Good evening/).locator("visible=true").first()).toBeVisible();

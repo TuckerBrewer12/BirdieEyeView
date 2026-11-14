@@ -1,6 +1,3 @@
--- Migration 012: normalize course name casing for consistent UI display
--- Applies title casing to course names and free-text played course names.
-
 BEGIN;
 
 UPDATE courses.courses

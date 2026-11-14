@@ -17,7 +17,6 @@ describe("toParTextClass", () => {
   });
 });
 
-
 describe("scoreFillClass", () => {
   it("paints every score with its own base token", () => {
     for (const key of SCORE_KEYS) {

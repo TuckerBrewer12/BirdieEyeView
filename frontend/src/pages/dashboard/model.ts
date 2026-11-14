@@ -1,10 +1,8 @@
 import type { ScoreMix } from "@/domain/score";
 import type { DashboardDto, GoalReportDto, WhsBreakdownDto } from "@/types/api";
 
-/** The server's verdict on a figure's move: a score or a handicap falling is good. */
 export type ChangeVerdict = NonNullable<DashboardDto["scoring_average_verdict"]>;
 
-/** The best round the player has, as the server picked it: the dashboard's best-round card. */
 export interface BestRound {
   roundId: string | null;
   score: number;
@@ -13,7 +11,6 @@ export interface BestRound {
   date: string | null;
 }
 
-/** Null until there's a scored round. */
 export function bestRoundFrom(dto: DashboardDto): BestRound | null {
   if (dto.best_round == null) return null;
   return {
@@ -25,10 +22,8 @@ export function bestRoundFrom(dto: DashboardDto): BestRound | null {
   };
 }
 
-/** The handicap index and how far it moved since the month began. */
 export interface HandicapMonth {
   index: number | null;
-  /** Null before there's an index from before the 1st. */
   change: number | null;
   verdict: ChangeVerdict | null;
 }
@@ -41,7 +36,6 @@ export function handicapMonthFrom(dto: DashboardDto): HandicapMonth {
   };
 }
 
-/** Whether a mix has any holes in it: a player with no classified holes has none to split. */
 export function hasScoreMix(mix: ScoreMix): boolean {
   return Object.values(mix).some((share) => share > 0);
 }
@@ -84,16 +78,12 @@ export function whsFrom(dto: WhsBreakdownDto): WhsBreakdown {
   };
 }
 
-/** Where the player stands against their scoring goal, as the goal report measured it. */
 export interface GoalProgress {
-  /** The goal as stored: 79 means breaking 80. */
   target: number;
-  /** Null until the goal report loads. */
   progressPct: number | null;
   onTrack: boolean;
 }
 
-/** Null until the player has set a goal. */
 export function goalProgress(scoringGoal: number | null | undefined, report: GoalReportDto | null): GoalProgress | null {
   if (scoringGoal == null) return null;
   return {

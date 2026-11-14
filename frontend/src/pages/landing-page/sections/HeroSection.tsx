@@ -20,11 +20,6 @@ import { useFilePreview } from "@/platform/useFilePreview";
 import { ScannerDemo } from "../components/ScannerDemo";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
-/**
- * The hero: the headline, Try it with a photo and Sign up free, beside the scanner demo: a photo of a
- * card, read, then a tour of the app it lands in. Once a photo is picked, what's on the card and
- * Scan my scorecard take the demo's place; while it reads, the scan's progress does.
- */
 export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
   const previewUrl = useFilePreview(viewModel.photo);
 

@@ -48,8 +48,6 @@ async def test_milestones_returns_empty_state(stats_database):
     assert result == {"milestones": []}
 
 
-
-
 @pytest.mark.asyncio
 async def test_dashboard_and_empty_analytics(monkeypatch):
     user_id = uuid4()
@@ -67,11 +65,9 @@ async def test_dashboard_and_empty_analytics(monkeypatch):
     assert dashboard.whs.window_size == 0
     assert dashboard.score_trend == []
     assert dashboard.handicap_trend == []
-    # The newest round's holes carry where it stood after each, so its last is its to par.
     last = dashboard.recent_rounds[0]
     assert last.hole_scores[-1].running_to_par == last.to_par
 
-    # The page's rounds, the handicap window's, and the golfer's last 20 for their own index.
     db.rounds.get_rounds_for_user = AsyncMock(side_effect=[[], [], []])
     analytics = await stats.get_analytics(user_id, 50, None, None, db, user)
     assert analytics.kpis.total_rounds == 0
@@ -130,7 +126,6 @@ async def test_benchmark_comparison_endpoint():
     handicap = await stats.get_benchmark_comparison(user_id, "handicap", 15, None, 20, db, user)
     assert (handicap.against, handicap.handicap) == ("handicap", 15)
     assert handicap.benchmark.par4_to_par == 1.025
-    # Eight bogeys and ten pars on par 4s: +0.44 a hole against the 15's +1.025.
     assert (handicap.par_types[1].gap, handicap.par_types[1].verdict) == (-0.58, "ahead")
 
     friend = await stats.get_benchmark_comparison(user_id, "friend", None, friend_id, 20, db, user)
