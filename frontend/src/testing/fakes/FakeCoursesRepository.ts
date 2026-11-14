@@ -13,6 +13,7 @@ export class FakeCoursesRepository implements CoursesRepository {
   analytics: CourseAnalyticsDto | null = null;
   error: Error | null = null;
   courseError: Error | null = null;
+  analyticsError: Error | null = null;
 
   constructor(courses: CourseSummaryDto[] = []) {
     this.courses = [...courses];
@@ -60,6 +61,7 @@ export class FakeCoursesRepository implements CoursesRepository {
   }
 
   async getCourseAnalytics(_userId: string, courseId: string): Promise<CourseAnalytics> {
+    if (this.analyticsError) throw this.analyticsError;
     return courseAnalyticsFrom(this.analytics ?? emptyCourseAnalytics(courseId));
   }
 }

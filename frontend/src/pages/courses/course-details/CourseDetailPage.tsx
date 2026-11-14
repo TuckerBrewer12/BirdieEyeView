@@ -2,6 +2,7 @@ import { ChevronLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Alert,
+  AlertAction,
   AlertDescription,
   Button,
   Card,
@@ -102,6 +103,15 @@ export function CourseDetailPage({ userId }: { userId: string }) {
                 </CardContent>
               </Card>
             </div>
+          ) : viewModel.recordError ? (
+            <Alert tone="danger" data-slot="record-error">
+              <AlertDescription>{viewModel.recordError}</AlertDescription>
+              <AlertAction>
+                <Button variant="outline" size="xs" onClick={viewModel.retryRecord}>
+                  Retry
+                </Button>
+              </AlertAction>
+            </Alert>
           ) : (
             <Card data-slot="not-played" className="flex-row items-center justify-between gap-4 px-4 py-4 md:px-5">
               <span className="text-body text-foreground-secondary">You haven’t played here yet.</span>

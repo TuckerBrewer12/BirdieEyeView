@@ -1,12 +1,13 @@
 import { type Locator, type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
-import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
+import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import type { StoredRound } from "../../../testing/fakes/roundResponses";
 
 /** Screen robot for /rounds — same idea as an Android Espresso robot. */
 export class RoundsRobot {
   private readonly page: Page;
+  private backend: FakeBackend | null = null;
 
   constructor(page: Page) {
     this.page = page;
@@ -32,6 +33,30 @@ export class RoundsRobot {
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.locator("[data-slot=page-title]").getByText("Rounds", { exact: true })).toBeVisible();
     await this.seesScopePressed("All");
+    return this;
+  }
+
+  /** The rounds list answers with a server error until `listingRecovers()`. */
+  async openFailing(rounds: StoredRound[]): Promise<this> {
+    this.backend = await FakeSession.install(this.page, { rounds, roundsError: "Rounds are down." });
+    await this.page.goto("/rounds");
+    return this;
+  }
+
+  listingRecovers(): this {
+    if (this.backend) this.backend.store.roundsError = null;
+    return this;
+  }
+
+  /** The page says the load failed, in place of an empty list. */
+  async seesLoadError(): Promise<this> {
+    await expect(this.page.locator("[data-slot=alert]")).toBeVisible();
+    await expect(this.page.getByText("No rounds found.")).toHaveCount(0);
+    return this;
+  }
+
+  async retry(): Promise<this> {
+    await this.page.getByRole("button", { name: "Retry" }).click();
     return this;
   }
 

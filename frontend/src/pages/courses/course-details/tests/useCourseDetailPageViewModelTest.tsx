@@ -36,6 +36,23 @@ describe("useCourseDetailPageViewModel", () => {
     expect(result.current.recentRounds).toEqual([]);
   });
 
+  it("a record that didn't load says so in place of the prompt to scan, and Retry reads it", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.fullCourses = [halfMoonBayCourse];
+    repository.analytics = halfMoonBayAnalytics;
+    repository.analyticsError = new Error("Stats are down.");
+    const { result } = renderVm(repository);
+    await waitFor(() => expect(result.current.recordError).toBe("Stats are down."));
+    expect(result.current.loadError).toBeNull();
+    expect(result.current.courseName).toBe("Half Moon Bay");
+    expect(result.current.played).toBe(false);
+
+    repository.analyticsError = null;
+    act(() => result.current.retryRecord());
+    await waitFor(() => expect(result.current.played).toBe(true));
+    expect(result.current.recordError).toBeNull();
+  });
+
   it("reads the scorecard off the tee the golfer picks", async () => {
     const repository = new FakeCoursesRepository();
     repository.fullCourses = [halfMoonBayCourse];

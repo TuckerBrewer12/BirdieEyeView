@@ -22,6 +22,18 @@ function renderVm(seed: FakeRoundsRepositorySeed = { rounds: storedRounds }) {
 }
 
 describe("useRoundsPageViewModel", () => {
+  it("a failed load says so, and Retry loads the rounds", async () => {
+    const repository = new FakeRoundsRepository({ rounds: storedRounds, roundsError: "Rounds are down." });
+    const { result } = renderHook(() => useRoundsPageViewModel("user-1", repository), { wrapper });
+    await waitFor(() => expect(result.current.loadError).toBe("Rounds are down."));
+    expect(result.current.rounds).toEqual([]);
+
+    repository.store.roundsError = null;
+    act(() => result.current.retry());
+    await waitFor(() => expect(result.current.loadError).toBeNull());
+    expect(result.current.rounds).toHaveLength(storedRounds.length);
+  });
+
   it("puts the most-played course first after All courses", async () => {
     const { result } = renderVm();
     await waitFor(() => expect(result.current.loading).toBe(false));

@@ -2,11 +2,12 @@ import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../../testing/playwright";
 import type { CourseDto } from "../../../../types/api";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
-import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
+import type { FakeBackend, FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 
 /** Screen robot for /courses/:courseId — same idea as an Android Espresso robot. */
 export class CourseDetailRobot {
   private readonly page: Page;
+  private backend: FakeBackend | null = null;
 
   constructor(page: Page) {
     this.page = page;
@@ -24,7 +25,7 @@ export class CourseDetailRobot {
     seed: Omit<FakeBackendSeed, "fullCourses"> = {},
   ): Promise<this> {
     await this.page.emulateMedia({ reducedMotion: "reduce" });
-    await FakeSession.install(this.page, { fullCourses: [course], ...seed });
+    this.backend = await FakeSession.install(this.page, { fullCourses: [course], ...seed });
     await this.page.goto(`/courses/${course.id}`);
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByRole("button", { name: "Courses", exact: true })).toBeVisible();
@@ -79,6 +80,23 @@ export class CourseDetailRobot {
 
   async seesHolesHardestFirst(): Promise<this> {
     await expect(this.page.getByRole("img", { name: "Average to par on each hole, hardest first" })).toBeVisible();
+    return this;
+  }
+
+  /** The golfer's record here failed to load: an error with Retry, not the prompt to scan. */
+  async seesRecordError(): Promise<this> {
+    await expect(this.page.locator("[data-slot=record-error]")).toBeVisible();
+    await expect(this.page.locator("[data-slot=not-played]")).toHaveCount(0);
+    return this;
+  }
+
+  recordRecovers(): this {
+    if (this.backend) this.backend.store.courseAnalyticsError = null;
+    return this;
+  }
+
+  async retryRecord(): Promise<this> {
+    await this.page.locator("[data-slot=record-error]").getByRole("button", { name: "Retry" }).click();
     return this;
   }
 

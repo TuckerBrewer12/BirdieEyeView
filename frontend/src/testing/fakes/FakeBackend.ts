@@ -343,6 +343,7 @@ export class FakeBackend {
     }
 
     if (verb === "GET" && /\/api\/rounds\/user\//.test(path)) {
+      if (this.store.roundsError) return { status: 500, body: { detail: this.store.roundsError } };
       return { status: 200, body: this.store.getRoundsForUser() };
     }
 
@@ -413,6 +414,7 @@ export class FakeBackend {
 
     if (verb === "GET" && /\/api\/stats\/course-analytics\//.test(path)) {
       const courseId = path.split("/").pop() ?? "";
+      if (this.store.courseAnalyticsError) return { status: 500, body: { detail: this.store.courseAnalyticsError } };
       return { status: 200, body: this.store.getCourseAnalytics(courseId) };
     }
 

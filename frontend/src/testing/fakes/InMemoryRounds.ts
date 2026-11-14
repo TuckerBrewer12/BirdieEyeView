@@ -32,6 +32,10 @@ export interface InMemoryRoundsSeed {
   /** Saving a scan fails with this. */
   saveError?: string | null;
   coursesError?: string | null;
+  /** Listing the golfer's rounds fails with this. */
+  roundsError?: string | null;
+  /** A course's analytics (the golfer's record there) fail with this. */
+  courseAnalyticsError?: string | null;
   searchDelaysMs?: number[];
 }
 
@@ -83,6 +87,8 @@ export class InMemoryRounds {
   /** Every scan saved, as sent. */
   savedScans: SaveScanRequestDto[] = [];
   coursesError: string | null;
+  roundsError: string | null;
+  courseAnalyticsError: string | null;
   searchDelaysMs: number[];
   private searchCalls = 0;
   deletedIds: string[];
@@ -105,6 +111,8 @@ export class InMemoryRounds {
     this.searchError = seed.searchError ?? null;
     this.saveError = seed.saveError ?? null;
     this.coursesError = seed.coursesError ?? null;
+    this.roundsError = seed.roundsError ?? null;
+    this.courseAnalyticsError = seed.courseAnalyticsError ?? null;
     this.searchDelaysMs = [...(seed.searchDelaysMs ?? [])];
     this.deletedIds = [];
   }

@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowUpDown, Search } from "lucide-react";
 import {
+  Alert,
+  AlertAction,
+  AlertDescription,
   Button,
   Card,
   Collapse,
@@ -35,6 +38,19 @@ export function RoundsPage({ userId }: RoundsPageProps) {
 
   if (viewModel.loading) {
     return <LoadingState>Loading rounds...</LoadingState>;
+  }
+
+  if (viewModel.loadError) {
+    return (
+      <Alert tone="danger">
+        <AlertDescription>{viewModel.loadError}</AlertDescription>
+        <AlertAction>
+          <Button variant="outline" size="xs" onClick={viewModel.retry}>
+            Retry
+          </Button>
+        </AlertAction>
+      </Alert>
+    );
   }
 
   return (
