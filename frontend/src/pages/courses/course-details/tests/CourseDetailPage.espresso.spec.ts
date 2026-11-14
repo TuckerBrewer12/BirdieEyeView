@@ -33,6 +33,17 @@ test("a course not played offers to scan a round", async ({ courseDetail }) => {
   await courseDetail.isAtScan();
 });
 
+test("a record that didn't load says so, and Retry shows it", async ({ courseDetail }) => {
+  await courseDetail.open(halfMoonBayCourse, {
+    courseAnalytics: halfMoonBayAnalytics,
+    courseAnalyticsError: "Stats are down.",
+  });
+  await courseDetail.seesRecordError();
+  courseDetail.recordRecovers();
+  await courseDetail.retryRecord();
+  await courseDetail.seesRecord("75.0");
+});
+
 test("tapping a recent round opens its detail", async ({ courseDetail }) => {
   await courseDetail.open(halfMoonBayCourse, {
     courseAnalytics: halfMoonBayAnalytics,
