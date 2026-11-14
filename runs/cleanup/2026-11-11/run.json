@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "task": "cleanup",
+  "id": "2026-11-11",
+  "date": "2026-11-11",
+  "branch": "nightly/cleanup-2026-11-11",
+  "pr": null,
+  "title": "[nightly/cleanup] Review bots' poster: one anchoring rule, a summary in parts, a shorter main",
+  "summary": "The script that turns the review bots' output into PR reviews gets one documented anchoring rule (inline, range, suggestion) instead of four overlapping branches, a summary built from parts, and a 110-line main split into named steps. 32 new tests and a 105,000-case differential check show identical output.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-cleanup-2026-11-11.patch",
+  "reportSource": "claude/nightly-cleanup-2026-11-11.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/cleanup.",
+    "Two bugs found and pinned, not fixed: a backwards range makes GitHub reject the whole review, and a deleted file's +++ /dev/null counts as an added line."
+  ],
+  "reviewFirst": [
+    "_anchor against the old block in collect_findings.",
+    "The fix-PR and suggested counts in the summary and the printed line."
+  ],
+  "next": [
+    "Fix backwards ranges so a bot review isn't rejected.",
+    "Treat +++ /dev/null as a header in added_source."
+  ],
+  "checks": [
+    {
+      "name": "Backend tests",
+      "status": "pass",
+      "detail": "401 passed"
+    },
+    {
+      "name": "Ruff",
+      "status": "pass"
+    },
+    {
+      "name": "Bandit",
+      "status": "pass"
+    },
+    {
+      "name": "Differential check",
+      "status": "pass",
+      "detail": "~105,000 cases identical"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "post_review.py + 32 tests"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

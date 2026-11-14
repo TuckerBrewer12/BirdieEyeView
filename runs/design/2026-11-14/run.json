@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "task": "design",
+  "id": "2026-11-14",
+  "date": "2026-11-14",
+  "branch": "nightly/design-2026-11-14",
+  "pr": null,
+  "title": "[nightly/design] Dashboard: offer a new golfer their first scan instead of empty figures",
+  "summary": "A golfer with no rounds sees one card, \"Scan your first round\", with a button to Scan, instead of four empty figure cards, a goal card and \"No other rounds yet\". Once the first round is saved the dashboard is exactly what it was.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-design-2026-11-14.patch",
+  "reportSource": "claude/nightly-design-2026-11-14.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor @ e8c07223 (after the redesign merge), so it should apply onto factory/design.",
+    "Four new screenshot baselines need CI's macOS renders (dashboard-no-rounds desktop and mobile, FirstRoundCard light and dark)."
+  ],
+  "reviewFirst": [
+    "hasRounds in useDashboardPageViewModel: a failed load must still show the error with Retry, not the first-run card.",
+    "The populated branch of both layouts renders the same tree as before."
+  ],
+  "next": [
+    "The empty handicap tile on a phone: hide it or read \"After 3 rounds\" before the first round.",
+    "The same first-run treatment on Rounds, Analytics and Career, as a shared kit piece.",
+    "\"Enter by hand\" as its own button, with a ?mode=manual address on Scan.",
+    "Check each dashboard card's wording for a golfer with one to four rounds."
+  ],
+  "checks": [
+    {
+      "name": "Lint",
+      "status": "pass"
+    },
+    {
+      "name": "Types",
+      "status": "pass"
+    },
+    {
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "809 passed"
+    },
+    {
+      "name": "Espresso",
+      "status": "pass",
+      "detail": "201 passed"
+    },
+    {
+      "name": "Screenshots",
+      "status": "pass",
+      "detail": "12/12 unchanged on Linux"
+    },
+    {
+      "name": "Build",
+      "status": "pass"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "12 files, +237 −15"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

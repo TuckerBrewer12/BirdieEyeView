@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "task": "speed",
+  "id": "2026-11-12",
+  "date": "2026-11-12",
+  "branch": "nightly/speed-2026-11-12",
+  "pr": null,
+  "title": "[nightly/speed] Send the dashboard's three reads to the database together",
+  "summary": "The dashboard stops re-reading the signed-in golfer and runs its three independent database reads at once instead of one after another. That's about a third faster when the database is 10–20 ms away (204 → 137 ms) and a few ms when it's on the same network; the response is byte-identical.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-speed-2026-11-12.patch",
+  "reportSource": "claude/nightly-speed-2026-11-12.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/speed."
+  ],
+  "reviewFirst": [
+    "Three pool connections per dashboard load (pool max 10).",
+    "user = current_user, safe because the route 403s unless they're the same golfer."
+  ],
+  "next": [
+    "Run GET /rounds/{id} and GET /courses/{id}'s independent reads together too.",
+    "Send hole upserts with executemany instead of 18 round trips."
+  ],
+  "checks": [
+    {
+      "name": "Backend tests",
+      "status": "pass",
+      "detail": "370 passed"
+    },
+    {
+      "name": "Ruff",
+      "status": "pass"
+    },
+    {
+      "name": "Bandit",
+      "status": "pass"
+    },
+    {
+      "name": "Dashboard at 10 ms DB latency",
+      "status": "pass",
+      "detail": "204 → 137 ms"
+    },
+    {
+      "name": "Response",
+      "status": "pass",
+      "detail": "byte-identical"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "Backend only, 2 files"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

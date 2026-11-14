@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "task": "cleanup",
+  "id": "2026-11-10",
+  "date": "2026-11-10",
+  "branch": "nightly/cleanup-2026-11-10",
+  "pr": null,
+  "title": "[nightly/cleanup] Row converters: typed rows, one helper per column rule, no dead writers",
+  "summary": "database/converters.py, which every course, round and user read and write goes through, gets typed rows and one helper per column rule (ratings, nullable ids, optional UUIDs, JSON text) instead of the same expressions written out inline, and its dead writers are removed.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-cleanup-2026-11-10.patch",
+  "reportSource": "claude/nightly-cleanup-2026-11-10.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/cleanup."
+  ],
+  "reviewFirst": [],
+  "next": [],
+  "checks": [],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "converters.py + tests"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

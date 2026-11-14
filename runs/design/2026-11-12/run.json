@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "task": "design",
+  "id": "2026-11-12",
+  "date": "2026-11-12",
+  "branch": "nightly/design-2026-11-12",
+  "pr": null,
+  "title": "[nightly/design] Landing: after a try-it scan, say the score and offer sign up honestly",
+  "summary": "After a visitor scans their own card on the landing page, the heading becomes \"Here's your round.\" with \"You shot 79 (+8) with 34 putts.\" (visible on a phone without swiping), and the sign-up offer stops promising to save the round, which sign up doesn't do today.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-design-2026-11-12.patch",
+  "reportSource": "claude/nightly-design-2026-11-12.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/design.",
+    "Two landing screenshot baselines change on purpose and need CI's macOS renders."
+  ],
+  "reviewFirst": [],
+  "next": [
+    "Keep the scan through sign up and offer to save it on first sign-in.",
+    "The compact 18-hole scorecard from the canvas frame.",
+    "The landing hero from Land-New / Land-Mobile-New."
+  ],
+  "checks": [
+    {
+      "name": "Lint",
+      "status": "pass"
+    },
+    {
+      "name": "Types",
+      "status": "pass"
+    },
+    {
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "629 passed"
+    },
+    {
+      "name": "Espresso (landing)",
+      "status": "pass",
+      "detail": "11 passed"
+    },
+    {
+      "name": "Build",
+      "status": "pass"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "Frontend only, 4 files"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

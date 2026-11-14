@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "task": "design",
+  "id": "2026-11-07",
+  "date": "2026-11-07",
+  "branch": "nightly/design-2026-11-07",
+  "pr": null,
+  "title": "[nightly/design] Saved scan: \"Scan another\", and the round at a glance",
+  "summary": "After a card saves, the screen confirms the course, day, tee, score and a hole-by-hole strip, and adds Scan another so a stack of cards can be entered in a row. A round that saved but won't load back no longer sits on \"Loading…\".",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-design-2026-11-07.patch",
+  "reportSource": "claude/nightly-design-2026-11-07.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/design.",
+    "Six screenshot baselines change on purpose and need CI's macOS renders."
+  ],
+  "reviewFirst": [
+    "Scan another reuses startOver: the saved round stays in the store, the review is dropped.",
+    "The saved-but-not-loaded state."
+  ],
+  "next": [
+    "Clear an old \"Round saved\" once the golfer leaves Scan.",
+    "Keep the \"What's on your card?\" answer for the next card.",
+    "A to-par pill in the kit (ToParFigure variant=pill).",
+    "A batch count after several saves in a row."
+  ],
+  "checks": [
+    {
+      "name": "Lint",
+      "status": "pass"
+    },
+    {
+      "name": "Types",
+      "status": "pass"
+    },
+    {
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "630 passed"
+    },
+    {
+      "name": "Espresso",
+      "status": "pass",
+      "detail": "158 passed"
+    },
+    {
+      "name": "Build",
+      "status": "pass"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "6 files"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

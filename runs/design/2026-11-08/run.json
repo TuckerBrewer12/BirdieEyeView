@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "task": "design",
+  "id": "2026-11-08",
+  "date": "2026-11-08",
+  "branch": "nightly/design-2026-11-08",
+  "pr": null,
+  "title": "[nightly/design] Round detail: ask before leaving a round mid-edit",
+  "summary": "Leaving a round with unsaved edits (the Rounds button, any nav link, a reload) now asks first: Save and leave, Discard changes, or stay. Today those edits are dropped without a word, while Settings already guards the same case.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-design-2026-11-08.patch",
+  "reportSource": "claude/nightly-design-2026-11-08.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/design.",
+    "Four new screenshot baselines need CI's macOS renders.",
+    "The browser's own Back button still isn't caught (BrowserRouter has no blocker)."
+  ],
+  "reviewFirst": [
+    "editorChanged: re-typing the original score counts as unchanged.",
+    "useLeaveGuard moved to app/ and gained request(to)."
+  ],
+  "next": [
+    "One LeavePrompt in the kit, drawn as the canvas does (dialog on desktop, bottom sheet on phone).",
+    "Catch browser and Android Back by moving to a data router with useBlocker.",
+    "Show that edits are unsaved before the golfer tries to leave.",
+    "Check Scan review and manual entry for lost input on reload."
+  ],
+  "checks": [
+    {
+      "name": "Lint",
+      "status": "pass"
+    },
+    {
+      "name": "Types",
+      "status": "pass"
+    },
+    {
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "640 passed"
+    },
+    {
+      "name": "Espresso",
+      "status": "pass",
+      "detail": "159 passed"
+    },
+    {
+      "name": "Build",
+      "status": "pass"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "~10 files"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

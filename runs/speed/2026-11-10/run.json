@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "task": "speed",
+  "id": "2026-11-10",
+  "date": "2026-11-10",
+  "branch": "nightly/speed-2026-11-10",
+  "pr": null,
+  "title": "[nightly/speed] Look up a course's hole by its place in the list first",
+  "summary": "Course.get_hole, called about 100,000 times per analytics request, checks hole n at index n−1 before walking the list. Every figure that needs a hole's par or stroke index gets faster; any other course shape falls back to the old walk.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-speed-2026-11-10.patch",
+  "reportSource": "claude/nightly-speed-2026-11-10.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/speed."
+  ],
+  "reviewFirst": [],
+  "next": [],
+  "checks": [],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "Backend only, 2 files"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "task": "speed",
+  "id": "2026-11-07",
+  "date": "2026-11-07",
+  "branch": "nightly/speed-2026-11-07",
+  "pr": null,
+  "title": "[nightly/speed] Load the signed-in pages on demand",
+  "summary": "A signed-out visitor downloads 190 kB of JS instead of 406 kB, and the landing page paints about 1.1 s sooner on a slow phone (3.00 s → 1.91 s). The 12 signed-in pages load on demand and are preloaded when the browser is idle, so moving between pages doesn't get slower.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-speed-2026-11-07.patch",
+  "reportSource": "claude/nightly-speed-2026-11-07.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/speed.",
+    "Stacked on #571, which needed a rebase (saved as claude/nightly-speed-2026-11-04-rebased.patch)."
+  ],
+  "reviewFirst": [
+    "The moduleSideEffects rule in vite.config.ts: safe only while nothing in src/brand does work at import time.",
+    "PreloadOtherPages inside the Suspense boundary, and the 2 s fallback for Safari.",
+    "A stale chunk name after a deploy makes the page error; a reload-once on failed import would fix it."
+  ],
+  "next": [
+    "Reload once when a dynamic import fails, so a deploy doesn't break an open tab.",
+    "Draw the dashboard's three Recharts charts with the D3/SVG kit (−97 kB gz signed-in) and serve landing images as WebP/AVIF."
+  ],
+  "checks": [
+    {
+      "name": "Lint",
+      "status": "pass"
+    },
+    {
+      "name": "Types",
+      "status": "pass"
+    },
+    {
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "625 passed"
+    },
+    {
+      "name": "Espresso",
+      "status": "pass",
+      "detail": "155 passed"
+    },
+    {
+      "name": "Screenshots",
+      "status": "pass",
+      "detail": "458/458 identical on Linux"
+    },
+    {
+      "name": "Build",
+      "status": "pass"
+    },
+    {
+      "name": "Entry chunk (gzip)",
+      "status": "pass",
+      "detail": "405.5 → 189.3 kB"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "6 files"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

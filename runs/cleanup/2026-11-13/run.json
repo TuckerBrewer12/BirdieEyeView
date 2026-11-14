@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "task": "cleanup",
+  "id": "2026-11-13",
+  "date": "2026-11-13",
+  "branch": "nightly/cleanup-2026-11-13",
+  "pr": null,
+  "title": "[nightly/cleanup] UserRepositoryDB: shared lookup/update helpers, typed auth user",
+  "summary": "The user repository behind sign-in, registration, password reset, profile edits and friend requests gets a typed auth user instead of a bare dict built twice, a real timestamp instead of a \"NOW()\" string sentinel, and one helper for the repeated not-found update pattern.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-cleanup-2026-11-13.patch",
+  "reportSource": "claude/nightly-cleanup-2026-11-13.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/cleanup.",
+    "Conflicts with main, which already has two fixes to this file (constraint names and json.dumps for preferences); the merge is small."
+  ],
+  "reviewFirst": [],
+  "next": [],
+  "checks": [],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "user_repo.py + tests"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

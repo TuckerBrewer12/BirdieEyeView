@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "task": "design",
+  "id": "2026-11-09",
+  "date": "2026-11-09",
+  "branch": "nightly/design-2026-11-09",
+  "pr": null,
+  "title": "[nightly/design] Sign in: mark both fields on a wrong password, and carry the email to reset it",
+  "summary": "After a wrong password, both sign-in fields are marked invalid and tied to the error for screen readers, and Forgot password? keeps the email already typed (and Back to sign in brings it back), so a golfer on a phone doesn't retype it twice.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-design-2026-11-09.patch",
+  "reportSource": "claude/nightly-design-2026-11-09.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/design.",
+    "Two login screenshot baselines change on purpose and need CI's macOS renders."
+  ],
+  "reviewFirst": [],
+  "next": [],
+  "checks": [],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "Frontend only"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

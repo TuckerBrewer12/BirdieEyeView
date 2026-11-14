@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "task": "library-feature",
+  "id": "2026-11-12",
+  "date": "2026-11-12",
+  "branch": "nightly/library-feature-2026-11-12",
+  "pr": null,
+  "title": "[nightly/library] pip-audit: fail CI on known vulnerabilities in requirements.txt, and fix the ones with a safe bump",
+  "summary": "pip-audit found 16 vulnerable pins (99 advisories), three on the scorecard upload path. This bumps 14 of them, adds a CI check that fails on any unlisted advisory, lists the 5 that need major upgrades with reasons, and limits uploads to the JPEG, PNG, WebP and HEIF decoders.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-library-feature-2026-11-12.patch",
+  "reportSource": "claude/nightly-library-feature-2026-11-12.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/library-feature.",
+    "Frontend has a critical Capacitor advisory (fixed in 8.3.5) not covered here."
+  ],
+  "reviewFirst": [
+    "UPLOAD_IMAGE_DECODERS: a TIFF named .jpg is now refused before decoding.",
+    "A new advisory turns every PR red until it's bumped or listed."
+  ],
+  "next": [
+    "Frontend: Capacitor 8.3.5 and an npm audit check.",
+    "Pillow 13.",
+    "FastAPI with Starlette 1.x.",
+    "cryptography 50.",
+    "Replace python-jose with PyJWT."
+  ],
+  "checks": [
+    {
+      "name": "Backend tests",
+      "status": "pass",
+      "detail": "403 passed"
+    },
+    {
+      "name": "Dependency audit",
+      "status": "pass",
+      "detail": "51 listed, 0 new"
+    },
+    {
+      "name": "Ruff",
+      "status": "pass"
+    },
+    {
+      "name": "Bandit",
+      "status": "pass"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "Backend + CI"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

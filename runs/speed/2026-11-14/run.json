@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "task": "speed",
+  "id": "2026-11-14",
+  "date": "2026-11-14",
+  "branch": "nightly/speed-2026-11-14",
+  "pr": null,
+  "title": "[nightly/speed] Keep the brand preview harness out of production builds",
+  "summary": "A build-only Vite plugin drops the dev preview harness from production, cutting the entry chunk by 174 kB (−33 kB gzip) and bringing first paint about 250 ms sooner on a slow phone. Dev, Vitest and the screenshot suites are untouched, so unlike #571 it doesn't make the screenshot tests flaky.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-speed-2026-11-14.patch",
+  "reportSource": "claude/nightly-speed-2026-11-14.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor @ e8c07223 (after the redesign merge), so it should apply onto factory/speed.",
+    "Replaces #571; close #571 when this opens."
+  ],
+  "reviewFirst": [
+    "The plugin matches only src/App.tsx importing ./brand/BrandHarness, and the build fails if that import changes.",
+    "enforce: 'pre' so it resolves before Vite's own resolver."
+  ],
+  "next": [
+    "Load the signed-in pages on demand (the 11-07 patch), keeping them eager in dev.",
+    "Load html-to-image only when sharing a round image.",
+    "Compress and cache the static files in frontend/server.js (#575)."
+  ],
+  "checks": [
+    {
+      "name": "Lint",
+      "status": "pass"
+    },
+    {
+      "name": "Types",
+      "status": "pass"
+    },
+    {
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "806 passed"
+    },
+    {
+      "name": "Build",
+      "status": "pass"
+    },
+    {
+      "name": "Entry chunk (gzip)",
+      "status": "pass",
+      "detail": "358.6 → 325.2 kB"
+    },
+    {
+      "name": "Landing FCP, slow phone",
+      "status": "pass",
+      "detail": "2424 → 2176 ms"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "frontend/vite.config.ts only"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

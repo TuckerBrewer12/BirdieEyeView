@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "task": "cleanup",
+  "id": "2026-11-08",
+  "date": "2026-11-08",
+  "branch": "nightly/cleanup-2026-11-08",
+  "pr": null,
+  "title": "[nightly/cleanup] Users router: one ownership check, one friendship refetch, typed yardages",
+  "summary": "The users router's six copies of the \"is this your own id\" check become one shared require_own_user_id, the friendship refetch and home-course rule each live in one helper, and yardage validation is typed. 28 new tests pin today's behavior.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-cleanup-2026-11-08.patch",
+  "reportSource": "claude/nightly-cleanup-2026-11-08.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/cleanup.",
+    "A null hole yardage on tee create is a 500 today (pinned, not fixed)."
+  ],
+  "reviewFirst": [
+    "_addressee_id trusts the request validator's friend-code normalization.",
+    "require_own_user_id is a plain function in api/dependencies.py, not a FastAPI dependency."
+  ],
+  "next": [
+    "Use require_own_user_id in rounds.py and ai_insights.py (4 copies).",
+    "Use it in stats.py, courses.py and scan.py (15 copies) once open PRs on them land.",
+    "Fix the null-yardage 500.",
+    "Type the friends status filter as FriendshipStatus."
+  ],
+  "checks": [
+    {
+      "name": "Backend tests",
+      "status": "pass",
+      "detail": "397 passed"
+    },
+    {
+      "name": "Ruff",
+      "status": "pass"
+    },
+    {
+      "name": "Bandit",
+      "status": "pass"
+    },
+    {
+      "name": "Differential check",
+      "status": "pass",
+      "detail": "40,000 yardage dicts identical"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "3 files, 28 new tests"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

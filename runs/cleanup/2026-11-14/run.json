@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "task": "cleanup",
+  "id": "2026-11-14",
+  "date": "2026-11-14",
+  "branch": "nightly/cleanup-2026-11-14",
+  "pr": null,
+  "title": "[nightly/cleanup] RoundRepositoryDB writes: one owner check, one hole upsert, named steps (1 of 3)",
+  "summary": "Every round write in the app (saving a scan, editing, linking a course, deleting) goes through round_repo.py. Its ten duplicated owner-scoped queries become one pattern, the hole upsert copied three times becomes one, and create_round and update_hole_scores are split into named steps.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-cleanup-2026-11-14.patch",
+  "reportSource": "claude/nightly-cleanup-2026-11-14.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor @ e8c07223 (after the redesign merge), so it should apply onto factory/cleanup.",
+    "Conflicts with backend-refactor (#466 and the scan-parser stack), which rewrote this file."
+  ],
+  "reviewFirst": [],
+  "next": [],
+  "checks": [],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "3 commits: tests, refactor, dead method removed"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

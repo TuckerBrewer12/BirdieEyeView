@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "task": "design",
+  "id": "2026-11-11",
+  "date": "2026-11-11",
+  "branch": "nightly/design-2026-11-11",
+  "pr": null,
+  "title": "[nightly/design] Courses: say how often you've played each course, and list yours first",
+  "summary": "Each course card says \"2 rounds · last Oct 15, 2026\" or \"Not played yet\", and the list puts the courses you've played first, most recent first, before the 50-course cut, so a course you play is never missing from the page.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-design-2026-11-11.patch",
+  "reportSource": "claude/nightly-design-2026-11-11.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/design.",
+    "Seven screenshot baselines change on purpose and need CI's macOS renders."
+  ],
+  "reviewFirst": [],
+  "next": [
+    "Your average and best score at each course, from the same function the course page uses.",
+    "The Courses page redesign: divided rows and tee-colour dots.",
+    "\"Played here 2×\" in course link results.",
+    "A Played / All filter if the list keeps growing."
+  ],
+  "checks": [
+    {
+      "name": "Backend tests",
+      "status": "pass",
+      "detail": "369 passed"
+    },
+    {
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "631 passed"
+    },
+    {
+      "name": "Espresso",
+      "status": "pass",
+      "detail": "157 passed"
+    },
+    {
+      "name": "Types",
+      "status": "pass"
+    },
+    {
+      "name": "Build",
+      "status": "pass"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "Backend + frontend"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

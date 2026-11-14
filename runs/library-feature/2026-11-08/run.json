@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "task": "library-feature",
+  "id": "2026-11-08",
+  "date": "2026-11-08",
+  "branch": "nightly/library-feature-2026-11-08",
+  "pr": null,
+  "title": "[nightly/library] Report server errors to Sentry (off until SENTRY_DSN is set)",
+  "summary": "Adds sentry-sdk so server failures (most often in the scan pipeline's calls to Mistral, Gemini and GolfCourseAPI) reach an error tracker with stack traces, grouped by cause. It's off until SENTRY_DSN is set, works with sentry.io's free plan or self-hosted GlitchTip, and scrubs bodies, headers, IPs, emails and log arguments.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-library-feature-2026-11-08.patch",
+  "reportSource": "claude/nightly-library-feature-2026-11-08.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/library-feature."
+  ],
+  "reviewFirst": [
+    "What's sent and what isn't: scrub_event drops log arguments and request data.",
+    "Exception messages are sent as they are and can carry data."
+  ],
+  "next": [
+    "Tag events with the opaque user id and the scan stage.",
+    "Noise control: a sample rate and ignore lists for retried upstream errors.",
+    "Frontend errors with @sentry/react behind VITE_SENTRY_DSN, loaded lazily.",
+    "Native shells with @sentry/capacitor.",
+    "Spans around the Mistral and Gemini calls to see where slow scans spend time."
+  ],
+  "checks": [
+    {
+      "name": "Backend tests",
+      "status": "pass",
+      "detail": "382 passed"
+    },
+    {
+      "name": "Ruff",
+      "status": "pass"
+    },
+    {
+      "name": "Bandit",
+      "status": "pass"
+    },
+    {
+      "name": "Secret scan",
+      "status": "pass",
+      "detail": "clean"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "Backend only, 2 commits"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "task": "cleanup",
+  "id": "2026-11-12",
+  "date": "2026-11-12",
+  "branch": "nightly/cleanup-2026-11-12",
+  "pr": null,
+  "title": "[nightly/cleanup] api/security.py: named rules, short functions, one pruning helper",
+  "summary": "The deployment guards (startup secret and database checks, HTTPS redirect, allowed hosts, rate limiter, traffic monitor) get named rules and short functions instead of repeated sets and loops; the longest function goes from 53 lines to 26. 143 new tests cover the file fully, and 77,000 random environments and sequences gave identical results.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-cleanup-2026-11-12.patch",
+  "reportSource": "claude/nightly-cleanup-2026-11-12.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/cleanup.",
+    "Three bugs found and pinned, not fixed: a padded APP_ENV skips the HTTPS redirect, the limiter and monitor never forget an IP, and heavy traffic hides a brute-force alert."
+  ],
+  "reviewFirst": [
+    "_check_database_url against the old second half of validate_deployment_security.",
+    "enforce_https_if_needed still doesn't strip APP_ENV, on purpose for now."
+  ],
+  "next": [
+    "Strip APP_ENV in the HTTPS redirect too.",
+    "Drop empty rate-limit and monitor buckets so memory doesn't grow.",
+    "Give the volume and brute-force alerts their own cooldowns."
+  ],
+  "checks": [
+    {
+      "name": "Backend tests",
+      "status": "pass",
+      "detail": "512 passed"
+    },
+    {
+      "name": "Ruff",
+      "status": "pass"
+    },
+    {
+      "name": "Bandit",
+      "status": "pass"
+    },
+    {
+      "name": "Differential check",
+      "status": "pass",
+      "detail": "77,000 cases identical"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "security.py + 143 tests"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}

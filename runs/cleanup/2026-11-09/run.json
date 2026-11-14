@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "task": "cleanup",
+  "id": "2026-11-09",
+  "date": "2026-11-09",
+  "branch": "nightly/cleanup-2026-11-09",
+  "pr": null,
+  "title": "[nightly/cleanup] Rounds router: one text validator, named link-course steps, typed tee",
+  "summary": "The rounds router's four copy-pasted text validators become one, link-course goes from 74 lines to 22 with named steps and one fewer course query, and hole updates are built from the request's own fields. 33 new tests give rounds.py full line and branch coverage before the refactor.",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-cleanup-2026-11-09.patch",
+  "reportSource": "claude/nightly-cleanup-2026-11-09.md",
+  "stillOpen": [
+    "Couldn't open the PR: the run had no GitHub access. Written against frontend-refactor before the redesign merge, so it needs porting onto factory/cleanup.",
+    "A round deleted during an edit returns 500 instead of 404 (pinned, not fixed)."
+  ],
+  "reviewFirst": [
+    "One fewer query in link-course: the course fetched for the access check is reused.",
+    "HoleScore(**hs.model_dump()) relies on the request and model sharing field names."
+  ],
+  "next": [
+    "Return 404, not 500, when the metadata write finds no round.",
+    "Adopt require_own_user_id from the 11-08 cleanup in this router."
+  ],
+  "checks": [
+    {
+      "name": "Backend tests",
+      "status": "pass",
+      "detail": "402 passed"
+    },
+    {
+      "name": "Ruff",
+      "status": "pass"
+    },
+    {
+      "name": "Bandit",
+      "status": "pass"
+    },
+    {
+      "name": "Differential check",
+      "status": "pass",
+      "detail": "20,000 payloads identical"
+    }
+  ],
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks or comments (no GitHub API access)"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "2 files, 33 new tests"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    }
+  ],
+  "origin": {
+    "kind": "schedule"
+  }
+}
