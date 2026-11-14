@@ -14,10 +14,21 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
 GEMINI_MERGE_MODEL = "gemini-3.1-flash-lite-preview"
+
+_CANONICAL_HEADER = [
+    "HOLE", "1", "2", "3", "4", "5", "6", "7", "8", "9", "OUT",
+    "10", "11", "12", "13", "14", "15", "16", "17", "18", "IN", "TOT",
+]
+_KNOWN_SEPARATOR_LABELS = {"initials", "initiales", "player"}
+_SMALL_VALUE_RE = re.compile(
+    r"^(?:[+\-−]?\d{1,2}|[①②③④⑤⑥⑦⑧⑨❶❷❸❹❺❻❼❽❾➀➁➂➃➄➅➆➇➈⓿⓪]|[eE])$"
+)
 
 _MERGE_PROMPT = """\
 Your task is to merge the following golf scorecard fragments into a single, comprehensive Markdown table.
@@ -46,6 +57,90 @@ REQUIRED STRUCTURE EXAMPLE:
 DATA TO MERGE:
 {markdown}
 """
+
+
+def _split_pipe_row(line: str) -> List[str]:
+    stripped = line.strip()
+    if "|" not in stripped:
+        return []
+    return [cell.strip() for cell in stripped.strip("|").split("|")]
+
+
+def _source_has_separator_after_out(markdown: str) -> bool:
+    """Return whether the source header proves a non-hole column after OUT."""
+    for line in markdown.splitlines():
+        cells = _split_pipe_row(line)
+        upper = [cell.upper() for cell in cells]
+        if "OUT" not in upper or "10" not in cells:
+            continue
+        out_idx = upper.index("OUT")
+        ten_idx = cells.index("10")
+        between = [cell.lower() for cell in cells[out_idx + 1:ten_idx]]
+        if between and all(not cell or cell in _KNOWN_SEPARATOR_LABELS for cell in between):
+            return True
+    return False
+
+
+def _is_markdown_separator(cells: List[str]) -> bool:
+    return bool(cells) and all(
+        cell and set(cell).issubset({"-", ":", " "})
+        for cell in cells
+    )
+
+
+def _small_value_count(cells: List[str]) -> int:
+    return sum(bool(_SMALL_VALUE_RE.fullmatch(cell.strip())) for cell in cells)
+
+
+def _normalize_and_validate_merge(source: str, merged: str) -> Optional[str]:
+    """Normalize a provable separator shift and reject malformed merge output."""
+    source_has_separator = _source_has_separator_after_out(source)
+    normalized_rows: List[List[str]] = []
+    header_found = False
+
+    for line in merged.splitlines():
+        cells = _split_pipe_row(line)
+        if not cells:
+            if line.strip():
+                return None
+            continue
+        if not any(cells):
+            continue
+
+        # Gemini sometimes removes INITIALS from the header but preserves the
+        # corresponding blank cell in every data row. Only repair that exact
+        # shape when the original Mistral header proves the separator existed.
+        if (
+            source_has_separator
+            and len(cells) == len(_CANONICAL_HEADER) + 1
+            and cells[11] == ""
+        ):
+            cells = cells[:11] + cells[12:]
+
+        if len(cells) != len(_CANONICAL_HEADER):
+            return None
+
+        if [cell.upper() for cell in cells] == _CANONICAL_HEADER:
+            header_found = True
+        elif _is_markdown_separator(cells):
+            pass
+        else:
+            front_count = _small_value_count(cells[1:10])
+            back_count = _small_value_count(cells[11:20])
+            # A populated half paired with an entirely empty half is not a
+            # valid 18-hole merge. Fall back to the untouched source tables.
+            if (front_count >= 4 and back_count == 0) or (back_count >= 4 and front_count == 0):
+                return None
+
+        normalized_rows.append(cells)
+
+    if not header_found:
+        return None
+
+    return "\n".join(
+        "| " + " | ".join(cells) + " |"
+        for cells in normalized_rows
+    )
 
 
 async def merge_split_tables(markdown: str) -> str:
@@ -83,12 +178,16 @@ async def merge_split_tables(markdown: str) -> str:
             ).strip()
 
         if merged:
+            normalized = _normalize_and_validate_merge(markdown, merged)
+            if normalized is None:
+                logger.warning("Gemini table merge failed structural validation; using original markdown")
+                return markdown
             logger.info(
                 "Gemini table merge complete: input_chars=%d output_chars=%d",
                 len(markdown),
-                len(merged),
+                len(normalized),
             )
-            return merged
+            return normalized
 
         logger.warning("Gemini table merge returned empty response; using original")
         return markdown

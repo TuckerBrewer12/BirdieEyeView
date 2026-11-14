@@ -21,6 +21,7 @@ from api.player_handicap import player_handicap_index
 from api.error_responses import ROUND_SAVE_FAILED, SCAN_FAILED
 from api.input_validation import ensure_uuid_str, normalize_course_display_name, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
+from api.scan_errors import ScanExtractionError
 from api.schemas import ConfidenceLevel, OcrTextResponse, SaveScanResponse, ScanResponse
 from models import User
 from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
@@ -31,9 +32,9 @@ from services.scan_service import ScanService
 
 router = APIRouter()
 
-OCR_LONG_EDGE_TARGET = 1800
-OCR_JPEG_QUALITY = 75
-PREPROCESS_CACHE_VERSION = "v2"
+OCR_LONG_EDGE_TARGET = 2000
+OCR_JPEG_QUALITY = 80
+PREPROCESS_CACHE_VERSION = "v3"
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
 MAX_OCR_TEXT_CHARS = 300_000
 MAX_USER_CONTEXT_CHARS = 1_500
@@ -316,6 +317,7 @@ def _build_round_from_parsed_rows(
         if (
             effective_to_par is True
             and raw_score == 1
+            and parsed.sign_evidence_trusted
             and sign_shots is not None
             and sign_putts is not None
             and 1 <= sign_shots <= 10
@@ -489,6 +491,35 @@ def _save_jpeg(path: Path, img: Image.Image) -> None:
     )
 
 
+def _is_ocr_ready_jpeg(path: Path, img: Image.Image) -> bool:
+    """Return whether a browser-prepared JPEG can go to OCR unchanged."""
+    if path.suffix.lower() not in {".jpg", ".jpeg"}:
+        return False
+    if img.format != "JPEG" or img.mode != "RGB":
+        return False
+    if max(img.size) > OCR_LONG_EDGE_TARGET:
+        return False
+    if img.getexif():
+        return False
+
+    # Canvas-created JPEGs contain only ordinary JFIF/encoding information.
+    # Re-encode anything carrying payload metadata before sending it onward.
+    safe_info_keys = {
+        "dpi",
+        "jfif",
+        "jfif_density",
+        "jfif_unit",
+        "jfif_version",
+        "progression",
+        "progressive",
+    }
+    return not any(
+        value
+        for key, value in img.info.items()
+        if key not in safe_info_keys
+    )
+
+
 def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, bool]:
     """
     Normalize uploaded images to JPEG for faster, consistent OCR payloads.
@@ -504,6 +535,14 @@ def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, boo
     try:
         with Image.open(path) as img:
             t_open = time.perf_counter()
+            if _is_ocr_ready_jpeg(path, img):
+                logger.info(
+                    "OCR preprocess pass-through: format=JPEG size=%sx%s bytes=%s",
+                    img.width,
+                    img.height,
+                    path.stat().st_size,
+                )
+                return path, False
             if is_pdf:
                 # First page only for scorecard PDFs.
                 with contextlib.suppress(EOFError):
@@ -621,7 +660,10 @@ async def extract_scan(
         getattr(current_user, "id", "anonymous"),
     )
     # Validate file type + metadata.
-    suffix = _extract_upload_suffix(file)
+    try:
+        suffix = _extract_upload_suffix(file)
+    except HTTPException as exc:
+        raise ScanExtractionError(exc.status_code, exc.detail, category="invalid_upload", stage="upload") from None
     if user_context is not None:
         try:
             user_context = sanitize_user_text(
@@ -650,10 +692,14 @@ async def extract_scan(
                 422, f"ocr_text must be plain text of at most {MAX_OCR_TEXT_CHARS} characters."
             ) from None
 
-    original_tmp_path, upload_digest = _save_upload_to_temp(file, suffix)
+    try:
+        original_tmp_path, upload_digest = _save_upload_to_temp(file, suffix)
+    except HTTPException as exc:
+        raise ScanExtractionError(exc.status_code, exc.detail, category="invalid_upload", stage="upload") from None
 
     ocr_path = original_tmp_path
     cache_hit = False
+    failure_stage = "upload"
 
     try:
         _validate_upload_payload(original_tmp_path, suffix)
@@ -675,6 +721,7 @@ async def extract_scan(
         to_par_scoring: Optional[bool] = None
 
         # Optional known course preload; extraction is always full Mistral parse.
+        failure_stage = "unknown"
         course_model = None
         t_course_lookup_start = time.perf_counter()
         if course_id:
@@ -690,6 +737,7 @@ async def extract_scan(
             course_model is not None,
             (t_course_lookup_end - t_course_lookup_start) * 1000.0,
         )
+        failure_stage = "ocr"
         t_extract_start = time.perf_counter()
         if ocr_text:
             # Prefetch already ran OCR + Gemini merge — use it directly.
@@ -708,8 +756,10 @@ async def extract_scan(
         else:
             logger.info("Merged OCR markdown chars=%d", len(markdown_text))
 
+        failure_stage = "parse"
         t_parse_start = time.perf_counter()
         parsed_rows = parse_mistral_scorecard_rows(markdown_text, user_context=user_context)
+        failure_stage = "assembly"
         round_data, fields_needing_review = _build_round_from_parsed_rows(
             parsed_rows,
             course_model=course_model,
@@ -721,13 +771,15 @@ async def extract_scan(
         )
         if present_strokes == 0:
             if parsed_rows.player_name:
-                raise HTTPException(
+                raise ScanExtractionError(
                     422,
                     "Name is unclear in the scorecard image. Please upload a cleaner image with clearer handwriting and try again.",
+                    category="unreadable_scores", stage="parse",
                 )
-            raise HTTPException(
+            raise ScanExtractionError(
                 422,
                 "Unable to clearly read the score rows from this image. Please upload a cleaner image with clearer handwriting and better lighting, then try again.",
+                category="unreadable_scores", stage="parse",
             )
 
         if _rated_tees(round_data):
@@ -755,15 +807,18 @@ async def extract_scan(
         )
 
     except FileNotFoundError:
-        raise HTTPException(400, "Uploaded file could not be processed") from None
+        raise ScanExtractionError(400, "Uploaded file could not be processed", category="invalid_upload", stage=failure_stage) from None
     except EnvironmentError:
         logger.exception("Scan extraction service unavailable")
-        raise HTTPException(500, SCAN_FAILED) from None
-    except HTTPException:
+        raise ScanExtractionError(500, SCAN_FAILED, category="service_unavailable", stage=failure_stage) from None
+    except ScanExtractionError:
         raise
+    except HTTPException as exc:
+        category = "invalid_upload" if failure_stage == "upload" and exc.status_code in {400, 413} else "http_error"
+        raise ScanExtractionError(exc.status_code, exc.detail, category=category, stage=failure_stage) from None
     except Exception:
         logger.exception("Scan extraction error")
-        raise HTTPException(500, "Extraction failed. Please try again.") from None
+        raise ScanExtractionError(500, "Extraction failed. Please try again.", category="extraction_failed", stage=failure_stage) from None
     finally:
         logger.info(
             "Scan extract request complete: total_ms=%.1f",

@@ -4,6 +4,10 @@
 
 Photograph a physical scorecard. A Mistral OCR + Gemini LLM pipeline extracts scores, putts, GIR, and tee boxes into a complete digital round — with course and player analytics across all your rounds.
 
+## Documentation
+
+Start with the [documentation index](docs/README.md) for [backend domain guides](docs/backend/README.md), [frontend page guides](docs/frontend/README.md), and [coding practices](docs/practices/README.md). These distinguish current behavior from refactor work still awaiting integration.
+
 ---
 
 ## What It Does
@@ -43,6 +47,33 @@ Open [http://localhost:5173](http://localhost:5173). Backend runs on port 8000; 
 
 Copy `.env.example` to `.env` and fill required keys (`GOOGLE_API_KEY`, `MISTRAL_API_KEY`, `SECRET_KEY`, `DATABASE_URL`).  
 For auth emails in production, also set `RESEND_API_KEY` and `AUTH_FROM_EMAIL`.
+
+## Scan Evaluation
+
+Run the live scan evaluator locally from the repository root.
+
+```bash
+source .venv/bin/activate
+python -m scripts.quick_scan_eval                # quick suite
+python -m scripts.quick_scan_eval --suite large  # larger suite
+```
+
+Both commands require `MISTRAL_API_KEY` and `GOOGLE_API_KEY`. The evaluator uses the app's OCR-prefetch and extraction flow and shares one OCR result across all target players on an image. The [quick manifest](tests/test_scorecards/quick_eval_cases.json) contains four cases across three images. The [large manifest](tests/test_scorecards/scan_eval_cases.json) contains 22 active cases across 14 images. Move an entry from `disabled_cases` back into `cases` to re-enable it. Each case's `user_context` holds only hints the app or parser understands. Remarks for people go in an optional `notes` field, which the scanner never sees. A layout the scanner doesn't support yet carries a `known_gap` explanation and is reported as a known gap, for example the two Lake Chabot cases, whose card has no final score row.
+
+The answer key grades final numeric values by field and hole number. To-par handwriting is compared against normalized raw strokes. Cards with recorded putts and shots-to-green grade those fields too. Results are cumulative: a 100% case also counts in the 90%+ and 80%+ totals. Cases below 80% are labeled failed and list every mismatch, but accuracy failures do not make the command exit unsuccessfully.
+
+The report includes OCR/merge time per image, extraction and effective time per case, and total suite time. Provider latency varies across runs. Ordinary pytest uses deterministic provider replacements.
+
+### Run from a pull request
+
+In GitHub, create the two labels below if they are missing and configure `MISTRAL_API_KEY` and `GOOGLE_API_KEY` as repository Actions secrets. On a mergeable PR from a branch in the same repository, add one label to start the matching suite.
+
+| PR label | Suite |
+|---|---|
+| `run-scan-evals` | Large |
+| `run-quick-scan-eval` | Quick |
+
+The [live eval workflow](.github/workflows/scan-evals.yml) evaluates the PR merge commit, posts accuracy and timing on the PR, and uploads a detailed report to the Actions run. The check is optional for merging. Remove and re-add the label to request a new run after a push. A new request on the same PR supersedes a paid run already in progress.
 
 For production hardening (HTTPS, secret handling, DB network restrictions, security logging), see:
 

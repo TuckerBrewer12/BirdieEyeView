@@ -898,6 +898,25 @@
         "title": "Body_prefetch_ocr_api_scan_ocr_post",
         "type": "object"
       },
+      "Body_report_failed_scan_api_scan_reports_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "metadata": {
+            "title": "Metadata",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "metadata"
+        ],
+        "title": "Body_report_failed_scan_api_scan_reports_post",
+        "type": "object"
+      },
       "CareerTotals": {
         "properties": {
           "lifetime": {
@@ -8665,6 +8684,45 @@
           }
         ],
         "summary": "Prefetch Ocr",
+        "tags": [
+          "scan"
+        ]
+      }
+    },
+    "/api/scan/reports": {
+      "post": {
+        "operationId": "report_failed_scan_api_scan_reports_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_report_failed_scan_api_scan_reports_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Report Failed Scan",
         "tags": [
           "scan"
         ]

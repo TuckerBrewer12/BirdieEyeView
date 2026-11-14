@@ -342,6 +342,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/scan/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report Failed Scan */
+        post: operations["report_failed_scan_api_scan_reports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/scan/save": {
         parameters: {
             query?: never;
@@ -869,6 +886,13 @@ export interface components {
         Body_prefetch_ocr_api_scan_ocr_post: {
             /** File */
             file: string;
+        };
+        /** Body_report_failed_scan_api_scan_reports_post */
+        Body_report_failed_scan_api_scan_reports_post: {
+            /** File */
+            file: string;
+            /** Metadata */
+            metadata: string;
         };
         /** CareerTotals */
         CareerTotals: {
@@ -3544,6 +3568,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OcrTextResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_failed_scan_api_scan_reports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_report_failed_scan_api_scan_reports_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
