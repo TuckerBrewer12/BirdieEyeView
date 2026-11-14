@@ -4,11 +4,12 @@ import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import { SCANNED_COURSE_NAME, scannedCard } from "../../../testing/fixtures/scan";
 import { expectTheme } from "../../../testing/theme";
+import { fontsLoaded } from "../../../testing/fontsLoaded";
 
-/** The photo the hero demo uses, so an upload has a real card in its preview. */
+/** The photo the hero shows, so an upload has a real card in its preview. */
 const CARD_PHOTO = fileURLToPath(new URL("../../../../public/hero/physical-card.jpg", import.meta.url));
 const CARD_NAME = "physical-card.jpg";
-const DEMO_ALT = "A paper golf scorecard being scanned";
+const HERO_ALT = "A paper scorecard held over a golf cart";
 
 /** Screen robot for the logged-out landing page at `/`. */
 export class LandingRobot {
@@ -27,9 +28,8 @@ export class LandingRobot {
 
   /** `scanFails`: the scan endpoint errors, as it does when the server can't read a card. */
   async open({ scanFails = false }: { scanFails?: boolean } = {}): Promise<this> {
-    // The hero's scan loop is decoration and holds on step one under reduced
-    // motion. Emulating it here is what makes the page deterministic enough to
-    // have a baseline — `test.use({ reducedMotion })` does not reach the page.
+    // Reduced motion settles the hero's entrance at once, so a capture never
+    // catches it mid-fade. `test.use({ reducedMotion })` does not reach the page.
     await this.page.emulateMedia({ reducedMotion: "reduce" });
     await FakeSession.install(this.page, { signedOut: true, scan: scanFails ? undefined : scannedCard });
     await this.page.goto("/");
@@ -55,38 +55,21 @@ export class LandingRobot {
     return this;
   }
 
-  async openMenu(): Promise<this> {
-    await this.page.getByRole("button", { name: "Toggle menu" }).click();
-    return this;
-  }
-
-  /** The same toggle, tapped again with the menu open. */
-  async closeMenu(): Promise<this> {
-    return this.openMenu();
-  }
-
   async seesHeadline(text: string): Promise<this> {
     await expect(this.page.getByRole("heading", { level: 1 })).toContainText(text);
     return this;
   }
 
-  async seesMenuOpen(open: boolean): Promise<this> {
-    await expect(this.page.getByRole("button", { name: "Toggle menu" })).toHaveAttribute(
-      "aria-expanded",
-      String(open),
-    );
-    return this;
-  }
-
-  /** The upload drop zone sits in the first screen, not below the fold. */
+  /** "Try it with a photo" sits in the first screen, not below the fold. */
   async seesScanner(): Promise<this> {
-    await expect(this.page.getByText("Upload a scorecard photo")).toBeInViewport();
+    await expect(this.page.getByRole("button", { name: "Try it with a photo" })).toBeInViewport();
     return this;
   }
 
-  /** The sample scan looping beside the uploader. */
-  async seesDemo(shown = true): Promise<this> {
-    await expect(this.page.getByRole("img", { name: DEMO_ALT })).toHaveCount(shown ? 1 : 0);
+  /** The hero's scanner demo, holding on its photo of a card (reduced motion stops the loop). */
+  async seesHeroPhoto(shown = true): Promise<this> {
+    await expect(this.page.getByRole("img", { name: HERO_ALT })).toHaveCount(shown ? 1 : 0);
+    if (shown) await expect(this.page.locator("[data-slot=scanner-demo]")).toContainText("1. Snap a photo");
     return this;
   }
 
@@ -106,7 +89,7 @@ export class LandingRobot {
 
   /** The scan failed: the reason shows, and the photo is still there to try again. */
   async seesScanFailed(): Promise<this> {
-    await expect(this.page.getByRole("alert")).toContainText("We couldn't scan this scorecard.");
+    await expect(this.page.getByRole("alert")).toContainText("Couldn't read this card.");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Scan my scorecard" })).toBeVisible();
     return this;
@@ -125,9 +108,11 @@ export class LandingRobot {
     return this;
   }
 
-  /** The visitor's own card, read back as a scorecard. */
+  /** The visitor's own card, read back as a scorecard under "Here's your round." */
   async seesScannedCard(): Promise<this> {
-    await expect(this.page.getByText(SCANNED_COURSE_NAME, { exact: true })).toBeVisible();
+    await expect(this.page.getByRole("heading", { level: 1, name: "Here’s your round." })).toBeVisible();
+    // The course leads the scorecard's course line, before where it is.
+    await expect(this.page.getByText(`${SCANNED_COURSE_NAME} ·`, { exact: false })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Scan another" })).toBeVisible();
     return this;
   }
@@ -137,15 +122,16 @@ export class LandingRobot {
     return this;
   }
 
-  async tapSignUp(): Promise<this> {
-    await this.page.getByRole("link", { name: "Sign Up", exact: true }).click();
+  /** The nav's Sign up; Sign up free beside Try it or under the scanned round; a phone's "or sign up free". */
+  async tapSignUp(name: "Sign up" | "Sign up free" | "sign up free" = "Sign up"): Promise<this> {
+    await this.page.getByRole("link", { name, exact: true }).click();
     return this;
   }
 
   async capture(name: string): Promise<this> {
-    // Tapping into the card scrolls the page; a full-page capture taken from
-    // there pins the sticky nav over the headline.
+    // Tapping into the card scrolls the page; capture from the top.
     await this.page.evaluate(() => window.scrollTo(0, 0));
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });
     return this;
   }

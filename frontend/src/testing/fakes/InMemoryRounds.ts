@@ -11,7 +11,8 @@ import type { UpdateRoundBody } from "../../pages/rounds/roundsRepository";
 import { emptyCourseAnalytics } from "../fixtures/courseAnalytics";
 import { toCourseSummary } from "../fixtures/roundDetails";
 import { courseResponse } from "./courseResponses";
-import { bestRanks, roundResponse, storedFromRound, summaryResponse, type StoredRound } from "./roundResponses";
+import { courseSummaryResponse } from "./courseAnalyticsResponses";
+import { listRanks, roundResponse, storedFromRound, summaryResponse, type StoredRound } from "./roundResponses";
 
 export interface InMemoryRoundsSeed {
   /** The round list, in order, as the facts the server stores. */
@@ -31,6 +32,10 @@ export interface InMemoryRoundsSeed {
   /** Saving a scan fails with this. */
   saveError?: string | null;
   coursesError?: string | null;
+  /** Listing the golfer's rounds fails with this. */
+  roundsError?: string | null;
+  /** A course's analytics (the golfer's record there) fail with this. */
+  courseAnalyticsError?: string | null;
   searchDelaysMs?: number[];
 }
 
@@ -82,6 +87,8 @@ export class InMemoryRounds {
   /** Every scan saved, as sent. */
   savedScans: SaveScanRequestDto[] = [];
   coursesError: string | null;
+  roundsError: string | null;
+  courseAnalyticsError: string | null;
   searchDelaysMs: number[];
   private searchCalls = 0;
   deletedIds: string[];
@@ -104,6 +111,8 @@ export class InMemoryRounds {
     this.searchError = seed.searchError ?? null;
     this.saveError = seed.saveError ?? null;
     this.coursesError = seed.coursesError ?? null;
+    this.roundsError = seed.roundsError ?? null;
+    this.courseAnalyticsError = seed.courseAnalyticsError ?? null;
     this.searchDelaysMs = [...(seed.searchDelaysMs ?? [])];
     this.deletedIds = [];
   }
@@ -112,7 +121,13 @@ export class InMemoryRounds {
     return this.searchDelaysMs[this.searchCalls++] ?? 0;
   }
 
-  searchCourses(query: string): CourseSummaryDto[] {
+  /** A listed course with the golfer's record there, worked out from the stored rounds as the server does. */
+  private withRecord(course: CourseSummaryDto): CourseSummaryDto {
+    return courseSummaryResponse(course, [...this.stored.values()]);
+  }
+
+  /** `include_record` adds the golfer's record at each course, as the course list's search asks. */
+  searchCourses(query: string, includeRecord = false): CourseSummaryDto[] {
     if (this.searchError) throw new Error(this.searchError);
     const q = query.toLowerCase();
     const byId = new Map<string, CourseSummaryDto>();
@@ -122,17 +137,21 @@ export class InMemoryRounds {
     for (const course of this.courses) {
       byId.set(course.id, course);
     }
-    return [...byId.values()].filter((course) => (course.name ?? "").toLowerCase().includes(q));
+    return [...byId.values()]
+      .filter((course) => (course.name ?? "").toLowerCase().includes(q))
+      .map((course) =>
+        includeRecord ? this.withRecord(course) : { ...course, rounds_played: 0, scoring_average: null, best_score: null },
+      );
   }
 
   getCourses(): CourseSummaryDto[] {
     if (this.coursesError) throw new Error(this.coursesError);
-    return this.courses;
+    return this.courses.map((course) => this.withRecord(course));
   }
 
   getRoundsForUser(): RoundSummaryDto[] {
     const rounds = this.listed.map((id) => this.stored.get(id)!);
-    const ranks = bestRanks(rounds);
+    const ranks = listRanks(rounds);
     return rounds.map((round, i) => summaryResponse(round, ranks[i]));
   }
 

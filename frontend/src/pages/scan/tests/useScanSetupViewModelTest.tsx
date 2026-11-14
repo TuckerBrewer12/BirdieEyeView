@@ -56,7 +56,7 @@ describe("useScanSetupViewModel", () => {
 
     expect(result.current.linkedName).toBe(pebbleBeachSummary.name);
     expect(result.current.loadingTees).toBe(true);
-    await waitFor(() => expect(result.current.tees).toEqual(["Blue"]));
+    await waitFor(() => expect(result.current.tees.map((tee) => tee.name)).toEqual(["Blue"]));
     expect(result.current.loadingTees).toBe(false);
     act(() => result.current.setTeeBox("Blue"));
     expect(result.current.teeBox).toBe("Blue");
@@ -88,7 +88,7 @@ describe("useScanSetupViewModel", () => {
   it("changing a picked course drops its tee and opens an empty search", async () => {
     const { result } = renderSetup();
     act(() => result.current.pickCourse(pebbleBeachSummary));
-    await waitFor(() => expect(result.current.tees).toEqual(["Blue"]));
+    await waitFor(() => expect(result.current.tees.map((tee) => tee.name)).toEqual(["Blue"]));
     act(() => result.current.setTeeBox("Blue"));
 
     act(() => result.current.clearCourse());
@@ -118,7 +118,7 @@ describe("useScanSetupViewModel", () => {
   it("starts a card on the picked course's holes, linked to it", async () => {
     const { result, session } = renderSetup();
     act(() => result.current.pickCourse(pebbleBeachSummary));
-    await waitFor(() => expect(result.current.tees).toEqual(["Blue"]));
+    await waitFor(() => expect(result.current.tees.map((tee) => tee.name)).toEqual(["Blue"]));
 
     act(() => result.current.start());
 

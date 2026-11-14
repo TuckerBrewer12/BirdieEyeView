@@ -1,19 +1,21 @@
 import * as React from "react";
-import { LogOut, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { cn } from "@/brand/cn";
 import { NavLink, type NavItem, type RenderLink } from "@/brand/nav";
-import { Button } from "./Button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./Collapsible";
+import { MoreMenu } from "./MoreMenu";
+import { Sheet, SheetContent, SheetTrigger } from "./Sheet";
+import type { SideNavUser } from "./SideNav";
 
 interface BottomNavProps {
-  /** The tabs along the bar. Four fit a phone. */
+  /** The tabs along the bar. Four, so with "More" five fit a phone. */
   tabs: NavItem[];
-  /** Everything else, in a menu the last tab opens. */
+  /** The `href` of the tab raised in a filled circle, the one action the app is for. Put it mid-bar. */
+  featuredHref?: string;
+  /** Everything else, in a sheet the last tab opens. */
   moreItems?: NavItem[];
   moreLabel?: string;
-  /** Adds a sign-out row to the menu. */
-  onSignOut?: () => void;
-  signingOut?: boolean;
+  /** The signed-in golfer, at the top of the More sheet. */
+  user?: SideNavUser;
   renderLink?: RenderLink;
   /** The nav landmark's name. */
   label?: string;
@@ -21,19 +23,26 @@ interface BottomNavProps {
 }
 
 const tabClass =
-  "flex flex-1 flex-col items-center justify-center gap-0.5 text-meta font-semibold text-muted-foreground transition-colors data-active:text-primary data-panel-open:text-primary [&_svg]:size-5 [&_svg]:stroke-icon data-active:[&_svg]:stroke-icon-active data-panel-open:[&_svg]:stroke-icon-active";
+  "group flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-meta font-medium text-muted-foreground transition-colors data-active:font-bold data-active:text-foreground data-panel-open:font-bold data-panel-open:text-foreground [&_svg]:size-5 [&_svg]:stroke-icon";
+
+/** The icon's round holder: bare on a tab, a lifted filled disc on the featured one. */
+const iconClass = "flex size-7 items-center justify-center rounded-full transition-colors";
+const plainIconClass = "group-data-active:text-primary group-data-panel-open:text-primary";
+const featuredIconClass = "-mt-3.5 size-11 bg-primary text-primary-foreground";
 
 /**
- * The phone's tab bar: a few tabs and a "More" tab that opens a menu of the
- * rest above the bar. Taking any link folds the menu, as does tapping the
- * dimmed page or pressing Escape. `AppShell` pins it to the bottom edge.
+ * The phone's tab bar: a few tabs and a "More" tab that opens a bottom sheet
+ * of the rest (`MoreMenu`). One tab can be featured: its icon sits in a filled
+ * disc raised above the bar. Taking a link closes the sheet, as does tapping
+ * the dimmed page, dragging it down or pressing Escape. `AppShell` pins the
+ * bar to the bottom edge.
  */
 function BottomNav({
   tabs,
+  featuredHref,
   moreItems = [],
   moreLabel = "More",
-  onSignOut,
-  signingOut = false,
+  user,
   renderLink,
   label = "Main",
   className,
@@ -41,95 +50,40 @@ function BottomNav({
   const [open, setOpen] = React.useState(false);
   const close = React.useCallback(() => setOpen(false), []);
   const moreActive = moreItems.some((item) => item.active);
-  const hasMenu = moreItems.length > 0 || onSignOut != null;
-
-  React.useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, close]);
 
   return (
-    <Collapsible
-      open={open}
-      onOpenChange={setOpen}
-      render={<nav aria-label={label} />}
-      data-slot="bottom-nav"
-      className={cn("relative", className)}
-    >
-      {/* Raised so the bar stays clear of the dimmed page while the menu is open. */}
-      <div className="relative z-10 border-t border-border bg-card pb-safe-bottom">
-        <div className="flex h-14 items-stretch">
+    <nav aria-label={label} data-slot="bottom-nav" className={cn("relative", className)}>
+      <div className="border-t border-border bg-card px-2 pb-safe-bottom">
+        {/* `h-nav` is the measure `ActionBar` and the shell's padding take the bar's height from. */}
+        <div className="flex h-nav items-stretch pt-1.5">
           {tabs.map((item) => (
-            <NavLink key={item.href} item={item} renderLink={renderLink} onClick={close} className={tabClass}>
-              <item.icon aria-hidden />
+            <NavLink key={item.href} item={item} renderLink={renderLink} className={tabClass}>
+              <span className={cn(iconClass, item.href === featuredHref ? featuredIconClass : plainIconClass)}>
+                <item.icon aria-hidden />
+              </span>
               <span>{item.label}</span>
             </NavLink>
           ))}
-          {hasMenu && (
-            <CollapsibleTrigger
-              data-active={moreActive ? "" : undefined}
-              className={tabClass}
-            >
-              <Menu aria-hidden />
-              <span>{moreLabel}</span>
-            </CollapsibleTrigger>
+          {moreItems.length > 0 && (
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger
+                data-active={moreActive ? "" : undefined}
+                data-panel-open={open ? "" : undefined}
+                className={tabClass}
+              >
+                <span className={cn(iconClass, plainIconClass)}>
+                  <Menu aria-hidden />
+                </span>
+                <span>{moreLabel}</span>
+              </SheetTrigger>
+              <SheetContent side="bottom" showCloseButton={false} data-slot="bottom-nav-menu">
+                <MoreMenu items={moreItems} user={user} title={moreLabel} renderLink={renderLink} onNavigate={close} />
+              </SheetContent>
+            </Sheet>
           )}
         </div>
       </div>
-
-      {hasMenu && (
-        <CollapsibleContent>
-          <button
-            type="button"
-            aria-label="Close menu"
-            tabIndex={-1}
-            onClick={close}
-            className="fixed inset-0 bg-foreground/wash dark:bg-background/strong"
-          />
-          <div
-            data-slot="bottom-nav-menu"
-            className="absolute inset-x-3 bottom-full mb-3 rounded-2xl border border-border bg-card/glass shadow-card backdrop-blur-sm"
-          >
-            <p className="px-4 pt-4 pb-2 text-xs font-bold tracking-section text-muted-foreground uppercase">
-              {moreLabel}
-            </p>
-            {moreItems.length > 0 && (
-              <div className="grid grid-cols-2 gap-1 px-2 pb-2">
-                {moreItems.map((item) => (
-                  <NavLink
-                    key={item.href}
-                    item={item}
-                    renderLink={renderLink}
-                    onClick={close}
-                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-active:bg-accent data-active:font-semibold data-active:text-primary [&_svg]:size-4"
-                  >
-                    <item.icon aria-hidden />
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
-              </div>
-            )}
-            {onSignOut && (
-              <div className="px-2 pb-3">
-                <Button
-                  variant="ghost"
-                  onClick={onSignOut}
-                  disabled={signingOut}
-                  className="h-auto w-full justify-start gap-2 rounded-xl px-3 py-2.5 font-normal text-destructive hover:bg-destructive/tint hover:text-destructive dark:hover:bg-destructive/wash"
-                >
-                  <LogOut aria-hidden />
-                  {signingOut ? "Signing out…" : "Sign out"}
-                </Button>
-              </div>
-            )}
-          </div>
-        </CollapsibleContent>
-      )}
-    </Collapsible>
+    </nav>
   );
 }
 

@@ -69,7 +69,7 @@ def round_course_handicap(round_obj: Round, handicap_index: Optional[float]) -> 
     """The golfer's course handicap for a round, off the tee played. Ratings are for 18 holes,
     so a nine or a round cut short has none, the way it has no differential."""
     tee = round_obj.get_tee()
-    if tee is None or round_obj.holes_played() < 18:
+    if tee is None or round_obj.holes_played() < HOLES_PER_ROUND:
         return None
     return tee_course_handicap(handicap_index, tee.slope_rating, tee.course_rating, round_obj.get_par())
 

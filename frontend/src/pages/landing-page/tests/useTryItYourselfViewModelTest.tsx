@@ -31,13 +31,13 @@ describe("useTryItYourselfViewModel", () => {
     const file = await pick(result);
     await waitFor(() => expect(repository.readPhotos).toEqual([file]));
 
-    act(() => result.current.setUserContext("my name is Sam"));
+    act(() => result.current.setCard({ name: "Sam", putts: true }));
     act(() => result.current.extract());
 
     await waitFor(() => expect(repository.extractRequests).toHaveLength(1));
     expect(repository.extractRequests[0]).toEqual({
       photo: file,
-      userContext: "my name is Sam",
+      userContext: "my name is Sam. name on score row. row order: score, putts",
       ocrText: "HOLE 1 2 3",
     });
   });

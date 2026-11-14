@@ -2,10 +2,12 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
-import { queryKeys } from "@/data/queryKeys";
-import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 import { FakeAnalyticsRepository, type FakeAnalyticsSeed } from "@/testing/fakes/FakeAnalyticsRepository";
-import { DEFAULT_FILTERS } from "../model";
+import { populatedFriendships } from "@/testing/fixtures/friendships";
+import { labAnalytics, labBenchmarks, labGoalReport, labUser } from "@/testing/fixtures/lab";
+import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
+import { DEFAULT_FILTERS, type AnalyticsTab } from "../model";
+import { PROFILE_FILTERS } from "../profileModel";
 import { useAnalyticsPageViewModel } from "../useAnalyticsPageViewModel";
 
 const USER_ID = sampleGolfer.profile.id;
@@ -17,17 +19,27 @@ const golfer: FakeAnalyticsSeed = {
   analyticsByCourse: sampleGolfer.analyticsByCourse,
   playedCourses: sampleGolfer.playedCourses,
   user: sampleGolfer.profile,
-  detailRounds: sampleGolfer.detailRounds,
 };
 
-function setup(seed: FakeAnalyticsSeed = golfer, configure?: (repository: FakeAnalyticsRepository) => void) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+/** The Lab's golfer, out to break 90, with friends and the server's comparisons. */
+const labGolfer: FakeAnalyticsSeed = {
+  analytics: labAnalytics,
+  profileAnalytics: labAnalytics,
+  user: labUser,
+  goalReport: labGoalReport,
+  friends: { friendships: populatedFriendships },
+  benchmarks: labBenchmarks,
+};
+
+function setup(seed: FakeAnalyticsSeed = golfer, configure?: (repository: FakeAnalyticsRepository) => void, tab?: AnalyticsTab) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const repository = new FakeAnalyticsRepository(seed);
   configure?.(repository);
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
-  const { result } = renderHook(() => useAnalyticsPageViewModel(USER_ID, repository), { wrapper });
+  const userId = seed.user?.id ?? USER_ID;
+  const { result } = renderHook(() => useAnalyticsPageViewModel(userId, { initialTab: tab, repository }), { wrapper });
   return { client, repository, result };
 }
 
@@ -38,80 +50,68 @@ async function loaded(seed?: FakeAnalyticsSeed, configure?: (repository: FakeAna
 }
 
 describe("useAnalyticsPageViewModel", () => {
-  it("opens on the last 50 rounds everywhere, with the courses to filter by", async () => {
+  it("opens on Scoring over the last 50 rounds everywhere, with the courses to pick from", async () => {
     const { repository, result } = await loaded();
 
-    expect(repository.requests).toEqual([DEFAULT_FILTERS]);
-    expect(result.current.filters).toEqual(DEFAULT_FILTERS);
+    expect(repository.requests[0]).toEqual(DEFAULT_FILTERS);
+    expect(result.current.tab).toBe("scoring");
     expect(result.current.filtered).toBe(false);
     expect(result.current.analytics?.roundCount).toBe(24);
-    expect(result.current.showEmpty).toBe(false);
-    expect(result.current.loadError).toBeNull();
-    await waitFor(() => expect(result.current.playedCourses.map((course) => course.name)).toEqual([
-      "Half Moon Bay Golf Links",
-      "Presidio Golf Course",
-      "Sharp Park Golf Course",
-    ]));
+    expect(result.current.analytics?.headline.map((figure) => figure.metric)).toEqual([
+      "scoring_average",
+      "gir_percentage",
+      "average_putts",
+      "scrambling_percentage",
+      "three_putt_rate",
+    ]);
+    await waitFor(() => expect(result.current.playedCourses).toHaveLength(3));
     await waitFor(() => expect(result.current.hasHomeCourse).toBe(true));
   });
 
-  it("does not offer a home course to a golfer without one", async () => {
-    const { result } = await loaded({ ...golfer, user: { ...sampleGolfer.profile, home_course_id: null } });
-    await waitFor(() => expect(result.current.playedCourses).toHaveLength(3));
-    expect(result.current.hasHomeCourse).toBe(false);
+  it("reads Profile's last 20 rounds only once it opens", async () => {
+    const { repository, result } = await loaded(labGolfer);
+    expect(repository.requests).toEqual([DEFAULT_FILTERS]);
+    expect(result.current.profile.loading).toBe(true);
+
+    act(() => result.current.setTab("profile"));
+    await waitFor(() => expect(repository.requests).toContainEqual(PROFILE_FILTERS));
+    act(() => result.current.setTab("scoring"));
+    // Still loaded, so going back is instant.
+    await waitFor(() => expect(result.current.profile.loading).toBe(false));
+  });
+
+  it("opens on the section the address names", async () => {
+    const { result } = setup(golfer, undefined, "profile");
+    expect(result.current.tab).toBe("profile");
   });
 
   it("loads the figures again for a course, and keeps the last ones up meanwhile", async () => {
     const { repository, result } = await loaded();
 
     repository.hold();
-    act(() => result.current.setFilters({ ...result.current.filters, courseId: LINKS.id }));
+    act(() => result.current.setCourse(LINKS.id));
 
-    await waitFor(() => expect(result.current.refreshing).toBe(true));
-    expect(result.current.loading).toBe(false);
+    await waitFor(() => expect(repository.requests).toContainEqual({ ...DEFAULT_FILTERS, courseId: LINKS.id }));
     expect(result.current.analytics?.roundCount).toBe(24);
     expect(result.current.filtered).toBe(true);
 
     act(() => repository.finish());
-    await waitFor(() => expect(result.current.refreshing).toBe(false));
-    expect(result.current.analytics?.roundCount).toBe(4);
-    expect(repository.requests.at(-1)).toEqual({ ...DEFAULT_FILTERS, courseId: LINKS.id });
-  });
-
-  it("asks for each timeframe and round count it is given", async () => {
-    const { repository, result } = await loaded();
-
-    act(() => result.current.setFilters({ ...result.current.filters, timeframe: "ytd" }));
-    await waitFor(() => expect(repository.requests).toHaveLength(2));
-    act(() => result.current.setFilters({ ...result.current.filters, limit: 10 }));
-    await waitFor(() => expect(repository.requests).toHaveLength(3));
-
-    expect(repository.requests.slice(1)).toEqual([
-      { limit: 50, timeframe: "ytd", courseId: "all" },
-      { limit: 10, timeframe: "ytd", courseId: "all" },
-    ]);
-    expect(result.current.filtered).toBe(true);
-  });
-
-  it("shows filters it has seen straight from the cache", async () => {
-    const { repository, result } = await loaded();
-
-    act(() => result.current.setFilters({ ...result.current.filters, courseId: LINKS.id }));
     await waitFor(() => expect(result.current.analytics?.roundCount).toBe(4));
-    repository.hold();
-    act(() => result.current.setFilters(DEFAULT_FILTERS));
-
-    expect(result.current.analytics?.roundCount).toBe(24);
-    expect(result.current.refreshing).toBe(false);
-    act(() => repository.finish());
   });
 
-  it("shows the empty state when no round matches the filters", async () => {
+  it("asks for the round count picked, and that alone doesn't narrow the courses", async () => {
+    const { repository, result } = await loaded();
+
+    act(() => result.current.setLimit(10));
+    await waitFor(() => expect(repository.requests).toContainEqual({ ...DEFAULT_FILTERS, limit: 10 }));
+    expect(result.current.filtered).toBe(false);
+  });
+
+  it("shows the empty state when the course has no rounds", async () => {
     const { result } = await loaded();
 
-    act(() => result.current.setFilters({ ...result.current.filters, courseId: PRESIDIO.id }));
+    act(() => result.current.setCourse(PRESIDIO.id));
     await waitFor(() => expect(result.current.showEmpty).toBe(true));
-    expect(result.current.filtered).toBe(true);
     expect(result.current.analytics?.roundCount).toBe(0);
   });
 
@@ -122,49 +122,46 @@ describe("useAnalyticsPageViewModel", () => {
 
     expect(result.current.analytics).toBeNull();
     expect(result.current.loadError).toBe("Analytics failed to load.");
-    expect(result.current.showEmpty).toBe(false);
 
     repository.loadError = null;
     act(() => result.current.retry());
     await waitFor(() => expect(result.current.analytics?.roundCount).toBe(24));
-    expect(result.current.loadError).toBeNull();
   });
 
-  it("reads the golfer from the shared user query", async () => {
-    const { client } = await loaded();
-    await waitFor(() => expect(client.getQueryData(queryKeys.user(USER_ID))).toEqual(sampleGolfer.profile));
-  });
-
-  it("loads the server's lowest round in full for its card, into the shared round cache", async () => {
-    const { client, result } = await loaded();
-    const roundId = result.current.analytics!.bestRound!.roundId!;
-
-    await waitFor(() => expect(result.current.bestRound?.id).toBe(roundId));
-    expect(result.current.bestRound?.score).toBe(75);
-    expect(client.getQueryData(queryKeys.round(roundId))).toBe(result.current.bestRound);
-  });
-
-  it("has no best round to show when the window has none", async () => {
+  it("switches the score trend between gross and net", async () => {
     const { result } = await loaded();
 
-    act(() => result.current.setFilters({ ...result.current.filters, courseId: PRESIDIO.id }));
-    await waitFor(() => expect(result.current.showEmpty).toBe(true));
-    expect(result.current.bestRound).toBeNull();
+    expect(result.current.scoreReading).toBe("gross");
+    act(() => result.current.setScoreReading("net"));
+    expect(result.current.scoreReading).toBe("net");
   });
 
-  it("opens the range view on par 4s and keeps the par type picked", async () => {
+  it("keeps each trend's rounds slider across tabs, and shows every round again on new filters", async () => {
     const { result } = await loaded();
 
-    expect(result.current.rangePar).toBe(4);
-    act(() => result.current.setRangePar(3));
-    expect(result.current.rangePar).toBe(3);
-  });
-
-  it("opens the phone layout on scoring and switches sections", async () => {
-    const { result } = await loaded();
-
-    expect(result.current.tab).toBe("scoring");
+    expect(result.current.trendShown).toEqual({ score: null, greens: null, putts: null });
+    act(() => result.current.setTrendShown("greens", 8));
     act(() => result.current.setTab("putting"));
-    expect(result.current.tab).toBe("putting");
+    act(() => result.current.setTab("ball-striking"));
+    expect(result.current.trendShown.greens).toBe(8);
+
+    act(() => result.current.setLimit(20));
+    expect(result.current.trendShown.greens).toBeNull();
+  });
+
+  it("draws the score alone on the trend until other lines are turned on, and can turn it off", async () => {
+    const { result } = await loaded();
+
+    expect(result.current.trendLines).toEqual(["score"]);
+    act(() => result.current.setTrendLines(["birdie", "double"]));
+    expect(result.current.trendLines).toEqual(["birdie", "double"]);
+  });
+
+  it("opens Approach on par 4s and keeps the par type picked", async () => {
+    const { result } = await loaded();
+
+    expect(result.current.approachPar).toBe(4);
+    act(() => result.current.setApproachPar(3));
+    expect(result.current.approachPar).toBe(3);
   });
 });

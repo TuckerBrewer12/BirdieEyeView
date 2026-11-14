@@ -25,6 +25,7 @@ export class FakeRoundsRepository implements RoundsRepository {
   }
 
   async getRoundsForUser(): Promise<RoundSummary[]> {
+    if (this.store.roundsError) throw new Error(this.store.roundsError);
     return this.store.getRoundsForUser().map(RoundModel.fromSummary);
   }
 

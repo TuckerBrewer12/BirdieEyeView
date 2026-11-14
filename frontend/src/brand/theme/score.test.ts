@@ -4,7 +4,6 @@ import {
   scoreFillClass,
   scoreOnFillClass,
   scoreWashClass,
-  toParBadgeClass,
   toParFill,
   toParTextClass,
 } from "./score";
@@ -18,14 +17,6 @@ describe("toParTextClass", () => {
   });
 });
 
-describe("toParBadgeClass", () => {
-  it("splits under, even, and over par", () => {
-    expect(toParBadgeClass(-2)).toBe("bg-accent text-score-birdie");
-    expect(toParBadgeClass(0)).toBe("bg-muted text-muted-foreground");
-    expect(toParBadgeClass(3)).toBe("bg-destructive/10 text-score-bogey");
-    expect(toParBadgeClass(null)).toBe("bg-muted text-muted-foreground");
-  });
-});
 
 describe("scoreFillClass", () => {
   it("paints every score with its own base token", () => {

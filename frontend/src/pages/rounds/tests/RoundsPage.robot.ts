@@ -1,12 +1,14 @@
 import { type Locator, type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
-import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
+import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import type { StoredRound } from "../../../testing/fakes/roundResponses";
+import { fontsLoaded } from "../../../testing/fontsLoaded";
 
 /** Screen robot for /rounds — same idea as an Android Espresso robot. */
 export class RoundsRobot {
   private readonly page: Page;
+  private backend: FakeBackend | null = null;
 
   constructor(page: Page) {
     this.page = page;
@@ -30,43 +32,86 @@ export class RoundsRobot {
     await FakeSession.install(this.page, { rounds, ...seed });
     await this.page.goto("/rounds");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
-    await expect(this.page.getByPlaceholder("Search by course…")).toBeVisible();
-    await this.seesChipPressed("All");
+    await expect(this.page.locator("[data-slot=page-title]").getByText("Rounds", { exact: true })).toBeVisible();
+    await this.seesScopePressed("All");
+    return this;
+  }
+
+  /** The rounds list answers with a server error until `listingRecovers()`. */
+  async openFailing(rounds: StoredRound[]): Promise<this> {
+    this.backend = await FakeSession.install(this.page, { rounds, roundsError: "Rounds are down." });
+    await this.page.goto("/rounds");
+    return this;
+  }
+
+  listingRecovers(): this {
+    if (this.backend) this.backend.store.roundsError = null;
+    return this;
+  }
+
+  /** The page says the load failed, in place of an empty list. */
+  async seesLoadError(): Promise<this> {
+    await expect(this.page.locator("[data-slot=alert]")).toBeVisible();
+    await expect(this.page.getByText("No rounds found.")).toHaveCount(0);
+    return this;
+  }
+
+  async retry(): Promise<this> {
+    await this.page.getByRole("button", { name: "Retry" }).click();
     return this;
   }
 
   async search(query: string): Promise<this> {
-    await this.page.getByPlaceholder("Search by course…").fill(query);
+    await this.page.getByLabel("Search rounds").fill(query);
     return this;
   }
 
-  async tapChip(label: string): Promise<this> {
-    await this.page.getByRole("button", { name: label, exact: true }).click();
+  /** A phone keeps the search behind an icon. */
+  async openSearch(): Promise<this> {
+    await this.page.getByRole("button", { name: "Search", exact: true }).click();
+    await expect(this.page.getByLabel("Search rounds")).toBeFocused();
     return this;
   }
 
-  async seesChipPressed(label: string): Promise<this> {
-    await expect(this.page.getByRole("button", { name: label, exact: true })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+  async tapScope(label: string): Promise<this> {
+    await this.page.getByRole("group", { name: "Scope" }).getByRole("button", { name: label, exact: true }).click();
     return this;
   }
 
+  async seesScopePressed(label: string): Promise<this> {
+    await expect(
+      this.page.getByRole("group", { name: "Scope" }).getByRole("button", { name: label, exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    return this;
+  }
+
+  /** The course menu: a dropdown on desktop, a bottom sheet on a phone. */
+  async filterByCourse(name: string): Promise<this> {
+    await this.page.getByRole("button", { name: "Course", exact: true }).click();
+    await this.page
+      .getByRole("menuitemradio", { name, exact: true })
+      .or(this.page.locator("[data-slot=sheet-option]").getByText(name, { exact: true }))
+      .click();
+    return this;
+  }
+
+  /** The sort menu open: a dropdown on desktop, a bottom sheet from the title row's icon on a phone. */
   async openSortMenu(): Promise<this> {
-    await this.page.getByRole("combobox", { name: "Sort by" }).click();
+    await this.page.getByRole("button", { name: /^Sort by(: .+)?$/ }).click();
     return this;
   }
 
   async seesSortMenu(): Promise<this> {
-    await expect(this.page.getByRole("listbox")).toBeVisible();
-    await expect(this.page.locator("[data-slot=sort-menu]")).toBeVisible();
+    await expect(this.page.locator("[data-slot=picker-options]")).toBeVisible();
     return this;
   }
 
   async sortBy(label: string): Promise<this> {
     await this.openSortMenu();
-    await this.page.getByRole("option", { name: label, exact: true }).click();
+    await this.page
+      .getByRole("menuitemradio", { name: label, exact: true })
+      .or(this.page.locator("[data-slot=sheet-option]").getByText(label, { exact: true }))
+      .click();
     return this;
   }
 
@@ -82,8 +127,22 @@ export class RoundsRobot {
     return this;
   }
 
+  /** Esc closes the panel from its search. */
   async closeLink(): Promise<this> {
-    await this.page.getByRole("button", { name: "Close" }).click();
+    await this.page.getByPlaceholder("Search courses…").press("Escape");
+    return this;
+  }
+
+  /** The phone's sheet, closed by keeping the round's own name. */
+  async keepName(name: string): Promise<this> {
+    await this.page.getByRole("button", { name: `Keep as “${name}”` }).click();
+    return this;
+  }
+
+  async seesLinkSheet(line: RegExp): Promise<this> {
+    const sheet = this.page.locator("[data-slot=link-sheet]");
+    await expect(sheet.getByText("Link to a course")).toBeVisible();
+    await expect(sheet.getByText(line)).toBeVisible();
     return this;
   }
 
@@ -93,7 +152,7 @@ export class RoundsRobot {
   }
 
   async pickCourse(name: string): Promise<this> {
-    await this.page.getByRole("button", { name: new RegExp(name) }).click();
+    await this.page.getByRole("option", { name: new RegExp(name) }).click();
     return this;
   }
 
@@ -110,12 +169,12 @@ export class RoundsRobot {
   }
 
   async seesNoCoursesFound(): Promise<this> {
-    await expect(this.page.getByText("No courses found")).toBeVisible();
+    await expect(this.page.getByText(/No saved courses match/)).toBeVisible();
     return this;
   }
 
   async doesNotSeeNoCoursesFound(): Promise<this> {
-    await expect(this.page.getByText("No courses found")).toHaveCount(0);
+    await expect(this.page.getByText(/No saved courses match/)).toHaveCount(0);
     return this;
   }
 
@@ -139,11 +198,9 @@ export class RoundsRobot {
     return this;
   }
 
-  async seesLinkPanel(courseName: string): Promise<this> {
+  async seesLinkPanel(): Promise<this> {
     const search = this.page.getByPlaceholder("Search courses…");
-    await expect(
-      this.page.getByText(`Link "${courseName}" to a saved course`),
-    ).toBeVisible();
+    await expect(search).toBeVisible();
     await search.evaluate((el) => {
       el.scrollIntoView({ block: "end", inline: "nearest" });
       const nav = document.querySelector("[data-slot=app-shell-bottom]");
@@ -173,9 +230,9 @@ export class RoundsRobot {
     return this;
   }
 
+  /** The count beside the title: the rounds on screen. */
   async seesRoundCount(n: number): Promise<this> {
-    const label = n === 1 ? "1 round" : `${n} rounds`;
-    await expect(this.page.getByText(label, { exact: true }).first()).toBeVisible();
+    await expect(this.page.locator("[data-slot=round-count]")).toHaveText(String(n));
     return this;
   }
 
@@ -184,8 +241,10 @@ export class RoundsRobot {
     return this;
   }
 
-  async capture(name: string): Promise<this> {
-    await expect(this.page).toHaveScreenshot(name, { fullPage: true });
+  /** `fullPage: false` for an open sheet or menu, which sits over the viewport, not the page. */
+  async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
+    await fontsLoaded(this.page);
+    await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;
   }
 }

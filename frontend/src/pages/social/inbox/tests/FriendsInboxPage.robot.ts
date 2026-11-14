@@ -3,6 +3,7 @@ import { test as base, expect } from "../../../../testing/playwright";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { SocialRobot } from "../../tests/SocialPage.robot";
+import { fontsLoaded } from "../../../../testing/fontsLoaded";
 
 /** Screen robot for /inbox — same idea as an Android Espresso robot. */
 export class FriendsInboxRobot {
@@ -42,13 +43,13 @@ export class FriendsInboxRobot {
 
   async isOpen(): Promise<this> {
     await expect(this.page).toHaveURL(/\/inbox$/);
-    await expect(this.page.getByRole("heading", { name: "Inbox", level: 1 }).last()).toBeVisible();
-    await expect(this.page.getByText("Loading inbox…")).toHaveCount(0);
+    await expect(this.page.getByRole("heading", { name: "Requests", level: 1 }).last()).toBeVisible();
+    await expect(this.page.getByText("Loading requests…")).toHaveCount(0);
     return this;
   }
 
   async tapTab(tab: "Received" | "Sent"): Promise<this> {
-    const toggle = this.page.getByRole("button", { name: new RegExp(`^${tab} \\(`) });
+    const toggle = this.page.getByRole("button", { name: new RegExp(`^${tab} \\d`) });
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-pressed", "true");
     // Park the pointer so the capture doesn't catch the tab mid-hover.
@@ -67,7 +68,7 @@ export class FriendsInboxRobot {
   }
 
   async goBack(): Promise<SocialRobot> {
-    await this.page.getByRole("button", { name: "Back to social" }).click();
+    await this.page.getByRole("button", { name: "Social", exact: true }).click();
     return new SocialRobot(this.page).isOpen();
   }
 
@@ -103,6 +104,7 @@ export class FriendsInboxRobot {
   }
 
   async capture(name: string): Promise<this> {
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });
     return this;
   }

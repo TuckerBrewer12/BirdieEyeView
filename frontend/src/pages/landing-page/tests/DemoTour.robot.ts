@@ -3,6 +3,7 @@ import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
 import { HANDICAP_TAP, TOUR_LAYOUTS, type TourLayout } from "../components/demoTour";
+import { fontsLoaded } from "../../../testing/fontsLoaded";
 
 // A few days after the sample golfer's last round, so "this week" reads true.
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
@@ -58,28 +59,29 @@ export class DemoTourRobot {
     return this;
   }
 
-  /** The sample golfer's 24 rounds among the headline figures, so the charts have their data. */
+  /** The sample golfer's 24 rounds beside the title, so the charts have their data. */
   async seesAnalytics(): Promise<this> {
-    const rounds = this.page.getByText("Rounds", { exact: true }).locator("xpath=following-sibling::*[1]");
-    await expect(rounds.filter({ hasText: /^24$/ }).locator("visible=true").first()).toBeVisible();
+    await expect(this.page.getByText(/^24 rounds$/).locator("visible=true").first()).toBeVisible();
     return this;
   }
 
-  async openLab(): Promise<this> {
-    await this.page.goto("/the-lab");
-    await expect(this.page.getByRole("heading", { name: "The Lab" }).locator("visible=true")).toBeVisible();
+  /** Analytics' Profile tab. */
+  async openProfile(): Promise<this> {
+    await this.page.goto("/analytics?tab=profile");
+    await expect(this.page.getByRole("tab", { name: "Profile", selected: true }).locator("visible=true")).toBeVisible();
     return this;
   }
 
-  /** The par-type card, which both layouts open on, filled in from the golfer's rounds. */
-  async seesLab(): Promise<this> {
-    await expect(this.page.locator("[data-slot=par-type-card]").locator("visible=true").first()).toBeVisible();
+  /** The goal card and the shape, filled in from the golfer's rounds. */
+  async seesProfile(): Promise<this> {
+    await expect(this.page.locator("[data-slot=shape-card]").locator("visible=true").first()).toBeVisible();
     return this;
   }
 
   async capture(name: string): Promise<this> {
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     // Device scale, so the phone captures stay sharp on a phone.
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { scale: "device" });
     return this;
   }

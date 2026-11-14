@@ -1,6 +1,6 @@
 import { PageTitle } from "@/brand";
 import type { Career, CareerWindowFigures } from "../model";
-import { MILESTONE_GROUP_TITLE, NO_NEW_RECORDS, PAGE_SUBTITLE, newRecordsNote, totalsTitle } from "../present";
+import { MILESTONE_GROUP_TITLE, NO_NEW_RECORDS, PAGE_SUBTITLE, newRecordsNote, noRoundsInWindow, totalsTitle } from "../present";
 import type { CareerPageViewModel } from "../useCareerPageViewModel";
 import { CareerWindowPicker } from "./CareerWindowPicker";
 import { HandicapTrendCard } from "./HandicapTrendCard";
@@ -32,9 +32,9 @@ export function CareerDesktopLayout({ vm, career, figures, onOpenRound }: Career
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <HandicapTrendCard
           className="lg:col-span-2"
-          trend={career.handicapTrend}
+          trend={figures.handicapTrend}
           handicapIndex={career.handicapIndex}
-          roundCount={career.roundCount}
+          empty={noRoundsInWindow(career.windowDays)}
         />
         <PlayerProfileCard profile={career.profile} />
         <div className="flex flex-col gap-5">

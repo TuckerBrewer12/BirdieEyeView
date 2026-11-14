@@ -95,7 +95,6 @@ tester.run("kit/no-style-measure", kitNumbers.rules["no-style-measure"], {
 
 tester.run("kit/no-measure-prop", kitNumbers.rules["no-measure-prop"], {
   valid: [
-    "const el = <Pie innerRadius={chartLayout.ring.inner} outerRadius={chartLayout.ring.outer} />;",
     "const el = <circle r={dotR} strokeWidth={0} />;",
     "const el = <rect rx={chartLayout.barRadius[0]} fillOpacity={1} />;",
     "const el = <g opacity={1} />;",
@@ -105,9 +104,8 @@ tester.run("kit/no-measure-prop", kitNumbers.rules["no-measure-prop"], {
     'import { Link2 } from "lucide-react";\nconst el = <Link2 className="size-icon-xs" />;',
   ],
   invalid: [
-    { code: "const el = <Pie innerRadius={50} />;", errors: [{ messageId: "measure" }] },
     { code: "const el = <rect rx={2} />;", errors: [{ messageId: "measure" }] },
-    { code: 'const el = <CartesianGrid strokeDasharray="3 3" />;', errors: [{ messageId: "measure" }] },
+    { code: 'const el = <line strokeDasharray="3 3" />;', errors: [{ messageId: "measure" }] },
     { code: "const el = <stop stopOpacity={0.22} />;", errors: [{ messageId: "measure" }] },
     { code: "const el = <line opacity={0.35} />;", errors: [{ messageId: "measure" }] },
     { code: "const el = <line strokeWidth={4} />;", errors: [{ messageId: "measure" }] },

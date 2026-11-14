@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional, get_args
 
 from analytics.handicap import round_course_handicap, round_net_score
+from analytics.verdicts import ChangeVerdict, change_verdict
 from models.hole import BACK_NINE, FRONT_NINE, HOLES_PER_NINE, HOLES_PER_ROUND
 from models.hole_score import ScoreKind, score_kind
 from models.round import Round
@@ -249,7 +250,7 @@ def _round_total_par(round_obj: Round) -> Optional[int]:
 
 def usual_par(rounds: Iterable[Round]) -> int:
     """The par the golfer most often plays a full round against; 72 until they have one."""
-    pars = [p for p in (r.played_par() for r in rounds if r.holes_played() >= 18) if p is not None]
+    pars = [p for p in (r.played_par() for r in rounds if r.holes_played() >= HOLES_PER_ROUND) if p is not None]
     return Counter(pars).most_common(1)[0][0] if pars else 72
 
 
@@ -404,11 +405,30 @@ def _first_round_reaching_gir(round_set: List[Round], threshold: int) -> Optiona
     return None
 
 
+RECORDS_WINDOW_DAYS = 365
+"""How far back the records' "last year" reaches, in calendar days. One number for the records,
+the totals, the milestones and Career's handicap trend, so they can't drift apart."""
+
+
+def in_window(
+    round_obj: Round,
+    *,
+    reference_date: Optional[date] = None,
+    days: int = RECORDS_WINDOW_DAYS,
+) -> bool:
+    """Whether a round falls in the records' last year: the `days` up to `reference_date` (today's
+    UTC date when omitted), counted in calendar days. A round with no date never does."""
+    today = reference_date or datetime.now(timezone.utc).date()
+    if round_obj.date is None:
+        return False
+    return today - timedelta(days=days) <= round_obj.date.date() <= today
+
+
 def notable_achievements(
     rounds: Iterable[Round],
     *,
     reference_date: Optional[date] = None,
-    days: int = 365,
+    days: int = RECORDS_WINDOW_DAYS,
     home_course_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
@@ -421,7 +441,7 @@ def notable_achievements(
     cutoff = today - timedelta(days=days)
     rounds_list = list(rounds)
 
-    rounds_year = [r for r in rounds_list if r.date is not None and cutoff <= r.date.date() <= today]
+    rounds_year = [r for r in rounds_list if in_window(r, reference_date=today, days=days)]
     # A record or milestone set by a round's total (lowest, highest, fewest putts, most greens,
     # breaking a score) counts only full rounds: a nine's 40 is not a round of 40.
     full_list = full_rounds(rounds_list)
@@ -826,6 +846,13 @@ def putts_comparison(rounds: Iterable[Round], round_index: Optional[int] = None)
     )
 
 
+# Three or more three-putts in a round: the rounds the putting page marks.
+COSTLY_THREE_PUTTS = 3
+
+# The hole handicaps the analytics page marks as the golfer's hardest.
+HARDEST_HOLES = 3
+
+
 def three_putts_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     """
     Return 3-putt count and percentage for each round.
@@ -852,6 +879,7 @@ def three_putts_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
                 "three_putt_count": three_putt_count,
                 "holes_with_putt_data": holes_with_putt_data,
                 "three_putt_percentage": three_putt_percentage,
+                "costly": three_putt_count >= COSTLY_THREE_PUTTS,
             }
         )
     return results
@@ -870,6 +898,32 @@ def three_putt_averages(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
         "per_round": round_half_up(sum(r["three_putt_count"] for r in recorded) / len(recorded)),
         "rate": round_half_up(sum(r["three_putt_percentage"] for r in recorded) / len(recorded)),
     }
+
+
+def putts_per_hole(rounds: Iterable[Round]) -> Dict[str, Any]:
+    """How the holes with putts recorded split: one putt or none (a chip-in), two, three or more,
+    each a share of those holes to a hundredth."""
+    putts = [score.putts for r in rounds for score in _valid_hole_scores(r) if score.putts is not None]
+    if not putts:
+        return {"holes": 0, "one_or_fewer": 0.0, "two": 0.0, "three_or_more": 0.0}
+
+    def share(count: int) -> float:
+        return round_half_up(count / len(putts) * 100, 2)
+
+    return {
+        "holes": len(putts),
+        "one_or_fewer": share(sum(1 for p in putts if p <= 1)),
+        "two": share(sum(1 for p in putts if p == 2)),
+        "three_or_more": share(sum(1 for p in putts if p >= 3)),
+    }
+
+
+def with_rolling_average(rows: List[Dict[str, Any]], key: str, window: int = 5) -> List[Dict[str, Any]]:
+    """Each row with `rolling_average`: its `key` averaged with the rounds before it that have one,
+    `window` of them in all, to a tenth. A row without the figure has none."""
+    recorded = [row[key] for row in rows if row[key] is not None]
+    averages = iter(rolling_average(recorded, window))
+    return [{**row, "rolling_average": next(averages) if row[key] is not None else None} for row in rows]
 
 
 def three_putts_comparison(rounds: Iterable[Round], round_index: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -970,6 +1024,7 @@ def score_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     for index, round_obj in enumerate(rounds, start=1):
         total_score = round_obj.calculate_total_score()
         total_to_par = round_obj.total_to_par()
+        counts = round_obj.get_score_counts()
         course_name = (
             round_obj.course.name if round_obj.course else round_obj.course_name_played
         )
@@ -979,7 +1034,9 @@ def score_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
                 "round_id": round_obj.id,
                 "total_score": total_score,
                 "to_par": total_to_par,
+                "par": round_obj.scored_par() if total_score is not None else None,
                 "course_name": course_name,
+                "score_counts": {kind: counts.get(kind, 0) for kind in SCORE_KINDS},
             }
         )
     return results
@@ -992,7 +1049,18 @@ def best_round_ranks(rounds: List[Round]) -> Dict[int, int]:
     no place. Ties keep the list's order."""
     ranked = sorted(
         (i for i, r in enumerate(rounds) if r.total_to_par() is not None),
-        key=lambda i: (rounds[i].holes_played() < 18, rounds[i].total_to_par()),
+        key=lambda i: (rounds[i].holes_played() < HOLES_PER_ROUND, rounds[i].total_to_par()),
+    )
+    return {i: place for place, i in enumerate(ranked, start=1)}
+
+
+def worst_round_ranks(rounds: List[Round]) -> Dict[int, int]:
+    """Each round's place among `rounds`, worst first: the full rounds furthest over par, then the
+    nines and rounds cut short the same way, so a nine is never the worst round. Like
+    `best_round_ranks`, a round with no to par has no place and ties keep the list's order."""
+    ranked = sorted(
+        (i for i, r in enumerate(rounds) if r.total_to_par() is not None),
+        key=lambda i: (rounds[i].holes_played() < HOLES_PER_ROUND, -rounds[i].total_to_par()),
     )
     return {i: place for place, i in enumerate(ranked, start=1)}
 
@@ -1008,7 +1076,37 @@ def best_round(rounds: List[Round]) -> Optional[Round]:
 def full_rounds(rounds: Iterable[Round]) -> List[Round]:
     """The rounds of 18 holes or more: the ones a whole-round record, a score break or a
     per-round milestone is set in, so a nine's total is never read as a round's."""
-    return [r for r in rounds if r.holes_played() >= 18]
+    return [r for r in rounds if r.holes_played() >= HOLES_PER_ROUND]
+
+
+def worst_round(rounds: List[Round]) -> Optional[Round]:
+    """The worst of `rounds`, the one `worst_round_ranks` puts first: the full round furthest over
+    par, or the worst nine when there is no full round. Ties go to the earlier round in the list."""
+    ranks = worst_round_ranks(rounds)
+    return next((rounds[i] for i, place in ranks.items() if place == 1), None)
+
+
+def course_record(rounds: List[Round]) -> Dict[str, Any]:
+    """
+    A golfer's record at one course, from their rounds there newest first: how many they have
+    played and when they last did, their average score and its average to par, and their best
+    and worst rounds. The average is over the full rounds, or over the nines when there is no
+    full round, so a nine's total never pulls an 18-hole average down; best and worst follow the
+    same rule (`best_round`, `worst_round`).
+    """
+    full = full_rounds(rounds)
+    counted = full or rounds
+    scores = [s for s in (r.calculate_total_score() for r in counted) if s is not None]
+    to_pars = [t for t in (r.total_to_par() for r in counted) if t is not None]
+    dates = [r.date for r in rounds if r.date is not None]
+    return {
+        "rounds_played": len(rounds),
+        "last_played": max(dates) if dates else None,
+        "scoring_average": sum(scores) / len(scores) if scores else None,
+        "scoring_average_to_par": sum(to_pars) / len(to_pars) if to_pars else None,
+        "best_round": best_round(rounds),
+        "worst_round": worst_round(rounds),
+    }
 
 
 def score_trend_with_rolling_average(rounds: Iterable[Round], window: int = 5) -> List[Dict[str, Any]]:
@@ -1182,7 +1280,7 @@ def overall_putts_per_gir(rounds: Iterable[Round]) -> Dict[str, Optional[float]]
 
 
 def overall_gir_percentage(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
-    """Aggregate GIR percentage across all rounds."""
+    """Aggregate GIR percentage across the rounds with greens recorded."""
     total_holes = 0
     total_gir = 0
     rounds_with_data = 0
@@ -1191,11 +1289,11 @@ def overall_gir_percentage(rounds: Iterable[Round]) -> Dict[str, Optional[float]
         hole_scores = _valid_hole_scores(round_obj)
         holes_played = len(hole_scores)
         gir = round_obj.get_total_gir()
-        if holes_played:
+        # A round with no greens recorded says nothing about them: its holes aren't misses.
+        if holes_played and gir is not None:
             total_holes += holes_played
-            if gir is not None:
-                total_gir += gir
-                rounds_with_data += 1
+            total_gir += gir
+            rounds_with_data += 1
 
     misses = total_holes - total_gir
     return {
@@ -1395,6 +1493,10 @@ def scoring_vs_hole_handicap(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
                 "sample_size": len(values),
             }
         )
+    # The three the golfer scores worst on against par; a tie goes to the harder hole by handicap.
+    hardest = sorted(results, key=lambda row: (-row["average_to_par"], row["handicap"]))[:HARDEST_HOLES]
+    for row in results:
+        row["hardest"] = row in hardest
 
     return results
 
@@ -1443,18 +1545,89 @@ def average_score_relative_to_par_by_hole(rounds: Iterable[Round]) -> List[Dict[
     return results
 
 
-def hole_average_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[float]]:
+def hole_to_par_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[float]]:
     """
-    The player's per-hole average scores summed over the front nine, the back nine and every
+    The player's per-hole averages to par summed over the front nine, the back nine and every
     hole: the Out, In and Total of their row on the course scorecard. Takes the rows
     `average_score_relative_to_par_by_hole` builds; a nine with no hole played is null.
     """
 
     def total(holes: range) -> Optional[float]:
-        averages = [row["average_score"] for row in by_hole if row["hole_number"] in holes]
+        averages = [row["average_to_par"] for row in by_hole if row["hole_number"] in holes]
         return sum(averages) if averages else None
 
     return {"front_nine": total(FRONT_NINE), "back_nine": total(BACK_NINE), "total": total(range(1, HOLES_PER_ROUND + 1))}
+
+
+def gir_percentage_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[float]]:
+    """
+    The share of greens hit (0-100) over the front nine, the back nine and every hole, pooling the
+    holes' greens rather than averaging their rates: the Greens row's Out, In and Total. Takes the
+    rows `gir_percentage_by_hole` builds; a nine with no green recorded is null.
+    """
+
+    def share(holes: range) -> Optional[float]:
+        rows = [row for row in by_hole if row["hole_number"] in holes]
+        samples = sum(row["sample_size"] for row in rows)
+        return sum(row["gir_hits"] for row in rows) / samples * 100.0 if samples else None
+
+    return {"front_nine": share(FRONT_NINE), "back_nine": share(BACK_NINE), "total": share(range(1, HOLES_PER_ROUND + 1))}
+
+
+# A hole's putts read against two.
+TWO_PUTTS = 2
+
+
+def putts_verdict(average_putts: Optional[float]) -> Optional[ChangeVerdict]:
+    """Whether a hole's average putts beat two a hole, to a tenth: fewer is good, more is bad."""
+    if average_putts is None:
+        return None
+    return change_verdict(round_half_up(average_putts - TWO_PUTTS, 1))
+
+
+def course_hole_stats(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
+    """
+    How each hole of one course plays for the golfer, one row a hole in course order: its par, how
+    many times they've played it, their average score and to par on it, where it ranks by that to
+    par (`course_difficulty_profile_by_hole`: 1 is the hardest), how far their score swings (the
+    standard deviation, null under two rounds), the greens they hit (0-100), their average putts
+    (null where none were recorded) and its verdict against two a hole (`putts_verdict`), and the
+    share of each kind of score (0-100).
+
+    The course page's hole charts read these rows: one row a hole rather than a list per figure.
+    """
+    rounds = list(rounds)
+    to_par = {row["hole_number"]: row for row in average_score_relative_to_par_by_hole(rounds)}
+    rank = {row["hole_number"]: row["difficulty_rank"] for row in course_difficulty_profile_by_hole(rounds)}
+    spread = {row["hole_number"]: row for row in score_variance_by_hole(rounds)}
+    greens = {row["hole_number"]: row for row in gir_percentage_by_hole(rounds)}
+    putts = {row["hole_number"]: row for row in average_putts_by_hole(rounds)}
+    mix = {row["hole_number"]: row for row in score_type_distribution_by_hole(rounds)}
+    rows: List[Dict[str, Any]] = []
+    for hole_number in sorted(to_par):
+        row = to_par[hole_number]
+        played = row["sample_size"]
+        kinds = mix.get(hole_number)
+        average_putts = putts[hole_number]["average_putts"] if hole_number in putts else None
+        rows.append(
+            {
+                "hole_number": hole_number,
+                "par": row["par"],
+                "sample_size": played,
+                "average_score": row["average_score"],
+                "average_to_par": row["average_to_par"],
+                "difficulty_rank": rank[hole_number],
+                "score_std_dev": spread[hole_number]["score_std_dev"] if played >= 2 and hole_number in spread else None,
+                "gir_percentage": greens[hole_number]["gir_percentage"] if hole_number in greens else None,
+                "average_putts": average_putts,
+                "putts_verdict": putts_verdict(average_putts),
+                "score_mix": {
+                    kind: kinds[name] if kinds else 0.0
+                    for kind, name in zip(SCORE_KINDS, SCORE_TYPE_ORDER)
+                },
+            }
+        )
+    return rows
 
 
 def course_difficulty_profile_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
@@ -1683,7 +1856,13 @@ def scoring_by_yardage_buckets(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
             "sample_size": len(to_par_vals),
             "score_mix": score_mix_from_to_par(to_par_vals),
             "raw_scores": [{"to_par": tp, "yardage": y} for tp, y in zip(to_par_vals, entry["yardages"])],
+            "worst": False,
         })
+    # Each par's band the golfer scores worst from, once the par has two bands to choose between.
+    for par in {row["par"] for row in results}:
+        bands = [row for row in results if row["par"] == par]
+        if len(bands) > 1:
+            max(bands, key=lambda row: row["average_to_par"])["worst"] = True
     return results
 
 

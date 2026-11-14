@@ -34,7 +34,15 @@ describe("friendshipFromDto", () => {
       "user-1",
     );
     expect(mapped.updatedAt).toBeNull();
-    expect(mapped.other).toEqual({ id: dto.requester_id, name: null, email: null });
+    expect(mapped.other).toEqual({ id: dto.requester_id, name: null, email: null, handicapIndex: null, lastPlayed: null });
+  });
+
+  it("carries a friend's index and last round", () => {
+    const dto = populatedFriendships.find((row) => row.id === "friendship-avery");
+    if (!dto) throw new Error("no Avery");
+    const avery = friendshipFromDto(dto, "user-1");
+    expect(avery.other.handicapIndex).toBe(8.2);
+    expect(avery.other.lastPlayed).toBe("2026-10-28");
   });
 });
 

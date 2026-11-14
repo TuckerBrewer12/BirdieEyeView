@@ -57,15 +57,22 @@ const VIEW_SHAPING = [
     message: 'A `!` in JSX means the view is guessing at state. Have the view model hand over a value the view can render as is.',
   },
   {
-    selector: "JSXExpressionContainer CallExpression[callee.property.name=/^(toFixed|toPrecision)$/], JSXExpressionContainer CallExpression[callee.object.name='Math'][callee.property.name='round']",
+    // `.toFixed()` is kit/no-format-outside-domain's to report, in a view or anywhere else.
+    selector: "JSXExpressionContainer CallExpression[callee.property.name='toPrecision'], JSXExpressionContainer CallExpression[callee.object.name='Math'][callee.property.name='round']",
     message: 'Number formatting in JSX gets copied between views. Use a formatter from domain/ or the page’s presenter.',
   },
 ]
 
+/** The clock is state: a view that reads it renders differently on every pass and can't be previewed at a fixed time. */
+const NO_VIEW_CLOCK = [{
+  selector: "NewExpression[callee.name='Date'][arguments.length=0], CallExpression[callee.object.name='Date'][callee.property.name='now']",
+  message: 'Reading the clock in a view hides state. Have the view model read it (and take a clock a test can pin) and hand over what it means.',
+}]
+
 /** Native controls the kit already wraps, with its focus, sizing and dark-mode styles. */
 const NO_RAW_CONTROLS = [{
   selector: 'JSXOpeningElement[name.name=/^(button|input|select|textarea)$/]',
-  message: 'Use the kit’s control (Button, Input, InputGroup, ToggleGroup, SortControl from @/brand) instead of a raw element.',
+  message: 'Use the kit’s control (Button, Input, InputGroup, ToggleGroup, PickerMenu from @/brand) instead of a raw element.',
 }]
 
 /** Kit components and page components take domain types; the API's shapes stop at the data layer. */
@@ -75,12 +82,12 @@ const NO_API_TYPES_IN_COMPONENTS = {
 }
 
 /** Files that the brand kit's and golf rules cover: the kit, the app shell and every page. */
-const REFACTORED = [
+const UI_FILES = [
   'src/brand/**/*.{ts,tsx}',
   'src/app/**/*.{ts,tsx}',
   'src/pages/**/*.{ts,tsx}',
 ]
-const REFACTORED_IGNORES = [
+const UI_IGNORES = [
   // The homes these rules point to: score words, paint and token mirrors.
   'src/brand/theme/**',
   // Tests build fixtures and fake server figures on purpose.
@@ -202,43 +209,41 @@ export default defineConfig([
   {
     // Golf rules and score paint have one home each: the server and domain/ for figures and
     // rules, brand/theme for words, colour, lengths and motion.
-    files: REFACTORED,
-    ignores: REFACTORED_IGNORES,
+    files: UI_FILES,
+    ignores: UI_IGNORES,
     plugins: { golf, kit },
-    rules: {
-      'golf/no-score-kind-table': 'error',
-      'golf/no-to-par-branch': 'error',
-      'golf/no-golf-math': 'error',
-      'golf/no-shadowed-golf-type': 'error',
-      'golf/no-par-fallback': 'error',
-      'kit/no-arbitrary-value': 'error',
-      'kit/no-color-literal': 'error',
-      'kit/no-opacity-wash': 'error',
-      'kit/no-fraction-size': 'error',
-      'kit/no-raw-motion': 'error',
-      'kit/no-style-measure': 'error',
-      'kit/no-measure-prop': 'error',
-    },
+    rules: Object.fromEntries([
+      ...Object.keys(golf.rules).map((rule) => `golf/${rule}`),
+      // no-format-outside-domain covers every file, in its own block below.
+      ...Object.keys(kit.rules).filter((rule) => rule !== 'no-format-outside-domain').map((rule) => `kit/${rule}`),
+    ].map((rule) => [rule, 'error'])),
+  },
+  {
+    // Numbers and dates are worded in domain/format.ts and domain/date.ts, wherever they are shown.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: UI_IGNORES,
+    plugins: { kit },
+    rules: { 'kit/no-format-outside-domain': 'error' },
   },
   {
     // Views: lay out what the view model hands over, with kit controls.
-    files: REFACTORED.map((glob) => glob.replace('{ts,tsx}', 'tsx')),
-    ignores: [...REFACTORED_IGNORES, 'src/brand/components/**'],
+    files: UI_FILES.map((glob) => glob.replace('{ts,tsx}', 'tsx')),
+    ignores: [...UI_IGNORES, 'src/brand/components/**'],
     rules: {
-      'no-restricted-syntax': ['error', ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING, ...NO_RAW_CONTROLS],
+      'no-restricted-syntax': ['error', ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING, ...NO_VIEW_CLOCK, ...NO_RAW_CONTROLS],
     },
   },
   {
     // The kit's own components wrap the native controls, so only the view rules apply.
     files: ['src/brand/components/**/*.tsx'],
-    ignores: REFACTORED_IGNORES,
+    ignores: UI_IGNORES,
     rules: {
-      'no-restricted-syntax': ['error', ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING],
+      'no-restricted-syntax': ['error', ...THEME_IS_CSS, ...NO_RAW_API_FETCH, ...VIEW_SHAPING, ...NO_VIEW_CLOCK],
     },
   },
   {
     files: ['src/brand/**/*.{ts,tsx}', 'src/pages/**/components/**/*.{ts,tsx}'],
-    ignores: REFACTORED_IGNORES,
+    ignores: UI_IGNORES,
     rules: {
       '@typescript-eslint/no-restricted-imports': ['error', { patterns: [NO_API_TYPES_IN_COMPONENTS] }],
     },

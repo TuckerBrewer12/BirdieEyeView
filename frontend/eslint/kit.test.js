@@ -87,3 +87,339 @@ tester.run("kit/no-fraction-size", kit.rules["no-fraction-size"], {
     { code: "const c = `flex ${tall ? \"md:h-9/10\" : \"size-4/5\"}`;", errors: 2 },
   ],
 });
+
+tester.run("kit/no-arbitrary-value (numbers)", kit.rules["no-arbitrary-value"], {
+  valid: ['const c = "flex-1 grow basis-0 z-10";'],
+  invalid: [
+    { code: 'const c = "flex-[1.3]";', errors: [{ messageId: "number" }] },
+    { code: 'const c = "z-[60]";', errors: [{ messageId: "number" }] },
+  ],
+});
+
+tester.run("kit/no-off-scale-spacing", kit.rules["no-off-scale-spacing"], {
+  valid: [
+    'const c = "px-5 py-4 gap-4 w-10 size-3";',
+    // Tailwind's half steps under 4 are the 2px a hairline gap or an icon nudge needs.
+    'const c = "gap-0.5 py-1.5 px-2.5 size-3.5 -mt-0.5";',
+    // Named measures and fractions are other rules' business.
+    'const c = "w-sparkline-card px-page-phone w-1/2";',
+    'const v = "1.5 rounds";',
+  ],
+  invalid: [
+    { code: 'const c = "px-5.5 py-5";', errors: [{ messageId: "offScale" }] },
+    { code: 'const el = <div className="py-2.75 gap-0.75 md:w-37.5" />;', errors: 3 },
+    { code: 'const c = "size-4.5 -translate-y-1.25";', errors: 2 },
+  ],
+});
+
+tester.run("kit/no-chart-color-class", kit.rules["no-chart-color-class"], {
+  valid: [
+    'const c = "border-border bg-muted";',
+    { code: 'const c = "bg-chart-grid";', filename: "/app/src/brand/charts/Meter.tsx" },
+  ],
+  invalid: [
+    { code: 'const c = "divide-y border-chart-grid";', filename: "/app/src/pages/x/Row.tsx", errors: [{ messageId: "chart" }] },
+    { code: 'const c = "hover:bg-chart-series1";', filename: "/app/src/pages/x/Row.tsx", errors: [{ messageId: "chart" }] },
+  ],
+});
+
+tester.run("kit/no-display-size", kit.rules["no-display-size"], {
+  valid: [
+    'const c = "text-figure text-hero text-sm text-xl";',
+    { code: 'const c = "text-4xl";', filename: "/app/src/brand/components/variants/statVariants.ts" },
+  ],
+  invalid: [
+    { code: 'const c = "text-3xl font-semibold";', filename: "/app/src/pages/x/A.tsx", errors: [{ messageId: "display" }] },
+    { code: 'const c = "text-4xl md:text-5xl";', filename: "/app/src/pages/x/A.tsx", errors: 2 },
+  ],
+});
+
+tester.run("kit/no-text-arrow", kit.rules["no-text-arrow"], {
+  valid: [
+    'const label = "View round";',
+    "const el = <span>Handicap 1 (hardest) to 18 (easiest)</span>;",
+    // A comment can point however it likes.
+    "// upload → review\nconst a = 1;",
+  ],
+  invalid: [
+    { code: "const el = <span>View round →</span>;", errors: [{ messageId: "arrow" }] },
+    { code: 'const action = "View →";', errors: [{ messageId: "arrow" }] },
+    { code: "const el = <span>{`${where} ›`}</span>;", errors: [{ messageId: "arrow" }] },
+  ],
+});
+
+tester.run("kit/no-handmade-card", kit.rules["no-handmade-card"], {
+  valid: [
+    'const el = <Card className="gap-1.5 px-5" />;',
+    'const el = <div className="bg-card text-card-foreground" />;',
+    { code: 'const c = "rounded-surface bg-card shadow-surface";', filename: "/app/src/brand/components/Card.tsx" },
+  ],
+  invalid: [
+    {
+      code: 'const SURFACE = "rounded-surface bg-card text-card-foreground shadow-surface";',
+      errors: [{ messageId: "card" }],
+    },
+    {
+      code: 'const el = <a className={cn("bg-card shadow-surface", on && "hover:shadow-card")} />;',
+      errors: [{ messageId: "card" }],
+    },
+    { code: 'const el = <div className="grid rounded-surface bg-card" />;', errors: [{ messageId: "card" }] },
+  ],
+});
+
+tester.run("kit/no-tone-override", kit.rules["no-tone-override"], {
+  valid: [
+    'const el = <StatDelta tone="good" className="text-body font-semibold" />;',
+    'const el = <span className="text-primary" />;',
+  ],
+  invalid: [
+    {
+      code: 'const el = <StatDelta tone={v} className={cn("font-semibold", v === "good" && "text-primary")} />;',
+      errors: [{ messageId: "tone" }],
+    },
+    { code: 'const el = <ToParFigure toPar={t} className="text-score-birdie" />;', errors: [{ messageId: "tone" }] },
+  ],
+});
+
+tester.run("kit/no-handmade-to-par-pill", kit.rules["no-handmade-to-par-pill"], {
+  valid: [
+    { code: 'const c = cn("rounded-full bg-primary", on && "px-2");', filename: "/app/src/brand/components/Badge.tsx" },
+    { code: 'const c = cn("font-semibold", toParTextClass(toPar));', filename: "/app/src/brand/components/Badge.tsx" },
+    {
+      code: 'const c = cn("rounded-full", toParTextClass(toPar));',
+      filename: "/app/src/brand/components/ToParPill.tsx",
+    },
+    // A page is no-to-par-tone's to report.
+    { code: 'const c = cn("rounded-full", toParTextClass(toPar));', filename: "/app/src/pages/rounds/RoundsPage.tsx" },
+  ],
+  invalid: [
+    {
+      code: 'const c = cn("rounded-full bg-background px-3 py-1", toParTextClass(round.toPar));',
+      filename: "/app/src/brand/components/RoundPreview.tsx",
+      errors: [{ messageId: "pill" }],
+    },
+    {
+      code: 'const c = cn(compact ? "rounded-full px-2" : "rounded-full px-3", cn("font-semibold", toParTextClass(t)));',
+      filename: "/app/src/brand/components/RoundPreview.tsx",
+      errors: [{ messageId: "pill" }],
+    },
+  ],
+});
+
+tester.run("kit/no-breakpoint-styling", kit.rules["no-breakpoint-styling"], {
+  valid: [
+    // Which side a sheet opens from is behaviour the CSS can't change.
+    'function S() { const wide = useFromBreakpoint("md"); return <Sheet side={wide ? "right" : "bottom"} />; }',
+    'function S() { const wide = useFromBreakpoint("md"); return <div className="p-4 md:p-6" />; }',
+    // Picking what to render is what it's for.
+    'function S() { const wide = useFromBreakpoint("md"); return wide ? <Table /> : <><Table nine="front" /><Table nine="back" /></>; }',
+  ],
+  invalid: [
+    {
+      code: 'function S() { const wide = useFromBreakpoint("md"); return <div className={wide ? "p-6" : "p-4"} />; }',
+      errors: [{ messageId: "breakpoint" }],
+    },
+    {
+      code: 'function S() { const wide = useFromBreakpoint("md"); const c = cn("flex", wide && "gap-4"); return c; }',
+      errors: [{ messageId: "breakpoint" }],
+    },
+    // Handed on to a component, which could style by it out of sight.
+    {
+      code: 'function S() { const wide = useFromBreakpoint("md"); return <Table wide={wide} />; }',
+      errors: [{ messageId: "passThrough" }],
+    },
+    {
+      code: 'function S() { const wide = useFromBreakpoint("md"); return <Field focusOnOpen={!wide} />; }',
+      errors: [{ messageId: "passThrough" }],
+    },
+    // Words by breakpoint, outside a prop.
+    {
+      code: 'function S() { const wide = useFromBreakpoint("md"); return <th>{wide ? "Your avg" : "Avg"}</th>; }',
+      errors: [{ messageId: "words" }],
+    },
+    {
+      code: 'function S() { const wide = useFromBreakpoint("md"); const s = { label: wide ? "Avg differential" : "Avg diff" }; return s; }',
+      errors: [{ messageId: "words" }],
+    },
+  ],
+});
+
+const PAGE = "/app/src/pages/rounds/RoundsPage.tsx";
+const KIT = "/app/src/brand/components/PageTitle.tsx";
+
+tester.run("kit/no-raw-heading", kit.rules["no-raw-heading"], {
+  valid: [
+    { code: 'const el = <PageTitle size="heading">Half Moon Bay</PageTitle>;', filename: PAGE },
+    { code: "const el = <CardTitle level={2}>Round flow</CardTitle>;", filename: PAGE },
+    // The kit is where headings are built.
+    { code: 'const el = <h1 className="text-title" />;', filename: KIT },
+  ],
+  invalid: [
+    { code: 'const el = <h1 className="text-title">Rounds</h1>;', filename: PAGE, errors: [{ messageId: "title" }] },
+    { code: "const el = <h2>vs your average</h2>;", filename: PAGE, errors: [{ messageId: "heading" }] },
+  ],
+});
+
+tester.run("kit/no-figure-type", kit.rules["no-figure-type"], {
+  valid: [
+    { code: 'const el = <StatValue size="card">78</StatValue>;', filename: PAGE },
+    // `text-figure` lives in the kit's Stat variants.
+    { code: 'const el = <div className="text-figure" />;', filename: "/app/src/brand/components/Stat.tsx" },
+    { code: 'const el = <span className="text-title" />;', filename: PAGE },
+  ],
+  invalid: [
+    { code: 'const el = <span className="text-figure leading-none">78</span>;', filename: PAGE, errors: [{ messageId: "figure" }] },
+    { code: 'const el = <h1 className={cn("md:text-heading", x)} />;', filename: PAGE, errors: [{ messageId: "figure" }] },
+    { code: 'const el = <span className="text-hero" />;', filename: PAGE, errors: [{ messageId: "figure" }] },
+  ],
+});
+
+tester.run("kit/no-button-size-override", kit.rules["no-button-size-override"], {
+  valid: [
+    { code: 'const el = <Button size="toolbar" className="w-full md:ml-auto" />;', filename: PAGE },
+    { code: 'const el = <Button variant="link" size="inline" className="mb-4 self-start" />;', filename: PAGE },
+  ],
+  invalid: [
+    { code: 'const el = <Button className="h-11 rounded-xl px-4" />;', filename: PAGE, errors: [{ messageId: "size" }] },
+    { code: 'const el = <DropdownMenuTrigger className="size-11 p-0" />;', filename: PAGE, errors: [{ messageId: "size" }] },
+    { code: 'const el = <X render={<Button size="sm" className="group px-0" />} />;', filename: PAGE, errors: [{ messageId: "size" }] },
+  ],
+});
+
+tester.run("kit/no-handmade-radio", kit.rules["no-handmade-radio"], {
+  valid: [
+    'const el = <ToggleGroup aria-label="Tee" />;',
+    'const el = <div role="group" />;',
+    // A kit component's own role prop is its business.
+    'const el = <Thing role="radio" />;',
+  ],
+  invalid: [
+    { code: 'const el = <div role="radiogroup" />;', errors: [{ messageId: "role" }] },
+    { code: 'const el = <button role="radio" aria-checked />;', errors: [{ messageId: "role" }] },
+  ],
+});
+
+tester.run("kit/no-format-outside-domain", kit.rules["no-format-outside-domain"], {
+  valid: [
+    { code: "const s = formatOneDecimal(x);", filename: PAGE },
+    { code: "const s = x.toFixed(1);", filename: "/app/src/domain/format.ts" },
+    { code: 'const s = d.toLocaleDateString("en-US");', filename: "/app/src/domain/date.ts" },
+  ],
+  invalid: [
+    { code: "const s = x.toFixed(2);", filename: PAGE, errors: [{ messageId: "format" }] },
+    { code: 'const s = n.toLocaleString("en-US");', filename: "/app/src/brand/components/X.tsx", errors: [{ messageId: "format" }] },
+    { code: 'const f = new Intl.NumberFormat("en-US");', filename: "/app/src/domain/handicap.ts", errors: [{ messageId: "format" }] },
+  ],
+});
+
+tester.run("kit/no-to-par-tone", kit.rules["no-to-par-tone"], {
+  valid: [
+    { code: '<ToParFigure toPar={-0.5} size="inherit" label="−0.5" />;', filename: PAGE },
+    // The kit is where to-par paint is applied.
+    { code: "const c = toParTextClass(toPar);", filename: KIT },
+  ],
+  invalid: [
+    { code: "<span className={toParTextClass(toPar)}>{label}</span>;", filename: PAGE, errors: [{ messageId: "tone" }] },
+    { code: "const tone = toParStatTextClass(toPar);", filename: PAGE, errors: [{ messageId: "tone" }] },
+  ],
+});
+
+tester.run("kit/no-raw-table", kit.rules["no-raw-table"], {
+  valid: [
+    { code: "<ScorecardGrid nines={nines} nineLabel={label} withTot rows={rows} />;", filename: PAGE },
+    { code: "<table className='w-full' />;", filename: KIT },
+  ],
+  invalid: [{ code: "<table><tbody /></table>;", filename: PAGE, errors: [{ messageId: "table" }] }],
+});
+
+tester.run("kit/no-loose-card-title", kit.rules["no-loose-card-title"], {
+  valid: [
+    { code: "<Card><CardHeader><CardTitle>Goal</CardTitle><CardAction><Menu /></CardAction></CardHeader></Card>;", filename: PAGE },
+    // A heading over a group of cards is the section's, not a card's.
+    { code: "<section><CardTitle level={2}>Where to find 3 strokes</CardTitle><Card /></section>;", filename: PAGE },
+    { code: "<Card><div><CardTitle>Kit</CardTitle></div></Card>;", filename: KIT },
+  ],
+  invalid: [
+    {
+      code: '<Card><div className="flex justify-between"><CardTitle>Goal</CardTitle><Menu /></div></Card>;',
+      filename: PAGE,
+      errors: [{ messageId: "header" }],
+    },
+  ],
+});
+
+tester.run("kit/no-handmade-stat-tile", kit.rules["no-handmade-stat-tile"], {
+  valid: [
+    { code: '<StatTile layout="strip" label="Greens" value="33%" delta="4" direction="up" tone="good" />;', filename: PAGE },
+    { code: "<Stat><StatLabel>Rounds</StatLabel><StatValue>12</StatValue></Stat>;", filename: PAGE },
+    { code: "<div><StatLabel>Kit</StatLabel><StatValue>1</StatValue><StatDelta direction='up' /></div>;", filename: KIT },
+  ],
+  invalid: [
+    {
+      code:
+        "<Card><div className='flex flex-col'><StatLabel>Putts</StatLabel><div><StatValue>31</StatValue>" +
+        "{change && <StatDelta direction='down' tone='good'>{change}</StatDelta>}</div></div></Card>;",
+      filename: PAGE,
+      errors: [{ messageId: "tile" }],
+    },
+  ],
+});
+
+tester.run("kit/no-verdict-tone", kit.rules["no-verdict-tone"], {
+  valid: [
+    { code: '<StatValue tone={figure.tone}>{figure.value}</StatValue>;', filename: PAGE },
+    { code: '<b className={verdictTextClass(group.tone)}>{gap}</b>;', filename: PAGE },
+    // A colour that doesn't change with the data is the design's, not a verdict.
+    { code: '<span className="text-score-bogey">Penalty</span>;', filename: PAGE },
+    { code: 'const TONE = { good: "text-primary", bad: "text-score-bogey" };', filename: KIT },
+  ],
+  invalid: [
+    { code: '<StatValue className={cn(worst && "text-score-bogey")} />;', filename: PAGE, errors: [{ messageId: "tone" }] },
+    { code: '<b className={met ? "text-primary" : "text-score-bogey"} />;', filename: PAGE, errors: [{ messageId: "tone" }] },
+    { code: 'const TONE = { good: "text-primary", bad: "text-score-bogey" };', filename: PAGE, errors: [{ messageId: "tone" }] },
+  ],
+});
+
+tester.run("kit/no-percent-template", kit.rules["no-percent-template"], {
+  valid: [
+    { code: "<Meter aria-label={saverShareLabel(saver)} />;", filename: PAGE },
+    // In a style it's a length, not words.
+    { code: "<div style={{ width: `${share}%` }} />;", filename: PAGE },
+    { code: "<Meter aria-label={`${value}%`} />;", filename: KIT },
+  ],
+  invalid: [
+    {
+      code: "<Meter aria-label={`${saver.headline}: ${saver.shareOfGap}% of the gap`} />;",
+      filename: PAGE,
+      errors: [{ messageId: "percent" }],
+    },
+  ],
+});
+
+tester.run("kit/no-handmade-tee-picker", kit.rules["no-handmade-tee-picker"], {
+  valid: [
+    { code: '<TeePicker tees={tees} value={tee} onChange={setTee} />;', filename: PAGE },
+    { code: '<ToggleGroup aria-label="Scores written as" value={[v]} />;', filename: PAGE },
+    { code: '<ToggleGroup aria-label="Tee" value={[v]} />;', filename: KIT },
+  ],
+  invalid: [
+    { code: '<ToggleGroup size="sm" aria-label="Tee played" value={[tee]} />;', filename: PAGE, errors: [{ messageId: "tee" }] },
+    { code: '<ToggleGroup aria-label={"Tees"} value={[tee]} />;', filename: PAGE, errors: [{ messageId: "tee" }] },
+  ],
+});
+
+tester.run("kit/no-handmade-check-chip", kit.rules["no-handmade-check-chip"], {
+  valid: [
+    { code: '<CheckChip checked={on} onCheckedChange={setOn}>Putts</CheckChip>;', filename: PAGE },
+    // A plain checkbox and its words, as Settings lays one out.
+    { code: '<label className="flex items-center gap-2"><Checkbox />Get updates</label>;', filename: PAGE },
+    { code: '<label className="rounded-lg border"><Checkbox />Kit</label>;', filename: KIT },
+  ],
+  invalid: [
+    {
+      code: '<label className="inline-flex h-9 items-center rounded-lg border border-input px-3"><Checkbox checked={on} />Putts</label>;',
+      filename: PAGE,
+      errors: [{ messageId: "chip" }],
+    },
+  ],
+});

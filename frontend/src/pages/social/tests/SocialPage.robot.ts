@@ -1,8 +1,10 @@
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
+import { TEST_USER } from "../../../testing/fakes/FakeBackend";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { FriendsInboxRobot } from "../inbox/tests/FriendsInboxPage.robot";
+import { fontsLoaded } from "../../../testing/fontsLoaded";
 
 /** Screen robot for /social — same idea as an Android Espresso robot. */
 export class SocialRobot {
@@ -24,7 +26,19 @@ export class SocialRobot {
   }
 
   async open(friends: FakeBackendSeed["friends"] = {}): Promise<this> {
-    await FakeSession.install(this.page, { friends });
+    await FakeSession.install(this.page, {
+      friends,
+      profile: {
+        id: TEST_USER.user_id,
+        name: TEST_USER.name,
+        email: TEST_USER.email,
+        friend_code: "TGOLF7Q2",
+        home_course_id: null,
+        handicap: null,
+        created_at: null,
+        scoring_goal: null,
+      },
+    });
     await this.page.goto("/social");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.codeInput).toBeVisible();
@@ -52,9 +66,52 @@ export class SocialRobot {
     return this;
   }
 
-  async tapInbox(): Promise<FriendsInboxRobot> {
-    await this.page.getByRole("button", { name: "Inbox" }).click();
+  async tapRequests(): Promise<FriendsInboxRobot> {
+    await this.page.getByRole("button", { name: /^Requests/ }).click();
     return new FriendsInboxRobot(this.page).isOpen();
+  }
+
+  /** The Requests button's count of requests waiting for an answer, or none. */
+  async seesOpenRequests(count: number): Promise<this> {
+    const name = count > 0 ? `Requests, ${count} new` : "Requests";
+    await expect(this.page.getByRole("button", { name, exact: true })).toBeVisible();
+    return this;
+  }
+
+  /** Lets the page write to and read from the clipboard, as a golfer who allowed it would. */
+  async allowClipboard(): Promise<this> {
+    await this.page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    return this;
+  }
+
+  async copyMyCode(): Promise<this> {
+    await this.page.getByRole("button", { name: "Copy your code" }).click();
+    return this;
+  }
+
+  async seesCopied(code: string): Promise<this> {
+    await expect(this.page.getByRole("button", { name: "Copied" })).toBeVisible();
+    await expect.poll(() => this.page.evaluate(() => navigator.clipboard.readText())).toBe(code);
+    return this;
+  }
+
+  /** The golfer's code where this width shows it: the card's header, or under the field on a phone. */
+  async seesMyCode(code: string): Promise<this> {
+    await expect(this.page.getByText(code, { exact: true }).filter({ visible: true })).toBeVisible();
+    return this;
+  }
+
+  /** The line under a friend's name: their index and when they last played. */
+  async seesFriendDetail(name: string, detail: string): Promise<this> {
+    await expect(this.page.locator("[data-slot=person-row]").filter({ hasText: name })).toContainText(detail);
+    return this;
+  }
+
+  /** Compare (the whole row on a phone) opens Profile set against the friend. */
+  async tapCompare(name: string): Promise<this> {
+    await this.page.getByRole("link", { name: `Compare with ${name}` }).click();
+    await expect(this.page).toHaveURL(/\/analytics\?tab=profile&friend=/);
+    return this;
   }
 
   async isOpen(): Promise<this> {
@@ -94,6 +151,7 @@ export class SocialRobot {
   }
 
   async capture(name: string): Promise<this> {
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });
     return this;
   }

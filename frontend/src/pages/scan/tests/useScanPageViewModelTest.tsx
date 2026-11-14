@@ -75,14 +75,14 @@ describe("useScanPageViewModel", () => {
     act(() => result.current.pickPresetCourse(pebbleBeachSummary));
     const file = await pick(result);
     await waitFor(() => expect(scan.readPhotos).toEqual([file]));
-    act(() => result.current.setUserContext("my name is Sam"));
+    act(() => result.current.setCard({ name: "Sam", putts: true }));
 
     act(() => result.current.extract());
 
     await waitFor(() => expect(scan.extractRequests).toHaveLength(1));
     expect(scan.extractRequests[0]).toEqual({
       photo: file,
-      userContext: "my name is Sam",
+      userContext: "my name is Sam. name on score row. row order: score, putts",
       ocrText: "HOLE 1 2 3",
       courseId: pebbleBeachSummary.id,
     });
@@ -182,7 +182,7 @@ describe("useScanPageViewModel", () => {
     const { result } = renderVm();
     act(() => result.current.setMode("manual"));
     act(() => result.current.setup.pickCourse(pebbleBeachSummary));
-    await waitFor(() => expect(result.current.setup.tees).toEqual(["Blue"]));
+    await waitFor(() => expect(result.current.setup.tees.map((tee) => tee.name)).toEqual(["Blue"]));
     act(() => result.current.setup.setTeeBox("Blue"));
     act(() => result.current.setup.setDate("2026-10-01"));
 

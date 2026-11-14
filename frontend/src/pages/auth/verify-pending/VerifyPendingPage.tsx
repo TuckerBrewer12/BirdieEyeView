@@ -40,7 +40,7 @@ export function VerifyPendingPage() {
       }
     >
       <form
-        className="flex flex-col gap-5"
+        className="flex flex-col gap-4"
         onSubmit={(event) => {
           event.preventDefault();
           viewModel.resend();
@@ -54,15 +54,13 @@ export function VerifyPendingPage() {
           <Input
             id="verify-email"
             type="email"
-            size="cta"
             value={viewModel.email}
             onChange={(event) => viewModel.setEmail(event.target.value)}
             autoComplete="email"
-            placeholder="you@example.com"
           />
         </Field>
 
-        <Button type="submit" size="cta" disabled={viewModel.resending}>
+        <Button type="submit" size="lg" disabled={viewModel.resending}>
           <RefreshCw data-icon="inline-start" className={cn(viewModel.resending && "animate-spin")} />
           {viewModel.resending ? "Sending…" : "Send another confirmation email"}
         </Button>

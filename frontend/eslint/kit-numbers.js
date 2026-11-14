@@ -3,7 +3,7 @@
  *
  * kit.js reads strings: a class name or a hex. Much of the kit's styling never passes through a
  * string, though. Framer Motion takes a duration as a number, an inline style takes a font size
- * as a number, and an SVG or Recharts prop takes a radius as a number. These rules catch a raw
+ * as a number, and an SVG prop takes a radius as a number. These rules catch a raw
  * number in those places and point at the token in brand/theme/tokens.ts that already holds it:
  * `tokens.motion` for motion, a Tailwind utility or `tokens.type` / `space` / `size` / `radius`
  * for measures, and `tokens.chart` for charts.
@@ -37,8 +37,7 @@ const COLOR_KEYWORDS = new Set(["transparent", "currentcolor", "inherit", "initi
 const LENGTH = /\d(?:px|rem|em)(?![a-z])/;
 
 const MEASURE_PROPS = new Set([
-  "strokeWidth", "rx", "ry", "r", "innerRadius", "outerRadius", "cornerRadius", "maxBarSize", "barSize", "barGap",
-  "fontSize", "strokeDasharray", "opacity", "stopOpacity", "fillOpacity", "strokeOpacity", "tickSize", "tickMargin",
+  "strokeWidth", "rx", "ry", "r", "fontSize", "strokeDasharray", "opacity", "stopOpacity", "fillOpacity", "strokeOpacity",
 ]);
 /** Opacity of 1 is the default, not a measure. */
 const OPACITY_PROPS = new Set(["opacity", "stopOpacity", "fillOpacity", "strokeOpacity"]);
@@ -208,7 +207,7 @@ const noStyleMeasure = {
 const noMeasureProp = {
   meta: {
     type: "problem",
-    docs: { description: "Use a chart or size token instead of a raw number in an SVG, Recharts or icon prop." },
+    docs: { description: "Use a chart or size token instead of a raw number in an SVG or icon prop." },
     schema: [],
     messages: {
       measure:

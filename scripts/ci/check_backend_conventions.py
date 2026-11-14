@@ -24,10 +24,9 @@ SCAN_DIRS = ["api", "services", "database", "analytics", "models"]
 SKIP_GLOBS = ["analytics/demo.py", "analytics/visualize*.py"]
 
 HOLE_COUNTS = {9, 18}
-# No hole-count constant exists yet; this is where one should live.
 CONSTANT_HINT = (
-    "use a named constant (add HOLES_PER_ROUND = 18 / HOLES_PER_NINE = 9 to a "
-    "module in models/) and make sure 9-hole rounds still work (PR #284)"
+    "use HOLES_PER_ROUND / HOLES_PER_NINE from models.hole and make sure 9-hole "
+    "rounds still work (PR #284)"
 )
 
 # (start, stop) pairs for range() that walk a nine or a full round of holes.
@@ -120,20 +119,21 @@ def _int_const(expr: ast.expr) -> int | None:
 
 
 def _mentions_hole(expr: ast.expr) -> bool:
-    """A name/attribute about holes, or len(<anything>)."""
+    """A name/attribute about holes, a call to one (`r.holes_played()`), or len(<anything>)."""
     if isinstance(expr, ast.Name):
         return "hole" in expr.id.lower()
     if isinstance(expr, ast.Attribute):
         return "hole" in expr.attr.lower() or _mentions_hole(expr.value)
     if isinstance(expr, ast.Call):
         func = expr.func
-        return isinstance(func, ast.Name) and func.id == "len"
+        return (isinstance(func, ast.Name) and func.id == "len") or _mentions_hole(func)
     return False
 
 
 def _hole_count_findings(tree: ast.AST) -> Iterator[Finding]:
     for node in ast.walk(tree):
-        # Comparisons: `holes_played == 18`, `len(self.holes) != 18`, `1 <= hole_num <= 18`.
+        # Comparisons: `holes_played == 18`, `r.holes_played() < 18`, `len(self.holes) != 18`,
+        # `1 <= hole_num <= 18`.
         if isinstance(node, ast.Compare):
             operands = [node.left, *node.comparators]
             counts = [_int_const(op) for op in operands]

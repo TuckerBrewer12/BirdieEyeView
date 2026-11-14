@@ -1,97 +1,106 @@
 import * as React from "react";
 import { cn } from "@/brand/cn";
-import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
+import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
+import { RunningToParLine } from "@/brand/charts/RunningToParLine";
+import { ScoreMixBar } from "@/brand/charts/ScoreMixBar";
 import { BrandMark } from "@/brand/components/BrandMark";
-import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
-import { Stat, StatLabel, StatValue } from "@/brand/components/Stat";
-import { ToParFigure } from "@/brand/components/ToParFigure";
-import { playedScoreKinds, scoreKindCountLabel, type Round } from "@/domain";
-import { formatCourseName } from "@/domain/course";
-import { formatWeekdayDay } from "@/domain/date";
+import { Card } from "@/brand/components/Card";
+import { Stat, StatLabel, StatUnit, StatValue } from "@/brand/components/Stat";
+import { ToParPill } from "@/brand/components/ToParPill";
+import { courseLabel, roundDayAndTee, type Round } from "@/domain";
+import { formatCount } from "@/domain/format";
 
 interface RoundShareCardProps extends React.ComponentProps<"div"> {
   round: Round;
 }
 
+interface ShareFigure {
+  label: string;
+  value: string;
+  unit?: string;
+}
+
+/** Putts, greens and net under the card, each only when the round has it. */
+function shareFigures(round: Round): ShareFigure[] {
+  const figures: (ShareFigure | null)[] = [
+    round.putts != null ? { label: "Putts", value: round.putts.toString() } : null,
+    round.gir != null ? { label: "Greens", value: round.gir.toString(), unit: `/${round.holesPlayed}` } : null,
+    round.netScore != null ? { label: "Net", value: round.netScore.toString() } : null,
+  ];
+  return figures.filter((figure) => figure != null);
+}
+
+/** "Par 72 · 6,500 yds", from what the round knows. */
+function parAndYards(round: Round): string | null {
+  const parts = [
+    round.par != null ? `Par ${round.par}` : null,
+    round.yards != null ? `${formatCount(round.yards)} yds` : null,
+  ].filter((part) => part != null);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 /**
- * A round as an image to share: where and when, the score, every hole marked the way a
- * scorecard marks it, and how the holes added up. A fixed width, because it is captured
- * as a PNG rather than laid out on a page.
+ * A round as an image to send: the card the app draws for a round, resting on the page with the
+ * brand under it. The course, the day and tee, the score and its pill, the two nines as pills, how
+ * it went hole by hole, the score mix, then putts, greens and net. A fixed width, because it is
+ * captured as a PNG rather than laid out on a page.
  */
 const RoundShareCard = React.forwardRef<HTMLDivElement, RoundShareCardProps>(
   ({ round, className, ...props }, ref) => {
-    const date = formatWeekdayDay(round.date);
-    const played = playedScoreKinds(round.scoreCounts);
+    const when = roundDayAndTee(round);
+    const course = parAndYards(round);
+    const figures = shareFigures(round);
 
     return (
       <div
         ref={ref}
         data-slot="round-share-card"
-        className={cn(
-          "flex w-preview flex-col divide-y divide-border overflow-hidden rounded-card border border-border bg-background font-sans antialiased",
-          className,
-        )}
+        className={cn("flex w-preview flex-col items-center gap-4 bg-background p-5 font-sans antialiased", className)}
         {...props}
       >
-        <div className="px-5 py-3">
-          <BrandMark size="sm" />
-        </div>
-
-        <div className="px-5 pt-4 pb-3.5">
-          <div className="text-xl leading-tight font-extrabold tracking-title text-foreground">
-            {formatCourseName(round.course?.name)}
-          </div>
-          {date && <div className="mt-0.5 text-xs text-muted-foreground">{date}</div>}
-
-          <div className="mt-3 flex items-end gap-2.5">
-            <div className="font-mono text-hero text-foreground">
-              {round.score ?? "—"}
+        <Card className="w-full gap-0 py-0">
+          <div className="flex flex-col gap-4 px-5 pt-5 pb-4">
+            <div className="min-w-0">
+              {when && <p className="text-body-sm text-muted-foreground">{when}</p>}
+              <p className="mt-0.5 truncate text-name">{courseLabel(round.course?.name)}</p>
             </div>
-            <div className="pb-1">
-              <ToParFigure toPar={round.toPar} size="stat" />
-              {(round.par != null || round.yards != null) && (
-                <div className="mt-0.5 flex items-center gap-1.5 text-label text-muted-foreground">
-                  {round.par != null && <span>par {round.par}</span>}
-                  {round.par != null && round.yards != null && <span>·</span>}
-                  {round.yards != null && <span>{round.yards.toLocaleString("en-US")} yds</span>}
-                </div>
-              )}
+
+            <div className="flex items-end justify-between gap-3">
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-scoreboard-sm">{round.score ?? "—"}</span>
+                <ToParPill toPar={round.toPar} size="lg" />
+              </div>
+              {course && <p className="pb-1.5 text-body-sm text-muted-foreground">{course}</p>}
             </div>
-          </div>
-        </div>
 
-        <div className="px-5 py-3">
-          <HoleScoreShapes round={round} numbered />
-        </div>
+            <div className="flex gap-2">
+              <HoleScoreBars holes={round.frontNine.holes} size="lg" className="flex-1" />
+              <HoleScoreBars holes={round.backNine.holes} size="lg" className="flex-1" />
+            </div>
 
-        {played.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 px-5 py-3">
-            {played.map(({ kind, count }) => (
-              <ScoreCountChip key={kind} kind={kind} count={count}>
-                {scoreKindCountLabel(kind, count)}
-              </ScoreCountChip>
-            ))}
-          </div>
-        )}
+            <RunningToParLine holes={round.holes} compact />
 
-        {(round.putts != null || round.gir != null) && (
-          <div className="flex divide-x divide-border">
-            {round.putts != null && (
-              <Stat align="center" className="flex-1 py-3">
-                <StatValue size="sm">{round.putts}</StatValue>
-                <StatLabel>Putts</StatLabel>
-              </Stat>
-            )}
-            {round.gir != null && (
-              <Stat align="center" className="flex-1 py-3">
-                <StatValue size="sm" className="text-primary">
-                  {round.gir}/{round.holes.length}
-                </StatValue>
-                <StatLabel>GIR</StatLabel>
-              </Stat>
-            )}
+            <ScoreMixBar mix={round.scoreCounts} counted />
           </div>
-        )}
+
+          {figures.length > 0 && (
+            <div className="flex divide-x divide-border border-t border-border">
+              {figures.map((figure) => (
+                <Stat key={figure.label} align="center" className="flex-1 py-3">
+                  <StatValue size="summary">
+                    {figure.value}
+                    {figure.unit && <StatUnit>{figure.unit}</StatUnit>}
+                  </StatValue>
+                  <StatLabel tone="quiet" className="text-body-sm">
+                    {figure.label}
+                  </StatLabel>
+                </Stat>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <BrandMark size="sm" />
       </div>
     );
   },

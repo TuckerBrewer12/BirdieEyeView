@@ -1,6 +1,7 @@
 """The Lab's figures: the peak game, putting averages, recent form and the goal's counts."""
 
-from analytics import dashboard, goals, peak
+from analytics import goals, peak
+from analytics.headline import headline
 from analytics import stats as analytics
 from models import HoleScore, Round
 
@@ -71,13 +72,14 @@ def test_three_putt_averages_skip_rounds_without_putts():
     assert analytics.three_putt_averages([_round([4] * 18, putts=None)]) == {"per_round": None, "rate": None}
 
 
-def test_scoring_average_change_waits_for_a_full_window_when_asked():
+def test_scoring_move_waits_for_five_scored_rounds():
+    # The analytics page's one scoring move is its headline's.
     four = [_scored(90, str(i)) for i in range(4)]
-    assert dashboard.scoring_average_change(four) == 0.0
-    assert dashboard.scoring_average_change(four, full_window=True) is None
+    assert headline(four, {})[0]["change"] is None
     # The last five average 88 against 89.33 over all six.
     six = [_scored(s, str(i)) for i, s in enumerate([96, 88, 88, 88, 88, 88])]
-    assert dashboard.scoring_average_change(six, full_window=True) == -1.3
+    scoring = headline(six, {})[0]
+    assert (scoring["metric"], scoring["change"], scoring["verdict"]) == ("scoring_average", -1.3, "good")
 
 
 def test_goal_attempts_mark_each_scored_round_at_or_under_the_goal():

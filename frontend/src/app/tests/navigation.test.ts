@@ -36,6 +36,22 @@ describe("navigationFor", () => {
     expect(activeLabels(nav.more)).toEqual(["Settings"]);
   });
 
+  it("keeps Social lit on its requests page, in the rail and the More sheet", () => {
+    const nav = navigationFor("/inbox");
+    expect(activeLabels(nav.side)).toEqual(["Social"]);
+    expect(activeLabels(nav.more)).toEqual(["Social"]);
+  });
+
+  it("puts the waiting requests on the More sheet's Social row only", () => {
+    const nav = navigationFor("/rounds", 2);
+    expect(nav.more.map((item) => [item.label, item.badge ?? null])).toEqual([
+      ["Courses", null],
+      ["Career", null],
+      ["Social", 2],
+      ["Settings", null],
+    ]);
+  });
+
   it("lights Dashboard and Home on /", () => {
     const nav = navigationFor("/");
     expect(activeLabels(nav.side)).toEqual(["Dashboard"]);

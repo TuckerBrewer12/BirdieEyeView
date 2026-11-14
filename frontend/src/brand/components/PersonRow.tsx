@@ -1,16 +1,20 @@
 import type { ReactNode } from "react";
 import { cn } from "@/brand/cn";
+import { ListRow } from "./ListRow";
+import { Avatar } from "./Avatar";
 
 interface PersonRowProps {
   name: string;
   /** Two letters for the avatar. Defaults to the first letters of the first two words of `name`. */
   initials?: string;
-  /** The line under the name — an email, a handle. */
+  /** The line under the name: a handicap and when they last played, an email, a date. */
   detail?: ReactNode;
-  /** A quieter third line, such as when the row last changed. */
+  /** A quieter third line, such as when the row last changed. Makes the row taller than 64. */
   meta?: ReactNode;
-  /** Buttons or a status at the end of the row. */
+  /** Buttons, a status or a chevron at the end of the row. */
   actions?: ReactNode;
+  /** A row that's settled (a request answered): its avatar and words recede, its status doesn't. */
+  settled?: boolean;
   className?: string;
 }
 
@@ -25,28 +29,23 @@ function initialsOf(name: string): string {
 }
 
 /**
- * One person in a list: an initials avatar, their name and a line or two
- * about them, with whatever can be done about them at the end. Built to sit
- * in a `Collection layout="divided"`, which draws the rules between rows.
+ * One person in a list: a quiet initials avatar, their name and a line or two about them, with
+ * whatever can be done about them at the end. Built on `ListRow`, so it sits in a
+ * `Collection layout="divided"`, which draws the rules between rows.
  */
-function PersonRow({ name, initials, detail, meta, actions, className }: PersonRowProps) {
+function PersonRow({ name, initials, detail, meta, actions, settled = false, className }: PersonRowProps) {
   return (
-    <div data-slot="person-row" className={cn("flex items-center gap-3 px-4 py-3", className)}>
-      <span
-        aria-hidden
-        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground"
-      >
-        {initials ?? initialsOf(name)}
-      </span>
+    <ListRow slot="person-row" className={className}>
+      <Avatar initials={initials ?? initialsOf(name)} className={cn(settled && "opacity-settled")} />
 
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-foreground">{name}</p>
-        {detail != null && <p className="truncate text-xs text-muted-foreground">{detail}</p>}
+      <div className={cn("min-w-0 flex-1", settled && "opacity-settled")}>
+        <p className="truncate text-body-lg font-semibold text-foreground">{name}</p>
+        {detail != null && <p className="truncate text-body-sm text-muted-foreground">{detail}</p>}
         {meta != null && <p className="mt-0.5 truncate text-meta text-muted-foreground">{meta}</p>}
       </div>
 
       {actions != null && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
-    </div>
+    </ListRow>
   );
 }
 

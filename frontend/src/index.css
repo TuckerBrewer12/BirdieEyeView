@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "./brand/theme/tokens.gen.css";
 @custom-variant dark (&:where(.dark, .dark *));
+/* A text field's focus and invalid states: an Input itself, or an InputGroup
+   by the control inside it. The rings they draw are `fieldRing` in the kit. */
+@custom-variant field-focus (&:is(:focus-visible, :has([data-slot=input-group-control]:focus-visible)));
+@custom-variant field-invalid (&:is([aria-invalid="true"], :has([data-slot][aria-invalid="true"])));
 
 /* iOS WebView: remove tap highlight and 300ms click delay */
 * {

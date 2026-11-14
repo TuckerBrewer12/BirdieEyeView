@@ -1,8 +1,14 @@
-import { Alert, AlertAction, AlertDescription, Button, LoadingState } from "@/brand";
-import { AnalyticsDesktopHeader, AnalyticsDesktopLayout } from "./components/AnalyticsDesktopLayout";
-import { AnalyticsMobileHeader, AnalyticsMobileLayout } from "./components/AnalyticsMobileLayout";
-import type { Analytics } from "./model";
-import { emptyMessage } from "./present";
+import { useSearchParams } from "react-router-dom";
+import { Alert, AlertAction, AlertDescription, Button, EmptyNote, LoadingState, TabBar } from "@/brand";
+import { AnalyticsHeader } from "./components/AnalyticsHeader";
+import { ApproachSection } from "./components/ApproachSection";
+import { BallStrikingSection } from "./components/BallStrikingSection";
+import { HeadlineStrip } from "./components/HeadlineStrip";
+import { ProfileSection } from "./components/ProfileSection";
+import { PuttingSection } from "./components/PuttingSection";
+import { ScoringSection } from "./components/ScoringSection";
+import { DEFAULT_TAB, tabFrom, type Analytics } from "./model";
+import { ANALYTICS_TAB_OPTIONS, emptyMessage } from "./present";
 import { useAnalyticsPageViewModel, type AnalyticsPageViewModel } from "./useAnalyticsPageViewModel";
 
 interface AnalyticsPageProps {
@@ -10,7 +16,11 @@ interface AnalyticsPageProps {
 }
 
 export function AnalyticsPage({ userId }: AnalyticsPageProps) {
-  const vm = useAnalyticsPageViewModel(userId);
+  const [params] = useSearchParams();
+  const vm = useAnalyticsPageViewModel(userId, {
+    initialTab: tabFrom(params.get("tab")) ?? DEFAULT_TAB,
+    initialFriendId: params.get("friend"),
+  });
 
   if (vm.loading) {
     return <LoadingState>Loading analytics...</LoadingState>;
@@ -18,7 +28,7 @@ export function AnalyticsPage({ userId }: AnalyticsPageProps) {
 
   if (!vm.analytics) {
     return (
-      <Alert variant="destructive">
+      <Alert tone="danger">
         <AlertDescription>{vm.loadError ?? "Could not load your analytics."}</AlertDescription>
         <AlertAction>
           <Button variant="outline" size="xs" onClick={vm.retry}>
@@ -29,50 +39,63 @@ export function AnalyticsPage({ userId }: AnalyticsPageProps) {
     );
   }
 
-  if (vm.showEmpty) {
-    return <EmptyAnalytics vm={vm} />;
-  }
-
-  return <AnalyticsLayouts vm={vm} analytics={vm.analytics} />;
-}
-
-interface LayoutProps {
-  vm: AnalyticsPageViewModel;
-  analytics: Analytics;
-}
-
-/** No round matches the filters. The filters stay up so the golfer can widen them again. */
-function EmptyAnalytics({ vm }: { vm: AnalyticsPageViewModel }) {
-  const message = (
-    <div className="flex h-48 items-center justify-center text-center">
-      <p className="text-sm text-muted-foreground">{emptyMessage(vm.filtered)}</p>
+  return (
+    <div data-slot="analytics-page" className="flex flex-col gap-3.5 pb-6 md:gap-4">
+      <AnalyticsHeader vm={vm} roundCount={vm.analytics.roundCount} />
+      {vm.showEmpty ? (
+        <EmptyNote className="flex h-48 items-center justify-center py-0">{emptyMessage(vm.filtered)}</EmptyNote>
+      ) : (
+        <AnalyticsBody vm={vm} analytics={vm.analytics} />
+      )}
     </div>
   );
-
-  return (
-    <>
-      <div className="flex flex-col gap-5 pt-2 md:hidden">
-        {vm.filtered && <AnalyticsMobileHeader vm={vm} />}
-        {message}
-      </div>
-      <div className="hidden md:block">
-        <AnalyticsDesktopHeader vm={vm} />
-        {message}
-      </div>
-    </>
-  );
 }
 
-function AnalyticsLayouts({ vm, analytics }: LayoutProps) {
+function AnalyticsBody({ vm, analytics }: { vm: AnalyticsPageViewModel; analytics: Analytics }) {
   return (
     <>
-      {/* CSS picks the layout, so the page renders the same on the server and the first paint. */}
-      <div className="md:hidden">
-        <AnalyticsMobileLayout vm={vm} analytics={analytics} />
-      </div>
-      <div className="hidden md:block">
-        <AnalyticsDesktopHeader vm={vm} />
-        <AnalyticsDesktopLayout vm={vm} analytics={analytics} />
+      {/* A phone keeps the headline to Scoring; the desktop has room for it over every section. */}
+      <HeadlineStrip figures={analytics.headline} className={vm.tab === "scoring" ? undefined : "max-md:hidden"} />
+      <TabBar
+        aria-label="Analytics sections"
+        tabs={ANALYTICS_TAB_OPTIONS}
+        value={vm.tab}
+        onValueChange={(key) => {
+          const next = ANALYTICS_TAB_OPTIONS.find((option) => option.key === key);
+          if (next) vm.setTab(next.key);
+        }}
+        className="mt-1"
+      />
+      <div role="tabpanel" aria-label={ANALYTICS_TAB_OPTIONS.find((option) => option.key === vm.tab)?.label}>
+        {vm.tab === "profile" && <ProfileSection profile={vm.profile} />}
+        {vm.tab === "scoring" && (
+          <ScoringSection
+            analytics={analytics}
+            reading={vm.scoreReading}
+            onReadingChange={vm.setScoreReading}
+            lines={vm.trendLines}
+            onLinesChange={vm.setTrendLines}
+            shown={vm.trendShown.score}
+            onShownChange={(shown) => vm.setTrendShown("score", shown)}
+          />
+        )}
+        {vm.tab === "ball-striking" && (
+          <BallStrikingSection
+            analytics={analytics}
+            shown={vm.trendShown.greens}
+            onShownChange={(shown) => vm.setTrendShown("greens", shown)}
+          />
+        )}
+        {vm.tab === "putting" && (
+          <PuttingSection
+            analytics={analytics}
+            shown={vm.trendShown.putts}
+            onShownChange={(shown) => vm.setTrendShown("putts", shown)}
+          />
+        )}
+        {vm.tab === "approach" && (
+          <ApproachSection analytics={analytics} par={vm.approachPar} onParChange={vm.setApproachPar} />
+        )}
       </div>
     </>
   );

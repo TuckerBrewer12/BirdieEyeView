@@ -62,8 +62,10 @@ export type Milestone = (
   | { kind: "under-par" | "first-eagle" | "hole-in-one" }
 ) & { achieved: boolean; roundId: string | null };
 
-/** The records, totals and milestones over one window. */
+/** The handicap trend, records, totals and milestones over one window. */
 export interface CareerWindowFigures {
+  /** The index after each round in the window, oldest first: the rounds the server marks as in it. */
+  handicapTrend: RoundTrendPoint[];
   records: CareerRecord[];
   totals: CareerTotal[];
   /**
@@ -82,8 +84,6 @@ export interface Career {
   roundCount: number;
   holesPlayed: number;
   handicapIndex: number | null;
-  /** The index after each round, oldest first. */
-  handicapTrend: RoundTrendPoint[];
   /** Each score kind's share of every counted hole. */
   scoreMix: ScoreMix;
   /** The radar's axes the golfer has figures for. */
@@ -201,8 +201,9 @@ function thresholdMilestones(rows: ThresholdRow[], kind: "putt-break" | "gir-bre
   }));
 }
 
-function windowFrom(a: Achievements, timeWindow: CareerWindow): CareerWindowFigures {
+function windowFrom(a: Achievements, trend: RoundTrendPoint[], timeWindow: CareerWindow): CareerWindowFigures {
   return {
+    handicapTrend: timeWindow === "lifetime" ? trend : trend.filter((point) => point.inWindow),
     records: recordsFrom(a, timeWindow),
     totals: totalsFrom(a, timeWindow),
     scoring: scoringMilestones(a, timeWindow),
@@ -215,17 +216,17 @@ function windowFrom(a: Achievements, timeWindow: CareerWindow): CareerWindowFigu
 /** The career page's figures from the server's analytics over every round. */
 export function careerFrom(dto: AnalyticsDto): Career {
   const a = dto.notable_achievements;
+  const trend = trendPointsFrom(dto);
   return {
     roundCount: dto.kpis.total_rounds,
     holesPlayed: a.career_totals.lifetime.total_holes_played,
     handicapIndex: dto.kpis.handicap_index ?? null,
-    handicapTrend: trendPointsFrom(dto),
     scoreMix: dto.score_mix,
     profile: buildRadarData(dto.kpis, dto.scoring_by_par).filter((entry) => entry.hasData),
     windowDays: a.window_days,
     windows: {
-      lifetime: windowFrom(a, "lifetime"),
-      one_year: windowFrom(a, "one_year"),
+      lifetime: windowFrom(a, trend, "lifetime"),
+      one_year: windowFrom(a, trend, "one_year"),
     },
   };
 }

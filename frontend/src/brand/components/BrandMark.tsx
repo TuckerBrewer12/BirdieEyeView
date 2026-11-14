@@ -36,7 +36,7 @@ function BrandMark({
       <div
         data-slot="brand-mark-badge"
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground",
+          "flex shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground",
           sizing.badge,
         )}
       >

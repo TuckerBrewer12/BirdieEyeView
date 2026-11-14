@@ -17,12 +17,15 @@ function AppShell({ sideNav, bottomNav, className, children, ...props }: AppShel
   return (
     <div data-slot="app-shell" className={cn("min-h-screen", className)} {...props}>
       {sideNav != null && (
-        <div data-slot="app-shell-side" className="fixed inset-y-0 left-0 z-30 hidden w-64 md:block">
+        <div data-slot="app-shell-side" className="fixed inset-y-0 left-0 z-30 hidden w-rail md:block">
           {sideNav}
         </div>
       )}
-      {/* The padding clears the tab bar on phones and the rail on wide screens. */}
-      <main data-slot="app-shell-main" className="p-4 pt-16 pb-20 md:ml-64 md:p-6 md:pt-16 md:pb-6">
+      {/* The padding clears the tab bar on phones, and an ActionBar pinned over it, and the rail on wide screens. */}
+      <main
+        data-slot="app-shell-main"
+        className="px-page-phone pt-15 pb-page-end-phone has-data-[slot=action-bar]:pb-page-end-action-bar md:ml-rail md:px-page md:pt-11 md:pb-12 md:has-data-[slot=action-bar]:pb-12 md:has-data-[pinned=always]:pb-page-end-pinned"
+      >
         {children}
       </main>
       {bottomNav != null && (

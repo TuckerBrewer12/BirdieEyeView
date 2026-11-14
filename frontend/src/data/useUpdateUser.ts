@@ -6,7 +6,7 @@ import { userRepository, type UserRepository } from "./userRepository";
 /**
  * Saves changes to the golfer's profile: handicap, home course, scoring goal.
  *
- * The cached user takes the saved one, so the dashboard and The Lab show it at once. Figures
+ * The cached user takes the saved one, so the dashboard and Profile show it at once. Figures
  * that start from the profile (the dashboard, goal report, analytics, and the course handicaps
  * and net scores on rounds and courses) refetch.
  * The mutation stays pending until Settings has refetched, so a caller that clears its form on

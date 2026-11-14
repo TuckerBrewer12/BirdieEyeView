@@ -1,9 +1,5 @@
-import type {
-  HandicapTrendRowDto,
-  ScoreTrendRowDto,
-  ScramblingTrendRowDto,
-  UpAndDownTrendRowDto,
-} from "@/types/api";
+import { formatOneDecimal } from "./format";
+import type { HandicapTrendRowDto, ScoreTrendRowDto } from "@/types/api";
 import type { DifferentialStatus } from "./handicap";
 
 /** One round on the score and handicap trend. */
@@ -11,11 +7,17 @@ export interface RoundTrendPoint {
   roundIndex: number;
   score: number | null;
   toPar: number | null;
+  /** The par the round's to par reads against: the holes played. */
+  par: number | null;
+  /** The average over this round and the four before it, as the server worked it. */
+  rollingAverage: number | null;
   /** The index after this round. Null until there are enough rounds to have one. */
   handicapIndex: number | null;
   courseName: string | null;
   /** Where the round's differential stands in the WHS window, as the server read it. */
   differentialStatus: DifferentialStatus;
+  /** The round falls in the records' last year, as the server counts it. */
+  inWindow: boolean;
 }
 
 /** The two per-round series the dashboard and analytics responses both carry. */
@@ -37,34 +39,36 @@ export function trendPointsFrom(trends: ScoreAndHandicapTrends | null): RoundTre
       roundIndex: row.round_index,
       score: row.total_score,
       toPar: row.to_par,
+      par: row.par,
+      rollingAverage: row.rolling_average,
       handicapIndex: handicap?.handicap_index ?? null,
       courseName: row.course_name ?? null,
       differentialStatus: handicap?.differential_status ?? "unrated",
+      inWindow: handicap?.in_window ?? false,
     };
   });
 }
 
-/** One round's scrambling and up-and-down rates, in percent. Null where the round had no chance at one. */
-export interface ShortGamePoint {
-  roundIndex: number;
-  roundId: string | null;
-  scrambling: number | null;
-  upAndDown: number | null;
+/** The dashed line across a trend: an average, labelled "Avg 84.2". None without one. */
+export interface AverageLine {
+  value: number;
+  label: string;
 }
 
-/**
- * The server's scrambling and up-and-down series side by side, paired by round, oldest first.
- * The dashboard and analytics responses both carry them.
- */
-export function shortGamePointsFrom(
-  scrambling: ScramblingTrendRowDto[],
-  upAndDown: UpAndDownTrendRowDto[],
-): ShortGamePoint[] {
-  const upAndDownByRound = new Map(upAndDown.map((row) => [row.round_index, row.percentage]));
-  return scrambling.map((row) => ({
-    roundIndex: row.round_index,
-    roundId: row.round_id,
-    scrambling: row.scrambling_percentage,
-    upAndDown: upAndDownByRound.get(row.round_index) ?? null,
-  }));
+export function averageLine(
+  average: number | null | undefined,
+  format: (value: number) => string = formatOneDecimal,
+): AverageLine | null {
+  return average != null ? { value: average, label: `Avg ${format(average)}` } : null;
+}
+
+/** A figure's move: which way, and how far, unsigned. No move, or none at all, shows nothing. */
+export interface Move {
+  direction: "up" | "down" | null;
+  amount: string;
+}
+
+export function moveOf(change: number | null | undefined, format: (value: number) => string = formatOneDecimal): Move {
+  if (change == null || change === 0) return { direction: null, amount: "" };
+  return { direction: change < 0 ? "down" : "up", amount: format(Math.abs(change)) };
 }

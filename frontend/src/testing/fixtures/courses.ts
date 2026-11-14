@@ -1,6 +1,8 @@
 import { courseSummaryFrom } from "../../domain/course";
 import type { CourseSummaryDto } from "../../types/api";
+import { courseSummaryResponse } from "../fakes/courseAnalyticsResponses";
 import { pebbleBeachCourse, toCourseSummary } from "./roundDetails";
+import { storedRounds } from "./rounds";
 
 /** Pebble Beach as the server lists it. */
 export const pebbleBeach = toCourseSummary(pebbleBeachCourse);
@@ -8,6 +10,7 @@ export const pebbleBeach = toCourseSummary(pebbleBeachCourse);
 export const pebbleBeachSummary = courseSummaryFrom(pebbleBeach);
 export const searchableCourses = [pebbleBeach];
 
+/** The course list: two courses the golfer has played, with their record there, and one they haven't. */
 export const populatedCourses: CourseSummaryDto[] = [
   {
     id: "course-hmb",
@@ -16,8 +19,9 @@ export const populatedCourses: CourseSummaryDto[] = [
     par: 72,
     total_holes: 18,
     tee_count: 4,
+    tees: ["Blue", "White", "Gold", "Red"],
     external_course_id: null,
-    source: "local",
+    source: "local" as const,
   },
   {
     id: "course-blue-rock",
@@ -26,8 +30,9 @@ export const populatedCourses: CourseSummaryDto[] = [
     par: 72,
     total_holes: 18,
     tee_count: 3,
+    tees: ["Blue", "White", "Red"],
     external_course_id: null,
-    source: "local",
+    source: "local" as const,
   },
   {
     id: "course-pebble",
@@ -36,7 +41,8 @@ export const populatedCourses: CourseSummaryDto[] = [
     par: 72,
     total_holes: 18,
     tee_count: 5,
+    tees: ["Black", "Blue", "White", "Gold", "Red"],
     external_course_id: null,
-    source: "local",
+    source: "local" as const,
   },
-];
+].map((course) => courseSummaryResponse(course, storedRounds));

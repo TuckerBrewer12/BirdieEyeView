@@ -49,16 +49,18 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   dashboard?: DashboardDto;
   analytics?: AnalyticsDto | null;
   /**
-   * Analytics by golfer, for screens that read someone else's (The Lab's friend comparison).
+   * Analytics by golfer, for screens that read someone else's (a friend's).
    * A golfer with none here gets `analytics`.
    */
   analyticsByGolfer?: Record<string, AnalyticsDto>;
+  /** Analytics asked for this many rounds fails, as a server error would: Profile's last 20, say. */
+  analyticsFailsAtLimit?: number | null;
   /** `/api/stats/analytics/{id}?course_id=` per course. A course not here answers with no rounds. */
   analyticsByCourse?: Record<string, AnalyticsDto>;
   /** `/api/stats/{id}/played-courses`: the courses the golfer has rounds at. */
   playedCourses?: PlayedCourseDto[];
   goalReport?: GoalReportDto | null;
-  /** `/api/stats/{id}/benchmark` by comparison: "handicap:5", "peak", "friend:{id}". One not here answers 422. */
+  /** `/api/stats/{id}/benchmark` by comparison: "handicap:5", "friend:{id}". One not here answers 422. */
   benchmarks?: Record<string, BenchmarkComparisonDto>;
   /** No one is signed in — `/api/auth/me` answers 401, as the real API does. */
   signedOut?: boolean;
@@ -92,6 +94,7 @@ export class FakeBackend {
   profile: UserDto | undefined;
   dashboard: DashboardDto | undefined;
   analytics: AnalyticsDto | null | undefined;
+  analyticsFailsAtLimit: number | null;
   analyticsByGolfer: Partial<Record<string, AnalyticsDto>>;
   readonly analyticsByCourse: Record<string, AnalyticsDto>;
   readonly playedCourses: PlayedCourseDto[];
@@ -126,6 +129,7 @@ export class FakeBackend {
       profile,
       dashboard,
       analytics,
+      analyticsFailsAtLimit,
       analyticsByGolfer,
       analyticsByCourse,
       playedCourses,
@@ -152,6 +156,7 @@ export class FakeBackend {
     this.profile = profile;
     this.dashboard = dashboard;
     this.analytics = analytics;
+    this.analyticsFailsAtLimit = analyticsFailsAtLimit ?? null;
     this.analyticsByGolfer = analyticsByGolfer ?? {};
     this.analyticsByCourse = analyticsByCourse ?? {};
     this.playedCourses = playedCourses ?? [];
@@ -227,6 +232,9 @@ export class FakeBackend {
     return this.store.courses;
   }
 
+  /** Each `/api/scan/extract` request's text fields, oldest first: what was said about the card. */
+  scanRequests: Record<string, string>[] = [];
+
   /** Lets a held scan answer. */
   finishScan(): void {
     this.releaseScan?.();
@@ -299,6 +307,7 @@ export class FakeBackend {
     }
 
     if (verb === "POST" && path.includes("/api/scan/extract")) {
+      this.scanRequests = [...this.scanRequests, (body ?? {}) as Record<string, string>];
       if (!this.scan) return { status: 500, body: { detail: "Could not read this scorecard." } };
       return { status: 200, body: this.scan };
     }
@@ -316,7 +325,8 @@ export class FakeBackend {
     if (verb === "GET" && path.includes("/api/courses/search")) {
       const q = parsed.searchParams.get("q") ?? "";
       try {
-        return { status: 200, body: this.store.searchCourses(q) };
+        const includeRecord = parsed.searchParams.get("include_record") === "true";
+        return { status: 200, body: this.store.searchCourses(q, includeRecord) };
       } catch (err) {
         const detail = err instanceof Error ? err.message : "Could not search courses.";
         return { status: this.store.searchError ? 500 : 404, body: { detail } };
@@ -333,6 +343,7 @@ export class FakeBackend {
     }
 
     if (verb === "GET" && /\/api\/rounds\/user\//.test(path)) {
+      if (this.store.roundsError) return { status: 500, body: { detail: this.store.roundsError } };
       return { status: 200, body: this.store.getRoundsForUser() };
     }
 
@@ -403,6 +414,7 @@ export class FakeBackend {
 
     if (verb === "GET" && /\/api\/stats\/course-analytics\//.test(path)) {
       const courseId = path.split("/").pop() ?? "";
+      if (this.store.courseAnalyticsError) return { status: 500, body: { detail: this.store.courseAnalyticsError } };
       return { status: 200, body: this.store.getCourseAnalytics(courseId) };
     }
 
@@ -487,6 +499,9 @@ export class FakeBackend {
     });
     if (this.analytics == null) {
       return { status: 404, body: { detail: "Analytics failed to load." } };
+    }
+    if (this.analyticsFailsAtLimit != null && Number(params.get("limit") ?? 50) === this.analyticsFailsAtLimit) {
+      return { status: 500, body: { detail: "Analytics failed to load." } };
     }
     const body = analyticsForCourse(
       {

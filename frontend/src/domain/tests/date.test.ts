@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayParts, formatDay, formatDayShort, formatDayTick, formatWeekdayDay, isoDay, parseDay } from "../date";
+import { dayParts, formatDay, formatDayShort, formatWeekday, isoDay, parseDay } from "../date";
 
 // vite.config.ts runs the unit tests in Los Angeles, where UTC midnight is the
 // evening before. A date read as UTC would show a day early in every case below.
@@ -49,20 +49,20 @@ describe("isoDay", () => {
   });
 });
 
-describe("formatWeekdayDay", () => {
+describe("formatWeekday", () => {
   it("reads weekday · month day · year", () => {
-    expect(formatWeekdayDay("2026-06-15")).toBe("Mon · Jun 15 · 2026");
-    expect(formatWeekdayDay("2026-06-15T00:00:00")).toBe("Mon · Jun 15 · 2026");
+    expect(formatWeekday("2026-06-15")).toBe("Mon, Jun 15, 2026");
+    expect(formatWeekday("2026-06-15T00:00:00")).toBe("Mon, Jun 15, 2026");
   });
 
   it("drops the year when asked", () => {
-    expect(formatWeekdayDay(new Date(2026, 5, 15, 9), { year: false })).toBe("Mon · Jun 15");
+    expect(formatWeekday(new Date(2026, 5, 15, 9), { year: false })).toBe("Mon, Jun 15");
   });
 
   it("is null for a missing or unparseable date", () => {
-    expect(formatWeekdayDay(null)).toBeNull();
-    expect(formatWeekdayDay("not a date")).toBeNull();
-    expect(formatWeekdayDay(new Date(Number.NaN))).toBeNull();
+    expect(formatWeekday(null)).toBeNull();
+    expect(formatWeekday("not a date")).toBeNull();
+    expect(formatWeekday(new Date(Number.NaN))).toBeNull();
   });
 });
 
@@ -97,17 +97,5 @@ describe("dayParts", () => {
   it("is null for a missing or unparseable date", () => {
     expect(dayParts(null)).toBeNull();
     expect(dayParts("not a date")).toBeNull();
-  });
-});
-
-describe("formatDayTick", () => {
-  it("reads MM-DD", () => {
-    expect(formatDayTick("2026-03-09")).toBe("03-09");
-    expect(formatDayTick("2026-03-09T00:00:00")).toBe("03-09");
-  });
-
-  it("is null for a missing or unparseable date", () => {
-    expect(formatDayTick(null)).toBeNull();
-    expect(formatDayTick("Monday")).toBeNull();
   });
 });

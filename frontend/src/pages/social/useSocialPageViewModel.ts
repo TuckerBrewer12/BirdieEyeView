@@ -1,9 +1,16 @@
 import { useCallback, useMemo, useState } from "react";
 import { messageFrom } from "@/lib/userFacingErrors";
-import { acceptedFriends, type Friendship } from "@/data/friendsModel";
+import { acceptedFriends, awaitsAnswer, type Friendship } from "@/data/friendsModel";
 import { friendsRepository, type FriendsRepository } from "@/data/friendsRepository";
 import { useFriendships } from "@/data/useFriendships";
+import { useUser } from "@/data/useUser";
+import { userRepository, type UserRepository } from "@/data/userRepository";
 import { useSendFriendRequest } from "./useSendFriendRequest";
+
+/** What Social reads: the golfer's friendships, and their own profile for their friend code. */
+export type SocialRepository = FriendsRepository & Pick<UserRepository, "getUser">;
+
+const socialRepository: SocialRepository = { ...friendsRepository, getUser: userRepository.getUser };
 
 export interface SocialPageViewModel {
   loading: boolean;
@@ -11,6 +18,11 @@ export interface SocialPageViewModel {
   /** Empty copy — false while loading or when a load error is showing. */
   showEmpty: boolean;
   friends: Friendship[];
+  /** Requests sent to the golfer still waiting for an answer: the Requests button's count. */
+  openRequests: number;
+
+  /** The golfer's own friend code, to give to friends; null until the server has one. */
+  myCode: string | null;
 
   friendCode: string;
   setFriendCode: (code: string) => void;
@@ -25,9 +37,11 @@ export interface SocialPageViewModel {
 
 export function useSocialPageViewModel(
   userId: string,
-  repository: FriendsRepository = friendsRepository,
+  repository: SocialRepository = socialRepository,
 ): SocialPageViewModel {
   const { data = [], isLoading: loading, isError, error } = useFriendships(userId, repository);
+  const { data: user } = useUser(userId, repository);
+  const myCode = user?.friend_code || null;
   const {
     mutate: send,
     isPending: sending,
@@ -73,6 +87,8 @@ export function useSocialPageViewModel(
     loadError,
     showEmpty: !loading && loadError == null && friends.length === 0,
     friends,
+    openRequests: data.filter(awaitsAnswer).length,
+    myCode,
     friendCode,
     setFriendCode,
     sending,

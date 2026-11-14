@@ -30,7 +30,8 @@ def _summary_from_row(row) -> CourseSummary:
     """CourseSummary from a summary query row.
 
     The queries work par out the way Course.get_par() does: the stored par,
-    else the sum of the hole pars when all 18 holes have one.
+    else the sum of the hole pars when all 18 holes have one. The tee colours come
+    longest first, ties by colour, as Course.tees_by_length() orders them.
     """
     return CourseSummary(
         id=str(row["id"]),
@@ -40,6 +41,7 @@ def _summary_from_row(row) -> CourseSummary:
         par=row["par"],
         hole_count=row["hole_count"],
         tee_count=row["tee_count"],
+        tee_colors=list(row["tee_colors"] or []),
     )
 
 
@@ -533,7 +535,13 @@ class CourseRepositoryDB:
                               HAVING COUNT(*) = 18 AND COUNT(h.par) = 18
                           )) AS par,
                           (SELECT COUNT(*) FROM courses.holes h WHERE h.course_id = c.id) AS hole_count,
-                          (SELECT COUNT(*) FROM courses.tees t WHERE t.course_id = c.id) AS tee_count
+                          (SELECT COUNT(*) FROM courses.tees t WHERE t.course_id = c.id) AS tee_count,
+                          ARRAY(
+                              SELECT t.color FROM courses.tees t
+                              WHERE t.course_id = c.id
+                              ORDER BY (SELECT COALESCE(SUM(y.yardage), 0) FROM courses.tee_yardages y
+                                        WHERE y.tee_id = t.id) DESC, lower(t.color)
+                          ) AS tee_colors
                    FROM (
                        SELECT * FROM courses.courses
                        WHERE user_id IS NULL OR user_id = $3
@@ -557,7 +565,13 @@ class CourseRepositoryDB:
                               HAVING COUNT(*) = 18 AND COUNT(h.par) = 18
                           )) AS par,
                           (SELECT COUNT(*) FROM courses.holes h WHERE h.course_id = c.id) AS hole_count,
-                          (SELECT COUNT(*) FROM courses.tees t WHERE t.course_id = c.id) AS tee_count
+                          (SELECT COUNT(*) FROM courses.tees t WHERE t.course_id = c.id) AS tee_count,
+                          ARRAY(
+                              SELECT t.color FROM courses.tees t
+                              WHERE t.course_id = c.id
+                              ORDER BY (SELECT COALESCE(SUM(y.yardage), 0) FROM courses.tee_yardages y
+                                        WHERE y.tee_id = t.id) DESC, lower(t.color)
+                          ) AS tee_colors
                    FROM (
                        SELECT * FROM courses.courses
                        WHERE (name ILIKE $1 OR location ILIKE $1)

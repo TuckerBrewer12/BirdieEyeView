@@ -1,27 +1,35 @@
 import { RadarChart, type RadarAxis } from "@/brand/charts/RadarChart";
+import { benchmarkComparisonFrom, buildRadarData, type RadarEntry } from "@/domain";
+import { labAnalytics, labBenchmarks } from "@/testing/fixtures/lab";
 
-/** A mid-handicapper's six axes against a break-80 shape. */
-const compared: RadarAxis[] = [
-  { label: "GIR", value: 38, benchmark: 44, valueLabel: "38%", benchmarkLabel: "44%" },
-  { label: "Scrambling", value: 29, benchmark: 41, valueLabel: "29%", benchmarkLabel: "41%" },
-  { label: "Putting", value: 71, benchmark: 78, valueLabel: "2.08/GIR", benchmarkLabel: "1.94/GIR" },
-  { label: "Par 3s", value: 58, benchmark: 72, valueLabel: "+0.6", benchmarkLabel: "+0.2" },
-  { label: "Par 4s", value: 48, benchmark: 60, valueLabel: "+0.8", benchmarkLabel: "+0.5" },
-  { label: "Par 5s", value: 64, benchmark: 58, valueLabel: "+0.4", benchmarkLabel: "+0.5" },
-];
-
-/** No comparison: the shape alone, on four axes. */
-const alone: RadarAxis[] = compared.slice(0, 4).map(({ label, value, valueLabel }) => ({ label, value, valueLabel }));
+/** The Lab fixture's golfer against a comparison, as Profile's shape card draws it. */
+function axesAgainst(key: string | null): RadarAxis[] {
+  const comparison = key ? benchmarkComparisonFrom(labBenchmarks[key]) : null;
+  const entries = buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par, comparison?.benchmark, comparison?.verdicts);
+  return entries.map((entry: RadarEntry) => ({
+    label: entry.axis,
+    value: entry.value,
+    benchmark: comparison ? entry.benchmark : null,
+    verdict: comparison ? entry.verdict : null,
+    valueLabel: entry.userRaw,
+    benchmarkLabel: entry.benchRaw,
+  }));
+}
 
 export default function RadarChartPreview() {
+  const breaks90 = axesAgainst("handicap:15");
   return (
     <>
-      <RadarChart axes={compared} aria-label="Shape against a break-80 golfer" />
-      <RadarChart axes={alone} />
-      <RadarChart axes={compared.slice(0, 2)} empty="Play a few more rounds to see your shape." />
+      {/* Ahead of a 15 handicap on GIR, scrambling, putting and par 5s; behind on par 3s and 4s. */}
+      <RadarChart axes={breaks90} aria-label="Shape against a 15 handicap" />
+      {/* Behind a 5 handicap on every axis. */}
+      <RadarChart axes={axesAgainst("handicap:5")} aria-label="Shape against a 5 handicap" />
+      {/* No comparison: the shape alone, on four axes. */}
+      <RadarChart axes={axesAgainst(null).slice(0, 4)} />
+      <RadarChart axes={breaks90.slice(0, 2)} empty="Play a few more rounds to see your shape." />
       {/* On a phone: the compact drawing at a phone's width. */}
       <div className="max-w-xs">
-        <RadarChart axes={compared} compact aria-label="Shape against a break-80 golfer, on a phone" />
+        <RadarChart axes={breaks90} compact aria-label="Shape against a 15 handicap, on a phone" />
       </div>
     </>
   );

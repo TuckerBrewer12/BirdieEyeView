@@ -34,5 +34,5 @@ def course_detail(course: Course, handicap_index: Optional[float] = None) -> Cou
         front_nine_par=course.front_nine_par,
         back_nine_par=course.back_nine_par,
         holes=course.holes,
-        tees=[_tee(tee, par, handicap_index) for tee in course.tees],
+        tees=[_tee(tee, par, handicap_index) for tee in course.tees_by_length()],  # longest first
     )

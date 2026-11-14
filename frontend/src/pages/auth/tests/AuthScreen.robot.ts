@@ -2,6 +2,7 @@ import { type Page } from "@playwright/test";
 import { expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
+import { fontsLoaded } from "../../../testing/fontsLoaded";
 
 export type AuthSeed = Omit<FakeBackendSeed, "signedOut">;
 
@@ -89,6 +90,7 @@ export class AuthScreenRobot {
   async capture(name: string): Promise<this> {
     // A click leaves the pointer over what it hit; park it so no baseline holds a hover.
     await this.page.mouse.move(0, 0);
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });
     return this;
   }

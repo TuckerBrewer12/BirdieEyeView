@@ -1,18 +1,19 @@
-import { ChevronRight, Link2, Trophy } from "lucide-react";
-import { motion } from "framer-motion";
+import { ChevronRight, Trophy } from "lucide-react";
 import { cn } from "@/brand/cn";
+import { EmptyNote } from "./EmptyNote";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
 import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
-import { RowButton } from "@/brand/components/Button";
-import { ScoreCountChip } from "@/brand/components/ScoreCountChip";
-import { ToParFigure } from "@/brand/components/ToParFigure";
-import { toParBadgeClass, toParLabel, toParTextClass, tokens } from "@/brand/theme";
-import { playedScoreKinds, scoreKindCountLabel, type RoundSummary } from "@/domain";
-import { formatCourseName } from "@/domain/course";
+import { Button, RowButton } from "@/brand/components/Button";
+import { StatValue } from "@/brand/components/Stat";
+import { ToParPill } from "@/brand/components/ToParPill";
+import { toParLabel, toParTextClass } from "@/brand/theme";
+import { roundDayAndTee, type RoundSummary } from "@/domain";
+import { courseLabel } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
 interface RoundListProps {
   round: RoundSummary;
+  /** Default is the dated row; `history` a round at a course the page already names: its day, its holes, its score. */
   variant?: "history";
   onClick?: () => void;
   onLinkClick?: () => void;
@@ -25,140 +26,145 @@ interface RoundHighlightProps {
   onClick?: () => void;
 }
 
-interface RoundTicketProps {
+interface RoundCompactProps {
   round: RoundSummary;
-  variant: "ticket";
-  /** The eyebrow over the course name, worded by the screen: "Last Round". */
-  label: string;
-  /** Shown with a chevron when the ticket opens the round, like "Open card". */
-  actionLabel?: string;
+  /** A row in a card's list of rounds: the date, the course, a strip of the holes, the score. */
+  variant: "compact";
+  /** `stacked` is the phone's: the date under the course, and no strip. */
+  layout?: "inline" | "stacked";
   onClick?: () => void;
 }
 
-type RoundPreviewProps = RoundListProps | RoundHighlightProps | RoundTicketProps;
+interface RoundSummaryProps {
+  round: RoundSummary;
+  /**
+   * A round on its own, in a box of its own: the course with its day and tee, the score and its
+   * pill, and the two nines as pills under them. The scan's saved screen shows the round this way.
+   */
+  variant: "summary";
+  /** `nines` (the default): two nines of pills. `strip`: one thin cell a hole, for a small card. */
+  holes?: "nines" | "strip";
+  /** `outline` (the default): its own bordered box. `none`: no box, for a `Card` that already frames it. */
+  frame?: "outline" | "none";
+}
+
+type RoundPreviewProps = RoundListProps | RoundHighlightProps | RoundCompactProps | RoundSummaryProps;
 
 export function RoundPreview(props: RoundPreviewProps) {
   if (props.variant === "highlight") {
     return <RoundHighlight round={props.round} onClick={props.onClick} />;
   }
-  if (props.variant === "ticket") {
-    return <RoundTicket {...props} />;
+  if (props.variant === "compact") {
+    return <RoundCompact {...props} />;
+  }
+  if (props.variant === "summary") {
+    return <RoundSummaryBox round={props.round} holes={props.holes} frame={props.frame} />;
   }
 
   const { round, variant, onClick, onLinkClick } = props;
 
   if (variant === "history") {
-    const row = "flex items-center justify-between px-5 py-3";
-    const content = (
-      <>
-        <span className="text-sm text-muted-foreground">
-          {formatDay(round.date) ?? "—"}
-        </span>
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-foreground">{round.score ?? "—"}</span>
-          <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", toParBadgeClass(round.toPar))}>
-            {toParLabel(round.toPar) ?? "—"}
-          </span>
-        </div>
-      </>
-    );
-    // A row that opens the round is a button, so a keyboard can reach and press it.
-    return onClick ? (
+    // One of the golfer's rounds at a course: the day over a cell per hole, then the score and its to-par.
+    return (
       <RowButton
         data-slot="round-preview"
-        className={cn(row, "w-full cursor-pointer hover:bg-muted")}
+        data-variant="history"
         onClick={onClick}
+        disabled={!onClick}
+        className={cn(
+          "flex w-full items-center gap-3 px-3.5 py-3 text-left md:gap-4 md:px-5",
+          onClick ? "cursor-pointer hover:bg-muted/half" : "cursor-default",
+        )}
       >
-        {content}
+        <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span className="text-body font-semibold text-foreground md:text-body-sm">{formatDay(round.date) ?? "—"}</span>
+          {round.holes.length > 0 && (
+            <HoleScoreBars holes={round.holes} variant="strip" className="w-full md:max-w-70" />
+          )}
+        </span>
+        <span className="flex shrink-0 flex-col items-end gap-1 md:flex-row md:items-center md:gap-4">
+          <span className="text-xl leading-none font-bold text-foreground md:text-title">{round.score ?? "—"}</span>
+          <ToParPill toPar={round.toPar} size="row" ground="muted" />
+        </span>
       </RowButton>
-    ) : (
-      <div data-slot="round-preview" className={row}>
-        {content}
-      </div>
     );
   }
 
   const dateParts = dayParts(round.date);
-  const courseName = round.course?.name ? formatCourseName(round.course.name) : null;
+  const courseName = courseLabel(round.course?.name);
+  const unlinked = !round.course?.id;
+  const meta = [
+    round.frontNine.total != null && round.backNine.total != null
+      ? `${round.frontNine.total} · ${round.backNine.total}`
+      : null,
+    round.putts != null ? `${round.putts} putts` : null,
+    round.teeBox,
+  ].filter(Boolean);
 
+  // The course name is the row's one button; its ::after stretches over the whole row, so the row
+  // opens from anywhere while "Link" stays a button of its own above it.
   return (
-    <motion.div
+    <div
       data-slot="round-preview"
-      className={cn(
-        "grid grid-cols-round-preview items-center gap-2.5 overflow-hidden rounded-card border border-border bg-card transition-shadow",
-        onClick ? "cursor-pointer hover:shadow-card" : "cursor-default",
-      )}
-      whileHover={onClick ? { scale: tokens.motion.hoverScale } : undefined}
-      whileTap={onClick ? { scale: tokens.motion.tapScale } : undefined}
-      transition={tokens.motion.spring}
-      onClick={onClick}
+      className="relative flex items-center gap-3 px-3.5 py-3 transition-colors hover:bg-muted/half md:gap-4 md:px-5 md:py-3.5"
     >
-      <div className="flex flex-col items-center justify-center gap-0.5 self-stretch rounded-l-lg bg-muted py-2.5 text-center">
+      <div className="flex w-8 shrink-0 flex-col items-center text-center md:w-9">
         {dateParts ? (
           <>
-            <span className="text-kicker uppercase text-muted-foreground">
+            <span className="text-meta font-semibold uppercase tracking-chip text-muted-foreground">
               {dateParts.month}
             </span>
-            <span className="text-lg font-bold leading-none text-foreground">
-              {dateParts.day}
-            </span>
-            <span className="text-caption text-muted-foreground">{dateParts.year}</span>
+            <span className="text-lg leading-tight font-bold text-foreground md:text-xl">{dateParts.day}</span>
           </>
         ) : (
-          <span className="text-caption text-muted-foreground">—</span>
+          <span className="text-label text-muted-foreground">—</span>
         )}
       </div>
 
-      <div className="flex min-w-0 flex-col gap-0.5 py-2.5">
-        <div className="flex min-w-0 items-center gap-tight">
-          <span className="min-w-0 flex-1 truncate text-base font-bold tracking-name text-foreground">
-            {courseName ?? "Unknown course"}
-          </span>
-          {!round.course?.id && onLinkClick && (
-            <button
-              type="button"
-              aria-label={`Link ${courseName ?? "this round"} to a saved course`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onLinkClick();
-              }}
-              className="flex shrink-0 items-center border-none bg-transparent p-0 text-muted-foreground hover:text-foreground"
-            >
-              <Link2 className="size-icon-xs" />
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 text-meta text-muted-foreground">
-          {round.frontNine.total != null && round.backNine.total != null && (
-            <span>
-              <strong className="font-bold text-foreground">
-                {round.frontNine.total}·{round.backNine.total}
-              </strong>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex min-w-0 flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-x-2.5 md:gap-y-1">
+          <RowButton
+            onClick={onClick}
+            disabled={!onClick}
+            className={cn(
+              "min-w-0 max-w-full truncate text-body-lg font-semibold text-foreground outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset",
+              onClick ? "cursor-pointer" : "cursor-default",
+            )}
+          >
+            <span>{courseName}</span>
+          </RowButton>
+          {(meta.length > 0 || unlinked) && (
+            <span className="text-body-sm text-muted-foreground">
+              {meta.join(" · ")}
+              {unlinked && onLinkClick && (
+                <span className="relative z-10">
+                  {meta.length > 0 && " · "}
+                  Not linked ·{" "}
+                  <Button
+                    variant="link"
+                    size="xs"
+                    className="h-auto p-0 text-body-sm font-semibold underline underline-offset-3"
+                    aria-label={`Link ${courseName} to a saved course`}
+                    onClick={onLinkClick}
+                  >
+                    Link
+                  </Button>
+                </span>
+              )}
             </span>
           )}
-          {round.putts != null && (
-            <span>
-              <strong className="font-bold text-foreground">{round.putts}</strong> putts
-            </span>
-          )}
-          {round.teeBox && <span>{round.teeBox}</span>}
         </div>
-
-        <HoleScoreBars holes={round.holes} className="mt-1" />
-      </div>
-
-      <div className="flex flex-col items-end gap-0.5 whitespace-nowrap pr-3.5 text-right">
-        <span className="text-2xl font-bold leading-none tracking-stat text-foreground">
-          {round.score ?? "—"}
-        </span>
-        {round.toPar != null && (
-          <span className={cn("text-meta font-bold", toParTextClass(round.toPar))}>
-            {toParLabel(round.toPar)}
-          </span>
+        {round.holes.length > 0 && (
+          <HoleScoreBars holes={round.holes} variant="strip" className="w-full md:max-w-115" />
         )}
       </div>
-    </motion.div>
+
+      <div className="flex shrink-0 flex-col items-end gap-1 md:flex-row md:items-center md:gap-4">
+        <span className="text-name leading-none font-bold text-foreground md:text-title">{round.score ?? "—"}</span>
+        <ToParPill toPar={round.toPar} size="row" ground="muted" />
+      </div>
+      <ChevronRight aria-hidden className="hidden size-3.5 shrink-0 text-muted-foreground md:block" />
+    </div>
   );
 }
 
@@ -172,9 +178,9 @@ function RoundHighlight({
 }) {
   if (!round) {
     return (
-      <div data-slot="round-preview" className="p-4 text-center text-sm text-muted-foreground">
+      <EmptyNote data-slot="round-preview" className="p-4">
         Play a round to unlock highlights!
-      </div>
+      </EmptyNote>
     );
   }
 
@@ -198,7 +204,7 @@ function RoundHighlight({
             Best Recent Round
           </div>
           <div className="font-bold leading-tight text-card-foreground transition-colors group-hover:text-primary">
-            {round.course?.name ? formatCourseName(round.course.name) : "Unknown course"}
+            {courseLabel(round.course?.name)}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
             {formatDayShort(round.date) ?? "—"}
@@ -217,7 +223,7 @@ function RoundHighlight({
       </div>
 
       <div className="shrink-0 text-right">
-        <div className="text-4xl font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
+        <div className="text-figure-lg font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
           {round.score ?? "—"}
         </div>
       </div>
@@ -226,76 +232,76 @@ function RoundHighlight({
 }
 
 /**
- * A round as a ticket: where and when, the number, a bar per hole and what it held.
- * The screen words the eyebrow and the action, so the kit holds only the layout.
+ * A round as one row of a card's list of rounds: when, where, a cell per hole coloured by how it
+ * went, and the score with its to-par. On a phone the date goes under the course and the cells go.
  */
-function RoundTicket({ round, label, actionLabel, onClick }: Omit<RoundTicketProps, "variant">) {
-  const courseName = round.course?.name ? formatCourseName(round.course.name) : "Unknown course";
-  const kinds = playedScoreKinds(round.scoreCounts);
+function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactProps, "variant">) {
+  const stacked = layout === "stacked";
+  const courseName = courseLabel(round.course?.name);
+  const date = formatDayShort(round.date) ?? "—";
 
   return (
-    <button
-      type="button"
+    <RowButton
       data-slot="round-preview"
+      data-variant="compact"
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        "group flex w-full flex-col gap-3.5 rounded-card border border-border bg-card p-4 text-left",
-        onClick ? "cursor-pointer" : "cursor-default",
+        "w-full items-center rounded-2xl",
+        stacked ? "flex gap-3 px-3 py-3" : "grid grid-cols-round-row gap-4 px-3.5 py-3",
+        onClick ? "cursor-pointer hover:bg-muted/half" : "cursor-default",
       )}
     >
-      <div className="flex w-full items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="mb-1 text-eyebrow uppercase text-muted-foreground">
-            {label}
-          </div>
-          <div className="truncate text-lg font-bold leading-tight tracking-name text-card-foreground">
-            {courseName}
-          </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>{formatDayShort(round.date) ?? "—"}</span>
-            {round.teeBox && (
-              <>
-                <span aria-hidden className="size-1 rounded-full bg-current opacity-50" />
-                <span>{round.teeBox}</span>
-              </>
-            )}
-          </div>
+      {stacked ? (
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-body-lg font-semibold text-foreground">{courseName}</span>
+          <span className="text-body-sm text-muted-foreground">{date}</span>
+        </span>
+      ) : (
+        <>
+          <span className="text-body text-muted-foreground">{date}</span>
+          <span className="min-w-0 truncate text-body-lg font-semibold text-foreground">{courseName}</span>
+          <span>{round.holes.length > 0 && <HoleScoreBars holes={round.holes} variant="strip" size="sm" />}</span>
+        </>
+      )}
+      <span className={cn("shrink-0 text-xl font-semibold text-foreground", !stacked && "text-right")}>
+        {round.score ?? "—"}
+      </span>
+      <ToParPill toPar={round.toPar} size="row" />
+    </RowButton>
+  );
+}
+
+function RoundSummaryBox({
+  round,
+  holes = "nines",
+  frame = "outline",
+}: Pick<RoundSummaryProps, "round" | "holes" | "frame">) {
+  const when = roundDayAndTee(round);
+  return (
+    <div
+      data-slot="round-preview"
+      data-variant="summary"
+      className={cn("flex flex-col gap-3", frame === "outline" && "rounded-xl border border-border p-4")}
+    >
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-body-lg font-semibold text-foreground">{courseLabel(round.course?.name)}</p>
+          {when && <p className="mt-0.5 text-body-sm text-muted-foreground">{when}</p>}
         </div>
-        <div className="flex shrink-0 flex-col items-end">
-          <span className="text-4xl font-semibold leading-none tracking-stat text-card-foreground">
-            {round.score ?? "—"}
-          </span>
-          <ToParFigure toPar={round.toPar} />
+        <div className="flex items-baseline gap-1.5">
+          <StatValue size="lg">{round.score ?? "—"}</StatValue>
+          <ToParPill toPar={round.toPar} ground="muted" />
         </div>
       </div>
-
-      {round.holes.length > 0 && (
-        <div className="w-full">
-          <HoleScoreBars holes={round.holes} variant="profile" />
-          <div className="mt-1 flex justify-between text-caption text-muted-foreground">
-            <span>1</span>
-            <span>{Math.ceil(round.holes.length / 2)}</span>
-            <span>{round.holes.length}</span>
-          </div>
+      {holes === "strip" ? (
+        <HoleScoreBars holes={round.holes} variant="strip" className="w-full" />
+      ) : (
+        <div className="flex gap-2">
+          <HoleScoreBars holes={round.frontNine.holes} size="sm" className="flex-1" />
+          <HoleScoreBars holes={round.backNine.holes} size="sm" className="flex-1" />
         </div>
       )}
-
-      <div className="flex w-full items-center justify-between gap-3 border-t border-dashed border-border pt-3">
-        <div className="flex flex-wrap gap-1.5">
-          {kinds.map(({ kind, count }) => (
-            <ScoreCountChip key={kind} kind={kind} count={count}>
-              {scoreKindCountLabel(kind, count)}
-            </ScoreCountChip>
-          ))}
-        </div>
-        {onClick && actionLabel && (
-          <span className="flex shrink-0 items-center gap-0.5 text-xs font-semibold text-primary group-hover:underline">
-            {actionLabel}
-            <ChevronRight aria-hidden className="size-icon-xs" />
-          </span>
-        )}
-      </div>
-    </button>
+    </div>
   );
 }

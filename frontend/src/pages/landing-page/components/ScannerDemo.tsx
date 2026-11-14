@@ -1,233 +1,61 @@
 import type { CSSProperties } from "react";
-import { ScanLine, Type, GripVertical, CheckSquare } from "lucide-react";
+import { ScanLine, Type } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/brand/cn";
-import { scoreFillClass, toParDisplay, toParTextClass } from "@/brand";
-import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScreen } from "./demoTour";
+import { Card, CardContent, CardFactsForm, RoundPreview } from "@/brand";
 import { tokens } from "@/brand/theme";
-import { useScannerDemoViewModel, type DemoScorecardRow } from "./useScannerDemoViewModel";
+import type { CardFacts } from "@/domain/scan";
+import { SAMPLE_ROUND } from "../sampleRound";
+import { HANDICAP_TAP, TOUR_SCREENS, WIDE_FRAME_MEDIA, tourImage, type TourScreen } from "./demoTour";
+import { useScannerDemoViewModel } from "./useScannerDemoViewModel";
 
 const DEMO_MOTION = tokens.motion.demo;
 
-/** The clean scorecard the scan resolves to. */
-function DigitalScorecard({ rows }: { rows: DemoScorecardRow[] }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: DEMO_MOTION.scorecardEnterScale }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: DEMO_MOTION.crossfade }}
-      className="pointer-events-none absolute inset-0 z-10 flex h-full w-full flex-col overflow-hidden rounded-2xl bg-card p-4 md:p-6"
-    >
-      <div className="flex items-center justify-between rounded-t-lg bg-demo-card-header p-3 text-xs text-primary-foreground shadow-md md:text-sm">
-        <span className="font-semibold">Half Moon Bay Golf Course</span>
-        <div className="text-right">
-          <div className="text-caption font-bold uppercase tracking-chip text-primary-foreground/glass sm:text-xs">Blue tees</div>
-          <div className="text-caption text-primary-foreground/strong">Rating 70.8 / Slope 127</div>
-        </div>
-      </div>
+/** What the demo says is on its card: a name, scores written to par, putts and shots to green. */
+const DEMO_FACTS: CardFacts = {
+  name: "T",
+  writtenAs: "toPar",
+  putts: true,
+  shotsToGreen: true,
+  rowOrder: ["score", "shots", "putts"],
+  nameRow: "score",
+};
 
-      <div className="grid flex-1 overflow-hidden rounded-b-lg border-r border-b border-l border-border bg-card font-sans text-meta font-medium text-muted-foreground shadow-card sm:text-label">
-        <div className="grid grid-cols-11 items-center border-b border-border text-center">
-          <div className="col-span-2 py-2 pl-3 text-left font-bold tracking-chip text-muted-foreground">HOLE</div>
-          {rows.map((row) => (
-            <div key={row.hole} className="py-2 font-bold text-foreground">{row.hole}</div>
-          ))}
-        </div>
+const noop = () => {};
 
-        <div className="grid grid-cols-11 items-center border-b border-border text-center">
-          <div className="col-span-2 py-2 pl-3 text-left font-bold text-foreground">Par</div>
-          {rows.map((row) => (
-            <div key={row.hole} className="py-2 font-bold text-muted-foreground">{row.par}</div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-11 items-center border-b border-border text-center">
-          <div className="col-span-2 py-2 pl-3 text-left font-bold text-foreground">Score</div>
-          {rows.map((row) => (
-            <div key={row.hole} className="py-1">
-              <span
-                className={cn(
-                  "inline-block size-5 rounded-sm leading-5 text-primary-foreground sm:size-6 sm:leading-6",
-                  scoreFillClass(row.score),
-                )}
-              >
-                {row.strokes}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-11 items-center border-b border-border text-center">
-          <div className="col-span-2 py-2 pl-3 text-left font-bold text-foreground">To Par</div>
-          {rows.map((row) => (
-            <div
-              key={row.hole}
-              className={cn("py-2 font-semibold", toParTextClass(row.toPar))}
-
-            >
-              {toParDisplay(row.toPar)}
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-11 items-center border-b border-border text-center">
-          <div className="col-span-2 py-2 pl-3 text-left font-bold text-foreground">Putts</div>
-          {rows.map((row) => (
-            <div key={row.hole} className="py-2 text-muted-foreground">{row.putts}</div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-11 items-center border-b border-border text-center">
-          <div className="col-span-2 py-2 pl-3 text-left font-bold text-score-birdie">GIR</div>
-          {rows.map((row) => (
-            <div key={row.hole} className="flex justify-center py-2">
-              <div
-                className={`size-2 rounded-full border ${row.greenInRegulation ? "border-score-birdie bg-score-birdie" : "border-border"}`}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function TypewriterLabel({ text }: { text: string }) {
-  return (
-    <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ staggerChildren: DEMO_MOTION.typeStagger }}>
-      {text.split("").map((char, i) => (
-        <motion.span key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.15 }}>
-          {char}
-        </motion.span>
-      ))}
-    </motion.span>
-  );
-}
-
-/** The "what's on your card" panel the scan asks about before reading. */
-function MappingPanel() {
+/** The setup the scan asks for before reading, as the scan page shows it, filled in. */
+function SetupPanel() {
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: DEMO_MOTION.recedeScale }}
+      inert
       className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 pt-4 pb-16 sm:px-6"
     >
-      <div className="flex w-full max-w-md flex-col overflow-hidden rounded-xl bg-card font-sans shadow-card">
-        <div className="border-b border-border p-4">
-          <h3 className="mb-3 text-sm font-bold text-foreground">What's on your card?</h3>
+      <Card className="w-full max-w-md max-sm:scale-80">
+        <CardContent>
+          <CardFactsForm card={DEMO_FACTS} onChange={noop} idPrefix="demo" />
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
 
-          <div className="mb-3">
-            <div className="mb-1.5 flex items-center gap-1 text-caption font-bold uppercase tracking-chip text-muted-foreground">
-              Your Name On The Card
-            </div>
-            <div className="flex items-center rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground">
-              <TypewriterLabel text="T" />
-              <motion.div
-                animate={{ opacity: [1, 0] }}
-                transition={{ repeat: Infinity, duration: DEMO_MOTION.caretBlink }}
-                className="ml-1 h-4 w-0.5 bg-muted-foreground"
-              />
-            </div>
-          </div>
-
-          <div className="mb-3">
-            <div className="mb-1.5 flex items-center gap-1 text-caption font-bold uppercase tracking-chip text-muted-foreground">
-              Scoring Format
-            </div>
-            <div className="flex gap-2">
-              <motion.div
-                initial={{ opacity: 1 }}
-                animate={{ opacity: 0.4 }}
-                transition={{ delay: 1.2, duration: DEMO_MOTION.emphasis }}
-                className="flex flex-1 flex-col justify-center rounded-md border border-border p-2"
-              >
-                <div className="text-xs font-bold text-foreground">Total strokes</div>
-                <div className="text-caption text-muted-foreground">e.g. 4, 5, 3</div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0.5 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.2, duration: tokens.motion.duration.collapse }}
-                className="flex flex-1 flex-col justify-center rounded-md border-2 border-score-birdie bg-accent p-2"
-              >
-                <motion.div
-                  initial={{ scale: 1 }}
-                  animate={{ scale: [1, DEMO_MOTION.emphasisScale, 1] }}
-                  transition={{ delay: 1.2, duration: DEMO_MOTION.emphasis }}
-                >
-                  <div className="text-xs font-bold text-score-birdie">To par</div>
-                  <div className="text-caption text-score-birdie/strong">e.g. +1, -1, E</div>
-                </motion.div>
-              </motion.div>
-            </div>
-          </div>
-
-          <div>
-            <div className="mb-1.5 flex items-center gap-1 text-caption font-bold uppercase tracking-chip text-muted-foreground">
-              Also On The Card
-            </div>
-            <div className="flex gap-2">
-              {["Putts", "Shots to green"].map((label, i) => (
-                <motion.div
-                  key={label}
-                  initial={{ opacity: 0.4, scale: DEMO_MOTION.recedeScale }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 1.8 + i * 0.4, duration: DEMO_MOTION.emphasis }}
-                  className="flex items-center gap-2 rounded-md border border-score-birdie/recessed bg-accent px-3 py-1.5"
-                >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 1.9 + i * 0.4, type: "spring" }}
-                  >
-                    <CheckSquare className="size-3.5 text-score-birdie" />
-                  </motion.div>
-                  <span className="text-xs font-bold text-score-birdie">{label}</span>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="overflow-hidden bg-muted p-4">
-          <div className="relative flex flex-col gap-2">
-            <div className="relative flex gap-2">
-              <div className="z-10 flex w-16 items-center justify-center rounded-md bg-scan-row-name text-xs font-bold text-primary-foreground shadow-card">
-                NAME
-              </div>
-              <motion.div
-                initial={{ x: "120%", opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 2.6, ...DEMO_MOTION.rowSpring }}
-                className="flex flex-1 items-center gap-2 rounded-md bg-scan-row-score px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-              >
-                <GripVertical className="size-3.5 opacity-50" /> Score
-              </motion.div>
-            </div>
-
-            <motion.div
-              initial={{ x: "120%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 2.9, ...DEMO_MOTION.rowSpring }}
-              className="flex w-full items-center gap-2 rounded-md bg-scan-row-shots px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-            >
-              <GripVertical className="size-3.5 opacity-50" /> Shots to Green
-            </motion.div>
-
-            <motion.div
-              initial={{ x: "120%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 3.2, ...DEMO_MOTION.rowSpring }}
-              className="flex w-full items-center gap-2 rounded-md bg-scan-row-putts px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-            >
-              <GripVertical className="size-3.5 opacity-50" /> Putts
-            </motion.div>
-          </div>
-        </div>
-      </div>
+/** The round the scan reads back, as the app shows a saved one. */
+function ReadRound() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: DEMO_MOTION.crossfade }}
+      className="pointer-events-none absolute inset-x-4 bottom-16 z-10 sm:inset-x-8"
+    >
+      <Card data-slot="sample-round">
+        <CardContent>
+          <RoundPreview variant="summary" holes="strip" frame="none" round={SAMPLE_ROUND} />
+        </CardContent>
+      </Card>
     </motion.div>
   );
 }
@@ -303,28 +131,32 @@ function AppScreen({ screen, tapping }: { screen: TourScreen; tapping: boolean }
 }
 
 export function ScannerDemo() {
-  const { phase, label, scorecard, screen, tapping, tourPrimed } = useScannerDemoViewModel();
+  const { phase, label, screen, tapping, tourPrimed } = useScannerDemoViewModel();
   const scanned = phase === "result" || screen !== null;
+  const touring = screen !== null;
 
   return (
-    <div className="relative flex aspect-3/4 w-full max-w-lg items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:aspect-11/10 lg:aspect-square">
+    <div
+      data-slot="scanner-demo"
+      className="relative flex aspect-3/4 w-full items-center justify-center overflow-hidden rounded-2xl bg-muted sm:aspect-11/10 md:rounded-3xl lg:aspect-square"
+    >
       <motion.img
         src="/hero/physical-card.jpg"
-        alt="A paper golf scorecard being scanned"
+        alt="A paper scorecard held over a golf cart"
         className="absolute inset-0 h-full w-full origin-left object-cover"
         initial={false}
         animate={{
           filter: phase === "mapping" ? `brightness(0.5) blur(${tokens.blur.xs}px)` : "brightness(1) blur(0px)",
-          opacity: scanned ? 0 : 1,
-          scale: scanned ? DEMO_MOTION.recedeScale : 1,
+          opacity: touring ? 0 : 1,
+          scale: touring ? DEMO_MOTION.recedeScale : 1,
         }}
         transition={{ duration: DEMO_MOTION.crossfade }}
       />
 
       <AnimatePresence>
-        {phase === "result" && <DigitalScorecard rows={scorecard} />}
+        {phase === "result" && <ReadRound />}
       </AnimatePresence>
-      <AnimatePresence>{phase === "mapping" && <MappingPanel />}</AnimatePresence>
+      <AnimatePresence>{phase === "mapping" && <SetupPanel />}</AnimatePresence>
       <AnimatePresence>
         {screen && <AppScreen key="app" screen={screen} tapping={tapping} />}
       </AnimatePresence>

@@ -1,5 +1,5 @@
 import type { AnalyticsDto } from "../../types/api";
-import { achievementsAYearOn, sampleGolfer } from "../fixtures/sampleGolfer";
+import { achievementsAYearOn, handicapTrendAYearOn, sampleGolfer } from "../fixtures/sampleGolfer";
 
 /**
  * The fake backend's copy of `GET /stats/analytics/{id}`'s course filter. The figures themselves
@@ -38,24 +38,22 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
       average_putts: null,
       three_putts_per_round: null,
       three_putt_rate: null,
-      scoring_average_change: null,
     },
     score_trend: [],
     net_score_trend: [],
     gir_trend: [],
     putts_trend: [],
     three_putts_trend: [],
-    scrambling_trend: [],
-    up_and_down_trend: [],
     scoring_by_par: [],
     scoring_by_yardage: [],
     scoring_by_handicap: [],
     gir_vs_non_gir: [],
     handicap_trend: [],
-    score_differentials: [],
     score_mix: { eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0 },
-    insights: [],
     peak_game: null,
+    headline: analytics.headline.map((figure) => ({ ...figure, value: null, change: null, verdict: null, trend: [] })),
+    putts_per_hole: { holes: 0, one_or_fewer: 0, two: 0, three_or_more: 0 },
+    par_types: analytics.par_types.map((row) => ({ ...row, average_to_par: null, gap: null, verdict: null })),
     // No round, so no record either.
 
     notable_achievements: {
@@ -79,4 +77,5 @@ export function withoutRounds(analytics: AnalyticsDto): AnalyticsDto {
 export const sampleAnalyticsAYearOn: AnalyticsDto = {
   ...sampleGolfer.analytics,
   notable_achievements: achievementsAYearOn,
+  handicap_trend: handicapTrendAYearOn,
 };

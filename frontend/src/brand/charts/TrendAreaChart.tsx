@@ -1,10 +1,16 @@
-import { useId, useState, type PointerEvent, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useId } from "react";
 import { scaleLinear } from "d3-scale";
-import { area, curveMonotoneX, line } from "d3-shape";
+import { area, curveLinear, curveMonotoneX, line } from "d3-shape";
 import { cn } from "@/brand/cn";
-import { tokens } from "@/brand/theme";
-import { indexScale, knownValues, paddedExtent } from "./scales";
+import { Slider } from "@/brand/components/Slider";
+import { scoreMarkFill, tokens } from "@/brand/theme";
+import { pluralize } from "@/domain/format";
+import type { ScoreKind } from "@/domain/score";
+import { ChartTooltip } from "./ChartTooltip";
+import { AxisLabel, TooltipRow } from "./trendParts";
+import { useChartWidth } from "./useChartWidth";
+import { usePointPick } from "./usePointPick";
+import { indexScale, knownValues, niceExtent, tickIndexes } from "./scales";
 
 type TrendAreaTone = "primary" | "birdie" | "bogey" | "eagle" | "neutral" | "contrast";
 
@@ -13,7 +19,7 @@ const STROKE: Record<TrendAreaTone, string> = {
   birdie: tokens.color.score.birdie.base,
   bogey: tokens.color.score.bogey.base,
   eagle: tokens.color.score.eagle.base,
-  neutral: tokens.color.mutedForeground,
+  neutral: tokens.color.chart.axis,
   contrast: tokens.color.score.triple.text,
 };
 
@@ -23,7 +29,7 @@ const SWATCH: Record<TrendAreaTone, string> = {
   birdie: "bg-score-birdie-base",
   bogey: "bg-score-bogey-base",
   eagle: "bg-score-eagle-base",
-  neutral: "bg-muted-foreground",
+  neutral: "bg-foreground-secondary",
   contrast: "bg-score-triple",
 };
 
@@ -31,6 +37,8 @@ interface TrendAreaSeries {
   /** Names the line in the tooltip, and in a legend when there are two. */
   label: string;
   tone?: TrendAreaTone;
+  /** `dots` marks each round alone, with no line or fill: the scores under their running average. */
+  mark?: "line" | "dots";
 }
 
 interface TrendAreaPoint {
@@ -46,10 +54,22 @@ interface TrendAreaPoint {
   notes?: { label: string; value: string }[];
 }
 
+/** How many holes of one kind each round had, drawn in a panel of its own under the series. */
+interface TrendAreaCount {
+  kind: ScoreKind;
+  /** "Birdies", in the tooltip. */
+  label: string;
+  /** One per point, in the same order. Null leaves a gap. */
+  values: (number | null)[];
+}
+
 interface TrendAreaChartProps {
   /** One per round, oldest first. */
   points: TrendAreaPoint[];
-  /** The first is the figure, drawn over a soft fill. A second is drawn as a thinner line beside it. */
+  /**
+   * The first is the figure, drawn over a soft fill, or as dots alone; a second is drawn beside it, a
+   * thinner line beside a line, the lead line beside dots.
+   */
   series: [TrendAreaSeries] | [TrendAreaSeries, TrendAreaSeries];
   /** How a value reads on the axis and in the tooltip. */
   format?: (value: number) => string;
@@ -57,43 +77,85 @@ interface TrendAreaChartProps {
   domain?: [number, number];
   /** A dashed line across at a value worth measuring against: the average, par. */
   reference?: { value: number; label: string } | null;
+  /**
+   * Holes of a kind each round: a panel under the series, its own count axis from none, each kind a
+   * line in its score colour. Two scales never share one plot.
+   */
+  counts?: readonly TrendAreaCount[];
+  /** False hides the series and its panel, leaving the counts. With nothing left, the chart says `offLabel`. */
+  showSeries?: boolean;
+  offLabel?: string;
+  /**
+   * With `onShownChange`, a slider under the chart picks how many of the latest rounds to show: `shown`,
+   * or every one while it's null. The page holds the pick, so it lasts while the chart remounts.
+   */
+  shown?: number | null;
+  onShownChange?: (shown: number) => void;
   className?: string;
   "aria-label"?: string;
 }
 
 /**
- * A figure over a golfer's rounds: one line over a soft fill, oldest on the left, with a second
- * line beside it if wanted. Hovering with a mouse or tapping on a phone picks a round and shows
- * its figures.
+ * A figure over a golfer's rounds: one line over a soft fill, oldest on the left, with a second line
+ * beside it if wanted, or each round as a dot under its average's line. Holes of a kind each round
+ * draw in a panel below, on their own scale, sharing the rounds along the bottom. It draws at its
+ * box's width, so its labels keep their size. Hovering with a mouse or tapping on a phone picks a
+ * round and shows its figures.
  */
 export function TrendAreaChart({
-  points,
+  points: allPoints,
   series,
   format = String,
   domain,
   reference,
+  counts: allCounts = [],
+  showSeries = true,
+  offLabel = "Nothing turned on",
+  shown: pickedShown = null,
+  onShownChange,
   className,
   "aria-label": ariaLabel,
 }: TrendAreaChartProps) {
   const layout = tokens.chart.trendArea;
-  const { width: W, height: H, pad: PAD } = layout;
+  const PAD = layout.pad;
+  const [W, measureRef] = useChartWidth(layout.width, layout.minWidth);
   const gradientId = `trend-area-${useId().replace(/:/g, "")}`;
-  const [active, setActive] = useState<number | null>(null);
+  const { active, track } = usePointPick();
+
+  // The window: the latest `shown` rounds, every one until the slider says otherwise.
+  const canWindow = onShownChange != null && allPoints.length > layout.windowMin;
+  const shown = canWindow ? Math.min(pickedShown ?? allPoints.length, allPoints.length) : allPoints.length;
+  const from = allPoints.length - shown;
+  const points = allPoints.slice(from);
+  const counts = allCounts.map((count) => ({ ...count, values: count.values.slice(from) }));
 
   const first = points.map((point) => point.values[0] ?? null);
-  if (points.length < 2 || knownValues(first).length < 2) {
+  const nothingOn = !showSeries && counts.length === 0;
+  if (nothingOn || points.length < 2 || knownValues(first).length < 2) {
     return (
-      <div data-slot="trend-area-chart" className="flex h-chart items-center justify-center text-sm text-muted-foreground">
-        Not enough data
+      <div data-slot="trend-area-chart" className="flex h-chart items-center justify-center text-body text-muted-foreground">
+        {nothingOn ? offLabel : "Not enough data"}
       </div>
     );
   }
 
+  // One plot or two stacked: the series on top at full height, the counts under it, shorter.
+  const plotH = layout.height - PAD.top - PAD.bottom;
+  const seriesTop = PAD.top;
+  const seriesBottom = showSeries ? seriesTop + plotH : seriesTop;
+  const countsTop = showSeries ? seriesBottom + layout.panelGap : PAD.top;
+  const countsBottom = counts.length === 0 ? countsTop : countsTop + (showSeries ? layout.countHeight : plotH);
+  const baseline = counts.length > 0 ? countsBottom : seriesBottom;
+  const H = baseline + PAD.bottom;
+
   const all = points.flatMap((point) => point.values);
-  const extent = domain ?? paddedExtent([...all, reference?.value], { ratio: layout.headroom })!;
+  // Out to the round numbers either side of the values, so the top and bottom rules enclose every dot.
+  const extent = domain ?? niceExtent(all, layout.yTicks, layout.flatSpan)!;
   const x = indexScale(points.length, PAD.left, W - PAD.right);
-  const y = scaleLinear().domain(extent).range([H - PAD.bottom, PAD.top]);
-  const baseline = H - PAD.bottom;
+  const y = scaleLinear().domain(extent).range([seriesBottom, seriesTop]);
+  const countMax = Math.max(layout.countFloor, ...counts.flatMap((count) => knownValues(count.values)));
+  const yCount = scaleLinear().domain([0, countMax]).nice().range([countsBottom, countsTop]);
+  const countTicks = yCount.ticks(layout.countTicks).filter((tick) => Number.isInteger(tick));
 
   const valuesOf = (i: number) => points.map((point) => point.values[i] ?? null);
   const trace = line<number | null>()
@@ -104,43 +166,36 @@ export function TrendAreaChart({
   const shade = area<number | null>()
     .defined((v) => v != null)
     .x((_, i) => x(i))
-    .y0(baseline)
+    .y0(seriesBottom)
     .y1((v) => y(v!))
     .curve(curveMonotoneX);
+  const countTrace = line<number | null>()
+    .defined((v) => v != null)
+    .x((_, i) => x(i))
+    .y((v) => yCount(v!))
+    .curve(curveLinear);
 
   const lead = STROKE[series[0].tone ?? "primary"];
+  // The line drawn full weight: the first, unless the first is dots.
+  const leadLine = series.findIndex((s) => s.mark !== "dots");
+  const hasDots = series.some((s) => s.mark === "dots");
   const showDots = points.length <= layout.maxDots;
   const xTicks = tickIndexes(points.length, layout.xTicks);
 
-  const indexAt = (event: PointerEvent<SVGSVGElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const index = Math.round(x.invert((event.clientX - rect.left) * (W / rect.width)));
-    return Math.max(0, Math.min(points.length - 1, index));
-  };
-
   const point = active != null ? points[active] : null;
-  const pointValue = point?.values.find((value) => value != null) ?? null;
-  const pointY = pointValue != null ? y(pointValue) : null;
+  // The hover card sits by the round's figure, or its first count with the series hidden.
+  const pointValue = showSeries ? (point?.values.find((value) => value != null) ?? null) : null;
+  const countValue = active != null ? (counts.map((count) => count.values[active]).find((v) => v != null) ?? null) : null;
+  const pointY = pointValue != null ? y(pointValue) : countValue != null ? yCount(countValue) : null;
 
   return (
-    <div data-slot="trend-area-chart" className={cn("relative flex flex-col gap-2 select-none", className)}>
+    <div ref={measureRef} data-slot="trend-area-chart" className={cn("relative flex flex-col gap-3 select-none", className)}>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full touch-pan-y overflow-visible"
         role="img"
         aria-label={ariaLabel}
-        onPointerMove={(event) => {
-          if (event.pointerType === "mouse") setActive(indexAt(event));
-        }}
-        onPointerLeave={(event) => {
-          if (event.pointerType === "mouse") setActive(null);
-        }}
-        onPointerDown={(event) => {
-          if (event.pointerType === "mouse") return;
-          // A tap picks a round and a second tap on it puts it down.
-          const index = indexAt(event);
-          setActive(active === index ? null : index);
-        }}
+        {...track(x, points.length, W)}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -149,22 +204,33 @@ export function TrendAreaChart({
           </linearGradient>
         </defs>
 
-        {y.ticks(layout.yTicks).map((tick) => (
-          <g key={`y-${tick}`}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={y(tick)} y2={y(tick)} stroke={tokens.color.chart.muted} strokeWidth={tokens.lineWidth.border} />
-            <AxisLabel x={PAD.left - 8} y={y(tick) + 4} anchor="end">
-              {format(tick)}
-            </AxisLabel>
-          </g>
-        ))}
+        {showSeries &&
+          y.ticks(layout.yTicks).map((tick) => (
+            <g key={`y-${tick}`}>
+              <Rule x1={PAD.left} x2={W - PAD.right} y={y(tick)} />
+              <AxisLabel x={PAD.left - 8} y={y(tick) + 4} anchor="end">
+                {format(tick)}
+              </AxisLabel>
+            </g>
+          ))}
+
+        {counts.length > 0 &&
+          countTicks.map((tick) => (
+            <g key={`count-${tick}`}>
+              <Rule x1={PAD.left} x2={W - PAD.right} y={yCount(tick)} />
+              <AxisLabel x={PAD.left - 8} y={yCount(tick) + 4} anchor="end">
+                {tick}
+              </AxisLabel>
+            </g>
+          ))}
 
         {xTicks.map((i) => (
-          <AxisLabel key={`x-${i}`} x={x(i)} y={baseline + 16} anchor="middle">
+          <AxisLabel key={`x-${i}`} x={x(i)} y={baseline + 18} anchor="middle">
             {points[i].tick}
           </AxisLabel>
         ))}
 
-        {reference && (
+        {showSeries && reference && reference.value >= extent[0] && reference.value <= extent[1] && (
           <g data-slot="trend-area-reference">
             <line
               x1={PAD.left}
@@ -181,18 +247,69 @@ export function TrendAreaChart({
           </g>
         )}
 
-        <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />
+        {showSeries && series[0].mark !== "dots" && <path d={shade(first) ?? ""} fill={`url(#${gradientId})`} stroke="none" />}
 
-        {series.map((s, i) => (
-          <path
-            key={s.label}
-            d={trace(valuesOf(i)) ?? ""}
-            fill="none"
-            stroke={STROKE[s.tone ?? "primary"]}
-            strokeWidth={i === 0 ? layout.stroke : layout.strokeSecondary}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        {/* The rounds' dots sit under the lines, so a dot never hides the average running through it. */}
+        {showSeries &&
+          series.map((s, i) =>
+            points.map((p, index) => {
+              const value = p.values[i];
+              const dotted = s.mark === "dots";
+              // Beside the rounds' own dots, a line marks only the round picked.
+              const lineDots = showDots && !hasDots;
+              if (value == null || (!dotted && !lineDots && active !== index)) return null;
+              return (
+                <circle
+                  key={`dot-${i}-${index}`}
+                  cx={x(index)}
+                  cy={y(value)}
+                  r={active === index ? layout.dotHover : layout.dot}
+                  fill={dotted && active !== index ? tokens.color.chart.axis : STROKE[s.tone ?? "primary"]}
+                  stroke={tokens.color.card}
+                  strokeWidth={tokens.lineWidth.outline}
+                />
+              );
+            }),
+          )}
+        {showSeries &&
+          series.map((s, i) =>
+            s.mark === "dots" ? null : (
+              <path
+                key={s.label}
+                d={trace(valuesOf(i)) ?? ""}
+                fill="none"
+                stroke={STROKE[s.tone ?? "primary"]}
+                strokeWidth={i === leadLine ? layout.stroke : layout.strokeSecondary}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            ),
+          )}
+
+        {counts.map((count) => (
+          <g key={`count-${count.kind}`} data-slot="trend-area-count">
+            <path
+              d={countTrace(count.values) ?? ""}
+              fill="none"
+              stroke={scoreMarkFill(count.kind)}
+              strokeWidth={layout.strokeSecondary}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {count.values.map((value, index) =>
+              value == null || (!showDots && active !== index) ? null : (
+                <circle
+                  key={index}
+                  cx={x(index)}
+                  cy={yCount(value)}
+                  r={active === index ? layout.countDotHover : layout.countDot}
+                  fill={scoreMarkFill(count.kind)}
+                  stroke={tokens.color.card}
+                  strokeWidth={tokens.lineWidth.outline}
+                />
+              ),
+            )}
+          </g>
         ))}
 
         {active != null && pointY != null && (
@@ -207,62 +324,54 @@ export function TrendAreaChart({
           />
         )}
 
-        {series.map((s, i) =>
-          points.map((p, index) => {
-            const value = p.values[i];
-            if (value == null || (!showDots && active !== index)) return null;
-            return (
-              <circle
-                key={`dot-${i}-${index}`}
-                cx={x(index)}
-                cy={y(value)}
-                r={active === index ? layout.dotHover : layout.dot}
-                fill={STROKE[s.tone ?? "primary"]}
-                stroke={tokens.color.card}
-                strokeWidth={tokens.lineWidth.outline}
-              />
-            );
-          }),
-        )}
       </svg>
 
-      {series.length > 1 && (
-        <div className="flex items-center justify-center gap-4">
+      {showSeries && series.length > 1 && (
+        <div className="flex items-center justify-center gap-5">
           {series.map((s) => (
-            <span key={s.label} className="flex items-center gap-1.5 text-caption text-muted-foreground">
-              <span className={cn("size-2 rounded-full", SWATCH[s.tone ?? "primary"])} />
+            <span key={s.label} className="flex items-center gap-2 text-body text-foreground-secondary">
+              <span className={cn("size-2.5 rounded-full", SWATCH[s.tone ?? "primary"])} />
               {s.label}
             </span>
           ))}
         </div>
       )}
 
-      <AnimatePresence>
+      {canWindow && (
+        <Slider
+          aria-label="Rounds shown"
+          min={layout.windowMin}
+          max={allPoints.length}
+          value={shown}
+          onValueChange={onShownChange}
+          valueLabel={shown === allPoints.length ? `All ${pluralize(shown, "round")}` : `Last ${shown} of ${allPoints.length}`}
+        />
+      )}
+
+      <ChartTooltip
+        id={point && active != null && pointY != null ? active : null}
+        at={{ x: x(active ?? 0) / W, y: (pointY ?? 0) / H }}
+        className="min-w-32"
+      >
         {point && active != null && pointY != null && (
-          <motion.div
-            key={active}
-            data-slot="trend-area-tooltip"
-            className={cn(
-              "pointer-events-none absolute z-10 min-w-32 -translate-y-full rounded-xl border border-border bg-card/glass px-3 py-2.5 text-body-sm shadow-card",
-              // Past two thirds of the way across, the card opens to the left of the point.
-              x(active) > W * 0.65 ? "-ml-3 -translate-x-full" : "ml-3",
-            )}
-            style={{ left: `${(x(active) / W) * 100}%`, top: `${(pointY / H) * 100}%` }}
-            initial={{ opacity: 0, scale: tokens.motion.tapScale }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: tokens.motion.tapScale }}
-            transition={{ duration: tokens.motion.duration.collapse }}
-          >
+          <>
             <div className="text-sm font-bold text-card-foreground">{point.title}</div>
-            {point.subtitle && (
-              <div className="max-w-40 truncate text-label text-muted-foreground">{point.subtitle}</div>
-            )}
+            {point.subtitle && <div className="max-w-40 truncate text-label text-muted-foreground">{point.subtitle}</div>}
             <div className="mt-1.5 flex flex-col gap-0.5">
-              {series.map((s, i) => {
-                const value = point.values[i];
+              {showSeries &&
+                series.map((s, i) => {
+                  const value = point.values[i];
+                  return (
+                    <TooltipRow key={s.label} label={s.label}>
+                      {value != null ? format(value) : "—"}
+                    </TooltipRow>
+                  );
+                })}
+              {counts.map((count) => {
+                const value = count.values[active];
                 return (
-                  <TooltipRow key={s.label} label={s.label}>
-                    {value != null ? format(value) : "—"}
+                  <TooltipRow key={count.kind} label={count.label}>
+                    {value != null ? value : "—"}
                   </TooltipRow>
                 );
               })}
@@ -272,60 +381,16 @@ export function TrendAreaChart({
                 </TooltipRow>
               ))}
             </div>
-          </motion.div>
+          </>
         )}
-      </AnimatePresence>
+      </ChartTooltip>
     </div>
   );
 }
 
-function TooltipRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold text-card-foreground tabular-nums">{children}</span>
-    </div>
-  );
+/** A grid rule across a plot. */
+function Rule({ x1, x2, y }: { x1: number; x2: number; y: number }) {
+  return <line x1={x1} x2={x2} y1={y} y2={y} stroke={tokens.color.chart.muted} strokeWidth={tokens.lineWidth.border} />;
 }
 
-function AxisLabel({
-  x,
-  y,
-  anchor,
-  children,
-}: {
-  x: number;
-  y: number;
-  anchor: "start" | "middle" | "end";
-  children: ReactNode;
-}) {
-  return (
-    <text
-      x={x}
-      y={y}
-      textAnchor={anchor}
-      fontSize={tokens.type.label.size}
-      fontWeight="600"
-      fontFamily={tokens.font.sans}
-      fill={tokens.color.chart.axis}
-      paintOrder="stroke"
-      stroke={tokens.color.card}
-      strokeWidth={tokens.lineWidth.ring}
-      strokeLinejoin="round"
-    >
-      {children}
-    </text>
-  );
-}
-
-/** About `count` evenly spaced indexes from the first, always ending on the last. */
-function tickIndexes(length: number, count: number): number[] {
-  const step = Math.max(1, Math.ceil((length - 1) / (count - 1)));
-  const ticks = Array.from({ length: Math.ceil(length / step) }, (_, i) => i * step).filter((i) => i < length);
-  // Drop a tick that would crowd the last one.
-  if (ticks.length > 1 && length - 1 - ticks[ticks.length - 1] < step / 2) ticks.pop();
-  if (ticks[ticks.length - 1] !== length - 1) ticks.push(length - 1);
-  return ticks;
-}
-
-export type { TrendAreaChartProps, TrendAreaPoint, TrendAreaSeries, TrendAreaTone };
+export type { TrendAreaChartProps, TrendAreaCount, TrendAreaPoint, TrendAreaSeries, TrendAreaTone };

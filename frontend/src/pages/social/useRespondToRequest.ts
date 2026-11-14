@@ -10,7 +10,7 @@ export interface RespondVariables {
 
 /**
  * Accepts, declines or blocks a request the golfer received. The answered
- * friendship replaces its cached copy, which The Lab reads too, so an
+ * friendship replaces its cached copy, which Profile reads too, so an
  * accepted request is a friend to compare against straight away.
  */
 export function useRespondToRequest(
@@ -24,6 +24,10 @@ export function useRespondToRequest(
     onSuccess: (answered) => {
       queryClient.setQueryData<Friendship[]>(queryKeys.friendships(userId), (prev) =>
         prev ? withFriendship(prev, answered) : prev,
+      );
+      // An answered request is no longer pending, so the More menu's count drops with it.
+      queryClient.setQueryData<Friendship[]>(queryKeys.pendingFriendships(userId), (prev) =>
+        prev?.filter((f) => f.id !== answered.id),
       );
     },
   });

@@ -168,14 +168,6 @@ class RoundRepositoryDB:
     # Read
     # ================================================================
 
-    async def count_rounds_for_user(self, user_id: str) -> int:
-        """How many rounds the user has saved, however many the list views load."""
-        async with self._pool.acquire() as conn:
-            count = await conn.fetchval(
-                "SELECT COUNT(*) FROM users.rounds WHERE user_id = $1", UUID(user_id)
-            )
-        return int(count or 0)
-
     async def get_round_owner_id(self, round_id: str) -> Optional[str]:
         """Return the user_id that owns a round, or None if not found."""
         try:
@@ -212,12 +204,18 @@ class RoundRepositoryDB:
             return await self._assemble_round(conn, row)
 
     async def get_round_summaries_for_user(
-        self, user_id: str, *, limit: int = 100, offset: int = 0
+        self,
+        user_id: str,
+        *,
+        limit: Optional[int] = 100,
+        offset: int = 0,
+        course_ids: Optional[List[str]] = None,
     ) -> List[Round]:
         """Rounds for list views in one query: strokes, putts, greens and pars, no tees.
 
         The page of rounds is picked first, so only those rounds' holes are gathered.
         Only facts come back; the Round model works out the score, nines and to-par.
+        `course_ids` keeps the rounds at those courses; a null `limit` keeps every one.
         """
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
@@ -225,6 +223,7 @@ class RoundRepositoryDB:
                     SELECT id, course_id, tee_box_played, round_date, course_name_played
                     FROM users.rounds
                     WHERE user_id = $1
+                      AND ($4::uuid[] IS NULL OR course_id = ANY($4::uuid[]))
                     ORDER BY round_date DESC NULLS LAST, id
                     LIMIT $2 OFFSET $3
                 )
@@ -254,6 +253,7 @@ class RoundRepositoryDB:
                 ) holes ON true
                 ORDER BY p.round_date DESC NULLS LAST, p.id""",
                 UUID(user_id), limit, offset,
+                [UUID(c) for c in course_ids] if course_ids is not None else None,
             )
             return [round_from_summary_row(r) for r in rows]
 

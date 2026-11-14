@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   SCORE_KINDS,
   formatAverageToPar,
+  formatAverageToParTenths,
   playedScoreKinds,
   scoreKind,
   scoreKindCountLabel,
@@ -105,5 +106,24 @@ describe("scoreKindCountLabel", () => {
   it("is singular for one hole and plural otherwise", () => {
     expect([scoreKindCountLabel("birdie", 1), scoreKindCountLabel("birdie", 3), scoreKindCountLabel("quad", 2)])
       .toEqual(["Birdie", "Birdies", "Quads+"]);
+  });
+});
+
+describe("formatAverageToParTenths", () => {
+  it("writes an average to par to a tenth, with a true minus under par", () => {
+    expect(formatAverageToParTenths(0.5)).toBe("+0.5");
+    expect(formatAverageToParTenths(3)).toBe("+3.0");
+    expect(formatAverageToParTenths(-0.46)).toBe("\u22120.5");
+  });
+
+  it("is E for anything that rounds to even, and a dash for nothing", () => {
+    expect(formatAverageToParTenths(0.04)).toBe("E");
+    expect(formatAverageToParTenths(-0.04)).toBe("E");
+    expect(formatAverageToParTenths(null)).toBe("—");
+  });
+
+  it("rounds a half away from even on both sides", () => {
+    expect(formatAverageToParTenths(0.25)).toBe("+0.3");
+    expect(formatAverageToParTenths(-0.25)).toBe("\u22120.3");
   });
 });

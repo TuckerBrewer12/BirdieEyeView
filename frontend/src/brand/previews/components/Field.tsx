@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/brand/components/Field";
+import { Field, FieldError, FieldLabel } from "@/brand/components/Field";
 import { Input } from "@/brand/components/Input";
 import {
   InputGroup,
@@ -16,27 +16,23 @@ export default function FieldPreview() {
     <>
       <Field>
         <FieldLabel htmlFor="preview-email">Email</FieldLabel>
-        <Input id="preview-email" size="cta" type="email" placeholder="you@example.com" />
+        <Input id="preview-email" type="email" placeholder="you@example.com" />
       </Field>
 
       <Field>
         <FieldLabel htmlFor="preview-course">Home course</FieldLabel>
         <Input
           id="preview-course"
-          size="cta"
+         
           placeholder="Type course name…"
-          aria-describedby="preview-course-description"
         />
-        <FieldDescription id="preview-course-description">
-          Leave it blank and set one later in Settings.
-        </FieldDescription>
       </Field>
 
       <Field>
         <FieldLabel htmlFor="preview-handicap">Handicap</FieldLabel>
         <Input
           id="preview-handicap"
-          size="cta"
+         
           defaultValue="62"
           aria-invalid
           aria-describedby="preview-handicap-error"
@@ -49,7 +45,7 @@ export default function FieldPreview() {
       {/* Password reveal composes out of InputGroup — no separate component. */}
       <Field>
         <FieldLabel htmlFor="preview-password">Password</FieldLabel>
-        <InputGroup size="cta">
+        <InputGroup>
           <InputGroupInput
             id="preview-password"
             type={revealed ? "text" : "password"}
@@ -70,7 +66,7 @@ export default function FieldPreview() {
 
       <Field>
         <FieldLabel htmlFor="preview-disabled">Email</FieldLabel>
-        <Input id="preview-disabled" size="cta" defaultValue="tiger@example.com" disabled />
+        <Input id="preview-disabled" defaultValue="tiger@example.com" disabled />
       </Field>
     </>
   );

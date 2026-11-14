@@ -58,11 +58,33 @@ function friendship(
   };
 }
 
+/** The same friendships as `populatedFriendships`, for a signed-in golfer other than the test user. */
+export function friendshipsOf(golfer: { id: string; name: string | null; email: string | null }): FriendshipDto[] {
+  const swap = (id: string) => (id === ME.id ? golfer.id : id);
+  return populatedFriendships.map((row) => ({
+    ...row,
+    requester_id: swap(row.requester_id),
+    requester_name: row.requester_id === ME.id ? golfer.name : row.requester_name,
+    requester_email: row.requester_id === ME.id ? golfer.email : row.requester_email,
+    addressee_id: swap(row.addressee_id),
+    addressee_name: row.addressee_id === ME.id ? golfer.name : row.addressee_name,
+    addressee_email: row.addressee_id === ME.id ? golfer.email : row.addressee_email,
+  }));
+}
+
 /** Newest change first, as the server lists them. */
 export const populatedFriendships: FriendshipDto[] = [
   friendship("friendship-riley", riley, ME, "pending", "2026-10-28T15:30:00"),
   friendship("friendship-casey", ME, casey, "pending", "2026-10-26T09:00:00"),
-  friendship("friendship-avery", ME, avery, "accepted", "2026-10-20T18:45:00"),
-  friendship("friendship-jordan", jordan, ME, "accepted", "2026-10-12T12:00:00"),
+  {
+    ...friendship("friendship-avery", ME, avery, "accepted", "2026-10-20T18:45:00"),
+    friend_handicap_index: 8.2,
+    friend_last_played: "2026-10-28",
+  },
+  {
+    ...friendship("friendship-jordan", jordan, ME, "accepted", "2026-10-12T12:00:00"),
+    friend_handicap_index: 14.6,
+    friend_last_played: "2026-10-12",
+  },
   friendship("friendship-sam", sam, ME, "declined", "2026-09-30T08:15:00"),
 ];

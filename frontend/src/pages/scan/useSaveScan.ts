@@ -21,6 +21,8 @@ export function useSaveScan(userId: string, repository: ScanRepository = scanRep
         queryKeys.analytics(userId),
         queryKeys.goalReport(userId),
         queryKeys.playedCourses(userId),
+        queryKeys.allCourseLists(userId),
+        queryKeys.allCourseAnalytics(userId),
       ]) {
         void queryClient.invalidateQueries({ queryKey });
       }

@@ -138,7 +138,7 @@ def test_goal_report_ranks_all_actionable_savers(monkeypatch):
     assert all(saver["strokes_saved"] >= 0.1 for saver in report["savers"])
 
 
-def test_goal_report_on_track_uses_maintenance_copy(monkeypatch):
+def test_goal_report_on_track_still_names_each_saver(monkeypatch):
     _patch_goal_inputs(monkeypatch)
 
     report = goals.goal_report([_make_round(72)], 72)
@@ -146,9 +146,9 @@ def test_goal_report_on_track_uses_maintenance_copy(monkeypatch):
     assert report["on_track"] is True
     assert report["gap"] == 0.0
     assert report["savers"][0]["percentage_of_gap"] == 0.0
-    assert "keep eliminating" in next(
-        saver["detail"] for saver in report["savers"] if saver["type"] == "three_putt_bleed"
-    )
+    three_putts = next(saver for saver in report["savers"] if saver["type"] == "three_putt_bleed")
+    # A short title, and the golfer's figure as it stands.
+    assert (three_putts["headline"], three_putts["detail"]) == ("Cut out 3-putts", "2.0 a round")
 
 
 def test_goal_report_omits_non_actionable_inputs(monkeypatch):

@@ -1,8 +1,9 @@
 import {
   BarChart2,
-  FlaskConical,
-  Inbox,
+  ChartNoAxesColumn,
+  House,
   LayoutDashboard,
+  List,
   ListOrdered,
   MapPin,
   ScanLine,
@@ -21,7 +22,6 @@ const SIDE: Destination[] = [
   { href: "/rounds", label: "Rounds", icon: ListOrdered },
   { href: "/courses", label: "Courses", icon: MapPin },
   { href: "/analytics", label: "Analytics", icon: BarChart2 },
-  { href: "/the-lab", label: "The Lab", icon: FlaskConical },
   { href: "/career", label: "Career", icon: Trophy },
   { href: "/social", label: "Social", icon: Users },
 ];
@@ -29,21 +29,19 @@ const SIDE: Destination[] = [
 /** Pinned at the foot of the side rail. */
 const SIDE_FOOTER: Destination[] = [{ href: "/settings", label: "Settings", icon: Settings }];
 
-/** The phone's tab bar. */
+/** The phone's tab bar, Scan raised at its middle (with "More" after these four). */
 const TABS: Destination[] = [
-  { href: "/", label: "Home", icon: LayoutDashboard },
+  { href: "/", label: "Home", icon: House },
+  { href: "/rounds", label: "Rounds", icon: List },
   { href: "/scan", label: "Scan", icon: ScanLine },
-  { href: "/rounds", label: "Rounds", icon: ListOrdered },
-  { href: "/analytics", label: "Analytics", icon: BarChart2 },
+  { href: "/analytics", label: "Analytics", icon: ChartNoAxesColumn },
 ];
 
-/** The rest, behind the tab bar's More menu. */
+/** The rest, behind the tab bar's More sheet. Requests are reached through Social, which counts them. */
 const MORE: Destination[] = [
   { href: "/courses", label: "Courses", icon: MapPin },
-  { href: "/the-lab", label: "The Lab", icon: FlaskConical },
   { href: "/career", label: "Career", icon: Trophy },
   { href: "/social", label: "Social", icon: Users },
-  { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -60,11 +58,20 @@ export interface AppNavigation {
   more: NavItem[];
 }
 
-/** Every nav item in the shell, each marked active when it is the section the golfer is in. */
-export function navigationFor(pathname: string): AppNavigation {
+/** Social also owns its requests (`/inbox`), so it stays marked there. */
+function isCurrentSection(pathname: string, href: string): boolean {
+  return isCurrent(pathname, href) || (href === "/social" && isCurrent(pathname, "/inbox"));
+}
+
+/**
+ * Every nav item in the shell, each marked active when it is the section the golfer is in. The More
+ * sheet's Social row carries `openRequests`, the friend requests waiting for an answer.
+ */
+export function navigationFor(pathname: string, openRequests = 0): AppNavigation {
   const mark = (items: Destination[]) =>
-    items.map((item) => ({ ...item, active: isCurrent(pathname, item.href) }));
-  return { side: mark(SIDE), sideFooter: mark(SIDE_FOOTER), tabs: mark(TABS), more: mark(MORE) };
+    items.map((item) => ({ ...item, active: isCurrentSection(pathname, item.href) }));
+  const more = mark(MORE).map((item) => (item.href === "/social" ? { ...item, badge: openRequests } : item));
+  return { side: mark(SIDE), sideFooter: mark(SIDE_FOOTER), tabs: mark(TABS), more };
 }
 
 /** Avatar letters: the first letter of each of the first two words, or "?" with no name. */

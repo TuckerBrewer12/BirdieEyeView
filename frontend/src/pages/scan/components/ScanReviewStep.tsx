@@ -1,34 +1,32 @@
-import { CircleAlert, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import {
+  ActionBar,
   Alert,
   AlertDescription,
   AlertTitle,
   Button,
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
   CourseLinkSearch,
   Field,
   FieldLabel,
   Input,
+  PageTitle,
   RoundScorecard,
-  Stat,
-  StatLabel,
-  StatValue,
-  ToggleGroup,
-  ToggleGroupItem,
-  toParDisplay,
-  toParTextClass,
 } from "@/brand";
-import { formatCourseHandicap, type Round } from "@/domain";
 import { formatCourseName } from "@/domain/course";
-import { pluralNoun, pluralize } from "@/domain/format";
-import { holeList } from "../present";
+import { pluralize } from "@/domain/format";
+import { ringedBelow } from "../present";
+import { TeeField } from "./TeeField";
 import type { ScanReviewViewModel } from "../useScanReviewViewModel";
 
 interface ScanReviewStepProps {
   review: ScanReviewViewModel;
+  /** "Check your card", or "Enter your scores" by hand. */
+  title: string;
   /** Scores typed in by hand: there is no photo, and nothing the scan was unsure of. */
   manual: boolean;
   /** The photo the card was read from. */
@@ -37,68 +35,72 @@ interface ScanReviewStepProps {
 }
 
 /**
- * Checking a card before it is saved: the scorecard to type over, with the scores the scan
- * wasn't sure of ringed, beside the photo it was read from, the course, the tee and the date.
+ * Checking a card before it is saved: the photo it was read from beside the course, the tee and
+ * the date, then the scorecard to type over, with the scores the scan wasn't sure of ringed.
+ * Save and Start over sit by the title, or pinned above the tab bar on a phone.
  */
-export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanReviewStepProps) {
+export function ScanReviewStep({ review, title, manual, photoUrl, onStartOver }: ScanReviewStepProps) {
   const { round, toCheck } = review;
   if (!round) return null;
   const showPhoto = !manual && !!photoUrl;
 
   return (
-    <div data-slot="scan-review" className="flex flex-col gap-4">
+    <div data-slot="scan-review" className="flex flex-col gap-4 md:gap-5">
+      <div className="flex items-center justify-between gap-4">
+        <PageTitle>{title}</PageTitle>
+        <ActionBar>
+          <Button variant="outline" onClick={onStartOver}>
+            Start over
+          </Button>
+          <Button className="flex-1 md:flex-none" disabled={review.saving} onClick={review.save}>
+            {review.saving && <Loader2 data-icon="inline-start" className="animate-spin" />}
+            Save round
+          </Button>
+        </ActionBar>
+      </div>
+
       {review.error && (
-        <Alert variant="destructive">
+        <Alert tone="danger">
           <AlertDescription>{review.error}</AlertDescription>
         </Alert>
       )}
 
       {toCheck.length > 0 && (
-        <Alert data-slot="scores-to-check">
-          <CircleAlert className="text-destructive" />
+        <Alert tone="warning" variant="outline" data-slot="scores-to-check">
           <AlertTitle>{pluralize(toCheck.length, "score")} to check</AlertTitle>
-          <AlertDescription>
-            The scan wasn't sure what it read on {holeList(toCheck)}, ringed below. Check{" "}
-            {pluralNoun(toCheck.length, "it", "them")} against your card.
-          </AlertDescription>
+          <AlertDescription>{ringedBelow(toCheck)}</AlertDescription>
         </Alert>
       )}
 
-      <div className={showPhoto ? "grid grid-cols-1 gap-4 lg:grid-cols-2" : "flex flex-col"}>
+      <div className={showPhoto ? "grid grid-cols-1 gap-4 md:grid-cols-scan-review" : "flex flex-col"}>
         {showPhoto && (
-          <Card size="sm" className="lg:sticky lg:top-20 lg:self-start">
-            <CardHeader>
-              <CardTitle>Your card</CardTitle>
-            </CardHeader>
+          <Card className="hidden md:flex">
             <CardContent>
-              <img src={photoUrl} alt="Your scorecard" className="max-h-96 w-full rounded-lg object-contain" />
+              <img
+                src={photoUrl}
+                alt="Your scorecard"
+                className="h-card-photo w-full rounded-photo bg-muted object-cover"
+              />
             </CardContent>
           </Card>
         )}
 
-        <Card size="sm">
+        <Card>
           <CardContent className="flex flex-col gap-4">
-            <RoundFigures round={round} />
+            {showPhoto && <PhotoRow photoUrl={photoUrl} />}
             <CourseField review={review} />
-            <TeeField review={review} />
-            <Field>
-              <FieldLabel htmlFor="review-date">Date played</FieldLabel>
-              <Input
-                id="review-date"
-                type="date"
-                value={review.date}
-                max={review.today}
-                onChange={(e) => review.setDate(e.target.value)}
-              />
-            </Field>
-            <div className="flex gap-2">
-              <Button size="lg" className="flex-1" disabled={review.saving} onClick={review.save}>
-                {review.saving && <Loader2 data-icon="inline-start" className="animate-spin" />}
-                Save Round
-              </Button>
-              <Button size="lg" variant="outline" onClick={onStartOver}>
-                Start Over
-              </Button>
+            <div className="grid grid-cols-2 items-start gap-3">
+              <TeeField id="review-tee" tees={review.tees} teeBox={review.teeBox} setTeeBox={review.setTeeBox} />
+              <Field>
+                <FieldLabel htmlFor="review-date">Date</FieldLabel>
+                <Input
+                  id="review-date"
+                  type="date"
+                  value={review.date}
+                  max={review.today}
+                  onChange={(e) => review.setDate(e.target.value)}
+                />
+              </Field>
             </div>
           </CardContent>
         </Card>
@@ -107,8 +109,8 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
       <RoundScorecard
         round={round}
         teeBox={review.teeBox || null}
-        showTee
         toCheck={toCheck}
+        action={<span className="text-body-sm">Tap any score to edit</span>}
         edits={{
           onStrokesChange: review.setStrokes,
           onPuttsChange: review.setPutts,
@@ -119,24 +121,23 @@ export function ScanReviewStep({ review, manual, photoUrl, onStartOver }: ScanRe
   );
 }
 
-/** The round's score so far, against par, and net once the tee is rated and every hole is scored. */
-function RoundFigures({ round }: { round: Pick<Round, "score" | "toPar" | "courseHandicap" | "netScore"> }) {
-  const { score, toPar, courseHandicap, netScore } = round;
+/** A phone's photo: a thumbnail in the card's first row, opened full width under it. */
+function PhotoRow({ photoUrl }: { photoUrl: string }) {
   return (
-    <div className="grid grid-cols-3 gap-3 border-b border-border pb-4">
-      <Stat>
-        <StatLabel>Score</StatLabel>
-        <StatValue>{score ?? "—"}</StatValue>
-      </Stat>
-      <Stat>
-        <StatLabel>To par</StatLabel>
-        <StatValue className={toParTextClass(toPar)}>{toParDisplay(toPar)}</StatValue>
-      </Stat>
-      <Stat>
-        <StatLabel>{courseHandicap != null ? `Net · hcp ${formatCourseHandicap(courseHandicap)}` : "Net"}</StatLabel>
-        <StatValue>{netScore ?? "—"}</StatValue>
-      </Stat>
-    </div>
+    <Collapsible className="flex flex-col gap-3 border-b border-border pb-4 md:hidden">
+      <div className="flex items-center gap-3">
+        <img
+          src={photoUrl}
+          alt=""
+          className="aspect-4/3 w-photo-thumb shrink-0 rounded-lg bg-muted object-cover"
+        />
+        <span className="flex-1 text-body font-semibold text-foreground">Your card</span>
+        <CollapsibleTrigger render={<Button variant="ghost" />}>View</CollapsibleTrigger>
+      </div>
+      <CollapsibleContent>
+        <img src={photoUrl} alt="Your scorecard" className="w-full rounded-photo object-contain" />
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -147,6 +148,7 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
       <FieldLabel htmlFor="review-course">Course</FieldLabel>
       <CourseLinkSearch
         inputId="review-course"
+        surface="plain"
         query={courseSearch.query}
         results={courseSearch.results}
         searching={courseSearch.searching}
@@ -163,43 +165,13 @@ function CourseField({ review }: { review: ScanReviewViewModel }) {
       {nameToKeep && (
         <Button
           variant="linkMuted"
-          size="xs"
-          className="h-auto self-start p-0"
+          size="inline"
+          className="self-start"
           onClick={() => review.nameCourse(nameToKeep)}
         >
-          Save as "{formatCourseName(nameToKeep)}" without linking →
+          Save as "{formatCourseName(nameToKeep)}" without linking
+          <ArrowRight aria-hidden />
         </Button>
-      )}
-    </Field>
-  );
-}
-
-function TeeField({ review }: { review: ScanReviewViewModel }) {
-  return (
-    <Field>
-      <FieldLabel htmlFor={review.tees.length > 0 ? undefined : "review-tee"}>Tee played</FieldLabel>
-      {review.tees.length > 0 ? (
-        <ToggleGroup
-          variant="outline"
-          size="sm"
-          aria-label="Tee played"
-          value={review.teeBox ? [review.teeBox] : []}
-          onValueChange={(values) => review.setTeeBox(values[0] ?? "")}
-        >
-          {review.tees.map((color) => (
-            <ToggleGroupItem key={color} value={color}>
-              {color}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      ) : (
-        <Input
-          id="review-tee"
-          autoComplete="off"
-          placeholder="e.g. White"
-          value={review.teeBox}
-          onChange={(e) => review.setTeeBox(e.target.value)}
-        />
       )}
     </Field>
   );
