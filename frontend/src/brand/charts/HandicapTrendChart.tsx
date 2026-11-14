@@ -44,7 +44,7 @@ export function HandicapTrendChart({ data, compact = false }: HandicapTrendChart
     line<number | null>()
       .defined((v) => v != null)
       .x((_, i) => x(i))
-      .y((v) => y(v!))
+      .y((v) => (v == null ? bottom : y(v)))
       .curve(curveStepAfter)(handicaps) ?? "";
   const ticks = y.ticks(4).filter((v) => v !== y.domain()[0]);
 

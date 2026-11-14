@@ -97,7 +97,7 @@ describe("useDashboardPageViewModel", () => {
       dashboardError: new Error("Dashboard data failed to load."),
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.data).toBeNull();
+    expect(result.current.loaded).toBe(false);
     expect(result.current.error?.message).toBe("Dashboard data failed to load.");
   });
 

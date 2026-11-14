@@ -21,7 +21,7 @@ export function DashboardPage({ userId }: DashboardPageProps) {
     return <LoadingState>Loading dashboard...</LoadingState>;
   }
 
-  if (!vm.data) {
+  if (!vm.loaded) {
     return (
       <Alert tone="danger">
         <AlertDescription>

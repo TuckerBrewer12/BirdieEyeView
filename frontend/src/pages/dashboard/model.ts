@@ -22,6 +22,20 @@ export function bestRoundFrom(dto: DashboardDto): BestRound | null {
   };
 }
 
+export interface ScoringAverage {
+  average: number | null;
+  change: number | null;
+  verdict: ChangeVerdict | null;
+}
+
+export function scoringAverageFrom(dto: DashboardDto): ScoringAverage {
+  return {
+    average: dto.scoring_average_l5 ?? null,
+    change: dto.scoring_average_change ?? null,
+    verdict: dto.scoring_average_verdict ?? null,
+  };
+}
+
 export interface HandicapMonth {
   index: number | null;
   change: number | null;

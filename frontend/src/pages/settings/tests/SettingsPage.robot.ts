@@ -6,6 +6,7 @@ import { populatedCourses } from "../../../testing/fixtures/courses";
 import { expectTheme } from "../../../testing/theme";
 import type { UserDto } from "../../../types/api";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
+import { captureOptions } from "../../../testing/fullPageCapture";
 
 type ThemeLabel = "Light" | "Dark" | "System";
 
@@ -338,7 +339,7 @@ export class SettingsRobot {
 
   async capture(name: string): Promise<this> {
     await fontsLoaded(this.page);
-    await expect(this.page).toHaveScreenshot(name, { fullPage: true });
+    await expect(this.page).toHaveScreenshot(name, captureOptions());
     return this;
   }
 }

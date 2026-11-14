@@ -4,7 +4,7 @@ import { queryKeys } from "@/data/queryKeys";
 import { useGoalReport } from "@/data/useGoalReport";
 import { useUser } from "@/data/useUser";
 import { Round, trendPointsFrom, type RoundSummary, type ScoreMix } from "@/domain";
-import type { DashboardDto, UserDto } from "@/types/api";
+import type { UserDto } from "@/types/api";
 import {
   dashboardRepository,
   type DashboardRepository,
@@ -13,11 +13,13 @@ import {
   bestRoundFrom,
   goalProgress,
   handicapMonthFrom,
+  scoringAverageFrom,
   whsFrom,
   type BestRound,
   type ChangeVerdict,
   type GoalProgress,
   type HandicapMonth,
+  type ScoringAverage,
   type WhsBreakdown,
 } from "./model";
 import { greetingFor } from "./present";
@@ -25,7 +27,8 @@ import { greetingFor } from "./present";
 export type { ChangeVerdict, WhsBreakdown };
 
 export interface DashboardPageViewModel {
-  data: DashboardDto | null;
+  loaded: boolean;
+  scoringAverage: ScoringAverage;
   greeting: string;
   user: UserDto | null;
   loading: boolean;
@@ -55,6 +58,7 @@ const EMPTY_WHS: WhsBreakdown = {
   hasRatedRounds: false,
 };
 
+const EMPTY_AVERAGE: ScoringAverage = { average: null, change: null, verdict: null };
 const EMPTY_HANDICAP: HandicapMonth = { index: null, change: null, verdict: null };
 const EMPTY_MIX: ScoreMix = { eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0 };
 const RECENT_ROUNDS = 3;
@@ -86,7 +90,8 @@ export function useDashboardPageViewModel(
   const closeHandicapSheet = useCallback(() => setHandicapSheetOpen(false), []);
 
   return {
-    data,
+    loaded: data !== null,
+    scoringAverage: data ? scoringAverageFrom(data) : EMPTY_AVERAGE,
     greeting: greetingFor(now()),
     user: user ?? null,
     loading,

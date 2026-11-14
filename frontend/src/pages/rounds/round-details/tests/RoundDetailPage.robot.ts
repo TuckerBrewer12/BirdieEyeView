@@ -5,6 +5,7 @@ import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { formatCourseName } from "../../../../domain/course";
 import { fontsLoaded } from "../../../../testing/fontsLoaded";
+import { captureOptions } from "../../../../testing/fullPageCapture";
 
 export class RoundDetailRobot {
   private readonly page: Page;
@@ -248,7 +249,7 @@ export class RoundDetailRobot {
       await expect(this.page.locator("svg circle").last()).toBeVisible();
     }
     await fontsLoaded(this.page);
-    await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
+    await expect(this.page).toHaveScreenshot(name, captureOptions(options.fullPage));
     return this;
   }
 }

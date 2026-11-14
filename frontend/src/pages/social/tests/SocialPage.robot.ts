@@ -5,6 +5,7 @@ import { TEST_USER } from "../../../testing/fakes/FakeBackend";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { FriendsInboxRobot } from "../inbox/tests/FriendsInboxPage.robot";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
+import { captureOptions } from "../../../testing/fullPageCapture";
 
 export class SocialRobot {
   private readonly page: Page;
@@ -146,7 +147,7 @@ export class SocialRobot {
 
   async capture(name: string): Promise<this> {
     await fontsLoaded(this.page);
-    await expect(this.page).toHaveScreenshot(name, { fullPage: true });
+    await expect(this.page).toHaveScreenshot(name, captureOptions());
     return this;
   }
 }
