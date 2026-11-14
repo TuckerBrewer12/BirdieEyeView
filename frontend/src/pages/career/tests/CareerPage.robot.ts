@@ -6,6 +6,7 @@ import { sampleAnalyticsAYearOn, withoutRounds } from "../../../testing/fakes/an
 import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
 import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
+import { captureOptions } from "../../../testing/fullPageCapture";
 
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
 
@@ -187,7 +188,7 @@ export class CareerRobot {
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
     await this.page.evaluate(() => window.scrollTo(0, 0));
     await fontsLoaded(this.page);
-    await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
+    await expect(this.page).toHaveScreenshot(name, captureOptions(options.fullPage));
     return this;
   }
 }

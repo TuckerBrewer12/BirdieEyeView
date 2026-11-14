@@ -6,8 +6,7 @@ import { GreetingHeader } from "./GreetingHeader";
 import { LastRoundCard } from "./LastRoundCard";
 
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
-  const { data } = vm;
-  if (!data) return null;
+  if (!vm.loaded) return null;
 
   return (
     <div className="flex max-w-240 flex-col gap-5">
@@ -23,9 +22,9 @@ export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
 
       <div className="grid grid-cols-dashboard-cards gap-4">
         <ScoringAverageCard
-          average={data.scoring_average_l5}
-          change={data.scoring_average_change}
-          verdict={data.scoring_average_verdict}
+          average={vm.scoringAverage.average}
+          change={vm.scoringAverage.change}
+          verdict={vm.scoringAverage.verdict}
           line={vm.averageLine}
         />
         <ScoreMixCard mix={vm.recentMix} />
