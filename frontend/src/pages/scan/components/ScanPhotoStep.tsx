@@ -57,7 +57,12 @@ function ScanFailed({ step, action }: { step: PhotoStep; action: ReactNode }) {
         {report.available && (
           <>
             {" "}
-            <ScanReport status={report.status} error={report.error} onSend={report.submit} />
+            <ScanReport
+              status={report.status}
+              error={report.error}
+              onSend={report.submit}
+              className="text-body-lg"
+            />
           </>
         )}
       </AlertDescription>
