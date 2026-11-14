@@ -116,7 +116,6 @@ export type { TabBarProps } from "./components/TabBar";
 export { SideNav } from "./components/SideNav";
 export type { SideNavProps, SideNavUser } from "./components/SideNav";
 export type { NavItem, RenderLink } from "./nav";
-export { ScoreCountChip } from "./components/ScoreCountChip";
 export { SearchField } from "./components/SearchField";
 export { TeePicker } from "./components/TeePicker";
 export { LinePicker } from "./components/LinePicker";
