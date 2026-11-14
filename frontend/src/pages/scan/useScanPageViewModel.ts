@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { preparePhotoForUpload } from "@/data/photoUpload";
+import { scanReportRepository, type ScanReportRepository } from "@/data/scanReportRepository";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { useCardText } from "@/data/useCardText";
 import { useExtractScorecard, useIsExtractingScorecard } from "@/data/useExtractScorecard";
+import { useFailedScanReport, type FailedScanReport } from "@/data/useFailedScanReport";
 import type { RoundDetail } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
+import { failedScanAttempt, scanFailureOf } from "@/lib/scanReports";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/domain/course";
 import { SCAN_STEPS, SCAN_STEP_HOLD_MS, cardContext, type CardFacts } from "@/domain/scan";
@@ -27,12 +30,14 @@ export interface ScanPageRepositories {
   scan: ScanRepository;
   courses: CoursesRepository;
   rounds: Pick<RoundsRepository, "getRound">;
+  reports: ScanReportRepository;
 }
 
 const defaultRepositories: ScanPageRepositories = {
   scan: scanRepository,
   courses: coursesRepository,
   rounds: roundsRepository,
+  reports: scanReportRepository,
 };
 
 export interface ScanPageViewModel {
@@ -42,6 +47,8 @@ export interface ScanPageViewModel {
   setMode: (mode: ScanMode) => void;
   /** Why the last scan failed. */
   error: string | null;
+  /** Sending the failed scan's photo for debugging, when the golfer asks. */
+  report: FailedScanReport;
   startOver: () => void;
 
   // Upload
@@ -90,7 +97,7 @@ export function useScanPageViewModel(
   userId: string,
   repositories: ScanPageRepositories = defaultRepositories,
 ): ScanPageViewModel {
-  const { scan, courses, rounds } = repositories;
+  const { scan, courses, rounds, reports } = repositories;
   const { session, setSession } = useScanSession();
   const [phase, setPhase] = useState(0);
   // A later pick wins over an earlier one still being readied.
@@ -104,6 +111,7 @@ export function useScanPageViewModel(
   const { mutateAsync: extractCard } = useExtractScorecard(scan);
   const extracting = useIsExtractingScorecard();
   const savedRound = useSavedRound(session.savedRoundId, rounds);
+  const report = useFailedScanReport(session.failedScan, reports);
 
   const step: ScanStep = session.savedRoundId
     ? "success"
@@ -157,7 +165,7 @@ export function useScanPageViewModel(
       void preparePhotoForUpload(picked).then((file) => {
         if (pick !== latestPick.current) return;
         const id = `${file.name}-${file.size}-${Date.now()}`;
-        setSession((current) => ({ ...current, photo: { id, file }, error: null }));
+        setSession((current) => ({ ...current, photo: { id, file }, error: null, failedScan: null }));
       });
     },
     [setSession],
@@ -186,7 +194,7 @@ export function useScanPageViewModel(
     if (!photo) return;
     // Only the scan of the photo still picked may land, so starting over mid-scan sticks.
     const stillPicked = (current: typeof session) => current.photo?.id === photo.id;
-    setSession((current) => ({ ...current, error: null }));
+    setSession((current) => ({ ...current, error: null, failedScan: null }));
     extractCard({ photo: photo.file, userContext: cardContext(card), ocrText: cardText, courseId: presetCourse?.id ?? null })
       .then((result) => {
         setSession((current) =>
@@ -198,7 +206,13 @@ export function useScanPageViewModel(
       })
       .catch((err: unknown) => {
         setSession((current) =>
-          stillPicked(current) ? { ...current, error: messageFrom(err, USER_FACING_ERRORS.scan) } : current,
+          stillPicked(current)
+            ? {
+                ...current,
+                error: messageFrom(err, USER_FACING_ERRORS.scan),
+                failedScan: failedScanAttempt(photo.file, scanFailureOf(err)),
+              }
+            : current,
         );
       });
   }, [session, setSession, extractCard, cardText, setReviewQuery]);
@@ -219,6 +233,7 @@ export function useScanPageViewModel(
     mode: session.mode,
     setMode,
     error: session.error,
+    report,
     startOver,
 
     photo: session.photo?.file ?? null,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createScanReportRepository, REPORT_NOT_SAVED, REPORT_UNAVAILABLE } from "./scanReportRepository";
+import { createScanReportRepository, REPORT_NOT_SAVED, REPORT_UNAVAILABLE } from "../scanReportRepository";
 import { failedScanAttempt, readScanFailure } from "@/lib/scanReports";
 
 class FakeReportTransport {

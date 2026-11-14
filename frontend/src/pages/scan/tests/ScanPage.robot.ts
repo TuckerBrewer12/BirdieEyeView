@@ -276,6 +276,37 @@ export class ScanRobot {
     return this;
   }
 
+  async tapReportScan(): Promise<this> {
+    await this.page.getByRole("group", { name: "Scan report" }).getByRole("button", { name: "Report failed scan" }).click();
+    return this;
+  }
+
+  /** The report was saved: its button is spent, and it carried why the scan failed and no file name. */
+  async seesReportSent(): Promise<this> {
+    const report = this.page.getByRole("group", { name: "Scan report" });
+    await expect(report.getByRole("button", { name: "Report sent" })).toBeDisabled();
+    await expect(report.getByRole("status")).toHaveText("Thanks. Your report was saved.");
+    const sent = this.backend?.reportRequests ?? [];
+    expect(sent).toHaveLength(1);
+    expect(JSON.parse(sent[0].metadata)).toMatchObject({ category: "extraction_failed", stage: "parse" });
+    expect(sent[0].metadata).not.toContain(CARD_NAME);
+    return this;
+  }
+
+  /** The report wasn't saved: why shows, and it can be sent again. */
+  async seesReportNotSaved(message: string): Promise<this> {
+    const report = this.page.getByRole("group", { name: "Scan report" });
+    await expect(report.getByRole("status")).toHaveText(message);
+    await expect(report.getByRole("button", { name: "Report failed scan" })).toBeEnabled();
+    return this;
+  }
+
+  /** Nothing to report: no scan has failed. */
+  async seesNoReport(): Promise<this> {
+    await expect(this.page.getByRole("group", { name: "Scan report" })).toHaveCount(0);
+    return this;
+  }
+
   async searchCourse(query: string): Promise<this> {
     await this.page.getByPlaceholder("Search courses…").fill(query);
     return this;

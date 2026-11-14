@@ -1,5 +1,5 @@
 import { apiUrl } from "@/lib/apiBase";
-import type { FailedScanAttempt } from "@/types/scanReport";
+import type { FailedScanAttempt } from "@/domain/scanReport";
 
 export interface ScanReportRepository {
   submit(attempt: FailedScanAttempt): Promise<void>;

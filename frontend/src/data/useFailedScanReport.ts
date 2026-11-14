@@ -1,7 +1,16 @@
 import { useCallback, useRef, useState } from "react";
-import { REPORT_NOT_SAVED, scanReportRepository } from "@/data/scanReportRepository";
-import type { ScanReportRepository } from "@/data/scanReportRepository";
-import type { FailedScanAttempt, FailedScanReportViewModel, ScanReportStatus } from "@/types/scanReport";
+import type { FailedScanAttempt, ScanReportStatus } from "@/domain/scanReport";
+import { REPORT_NOT_SAVED, scanReportRepository, type ScanReportRepository } from "./scanReportRepository";
+
+/** Sending a failed scan for debugging, once the golfer asks to. */
+export interface FailedScanReport {
+  /** Whether there is a failed scan to report. */
+  available: boolean;
+  status: ScanReportStatus;
+  /** Why the last report wasn't saved. */
+  error: string | null;
+  submit: () => void;
+}
 
 interface Submission {
   attempt: FailedScanAttempt;
@@ -9,10 +18,14 @@ interface Submission {
   error: string | null;
 }
 
+/**
+ * Reports a failed scan only when asked, at most once per failure, and lets a failed report be
+ * sent again. A report still in flight for an earlier failure can't mark a newer one sent.
+ */
 export function useFailedScanReport(
   attempt: FailedScanAttempt | null,
   repository: ScanReportRepository = scanReportRepository,
-): FailedScanReportViewModel {
+): FailedScanReport {
   const [submission, setSubmission] = useState<Submission | null>(null);
   const pending = useRef(new Set<FailedScanAttempt>());
   const sent = useRef(new WeakSet<FailedScanAttempt>());
@@ -22,17 +35,16 @@ export function useFailedScanReport(
     if (!attempt || pending.current.has(attempt) || sent.current.has(attempt)) return;
     pending.current.add(attempt);
     setSubmission({ attempt, status: "sending", error: null });
-    void repository.submit(attempt).then(
+    repository.submit(attempt).then(
       () => {
         pending.current.delete(attempt);
         sent.current.add(attempt);
-        setSubmission((prev) => prev?.attempt === attempt ? { attempt, status: "sent", error: null } : prev);
+        setSubmission((prev) => (prev?.attempt === attempt ? { attempt, status: "sent", error: null } : prev));
       },
       (error: unknown) => {
         pending.current.delete(attempt);
-        setSubmission((prev) => prev?.attempt === attempt ? {
-          attempt, status: "failed", error: error instanceof Error ? error.message : REPORT_NOT_SAVED,
-        } : prev);
+        const message = error instanceof Error ? error.message : REPORT_NOT_SAVED;
+        setSubmission((prev) => (prev?.attempt === attempt ? { attempt, status: "failed", error: message } : prev));
       },
     );
   }, [attempt, repository]);

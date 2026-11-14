@@ -12,6 +12,7 @@ import {
   FileChip,
   PageTitle,
   ScanProgress,
+  ScanReport,
 } from "@/brand";
 import { tokens } from "@/brand/theme";
 import { SCAN_STEPS } from "@/domain/scan";
@@ -91,6 +92,13 @@ export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }
                   <Alert tone="danger">
                     <AlertDescription>{viewModel.error}</AlertDescription>
                   </Alert>
+                )}
+                {viewModel.report.available && (
+                  <ScanReport
+                    status={viewModel.report.status}
+                    error={viewModel.report.error}
+                    onReport={viewModel.report.submit}
+                  />
                 )}
                 <Button size="lg" onClick={viewModel.extract}>
                   <Upload data-icon="inline-start" />

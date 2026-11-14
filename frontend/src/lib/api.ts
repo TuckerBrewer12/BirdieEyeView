@@ -23,9 +23,11 @@ import type {
 } from "@/types/api";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
+import { readScanFailure, ScanFailedError } from "@/lib/scanReports";
 import {
   fetchWithUserFacingError,
   getUserFacingError,
+  messageFrom,
   parseJsonResponse,
   USER_FACING_ERRORS,
 } from "@/lib/userFacingErrors";
@@ -115,12 +117,27 @@ export const api = {
   },
 
   /** Reads a scorecard photo. `fields` carries the photo as `file` and the optional context fields. */
+  /** Throws a ScanFailedError carrying the safe diagnostics a failed-scan report may send. */
   extractScan: async (fields: Record<string, string | File>): Promise<ScanDto> => {
-    const res = await postForm("/scan/extract", fields, USER_FACING_ERRORS.scan);
-    if (!res.ok) {
-      throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.scan));
+    let res: Response;
+    try {
+      res = await postForm("/scan/extract", fields, USER_FACING_ERRORS.scan);
+    } catch (error) {
+      throw new ScanFailedError(messageFrom(error, USER_FACING_ERRORS.scan), {
+        category: "network_error", stage: "unknown", http_status: null,
+      });
     }
-    return parseJsonResponse<ScanDto>(res, USER_FACING_ERRORS.scan);
+    if (!res.ok) {
+      const failure = await readScanFailure(res);
+      throw new ScanFailedError(await getUserFacingError(res, USER_FACING_ERRORS.scan), failure);
+    }
+    try {
+      return await parseJsonResponse<ScanDto>(res, USER_FACING_ERRORS.scan);
+    } catch (error) {
+      throw new ScanFailedError(messageFrom(error, USER_FACING_ERRORS.scan), {
+        category: "invalid_response", stage: "unknown", http_status: res.status,
+      });
+    }
   },
 
   saveScan: (request: SaveScanRequestDto) =>

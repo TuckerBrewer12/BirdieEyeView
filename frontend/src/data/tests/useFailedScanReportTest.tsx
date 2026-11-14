@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { useFailedScanReport } from "../useFailedScanReport";
 import { FakeScanReportRepository } from "@/testing/fakes/FakeScanReportRepository";
 import { failedScanAttempt } from "@/lib/scanReports";
-import type { FailedScanAttempt } from "@/types/scanReport";
+import type { FailedScanAttempt } from "@/domain/scanReport";
 
 function attempt() {
   return failedScanAttempt(new File(["image"], "private-name.png", { type: "image/png" }), {

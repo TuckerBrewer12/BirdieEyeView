@@ -1,6 +1,7 @@
 import type { ExtractRequest, ScanRepository } from "../../data/scanRepository";
 import type { SaveScanRequestDto, ScanDto } from "../../types/api";
 import { InMemoryRounds } from "./InMemoryRounds";
+import { ScanFailedError } from "@/lib/scanReports";
 
 export interface FakeScanRepositorySeed {
   /** What extract reads off any card. Unset, extract fails. */
@@ -48,8 +49,10 @@ export class FakeScanRepository implements ScanRepository {
         this.release = resolve;
       });
     }
-    if (this.seed.extractError) throw new Error(this.seed.extractError);
-    if (!this.seed.result) throw new Error("Could not read this scorecard.");
+    // As the API client does: a failed read carries why, for a report.
+    const failure = { category: "extraction_failed", stage: "parse", http_status: 500 } as const;
+    if (this.seed.extractError) throw new ScanFailedError(this.seed.extractError, failure);
+    if (!this.seed.result) throw new ScanFailedError("Could not read this scorecard.", failure);
     return this.seed.result;
   }
 

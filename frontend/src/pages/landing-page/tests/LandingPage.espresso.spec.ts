@@ -31,6 +31,15 @@ test("a failed scan keeps the photo and says why", async ({ landing }) => {
   await landing.seesScanFailed();
 });
 
+test("a failed scan can be reported without an account", async ({ landing }) => {
+  await landing.open({ scanFails: true, reportStorage: true });
+  await landing.chooseScorecard();
+  await landing.tapScan();
+  await landing.seesScanFailed();
+  await landing.tapReportScan();
+  await landing.seesReportSent();
+});
+
 test("Sign up free beside Try it goes to register", async ({ landing }) => {
   await landing.open();
   await landing.tapSignUp("Sign up free");

@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
+import type { FakeBackend } from "../../../testing/fakes/FakeBackend";
 import { SCANNED_COURSE_NAME, scannedCard } from "../../../testing/fixtures/scan";
 import { expectTheme } from "../../../testing/theme";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
@@ -14,6 +15,7 @@ const HERO_ALT = "A paper scorecard held over a golf cart";
 /** Screen robot for the logged-out landing page at `/`. */
 export class LandingRobot {
   private readonly page: Page;
+  private backend: FakeBackend | null = null;
 
   constructor(page: Page) {
     this.page = page;
@@ -26,12 +28,19 @@ export class LandingRobot {
     return this;
   }
 
-  /** `scanFails`: the scan endpoint errors, as it does when the server can't read a card. */
-  async open({ scanFails = false }: { scanFails?: boolean } = {}): Promise<this> {
+  /**
+   * `scanFails`: the scan endpoint errors, as it does when the server can't read a card.
+   * `reportStorage`: a failed scan's report is saved; unset, reporting isn't set up.
+   */
+  async open({ scanFails = false, reportStorage = false }: { scanFails?: boolean; reportStorage?: boolean } = {}): Promise<this> {
     // Reduced motion settles the hero's entrance at once, so a capture never
     // catches it mid-fade. `test.use({ reducedMotion })` does not reach the page.
     await this.page.emulateMedia({ reducedMotion: "reduce" });
-    await FakeSession.install(this.page, { signedOut: true, scan: scanFails ? undefined : scannedCard });
+    this.backend = await FakeSession.install(this.page, {
+      signedOut: true,
+      scan: scanFails ? undefined : scannedCard,
+      reportStorage,
+    });
     await this.page.goto("/");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -92,6 +101,21 @@ export class LandingRobot {
     await expect(this.page.getByRole("alert")).toContainText("Couldn't read this card.");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Scan my scorecard" })).toBeVisible();
+    return this;
+  }
+
+  async tapReportScan(): Promise<this> {
+    await this.page.getByRole("group", { name: "Scan report" }).getByRole("button", { name: "Report failed scan" }).click();
+    return this;
+  }
+
+  /** The report was saved, its button spent, and it carried no file name. */
+  async seesReportSent(): Promise<this> {
+    const report = this.page.getByRole("group", { name: "Scan report" });
+    await expect(report.getByRole("button", { name: "Report sent" })).toBeDisabled();
+    const sent = this.backend?.reportRequests ?? [];
+    expect(sent).toHaveLength(1);
+    expect(sent[0].metadata).not.toContain(CARD_NAME);
     return this;
   }
 

@@ -11,6 +11,7 @@ import {
   Dropzone,
   FileButton,
   PhotoSourceSheet,
+  ScanReport,
   type PhotoSource,
 } from "@/brand";
 import { formatFileSize } from "@/domain";
@@ -25,6 +26,7 @@ type PhotoStep = Pick<
   | "pickPhoto"
   | "extract"
   | "error"
+  | "report"
   | "card"
   | "setCard"
   | "courseSearch"
@@ -47,19 +49,23 @@ const READ_CARD = "Read card";
 
 /**
  * Why the read failed: "Couldn't read this card." in bold with what to try beside it (under it on a
- * phone), and the way to another photo at the end.
+ * phone), and the way to another photo at the end. Under it, the way to report the failed scan.
  */
-function ScanFailed({ error, action }: { error: string | null; action: ReactNode }) {
-  if (!error) return null;
-  const { title, detail } = scanFailure(error);
+function ScanFailed({ step, action }: { step: PhotoStep; action: ReactNode }) {
+  if (!step.error) return null;
+  const { title, detail } = scanFailure(step.error);
+  const { report } = step;
   return (
-    <Alert tone="danger" data-slot="scan-failed" className="px-4 py-3.5 text-body-lg">
-      <CircleAlert className="size-5" />
-      <AlertDescription>
-        <strong className="block font-semibold md:inline">{title}</strong> {detail}
-      </AlertDescription>
-      <AlertAction>{action}</AlertAction>
-    </Alert>
+    <div className="flex flex-col gap-3">
+      <Alert tone="danger" data-slot="scan-failed" className="px-4 py-3.5 text-body-lg">
+        <CircleAlert className="size-5" />
+        <AlertDescription>
+          <strong className="block font-semibold md:inline">{title}</strong> {detail}
+        </AlertDescription>
+        <AlertAction>{action}</AlertAction>
+      </Alert>
+      {report.available && <ScanReport status={report.status} error={report.error} onReport={report.submit} />}
+    </div>
   );
 }
 
@@ -101,7 +107,7 @@ export function ScanPhotoStepWide({ step, previewUrl }: ScanPhotoStepProps) {
 
   return (
     <>
-      <ScanFailed error={step.error} action={anotherPhoto("outline")} />
+      <ScanFailed step={step} action={anotherPhoto("outline")} />
       <Card data-slot="scan-upload">
         <CardContent className="grid grid-cols-scan-photo gap-6">
           <div data-slot="scan-photo" className="flex flex-col gap-3">
@@ -144,7 +150,7 @@ export function ScanPhotoStepPhone({
   return (
     <>
       <ScanFailed
-        error={step.error}
+        step={step}
         action={
           <PhotoSourceSheet
             title="Retake scorecard photo"

@@ -68,6 +68,8 @@ export interface FakeBackendSeed extends InMemoryRoundsSeed {
   scan?: ScanDto;
   /** `/api/scan/extract` doesn't answer until `finishScan()`, so the scan can be seen running. */
   holdScan?: boolean;
+  /** `/api/scan/reports` saves a failed scan's report. Unset, it answers that reporting isn't set up. */
+  reportStorage?: boolean;
   /** Why `GET /api/users/{id}` fails; unset, it answers with the profile. */
   profileError?: string | null;
   /** Why `PATCH /api/users/{id}` fails; unset, it saves. */
@@ -103,6 +105,7 @@ export class FakeBackend {
   goalReport: GoalReportDto | null | undefined;
   readonly benchmarks: Partial<Record<string, BenchmarkComparisonDto>>;
   scan: ScanDto | undefined;
+  reportStorage: boolean;
   profileError: string | null;
   updateUserError: string | null;
   /** Flips to false when a sign-in or a verification link starts a session. */
@@ -138,6 +141,7 @@ export class FakeBackend {
       signedOut,
       scan,
       holdScan,
+      reportStorage,
       profileError,
       updateUserError,
       friends,
@@ -163,6 +167,7 @@ export class FakeBackend {
     this.goalReport = goalReport;
     this.benchmarks = benchmarks ?? {};
     this.scan = scan;
+    this.reportStorage = reportStorage ?? false;
     this.profileError = profileError ?? null;
     this.updateUserError = updateUserError ?? null;
     this.signedOut = signedOut ?? false;
@@ -234,6 +239,9 @@ export class FakeBackend {
 
   /** Each `/api/scan/extract` request's text fields, oldest first: what was said about the card. */
   scanRequests: Record<string, string>[] = [];
+
+  /** Each `/api/scan/reports` request's text fields, oldest first: the report's metadata. */
+  reportRequests: Record<string, string>[] = [];
 
   /** Lets a held scan answer. */
   finishScan(): void {
@@ -308,8 +316,24 @@ export class FakeBackend {
 
     if (verb === "POST" && path.includes("/api/scan/extract")) {
       this.scanRequests = [...this.scanRequests, (body ?? {}) as Record<string, string>];
-      if (!this.scan) return { status: 500, body: { detail: "Could not read this scorecard." } };
+      if (!this.scan) {
+        return {
+          status: 500,
+          body: { detail: "Could not read this scorecard.", failure: { category: "extraction_failed", stage: "parse" } },
+        };
+      }
       return { status: 200, body: this.scan };
+    }
+
+    if (verb === "POST" && path.endsWith("/api/scan/reports")) {
+      this.reportRequests = [...this.reportRequests, (body ?? {}) as Record<string, string>];
+      if (!this.reportStorage) {
+        return {
+          status: 503,
+          body: { code: "report_storage_unavailable", detail: "Reporting is not available yet. Your report was not saved." },
+        };
+      }
+      return { status: 200, body: { status: "saved" } };
     }
 
     if (verb === "POST" && path.includes("/api/scan/save")) {

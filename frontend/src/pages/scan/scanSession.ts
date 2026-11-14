@@ -1,6 +1,7 @@
 import { createContext, useContext, type Dispatch, type SetStateAction } from "react";
 import type { PickedPhoto } from "@/data/useCardText";
 import { NO_CARD_FACTS, type CardFacts } from "@/domain/scan";
+import type { FailedScanAttempt } from "@/domain/scanReport";
 import { todayIso, type ManualSetup, type PickedCourse, type ScanMode, type ScanReviewDraft } from "./scanModel";
 
 /**
@@ -22,6 +23,8 @@ export interface ScanSession {
    * because a scan can fail after the golfer has left the page and come back.
    */
   error: string | null;
+  /** The last failed scan, which the golfer may report. Cleared by a new photo or a new scan. */
+  failedScan: FailedScanAttempt | null;
 }
 
 export function newScanSession(today: string = todayIso()): ScanSession {
@@ -34,6 +37,7 @@ export function newScanSession(today: string = todayIso()): ScanSession {
     review: null,
     savedRoundId: null,
     error: null,
+    failedScan: null,
   };
 }
 
