@@ -5,7 +5,6 @@ import { RecentRounds } from "./RecentRounds";
 import { GreetingHeader } from "./GreetingHeader";
 import { LastRoundCard } from "./LastRoundCard";
 
-/** The wide dashboard: the last round first, then the figures in a row, then the rounds before. */
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   const { data } = vm;
   if (!data) return null;

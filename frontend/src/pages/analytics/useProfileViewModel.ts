@@ -21,48 +21,35 @@ import {
 } from "./profileModel";
 import { useBenchmarkComparison } from "./useBenchmarkComparison";
 
-/** How a friend comparison stands: no friends to pick, their rounds loading, too few rounds, or drawn. */
 export type FriendComparison = "no-friends" | "loading" | "no-rounds" | "ready";
 
-/** The Profile section: the goal, the golfer's shape against a comparison, where to find strokes, and the peak game. */
 export interface ProfileViewModel {
-  /** True until the profile's last 20 rounds first load. */
   loading: boolean;
   error: Error | null;
   retry: () => void;
 
-  /** Null until the golfer sets a goal. */
   goal: GoalStanding | null;
   setGoal: (target: number) => void;
   savingGoal: boolean;
-  /** Why the last goal didn't save, until the next pick. */
   goalSaveError: string | null;
 
-  /** The handicap, the friend, or null with nothing to compare (no index yet). */
   comparison: ComparisonTargetValue;
   selectedFriend: FriendOption | null;
   pickComparison: (value: ComparisonTargetValue, friendId: string | null) => void;
   friends: FriendOption[];
-  /** Null unless comparing with a friend. */
   friendComparison: FriendComparison | null;
-  /** The comparison has a shape to draw behind the golfer's. */
   compared: boolean;
-  /** The axes the golfer has figures for. */
   radar: RadarEntry[];
-  /** Ahead and behind on the radar, by the server's verdicts. */
   standing: RadarStanding;
 
   peak: PeakGame | null;
-  /** Birdies, bogeys and doubles a round in the best rounds against every round, and what each is worth. */
   peakImpacts: PeakImpact[];
 }
 
-/** `active` once the Profile section opens: until then its last 20 rounds aren't read. */
 export function useProfileViewModel(
   userId: string,
   active: boolean,
   repository: AnalyticsRepository = analyticsRepository,
-  /** A friend to compare with from the start, as Social's Compare asks. */
   initialFriendId: string | null = null,
 ): ProfileViewModel {
   const [picked, setPicked] = useState<{ value: ComparisonTargetValue; friendId: string | null } | null>(
@@ -80,9 +67,7 @@ export function useProfileViewModel(
   const peak = useMemo(() => (analytics ? peakGameFrom(analytics, target, report) : null), [analytics, target, report]);
 
   const friends = useMemo(() => friendOptionsFrom(friendships ?? []), [friendships]);
-  // Until the golfer picks, the next level up from their index.
   const comparison: ComparisonTargetValue = picked?.value ?? analytics?.next_level_handicap ?? null;
-  // A friend who has since gone falls back to the first one listed.
   const selectedFriend = friends.find((f) => f.id === picked?.friendId) ?? friends.at(0) ?? null;
 
   const against = useMemo<BenchmarkTarget | null>(() => {
@@ -118,7 +103,6 @@ export function useProfileViewModel(
     error: mine.error,
     retry: () => void mine.refetch(),
 
-    // Until the report comes, Best falls back on the lowest round the analytics already have.
     goal: goalStandingFrom(target, report, analytics?.lowestScore ?? null),
     setGoal,
     savingGoal: updateUser.isPending,

@@ -4,18 +4,12 @@ import { scoreCountTextClass, scoreFillClass, scoreMarkClass, type ScoreKey } fr
 
 interface ScoreKindLabelProps {
   kind: ScoreKey;
-  /**
-   * `mark` (the default): a round dot in the kind's ink colour, par's quiet grey. `fill`: a small
-   * square in the kind's fill, matching a bar's segment, as a legend's key does.
-   */
   swatch?: "mark" | "fill";
-  /** `kind` (the default) writes the words in the kind's colour; `inherit` leaves them to the surroundings. */
   ink?: "kind" | "inherit";
   className?: string;
   children: ReactNode;
 }
 
-/** Words that name a kind of score, led by its colour: a total's "Birdies", a legend's "bogey". */
 function ScoreKindLabel({ kind, swatch = "mark", ink = "kind", className, children }: ScoreKindLabelProps) {
   return (
     <span

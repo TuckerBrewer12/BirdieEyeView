@@ -10,10 +10,6 @@ import {
 
 const courses = ["All Courses", "Home Course", "Presidio Golf Course", "Half Moon Bay"];
 
-/**
- * Open under the outline trigger the analytics course filter uses; the sort
- * on Rounds uses the ghost trigger beside it.
- */
 export default function DropdownMenuPreview() {
   return (
     <div className="flex flex-col gap-2">

@@ -21,7 +21,6 @@ const golfer: FakeAnalyticsSeed = {
   user: sampleGolfer.profile,
 };
 
-/** The Lab's golfer, out to break 90, with friends and the server's comparisons. */
 const labGolfer: FakeAnalyticsSeed = {
   analytics: labAnalytics,
   profileAnalytics: labAnalytics,
@@ -76,7 +75,6 @@ describe("useAnalyticsPageViewModel", () => {
     act(() => result.current.setTab("profile"));
     await waitFor(() => expect(repository.requests).toContainEqual(PROFILE_FILTERS));
     act(() => result.current.setTab("scoring"));
-    // Still loaded, so going back is instant.
     await waitFor(() => expect(result.current.profile.loading).toBe(false));
   });
 

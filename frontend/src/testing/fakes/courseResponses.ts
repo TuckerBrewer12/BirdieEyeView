@@ -1,17 +1,11 @@
 import type { CourseDto, HoleDto, TeeDto } from "../../types/api";
 
-/**
- * The fake backend's copy of api/course_responses.py and models/course.py: a course is stored
- * as facts, and every response carries the figures the real server works out from them.
- */
-
 export interface StoredTee {
   color: string | null;
   total_yardage: number | null;
   hole_yardages: Record<number, number>;
   slope_rating: number | null;
   course_rating: number | null;
-  /** What the server works out off the signed-in golfer's index; a fixture sets it, since the fake knows no index. */
   course_handicap?: number | null;
 }
 
@@ -30,7 +24,6 @@ function sum(values: number[]): number {
   return values.reduce((total, value) => total + value, 0);
 }
 
-/** Stored par, else the sum of all 18 holes once every one has a par. */
 export function coursePar(course: StoredCourse): number | null {
   if (course.par != null) return course.par;
   if (course.holes.length !== 18 || course.holes.some((h) => h.par == null)) return null;
@@ -74,7 +67,6 @@ export function courseResponse(course: StoredCourse): CourseDto {
     front_nine_par: ninePar(course, 1),
     back_nine_par: ninePar(course, 10),
     holes: course.holes,
-    // Longest first, ties by colour, as Course.tees_by_length() sends them.
     tees: course.tees
       .map(teeResponse)
       .sort((a, b) => (b.total_yardage ?? 0) - (a.total_yardage ?? 0) || (a.color ?? "").toLowerCase().localeCompare((b.color ?? "").toLowerCase())),

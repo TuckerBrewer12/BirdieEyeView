@@ -10,7 +10,6 @@ interface PeakCardProps {
   target: number;
 }
 
-/** The golfer's best rounds: their average against the goal, the rounds, and what they did more or less of a round. */
 export function PeakCard({ peak, impacts, target }: PeakCardProps) {
   const note = peakNote(peak, target);
   return (

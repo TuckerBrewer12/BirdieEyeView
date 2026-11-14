@@ -10,20 +10,11 @@ import { useColumnHover } from "./useColumnHover";
 import { useLayoutTransition } from "./useLayoutTransition";
 
 interface HoleGreensPuttsChartProps {
-  /** In course order. */
   holes: readonly HoleStats[];
 }
 
-/** The line the putts stems grow from: two a hole, which the server reads them against. */
 const TWO_PUTTS = 2;
 
-/**
- * Greens and putts on each hole of a course, on one hole axis: the share of greens the golfer hits
- * as a bar over its full height, and under it their average putts as a stem from two putts, painted
- * by the server's verdict on them (fewer than two good, more bad). Where a missed green and an extra putt
- * meet on the same hole is plain to see. One chart for what the course page used to split across a
- * greens chart and a putts chart.
- */
 export function HoleGreensPuttsChart({ holes }: HoleGreensPuttsChartProps) {
   const { width, minWidth, pad: PAD, bar, corner, labelGap, greens: G, putts: P, pairedHeight: H, numbers, dot, stem } =
     tokens.chart.holes;
@@ -100,7 +91,6 @@ export function HoleGreensPuttsChart({ holes }: HoleGreensPuttsChartProps) {
               const paint = verdictFill(hole.puttsVerdict);
               return (
                 <g key={hole.hole}>
-                  {/* The bar's full height is every green; the fill is the share hit. */}
                   <rect x={left} y={G.top} width={column * bar} height={G.bottom - G.top} rx={corner} fill={tokens.color.chart.muted} />
                   {hole.greens != null && (
                     <motion.rect

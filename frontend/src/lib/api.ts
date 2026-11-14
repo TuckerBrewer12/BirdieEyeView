@@ -19,13 +19,18 @@ import type {
   SaveScanDto,
   SaveScanRequestDto,
   ScanDto,
+  ScanReportDto,
+  ScanReportErrorDto,
   UserDto,
 } from "@/types/api";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
+import type { FailedScanAttempt } from "@/domain/scanReport";
+import { readScanFailure, ScanFailedError } from "@/lib/scanReports";
 import {
   fetchWithUserFacingError,
   getUserFacingError,
+  messageFrom,
   parseJsonResponse,
   USER_FACING_ERRORS,
 } from "@/lib/userFacingErrors";
@@ -54,7 +59,6 @@ async function postJSON<T>(path: string, body: unknown, fallback?: string): Prom
   return parseJsonResponse<T>(res, fallback);
 }
 
-/** A multipart POST: a scorecard photo and the fields sent with it. */
 async function postForm(path: string, fields: Record<string, string | File>, fallback?: string): Promise<Response> {
   const form = new FormData();
   for (const [name, value] of Object.entries(fields)) form.append(name, value);
@@ -64,6 +68,18 @@ async function postForm(path: string, fields: Record<string, string | File>, fal
     headers: withAuthHeaders(),
     body: form,
   }, fallback);
+}
+
+function isReportError(payload: unknown): payload is ScanReportErrorDto {
+  return typeof payload === "object" && payload !== null && "code" in payload;
+}
+
+async function reportFailure(res: Response): Promise<string> {
+  if (res.status === 429) return USER_FACING_ERRORS.tooManyReports;
+  const payload: unknown = await res.json().catch(() => null);
+  return isReportError(payload) && payload.code === "report_storage_unavailable"
+    ? USER_FACING_ERRORS.reportUnavailable
+    : USER_FACING_ERRORS.reportNotSaved;
 }
 
 async function putJSON<T>(path: string, body: unknown): Promise<T> {
@@ -93,7 +109,6 @@ async function patchJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 export const api = {
-  /** The signed-in user, or null when the session has ended (401 or 403). */
   getAuthSession: async (): Promise<AuthUserDto | null> => {
     const res = await fetchWithUserFacingError(apiUrl("/api/auth/me"), {
       credentials: "include",
@@ -106,7 +121,6 @@ export const api = {
     return parseJsonResponse<AuthUserDto>(res, USER_FACING_ERRORS.account);
   },
 
-  /** The card's text, read ahead of the scan. Null when the server could not read it. */
   readScanText: async (photo: File): Promise<string | null> => {
     const res = await postForm("/scan/ocr", { file: photo });
     if (!res.ok) return null;
@@ -114,13 +128,49 @@ export const api = {
     return body.ocr_text || null;
   },
 
-  /** Reads a scorecard photo. `fields` carries the photo as `file` and the optional context fields. */
   extractScan: async (fields: Record<string, string | File>): Promise<ScanDto> => {
-    const res = await postForm("/scan/extract", fields, USER_FACING_ERRORS.scan);
-    if (!res.ok) {
-      throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.scan));
+    let res: Response;
+    try {
+      res = await postForm("/scan/extract", fields, USER_FACING_ERRORS.scan);
+    } catch (error) {
+      throw new ScanFailedError(messageFrom(error, USER_FACING_ERRORS.scan), {
+        category: "network_error", stage: "unknown", http_status: null,
+      });
     }
-    return parseJsonResponse<ScanDto>(res, USER_FACING_ERRORS.scan);
+    if (!res.ok) {
+      const failure = await readScanFailure(res);
+      throw new ScanFailedError(await getUserFacingError(res, USER_FACING_ERRORS.scan), failure);
+    }
+    try {
+      return await parseJsonResponse<ScanDto>(res, USER_FACING_ERRORS.scan);
+    } catch (error) {
+      throw new ScanFailedError(messageFrom(error, USER_FACING_ERRORS.scan), {
+        category: "invalid_response", stage: "unknown", http_status: res.status,
+      });
+    }
+  },
+
+  reportFailedScan: async (attempt: FailedScanAttempt): Promise<ScanReportDto> => {
+    const form = new FormData();
+    form.append("file", attempt.image, `scorecard.${attempt.extension}`);
+    form.append("metadata", JSON.stringify({
+      schema_version: 1,
+      retry_key: attempt.retryKey,
+      category: attempt.failure.category,
+      stage: attempt.failure.stage,
+      http_status: attempt.failure.http_status,
+    }));
+    const res = await fetchWithUserFacingError(apiUrl("/api/scan/reports"), {
+      method: "POST",
+      credentials: "omit",
+      referrerPolicy: "no-referrer",
+      cache: "no-store",
+      body: form,
+    }, USER_FACING_ERRORS.reportNotSaved);
+    if (!res.ok) throw new Error(await reportFailure(res));
+    const report = await parseJsonResponse<ScanReportDto>(res, USER_FACING_ERRORS.reportNotSaved);
+    if (report.status !== "saved") throw new Error(USER_FACING_ERRORS.reportNotSaved);
+    return report;
   },
 
   saveScan: (request: SaveScanRequestDto) =>
@@ -166,7 +216,6 @@ export const api = {
     return fetchJSON<CourseSummaryDto[]>(`/courses?${params}`);
   },
 
-  /** `includeRecord` adds the golfer's record at each course, as the course list shows it. */
   searchCourses: (query: string, userId?: string, includeExternal = false, includeRecord = false) => {
     const params = new URLSearchParams({ q: query });
     if (userId) params.set("user_id", userId);
@@ -200,7 +249,6 @@ export const api = {
     return fetchJSON<AnalyticsDto>(`/stats/analytics/${userId}?${p}`);
   },
 
-  /** The golfer's last `limit` rounds held up against a handicap's shape or a friend's. */
   getBenchmarkComparison: (userId: string, target: BenchmarkTarget, limit = 20) => {
     const p = new URLSearchParams({ against: target.against, limit: String(limit) });
     if (target.against === "handicap") p.set("handicap", String(target.handicap));

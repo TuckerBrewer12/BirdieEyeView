@@ -1,7 +1,6 @@
 import { Bird, Flag, Flame, Medal, Target, Trophy } from "lucide-react";
 import { IconBadge } from "@/brand/components/IconBadge";
 
-/** Each tone, as Career's round records use them. */
 export default function IconBadgePreview() {
   return (
     <div className="flex flex-wrap items-center gap-3">

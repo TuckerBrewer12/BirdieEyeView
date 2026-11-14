@@ -10,9 +10,7 @@ const ROWS: Record<CardRow, { label: string; tone: string }> = {
 };
 
 interface CardRowOrderProps {
-  /** The card's rows, top to bottom (`cardRows()`): the score, and putts or shots to green. */
   rows: readonly CardRow[];
-  /** The row the golfer's name sits beside, one of `rows` (`nameRowOf()`, which the scan's note uses too). */
   nameRow: CardRow;
   onChange: (rows: CardRow[], nameRow: CardRow) => void;
   className?: string;
@@ -20,14 +18,8 @@ interface CardRowOrderProps {
 
 type Drag = { type: "row"; from: number } | { type: "name" };
 
-/**
- * The card's rows dragged into the order they're written in, and Name dragged beside the row the
- * golfer's name is on. The scan finds the name, then reads each row at its distance from it, so a
- * card with putts or shots to green reads right only once these match the card. By mouse or touch.
- */
 function CardRowOrder({ rows, nameRow, onChange, className }: CardRowOrderProps) {
   const dragging = useRef<Drag | null>(null);
-  // `nameRow` is one of `rows` (`nameRowOf()`); if not, Name sits by the score, as the note says.
   const nameAt = rows.includes(nameRow) ? rows.indexOf(nameRow) : rows.indexOf("score");
 
   const moveTo = (to: number) => {
@@ -88,7 +80,6 @@ function CardRowOrder({ rows, nameRow, onChange, className }: CardRowOrderProps)
                   <span className="text-meta font-bold tracking-chip text-primary-foreground uppercase">Name</span>
                 </div>
               ) : (
-                // A place to drop Name.
                 <div className="h-full min-h-10 rounded-lg border border-dashed border-border" />
               )}
             </div>

@@ -1,5 +1,3 @@
-"""Runtime security controls for deployment hardening."""
-
 from __future__ import annotations
 
 import ipaddress
@@ -58,7 +56,6 @@ def _is_non_public_db_host(host: str) -> bool:
 
 
 def validate_deployment_security() -> None:
-    """Fail fast when critical production security controls are missing."""
     app_env = os.environ.get("APP_ENV", "development").strip().lower()
     is_prod_like = app_env in {"production", "prod", "staging"}
 
@@ -117,7 +114,6 @@ def should_allow_insecure_local_request(request: Request) -> bool:
 
 
 def enforce_https_if_needed(request: Request) -> Optional[RedirectResponse]:
-    """Return a redirect response if request should be upgraded to HTTPS."""
     enforce_https = env_bool("ENFORCE_HTTPS", os.environ.get("APP_ENV", "").lower() in {"production", "prod", "staging"})
     if not enforce_https:
         return None
@@ -148,7 +144,6 @@ def parse_allowed_hosts() -> list[str]:
     raw = os.environ.get("ALLOWED_HOSTS", "").strip()
     hosts = [h.strip() for h in raw.split(",") if h.strip()]
 
-    # Always keep local dev hosts available.
     hosts.extend(["localhost", "127.0.0.1", "::1"])
 
     for env_name in ("RAILWAY_PUBLIC_DOMAIN", "RAILWAY_PRIVATE_DOMAIN", "RAILWAY_STATIC_URL", "FRONTEND_URL"):
@@ -189,11 +184,6 @@ class _RateLimitBucket:
 
 
 class SlidingWindowRateLimiter:
-    """Simple in-memory sliding-window limiter.
-
-    Note: process-local only. For multi-instance deployments, use Redis/shared store.
-    """
-
     def __init__(self):
         self._buckets: dict[str, _RateLimitBucket] = defaultdict(_RateLimitBucket)
 
@@ -203,7 +193,6 @@ class SlidingWindowRateLimiter:
             bucket.events.popleft()
 
     def check(self, key: str, *, limit: int, window_seconds: int) -> tuple[bool, int]:
-        """Return (allowed, retry_after_seconds)."""
         now = time.time()
         safe_limit = max(1, int(limit))
         safe_window = max(1, int(window_seconds))
@@ -220,8 +209,6 @@ class SlidingWindowRateLimiter:
 
 
 class SecurityTrafficMonitor:
-    """In-memory traffic monitor for suspicious request patterns."""
-
     def __init__(
         self,
         *,

@@ -11,7 +11,6 @@ function advance(ms: number) {
   });
 }
 
-/** Each step's timer is set once the last one has rendered, so steps pass one at a time. */
 function advanceSteps(...holds: number[]) {
   for (const hold of holds) advance(hold);
 }
@@ -70,8 +69,6 @@ describe("useScannerDemoViewModel", () => {
   it("holds each step for its own time, not a shared one", () => {
     const { result } = renderHook(() => useScannerDemoViewModel());
 
-    // The mapping panel is dense, so it is given four seconds where the photo
-    // gets one. Advancing by the photo's hold must not move it on.
     advance(1000);
     expect(result.current.phase).toBe("mapping");
     advance(1000);

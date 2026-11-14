@@ -4,11 +4,9 @@ import { LIMIT_OPTIONS, courseOptions, roundCountLabel } from "../present";
 
 interface AnalyticsHeaderProps {
   vm: AnalyticsPageViewModel;
-  /** The rounds the figures cover; none while nothing has loaded. */
   roundCount: number | null;
 }
 
-/** The title with the round count, and the two menus every figure below answers to: how many rounds, at which course. */
 export function AnalyticsHeader({ vm, roundCount }: AnalyticsHeaderProps) {
   const courses = courseOptions(vm.playedCourses, vm.hasHomeCourse);
   const course = courses.find((option) => option.value === vm.filters.courseId) ?? courses[0];

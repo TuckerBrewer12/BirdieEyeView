@@ -1,5 +1,3 @@
-"""The analytics page's response, built in one place from the player's rounds."""
-
 from datetime import date
 from typing import Any, Dict, List, Optional
 
@@ -30,10 +28,6 @@ def _handicap_trend(
     today: Optional[date] = None,
     days: int = analytics.RECORDS_WINDOW_DAYS,
 ) -> List[Dict[str, Any]]:
-    """The golfer's index after each of `rounds`, read off their whole `history`, so a page
-    narrowed to a course or a timeframe still shows the golfer's own index after each round.
-    A round older than the history read has no index there (round_index 0). Each row says
-    whether its round falls in the records' last year, so Career can narrow the line with them."""
     trend = hcap.player_handicap_trend(user, history)
     position = {r.id: i for i, r in enumerate(history) if r.id is not None}
     return [
@@ -55,11 +49,6 @@ def analytics_response(
     today: Optional[date] = None,
     user: Optional[User] = None,
 ) -> AnalyticsResponse:
-    """Every analytics section over `rounds` (oldest first). `history` is the golfer's own rounds,
-    unfiltered and oldest first, ending with their latest and reaching back at least 19 rounds
-    before `rounds`: their index (`api/player_handicap.py`, held at the handicap `user` gave) and
-    its trend read it, whatever narrowed `rounds`. Net scores are off that index, so they match
-    each round's page. The records' last year ends `today`, now unless given."""
     scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
     score_rows = analytics.score_trend_with_rolling_average(rounds)
     gir_rows = analytics.gir_per_round(rounds)
@@ -67,13 +56,11 @@ def analytics_response(
     scoring_by_par = analytics.scoring_by_par(rounds)
     up_and_down_rows = analytics.up_and_down_trend(rounds)
     player_index = hcap.player_handicap_index(user, history)
-    # Newest first, so a tie goes to the newest, as on the round list and the dashboard.
     best_round = analytics.best_round(list(reversed(rounds)))
     best = round_summary(best_round) if best_round else None
     average_putts = _average([r["total_putts"] for r in putts_rows if r["total_putts"] is not None])
     three_putts = analytics.three_putt_averages(rounds)
     shape = player_shape(rounds) or {}
-    # The records' last year, and the handicap trend marked against the same one.
     achievements = analytics.notable_achievements(rounds, reference_date=today, home_course_id=home_course_id)
 
     next_level = benchmarks.next_level_handicap(player_index)

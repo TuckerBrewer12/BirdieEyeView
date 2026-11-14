@@ -11,106 +11,82 @@ import type {
 
 export type { AnalyticsFilters };
 
-/** The last 50 rounds at every course: what the page opens on. */
 export const DEFAULT_FILTERS: AnalyticsFilters = { limit: 50, timeframe: "all", courseId: "all" };
 
-/** A course narrows the rounds; the round count alone does not. */
 export function isFiltered(filters: AnalyticsFilters): boolean {
   return filters.courseId !== "all";
 }
 
-/** The page's sections, in the order the tab bar lists them. */
 export const ANALYTICS_TABS = ["profile", "scoring", "ball-striking", "putting", "approach"] as const;
 export type AnalyticsTab = (typeof ANALYTICS_TABS)[number];
 
-/** The section the page opens on. */
 export const DEFAULT_TAB: AnalyticsTab = "scoring";
 
-/** A section named in the address (`?tab=profile`), or null for one that isn't. */
 export function tabFrom(value: string | null): AnalyticsTab | null {
   return ANALYTICS_TABS.find((tab) => tab === value) ?? null;
 }
 
-/** A course the golfer has a round at, for the course menu. */
 export interface PlayedCourse {
   id: string;
   name: string | null;
   location: string | null;
 }
 
-/** One of the headline figures, as the server worked it out: its value, its move, and its line. */
 export type HeadlineFigure = HeadlineFigureDto;
 
-/** A figure each round, oldest first, with the server's five-round average after it. */
 export interface RoundSeriesPoint {
   value: number;
   rollingAverage: number | null;
-  /** Where the round was played, for the chart's hover card. */
   course: string | null;
 }
 
-/** A line the score trend can draw: the score with its five-round average, or holes of a kind each round. */
 export type TrendLine = "score" | ScoreKind;
 
-/** The page's charts of a figure each round, each with its own rounds slider. */
 export type TrendChart = "score" | "greens" | "putts";
 
-/** A trend's rounds slider, as a section hands it to its chart. */
 export interface TrendWindow {
-  /** How many of the latest rounds the trend shows; null is all of them. */
   shown: number | null;
   onShownChange: (shown: number) => void;
 }
 
-/** Every trend shows every round the filters read until its slider moves. */
 export const ALL_ROUNDS_SHOWN: Record<TrendChart, number | null> = { score: null, greens: null, putts: null };
 
-/** The score trend opens on the score alone. */
 export const DEFAULT_TREND_LINES: TrendLine[] = ["score"];
 
-/** A round on the score trend: its score (or net), and how many holes of each kind it had. */
 export interface ScorePoint extends RoundSeriesPoint {
   counts: ScoreCounts | null;
 }
 
-/** How holes went when the green was hit, and when it was missed. */
 export interface GirSplit {
   bucket: GirVsNonGirRowDto["bucket"];
   holes: number;
   mix: ScoreMix;
 }
 
-/** One hole handicap's average to par, and whether it is among the golfer's three hardest. */
 export interface HoleDifficulty {
   handicap: number;
   averageToPar: number;
   hardest: boolean;
 }
 
-/** The par types the approach section can show, in the order its picker lists them. */
 export const APPROACH_PARS = [3, 4, 5] as const;
 export type ApproachPar = (typeof APPROACH_PARS)[number];
 
-/** One yardage band of one par type: how the golfer scores from there. */
 export interface YardageBucket {
   par: number;
-  /** The server's band: "350–399". */
   label: string;
   holes: number;
   averageToPar: number;
   girPercent: number | null;
   mix: ScoreMix;
-  /** The band of its par the golfer scores worst from. */
   worst: boolean;
 }
 
-/** One round's three-putts, and whether the server marked it as costly. */
 export interface ThreePuttRound {
   count: number;
   costly: boolean;
 }
 
-/** The share of holes taken in one putt or none, two, and three or more. */
 export interface PuttsPerHole {
   holes: number;
   oneOrFewer: number;
@@ -118,7 +94,6 @@ export interface PuttsPerHole {
   threeOrMore: number;
 }
 
-/** The golfer's short game beside the tour's. Null where there is no figure. */
 export interface ShortGame {
   scrambling: number | null;
   upAndDown: number | null;
@@ -126,28 +101,20 @@ export interface ShortGame {
   tourUpAndDown: number | null;
 }
 
-/** The analytics page's figures, as the server sent them, shaped for the sections that draw them. */
 export interface Analytics {
   kpis: AnalyticsKpisDto;
   roundCount: number;
-  /** Scoring, greens, putts, scrambling and three-putts, each with its move and line. */
   headline: HeadlineFigure[];
   scoreTrend: ScorePoint[];
-  /** Rounds the golfer has a net score for. */
   netTrend: ScorePoint[];
-  /** Each par type against the next level's benchmark. */
   parTypes: ParTypeComparison[];
-  /** The handicap the par types are held up against; null without an index. */
   benchmarkHandicap: number | null;
   holeDifficulty: HoleDifficulty[];
-  /** Rounds with greens recorded. */
   girTrend: RoundSeriesPoint[];
   shortGame: ShortGame;
   girSplit: GirSplit[];
-  /** Rounds with putts recorded. */
   puttsTrend: RoundSeriesPoint[];
   puttsPerHole: PuttsPerHole;
-  /** Rounds with putts recorded, oldest first. */
   threePutts: ThreePuttRound[];
   yardageBuckets: YardageBucket[];
   peakGame: PeakGameDto | null;
@@ -165,7 +132,6 @@ function seriesFrom<T>(
   });
 }
 
-/** The server's yardage bands, in its order: by par, then band. */
 export function yardageBucketsFrom(rows: readonly ScoringByYardageRowDto[]): YardageBucket[] {
   return rows.map((row) => ({
     par: row.par,
@@ -178,14 +144,11 @@ export function yardageBucketsFrom(rows: readonly ScoringByYardageRowDto[]): Yar
   }));
 }
 
-/** The par the approach section opens on: par 4s if there are any, else the first par with a band. */
 export function defaultApproachPar(buckets: readonly YardageBucket[]): ApproachPar {
   return ([4, 3, 5] as const).find((par) => buckets.some((bucket) => bucket.par === par)) ?? 4;
 }
 
-/** The page's figures from the server's response. */
 export function analyticsFrom(data: AnalyticsDto): Analytics {
-  // The net trend is the same rounds as the score trend, so a net round's holes are its score row's.
   const countsByRound = new Map(data.score_trend.map((row) => [row.round_id, row.score_counts]));
   const withPutts = new Set(data.putts_trend.filter((row) => row.total_putts != null).map((row) => row.round_id));
   return {

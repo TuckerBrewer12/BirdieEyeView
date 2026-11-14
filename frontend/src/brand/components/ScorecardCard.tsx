@@ -4,26 +4,14 @@ import { Card } from "@/brand/components/Card";
 import { useFromBreakpoint } from "@/brand/useFromBreakpoint";
 
 interface ScorecardCardProps {
-  /** The green bar's line: the course and where it is, or the tee the card reads. Left out, no bar. */
   bar?: ReactNode;
-  /** Sits at the right of the bar, like a "Scan another" button. */
   action?: ReactNode;
-  /**
-   * Draws the card's grid: every hole across when `nine` is left out, or one nine closed by its own
-   * total, as a phone shows it.
-   */
   children: (nine?: "front" | "back") => ReactNode;
   className?: string;
   "data-slot"?: string;
 }
 
-/**
- * A scorecard on its card: the green bar, then the grid. A wide screen draws all eighteen holes in
- * one grid that scrolls sideways before it squeezes; a phone has no room for eighteen across, so it
- * stacks the front nine over the back. The round's card and the course's card both sit on it.
- */
 function ScorecardCard({ bar, action, children, className, "data-slot": slot = "scorecard-card" }: ScorecardCardProps) {
-  // Which grids to draw, not how they look: the phone's two nines are different tables.
   const wide = useFromBreakpoint("md");
 
   return (

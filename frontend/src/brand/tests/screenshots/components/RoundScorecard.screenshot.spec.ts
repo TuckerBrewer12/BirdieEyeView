@@ -3,7 +3,6 @@ import { BrandKitRobot } from "../../BrandKit.robot";
 import { enableDark } from "../../previewScreenshot";
 
 test.describe("RoundScorecard", () => {
-  // The board's width, with room for the variants under it.
   test.use({ viewport: { width: 960, height: 1260 } });
 
   test("light", async ({ page }) => {
@@ -19,7 +18,6 @@ test.describe("RoundScorecard", () => {
     await kit.captureFrame("round-scorecard-dark.png");
   });
 
-  // The kit runs at desktop only, so the phone capture sets its own viewport.
   test.describe("on a phone", () => {
     test.use({ viewport: { width: 390, height: 1260 }, hasTouch: true });
 

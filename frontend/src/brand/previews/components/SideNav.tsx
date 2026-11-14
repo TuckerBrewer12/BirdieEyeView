@@ -11,7 +11,6 @@ const items = [
   { href: "/social", label: "Social", icon: Users },
 ];
 
-/** Compose-style @Preview for SideNav. AppShell sets the rail's size in the app. */
 export default function SideNavPreview() {
   return (
     <div className="h-160 w-rail">

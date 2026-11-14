@@ -14,7 +14,6 @@ test("populated career in dark mode", async ({ career }) => {
 });
 
 test("the last year's records", async ({ career }) => {
-  // A year on, so the handicap trend narrows to the last year's rounds.
   await career.openLater();
   await career.pickWindow("Last 365 Days");
   await career.seesTotalsTitle("Year Totals");
@@ -33,7 +32,6 @@ test("load failed", async ({ career }) => {
   await career.capture("career-load-failed.png");
 });
 
-// A phone shows one milestone list at a time; desktop shows them all.
 const PHONE_TABS = [
   { tab: "Putting", milestone: "Break 30 Putts", file: "putting" },
   { tab: "GIR", milestone: "9/18 GIR", file: "gir" },

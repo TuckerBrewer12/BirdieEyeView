@@ -13,7 +13,6 @@ const blank: Parameters<typeof ScanCardForm>[0]["form"] = {
   clearPresetCourse: noop,
 };
 
-/** Nothing said about the card; then a course picked, a name, scores to par, and putts on the card. */
 export default function ScanCardFormPreview() {
   return (
     <div className="flex max-w-lg flex-col gap-8">

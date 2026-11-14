@@ -15,8 +15,6 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    // Only the Espresso coverage run sets VITE_COVERAGE. A normal dev server
-    // and the Vitest run stay uninstrumented.
     ...(collectCoverage
       ? [
           istanbul({

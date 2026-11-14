@@ -149,6 +149,48 @@ test("a failed scan keeps the photo and says why", async ({ scan }) => {
   await scan.seesScanFailed();
 });
 
+test("a failed scan can be reported, and the report says why it failed", async ({ scan }) => {
+  await scan.open({ scan: undefined, reportStorage: true });
+  await scan.chooseScorecard();
+  await scan.seesNoReport();
+  await scan.tapExtract();
+  await scan.seesScanFailed();
+  await scan.tapReportScan();
+  await scan.seesReportDisclaimer();
+  await scan.tapSendReport();
+  await scan.seesReportSent();
+});
+
+test("a sent report still shows as sent after leaving the page", async ({ scan }) => {
+  await scan.open({ scan: undefined, reportStorage: true });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.tapReportScan();
+  await scan.tapSendReport();
+  await scan.seesReportSent();
+  await scan.leaveTo("Rounds");
+  await scan.returnToScan();
+  await scan.seesReportStillSent();
+});
+
+test("a report that can't be stored says so, and can be sent again", async ({ scan }) => {
+  await scan.open({ scan: undefined });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.tapReportScan();
+  await scan.tapSendReport();
+  await scan.seesReportNotSaved("Reporting isn't available yet. Your report wasn't saved.");
+});
+
+test("a new photo clears the report with the failed read", async ({ scan }) => {
+  await scan.open({ scan: undefined });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesScanFailed();
+  await scan.chooseAnotherPhotoFromBanner();
+  await scan.seesNoReport();
+});
+
 test("a scan still running when the golfer leaves is there when they come back", async ({ scan }) => {
   await scan.open({ holdScan: true });
   await scan.chooseScorecard();

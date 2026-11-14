@@ -63,7 +63,6 @@ describe("useRoundDetailPageViewModel", () => {
     act(() => result.current.editor.setScore(1, "strokes", null));
     expect(result.current.played?.score).toBe(73);
     expect(result.current.played?.holes.find((h) => h.hole === 1)?.strokes).toBeNull();
-    // The running to par is the server's, so the flow chart waits for the save.
     expect(result.current.showFlow).toBe(false);
   });
 
@@ -200,8 +199,6 @@ describe("useRoundDetailPageViewModel", () => {
     };
     const { result } = renderVm("round-1", { detailRounds: [partial] });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    // Bars still draw, but a part-played nine reports no total — the same rule
-    // the round-list query uses, so the two screens cannot disagree.
     expect(result.current.played?.frontNine.holes).toHaveLength(5);
     expect(result.current.played?.frontNine.total).toBeNull();
     expect(result.current.played?.backNine.holes).toHaveLength(0);

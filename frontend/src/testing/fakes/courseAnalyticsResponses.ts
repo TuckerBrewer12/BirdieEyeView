@@ -1,13 +1,6 @@
 import type { CourseAnalyticsDto, CourseSummaryDto } from "../../types/api";
 import { listRanks, summaryResponse, type StoredRound } from "./roundResponses";
 
-/**
- * The fake backend's copy of api/course_analytics_responses.py. The record (count, last played,
- * average and its to par, best, worst) and the history come from the stored rounds, the way
- * `analytics.stats.course_record` works them out. The per-hole rows are taken as given rather than
- * copying analytics/stats.py.
- */
-
 export type CourseHoleStats = Pick<
   CourseAnalyticsDto,
   | "holes"
@@ -40,7 +33,6 @@ export function courseAnalyticsResponse(
     .filter((round) => round.course?.id === courseId)
     .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
   const rounds = here.map((round) => summaryResponse(round));
-  // The full rounds, or the nines when there is no full round.
   const full = rounds.filter((round) => round.hole_scores.filter((h) => h.strokes != null).length >= 18);
   const counted = full.length > 0 ? full : rounds;
   const ranks = listRanks(here);
@@ -61,7 +53,6 @@ export function courseAnalyticsResponse(
   };
 }
 
-/** `stats.score_trend_with_rolling_average`: each round oldest first, with its five-round average to a tenth. */
 function scoreTrend(rounds: CourseAnalyticsDto["rounds"]): CourseAnalyticsDto["score_trend"] {
   return rounds.map((round, i) => {
     const recent = rounds.slice(Math.max(0, i - 4), i + 1).flatMap((r) => (r.total_score != null ? [r.total_score] : []));
@@ -79,7 +70,6 @@ function scoreTrend(rounds: CourseAnalyticsDto["rounds"]): CourseAnalyticsDto["s
   });
 }
 
-/** A listed course, carrying the golfer's record there from their stored rounds, as GET /courses sends it. */
 export function courseSummaryResponse(
   course: Omit<CourseSummaryDto, "rounds_played" | "scoring_average" | "best_score">,
   stored: StoredRound[] = [],

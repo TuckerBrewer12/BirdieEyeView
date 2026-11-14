@@ -8,41 +8,26 @@ import { reviewFromSetup, todayIso, type ManualSetup } from "./scanModel";
 import { useScanSession } from "./scanSession";
 
 export interface ScanSetupViewModel {
-  /** Search over the golfer's saved courses. */
   courseSearch: CourseSearch;
-  /** The saved course picked. */
   linkedName: string | undefined;
-  /** A name typed for a course we don't have. */
   customName: string | undefined;
   pickCourse: (course: CourseSummary) => void;
-  /** Uses a typed name for a course we don't have. */
   nameCourse: (name: string) => void;
-  /** Back to searching: empty after a picked course, on the name after a typed one. */
   clearCourse: () => void;
 
-  /** The picked course's tees, once it has loaded. Empty means the tee is typed. */
   tees: TeeChoice[];
-  /** The picked course is still loading, so its tees aren't known yet. */
   loadingTees: boolean;
   teeBox: string;
   setTeeBox: (teeBox: string) => void;
 
-  /** `YYYY-MM-DD`. */
   date: string;
   setDate: (date: string) => void;
-  /** The latest date a round can be played on. */
   today: string;
 
-  /** Opens a blank card on the chosen course, tee and date. */
   start: () => void;
-  /** Forgets the search, for the next card. */
   reset: () => void;
 }
 
-/**
- * Choosing the course, tee and date before typing scores in by hand. The choices live in the
- * scan session with the rest of the card; starting opens the review on a blank card.
- */
 export function useScanSetupViewModel(
   userId: string,
   courses: CoursesRepository = coursesRepository,

@@ -1,10 +1,5 @@
 import { cva } from "class-variance-authority";
 
-/**
- * A callout. `tone` picks the status colour and `variant` how loudly it is
- * used: solid fills with it (the default), outline rings a card in it. Each
- * pairing is a `compoundVariants` entry over the `status` tokens.
- */
 const alertVariants = cva(
   "group/alert relative grid w-full gap-y-0.5 rounded-xl border-callout p-3 text-left text-body has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 has-data-[slot=alert-action]:gap-x-3 md:has-data-[slot=alert-action]:grid-cols-[1fr_auto] md:has-[>svg]:has-data-[slot=alert-action]:grid-cols-[auto_1fr_auto] *:[svg]:mt-px *:[svg]:self-start *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4",
   {

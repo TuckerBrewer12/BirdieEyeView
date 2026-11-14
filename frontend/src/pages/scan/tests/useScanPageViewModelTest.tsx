@@ -6,6 +6,7 @@ import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { FakeHandler } from "@/testing/fakes/FakeHandler";
 import { FakeRoundsRepository } from "@/testing/fakes/FakeRoundsRepository";
 import { FakeScanRepository, type FakeScanRepositorySeed } from "@/testing/fakes/FakeScanRepository";
+import { FakeScanReportRepository } from "@/testing/fakes/FakeScanReportRepository";
 import { pebbleBeach, pebbleBeachSummary } from "@/testing/fixtures/courses";
 import { pebbleBeachCourse } from "@/testing/fixtures/roundDetails";
 import { SCANNED_COURSE_NAME, scannedCard } from "@/testing/fixtures/scan";
@@ -21,8 +22,9 @@ function fakes(seed: FakeScanRepositorySeed = { result: scannedCard }) {
   const scan = new FakeScanRepository({ store: rounds.store, ...seed });
   const courses = new FakeCoursesRepository([pebbleBeach]);
   courses.fullCourses = [pebbleBeachCourse];
-  const repositories: ScanPageRepositories = { scan, courses, rounds };
-  return { scan, courses, rounds, repositories };
+  const reports = new FakeScanReportRepository();
+  const repositories: ScanPageRepositories = { scan, courses, rounds, reports };
+  return { scan, courses, rounds, reports, repositories };
 }
 
 function wrapperFor(client: QueryClient) {
@@ -118,8 +120,6 @@ describe("useScanPageViewModel", () => {
     const doubles = fakes({ result: scannedCard, holdExtract: true });
     const client = newClient();
     const Session = wrapperFor(client);
-    // The provider stays mounted throughout, as it does above the app's routes; only the page
-    // (the view model) unmounts while the golfer is away.
     let onPage = true;
     const { result, rerender } = renderHook(() => useScanPageViewModel("user-1", doubles.repositories), {
       wrapper: ({ children }) => <Session>{onPage ? children : null}</Session>,
@@ -159,6 +159,37 @@ describe("useScanPageViewModel", () => {
     await pick(result);
 
     expect(result.current.error).toBeNull();
+  });
+
+  it("offers the failed scan as a report, sent only when asked", async () => {
+    const { result, reports } = renderVm({ extractError: "We couldn't read that card." });
+    const file = await pick(result);
+    expect(result.current.report.available).toBe(false);
+
+    act(() => result.current.extract());
+    await waitFor(() => expect(result.current.report.available).toBe(true));
+    expect(reports.attempts).toHaveLength(0);
+
+    await act(async () => result.current.report.submit());
+    await waitFor(() => expect(result.current.report.status).toBe("sending"));
+    await act(async () => reports.saveNext());
+
+    await waitFor(() => expect(result.current.report.status).toBe("sent"));
+    const [sent] = reports.attempts;
+    expect(sent.failure).toEqual({ category: "extraction_failed", stage: "parse", http_status: 500 });
+    expect(sent.image.size).toBe(file.size);
+    expect("name" in sent.image).toBe(false);
+  });
+
+  it("another photo leaves nothing to report", async () => {
+    const { result } = renderVm({ extractError: "We couldn't read that card." });
+    await pick(result);
+    act(() => result.current.extract());
+    await waitFor(() => expect(result.current.report.available).toBe(true));
+
+    await pick(result);
+
+    expect(result.current.report.available).toBe(false);
   });
 
   it("does nothing on extract before a photo is picked", () => {

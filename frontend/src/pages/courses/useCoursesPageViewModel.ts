@@ -9,7 +9,6 @@ const SEARCH_DEBOUNCE_MS = 300;
 export interface CoursesPageViewModel {
   loading: boolean;
   error: string | null;
-  /** Empty copy — false while loading or when a load error is showing. */
   showEmpty: boolean;
   visibleCourses: CourseSummary[];
   search: string;

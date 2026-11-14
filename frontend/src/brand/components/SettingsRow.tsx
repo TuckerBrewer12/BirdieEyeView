@@ -8,13 +8,11 @@ import { Switch } from "./Switch";
 import { ToggleGroup, ToggleGroupItem } from "./ToggleGroup";
 
 interface SettingsGroupProps {
-  /** The group's name, small and quiet above its card: "Golf", "App". None for a card of its own, like Sign out. */
   title?: string;
   children: ReactNode;
   className?: string;
 }
 
-/** A settings card: its name above it, then its rows with a rule between each. */
 function SettingsGroup({ title, children, className }: SettingsGroupProps) {
   const titleId = useId();
   return (
@@ -37,14 +35,12 @@ interface RowBase {
   label: string;
 }
 
-/** An on/off. The whole row toggles it. */
 interface SwitchRow extends RowBase {
   type: "switch";
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 }
 
-/** A choice of two or three, on a boxed track: beside the label from `md`, under it on a phone. */
 interface ChooseRow<V extends string = string> extends RowBase {
   type: "choose";
   options: ReadonlyArray<{ value: V; label: ReactNode }>;
@@ -52,33 +48,27 @@ interface ChooseRow<V extends string = string> extends RowBase {
   onValueChange: (value: V) => void;
 }
 
-/** A value in a monospace face, with an icon button at the end that copies it. */
 interface CopyRow extends RowBase {
   type: "copy";
   value: string;
   onCopy: () => void;
-  /** Shows a check and names the button "Copied". */
   copied?: boolean;
   disabled?: boolean;
 }
 
-/** A value that opens somewhere to change it: the row is a button, with the value and a chevron at its end. */
 interface LinkRow extends RowBase {
   type: "link";
   value: ReactNode;
   onClick: () => void;
 }
 
-/** A control of the page's own at the end, such as a small field: the label names it (`controlId`). */
 interface FieldRow extends RowBase {
   type: "field";
   controlId: string;
   control: ReactNode;
-  /** A line under the row, such as the field's error. */
   note?: ReactNode;
 }
 
-/** One thing to do, as the whole row: Sign out. `danger` paints it red. */
 interface ActionRow extends RowBase {
   type: "action";
   onClick: () => void;
@@ -96,12 +86,6 @@ type SettingsRowProps<V extends string = string> =
 
 const LABEL = "min-w-0 flex-1 text-left text-body-lg font-medium text-foreground";
 
-/**
- * One row of a settings card, 56 tall, in one of its kinds by `type`: `switch` (on/off), `choose`
- * (a pick of two or three), `copy` (a value with a copy button), `link` (a value that opens
- * somewhere), `field` (a small control of the page's own) and `action` (the row is the button).
- * Put them in a `SettingsGroup`.
- */
 function SettingsRow<V extends string = string>(props: SettingsRowProps<V>) {
   const labelId = useId();
   const text = (
@@ -129,7 +113,6 @@ function SettingsRow<V extends string = string>(props: SettingsRowProps<V>) {
             aria-labelledby={labelId}
             className="w-full md:w-fit"
             value={[props.value]}
-            // Pressing the chosen option again would clear it; one is always chosen.
             onValueChange={(values) => values[0] && props.onValueChange(values[0] as V)}
           >
             {props.options.map((option) => (

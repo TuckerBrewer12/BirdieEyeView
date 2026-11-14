@@ -8,11 +8,9 @@ import { formatOneDecimal, pluralNoun, pluralize } from "@/domain/format";
 interface CoursePreviewProps {
   course: CourseSummary;
   onClick?: () => void;
-  /** Pin the keyboard focus ring — used by the kit preview. */
   focused?: boolean;
 }
 
-/** The course's tees as a row of dots, longest first, named for a screen reader. */
 function TeeDots({ tees, className }: { tees: string[]; className?: string }) {
   if (tees.length === 0) return <span className={className} />;
   return (
@@ -28,12 +26,6 @@ function TeeDots({ tees, className }: { tees: string[]; className?: string }) {
   );
 }
 
-/**
- * A course as one row of the course list: its name and where it is, its tees as dots, and the
- * golfer's average there with how many rounds and their best, or that they haven't played it. From
- * `lg` the row is a grid whose columns line up row to row; narrower, the tees sit after the place and
- * the figures shorten to "avg · 2 rds". Every figure is the server's.
- */
 export function CoursePreview({ course, onClick, focused = false }: CoursePreviewProps) {
   const name = formatCourseName(course.name);
   const { record } = course;

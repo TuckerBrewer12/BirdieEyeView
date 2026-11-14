@@ -12,31 +12,22 @@ import { useRoundEditorViewModel, type RoundEditorViewModel } from "./useRoundEd
 export interface RoundDetailUiState {
   loading: boolean;
   loadError: string | null;
-  /** The round as played: read against the course and tee being edited in, with the edits applied. */
   played: Round | null;
-  /** Over the course name: "Mon, Jun 15, 2026 · Blue tees · 72.4 / 130". */
   dateLine: string | null;
-  /** The round as the delete dialog names it: "Half Moon Bay · Jun 15 · 78". */
   deleteLine: string;
-  /** The course's tees as edit mode's chips; none when the course has no tees on file. */
   teeOptions: TeeChoice[];
-  /** Edit mode. Start it with `enterEditMode`, which also closes the page's other panels. */
   editor: RoundEditorViewModel;
   confirmDelete: boolean;
   deleting: boolean;
-  /** A failed save, course pick or delete. Edits and deletes never overlap, so there is one at a time. */
   actionError: string | null;
   showLinkCourse: boolean;
-  /** A round with no course behind it, out of edit mode, can be linked to one. */
   canLink: boolean;
-  /** The round flow chart: three or more holes with the server's running to par. An unsaved score edit has none. */
   showFlow: boolean;
 }
 
 export interface RoundDetailPageViewModel extends RoundDetailUiState {
   enterEditMode: () => void;
   requestDelete: () => void;
-  /** Deletes the round; `onDeleted` runs only if it worked. */
   confirmDeleteRound: (onDeleted: () => void) => void;
   cancelDelete: () => void;
   openLinkCourse: () => void;
@@ -103,7 +94,6 @@ export function useRoundDetailPageViewModel(
       editor.error ?? (deleteError ? messageFrom(deleteError, "Could not delete this round.") : null),
     showLinkCourse,
     canLink: !!round && !editor.editing && !round.linkedCourse,
-    // The round's flow is the server's, so an edit that changes a hole's score hides it until the save.
     showFlow: (played?.holes.filter((hole) => hole.runningToPar != null).length ?? 0) >= 3,
     enterEditMode,
     requestDelete: () => setConfirmDelete(true),

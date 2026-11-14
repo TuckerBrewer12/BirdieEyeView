@@ -3,8 +3,6 @@ import { BrandKitRobot } from "../../BrandKit.robot";
 import { enableDark } from "../../previewScreenshot";
 
 test.describe("TabBar", () => {
-  // The tab bar is shown at the width of its board: wide enough for every tab, with a narrow
-  // box under it for the phone's scrolling row.
   test.use({ viewport: { width: 760, height: 190 } });
 
   test("light", async ({ page }) => {

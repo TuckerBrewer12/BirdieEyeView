@@ -6,17 +6,12 @@ import { RECORD_LABEL, eventDetail, recordValue } from "../present";
 
 interface RecordsCardProps {
   records: CareerRecord[];
-  /** Opens the round a record was set in. */
   onOpenRound: (roundId: string) => void;
   className?: string;
 }
 
 const ROW = "flex w-full items-center gap-3 py-2.5 text-left";
 
-/**
- * Each record's mark and the colour of what it counts: scoring records take their score's (the lowest
- * round the eagle's gold, birdies green, a par streak par's grey), greens the brand green, putts blue.
- */
 const RECORD_MARK: Record<RecordKind, { icon: LucideIcon; tone: IconBadgeTone }> = {
   "lowest-round": { icon: Trophy, tone: "eagle" },
   "most-birdies": { icon: Bird, tone: "birdie" },
@@ -26,7 +21,6 @@ const RECORD_MARK: Record<RecordKind, { icon: LucideIcon; tone: IconBadgeTone }>
   "par-streak": { icon: Medal, tone: "par" },
 };
 
-/** The golfer's best rounds and streaks over the window, each marked in its colour and opening the round it was set in. */
 export function RecordsCard({ records, onOpenRound, className }: RecordsCardProps) {
   return (
     <Card data-slot="records-card" className={className}>

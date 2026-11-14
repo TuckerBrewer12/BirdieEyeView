@@ -25,20 +25,12 @@ import type { ScanReviewViewModel } from "../useScanReviewViewModel";
 
 interface ScanReviewStepProps {
   review: ScanReviewViewModel;
-  /** "Check your card", or "Enter your scores" by hand. */
   title: string;
-  /** Scores typed in by hand: there is no photo, and nothing the scan was unsure of. */
   manual: boolean;
-  /** The photo the card was read from. */
   photoUrl: string | null;
   onStartOver: () => void;
 }
 
-/**
- * Checking a card before it is saved: the photo it was read from beside the course, the tee and
- * the date, then the scorecard to type over, with the scores the scan wasn't sure of ringed.
- * Save and Start over sit by the title, or pinned above the tab bar on a phone.
- */
 export function ScanReviewStep({ review, title, manual, photoUrl, onStartOver }: ScanReviewStepProps) {
   const { round, toCheck } = review;
   if (!round) return null;
@@ -121,7 +113,6 @@ export function ScanReviewStep({ review, title, manual, photoUrl, onStartOver }:
   );
 }
 
-/** A phone's photo: a thumbnail in the card's first row, opened full width under it. */
 function PhotoRow({ photoUrl }: { photoUrl: string }) {
   return (
     <Collapsible className="flex flex-col gap-3 border-b border-border pb-4 md:hidden">

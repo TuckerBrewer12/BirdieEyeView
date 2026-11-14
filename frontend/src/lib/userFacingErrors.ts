@@ -1,4 +1,3 @@
-/** Prefer an Error message when the repository already threw one we can show. */
 export function messageFrom(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
 }
@@ -9,6 +8,9 @@ export const USER_FACING_ERRORS = {
   scan: "Couldn't read this card. Try a flatter, brighter photo.",
   saveRound: "We couldn't save this round. Please try again.",
   deleteRound: "We couldn't delete this round. Please try again.",
+  reportNotSaved: "Your report wasn't saved. Please try again.",
+  reportUnavailable: "Reporting isn't available yet. Your report wasn't saved.",
+  tooManyReports: "Too many reports. Please try again later.",
 } as const;
 
 export async function fetchWithUserFacingError(

@@ -5,29 +5,20 @@ import { trendPointsFrom, type RoundTrendPoint } from "./trend";
 
 export type PuttsVerdict = NonNullable<CourseHoleStatsRowDto["putts_verdict"]>;
 
-/** How one hole of a course plays for the golfer, every figure the server's. */
 export interface HoleStats {
   hole: number;
   par: number;
-  /** The rounds they've scored it in. */
   rounds: number;
   averageScore: number;
   averageToPar: number;
-  /** Where it ranks by average to par, as the server ranked it: 1 is the hardest. */
   difficultyRank: number;
-  /** How far their score swings on it (a standard deviation); null under two rounds. */
   spread: number | null;
-  /** The greens they've hit on it, 0-100; null when none was recorded. */
   greens: number | null;
-  /** Their average putts on it; null when none were recorded. */
   putts: number | null;
-  /** The server's read of those putts against two a hole: fewer is good, more is bad. */
   puttsVerdict: PuttsVerdict | null;
-  /** The share of each kind of score on it, 0-100. */
   mix: ScoreMix;
 }
 
-/** A figure over the front nine, the back nine and the course, as the server added it. Null for a nine with nothing recorded. */
 export interface NineFigures {
   front: number | null;
   back: number | null;
@@ -36,23 +27,15 @@ export interface NineFigures {
 
 export interface CourseAnalytics {
   roundsPlayed: number;
-  /** The day of their latest round here. */
   lastPlayed: string | null;
-  /** Over their full rounds here, or their nines when they have no full round. */
   scoringAverage: number | null;
   scoringAverageToPar: number | null;
-  /** The rounds the list ranks best and worst here, from `rounds`. */
   bestRound: RoundSummary | null;
   worstRound: RoundSummary | null;
-  /** The golfer's rounds here, newest first. */
   rounds: RoundSummary[];
-  /** The rounds the record counts, oldest first, each with its five-round average. */
   scoreTrend: RoundTrendPoint[];
-  /** In course order. */
   holes: HoleStats[];
-  /** The holes' averages to par summed by nine: the scorecard's Out, In and Tot. */
   nineToPar: NineFigures;
-  /** The greens hit over each nine, as a share. */
   nineGreens: NineFigures;
 }
 

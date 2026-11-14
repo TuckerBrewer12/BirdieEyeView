@@ -15,26 +15,20 @@ import { courseSummaryResponse } from "./courseAnalyticsResponses";
 import { listRanks, roundResponse, storedFromRound, summaryResponse, type StoredRound } from "./roundResponses";
 
 export interface InMemoryRoundsSeed {
-  /** The round list, in order, as the facts the server stores. */
   rounds?: StoredRound[];
   courses?: CourseSummaryDto[];
-  /** Full rounds; one sharing an id with a listed round replaces its facts. */
   detailRounds?: RoundDto[];
   fullCourses?: CourseDto[];
   courseAnalytics?: CourseAnalyticsDto | null;
   comparison?: RoundComparisonDto | null;
-  /** The handicap on the golfer's profile. Course handicaps come on the courses' tees, as the server sends them. */
   handicapIndex?: number | null;
   linkError?: string | null;
   updateError?: string | null;
   deleteError?: string | null;
   searchError?: string | null;
-  /** Saving a scan fails with this. */
   saveError?: string | null;
   coursesError?: string | null;
-  /** Listing the golfer's rounds fails with this. */
   roundsError?: string | null;
-  /** A course's analytics (the golfer's record there) fail with this. */
   courseAnalyticsError?: string | null;
   searchDelaysMs?: number[];
 }
@@ -68,11 +62,8 @@ function applyUpdate(round: StoredRound, body: UpdateRoundBody): StoredRound {
   };
 }
 
-/** One in-memory golf store. FakeRoundsRepository and FakeBackend both use this. */
 export class InMemoryRounds {
-  /** Round facts by id; every response is built from these, the way the server builds it. */
   private stored: Map<string, StoredRound>;
-  /** Ids of the rounds the list returns, in order. */
   private listed: string[];
   courses: CourseSummaryDto[];
   fullCourses: CourseDto[];
@@ -84,7 +75,6 @@ export class InMemoryRounds {
   deleteError: string | null;
   searchError: string | null;
   saveError: string | null;
-  /** Every scan saved, as sent. */
   savedScans: SaveScanRequestDto[] = [];
   coursesError: string | null;
   roundsError: string | null;
@@ -121,12 +111,10 @@ export class InMemoryRounds {
     return this.searchDelaysMs[this.searchCalls++] ?? 0;
   }
 
-  /** A listed course with the golfer's record there, worked out from the stored rounds as the server does. */
   private withRecord(course: CourseSummaryDto): CourseSummaryDto {
     return courseSummaryResponse(course, [...this.stored.values()]);
   }
 
-  /** `include_record` adds the golfer's record at each course, as the course list's search asks. */
   searchCourses(query: string, includeRecord = false): CourseSummaryDto[] {
     if (this.searchError) throw new Error(this.searchError);
     const q = query.toLowerCase();
@@ -165,10 +153,6 @@ export class InMemoryRounds {
     return roundResponse(this.find(roundId));
   }
 
-  /**
-   * Saves a checked scan as a new round at the top of the list, the way `/api/scan/save`
-   * does: linked to the course when one was picked, else under the name read off the card.
-   */
   saveScan(body: SaveScanRequestDto): string {
     if (this.saveError) throw new Error(this.saveError);
     const id = `scanned-${this.stored.size + 1}`;

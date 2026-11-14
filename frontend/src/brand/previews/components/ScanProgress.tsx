@@ -1,6 +1,5 @@
 import { ScanProgress } from "@/brand/components/ScanProgress";
 import { SCAN_STEPS } from "@/domain/scan";
-/** The landing page's photo of a real card, served from public/. */
 const scorecardPhoto = "/hero/physical-card.jpg";
 
 export default function ScanProgressPreview() {

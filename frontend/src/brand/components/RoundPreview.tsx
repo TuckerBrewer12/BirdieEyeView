@@ -13,14 +13,12 @@ import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
 interface RoundListProps {
   round: RoundSummary;
-  /** Default is the dated row; `history` a round at a course the page already names: its day, its holes, its score. */
   variant?: "history";
   onClick?: () => void;
   onLinkClick?: () => void;
 }
 
 interface RoundHighlightProps {
-  /** Null while the player has no round to celebrate yet. */
   round: RoundSummary | null;
   variant: "highlight";
   onClick?: () => void;
@@ -28,23 +26,15 @@ interface RoundHighlightProps {
 
 interface RoundCompactProps {
   round: RoundSummary;
-  /** A row in a card's list of rounds: the date, the course, a strip of the holes, the score. */
   variant: "compact";
-  /** `stacked` is the phone's: the date under the course, and no strip. */
   layout?: "inline" | "stacked";
   onClick?: () => void;
 }
 
 interface RoundSummaryProps {
   round: RoundSummary;
-  /**
-   * A round on its own, in a box of its own: the course with its day and tee, the score and its
-   * pill, and the two nines as pills under them. The scan's saved screen shows the round this way.
-   */
   variant: "summary";
-  /** `nines` (the default): two nines of pills. `strip`: one thin cell a hole, for a small card. */
   holes?: "nines" | "strip";
-  /** `outline` (the default): its own bordered box. `none`: no box, for a `Card` that already frames it. */
   frame?: "outline" | "none";
 }
 
@@ -64,7 +54,6 @@ export function RoundPreview(props: RoundPreviewProps) {
   const { round, variant, onClick, onLinkClick } = props;
 
   if (variant === "history") {
-    // One of the golfer's rounds at a course: the day over a cell per hole, then the score and its to-par.
     return (
       <RowButton
         data-slot="round-preview"
@@ -101,8 +90,6 @@ export function RoundPreview(props: RoundPreviewProps) {
     round.teeBox,
   ].filter(Boolean);
 
-  // The course name is the row's one button; its ::after stretches over the whole row, so the row
-  // opens from anywhere while "Link" stays a button of its own above it.
   return (
     <div
       data-slot="round-preview"
@@ -168,7 +155,6 @@ export function RoundPreview(props: RoundPreviewProps) {
   );
 }
 
-/** The round worth showing off: the trophy, the marked card, the number. */
 function RoundHighlight({
   round,
   onClick,
@@ -231,10 +217,6 @@ function RoundHighlight({
   );
 }
 
-/**
- * A round as one row of a card's list of rounds: when, where, a cell per hole coloured by how it
- * went, and the score with its to-par. On a phone the date goes under the course and the cells go.
- */
 function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactProps, "variant">) {
   const stacked = layout === "stacked";
   const courseName = courseLabel(round.course?.name);

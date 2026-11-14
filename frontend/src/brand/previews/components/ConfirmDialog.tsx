@@ -14,13 +14,6 @@ function Panel({ label, wide, children }: { label: string; wide: boolean; childr
   );
 }
 
-/**
- * The board's two layouts side by side: the same dialog in a wide box
- * centres, in a phone-wide one rises from the bottom. The top row asks before
- * a delete; the bottom row asks before leaving unsaved changes, with a second
- * way through and a failed save. It fills the window instead of the 390px
- * stage; capture it at 900 x 840.
- */
 export default function ConfirmDialogPreview() {
   return (
     <div data-testid="brand-frame" className="fixed inset-0 flex flex-col gap-6 overflow-hidden bg-background p-6">

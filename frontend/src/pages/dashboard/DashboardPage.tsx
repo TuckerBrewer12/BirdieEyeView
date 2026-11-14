@@ -38,7 +38,6 @@ export function DashboardPage({ userId }: DashboardPageProps) {
 
   return (
     <>
-      {/* CSS picks the layout, so the page renders the same on the server and the first paint. */}
       <div className="md:hidden">
         <DashboardMobileLayout vm={vm} />
       </div>

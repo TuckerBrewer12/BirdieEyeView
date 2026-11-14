@@ -1,5 +1,3 @@
-"""The analytics and dashboard responses carry what the stats functions work out, typed."""
-
 import importlib.util
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -23,8 +21,6 @@ _spec.loader.exec_module(sample_golfer)
 
 
 def _two_rounds():
-    """Two rounds on a par-72 course (par 3s, then 4s, then 5s): a 72 with 36 putts and 10 greens,
-    then an 81 with 27 putts and 9 greens."""
     course = Course(
         id="course-1",
         name="Demo Course",
@@ -43,7 +39,6 @@ def _two_rounds():
 
 def test_each_handicap_trend_row_says_whether_its_round_falls_in_the_last_year():
     rounds = _two_rounds()
-    # 2026-02-01 is 366 days before 2027-02-02, so only the second round is in the last year.
     response = analytics_response(rounds, rounds, today=date(2027, 2, 2))
     assert [row.in_window for row in response.handicap_trend] == [False, True]
     assert response.notable_achievements.career_totals.one_year.rounds_played == 1
@@ -51,7 +46,6 @@ def test_each_handicap_trend_row_says_whether_its_round_falls_in_the_last_year()
 
 def test_the_trend_is_marked_against_the_window_length_it_is_given():
     rounds = _two_rounds()
-    # 2026-02-01 and 02-02 are 14 and 13 days before 02-15.
     marks = lambda days: [row["in_window"] for row in _handicap_trend(None, rounds, rounds, date(2026, 2, 15), days)]
     assert marks(14) == [True, True]
     assert marks(13) == [False, True]
@@ -64,12 +58,9 @@ def test_analytics_response_works_out_the_figures_the_page_shows():
 
     assert response.kpis.average_putts == 31.5
     assert [row.rolling_average for row in response.score_trend] == [72.0, 76.5]
-    # 36 holes: 6 birdies, 17 pars, 11 bogeys, 2 doubles.
     assert response.score_mix == ScoreMix(birdie=16.67, par=47.22, bogey=30.56, double=5.56)
-    # 36 holes with putts: nine one-putts, the rest two-putts.
     assert response.putts_per_hole.model_dump() == {"holes": 36, "one_or_fewer": 25.0, "two": 75.0, "three_or_more": 0.0}
     assert [row.rolling_average for row in response.putts_trend] == [36.0, 31.5]
-    # Under five rounds, no figure has a move yet; each still has its five-round line.
     scoring = response.headline[0]
     assert (scoring.metric, scoring.value, scoring.change, scoring.verdict) == ("scoring_average", 76.5, None, None)
     assert scoring.trend == [72.0, 76.5]
@@ -81,7 +72,6 @@ def test_analytics_response_works_out_the_figures_the_page_shows():
     peak = response.peak_game
     assert [(r.round_id, r.score) for r in peak.rounds] == [("r1", 72), ("r2", 81)]
     assert peak.average == 76.5
-    # Both rounds are the peak, so it matches the average on every kind of hole.
     assert [(i.kind, i.strokes) for i in peak.impacts] == [("birdies", 0.0), ("bogeys", 0.0), ("doubles", 0.0)]
 
 
@@ -90,7 +80,7 @@ def test_analytics_response_marks_milestones_against_the_last_year_ending_today(
     breaks = lambda response: response.notable_achievements.round_milestones
 
     now = breaks(analytics_response(rounds, rounds, today=date(2026, 2, 15)))
-    assert now.one_year.new_personal_records_achieved_count == 8  # breaking 120 down to 75, all in round 1
+    assert now.one_year.new_personal_records_achieved_count == 8
     assert all(row.achievement.in_window for row in now.lifetime.score_breaks if row.achievement)
 
     later = breaks(analytics_response(rounds, rounds, today=date(2027, 3, 1)))
@@ -100,7 +90,6 @@ def test_analytics_response_marks_milestones_against_the_last_year_ending_today(
 
 @pytest.fixture
 def season():
-    """The demo tour's golfer: 24 rounds over three rated courses, oldest first."""
     rounds = sample_golfer._season()
     return rounds, sample_golfer._database(rounds), sample_golfer.USER
 
@@ -113,7 +102,6 @@ async def _analytics(season, limit=50) -> AnalyticsResponse:
 @pytest.mark.asyncio
 async def test_analytics_response_validates_for_a_season(season):
     response = await _analytics(season)
-    # What goes over the wire reads back into the model unchanged.
     wire = jsonable_encoder(response)
     assert AnalyticsResponse.model_validate(wire) == response
     assert response.kpis.total_rounds == 24
@@ -164,12 +152,10 @@ async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(seas
 
     assert isinstance(dashboard, DashboardResponse)
     assert len(dashboard.score_trend) == 20
-    # The same rounds with the same five-round average and par, so the score chart reads alike on both.
     assert dashboard.score_trend == trends.score_trend
     assert all(row.rolling_average is not None and row.par is not None for row in dashboard.score_trend)
     assert dashboard.handicap_trend == trends.handicap_trend
     assert all(row.differential_status != "unrated" for row in dashboard.handicap_trend)
-    # The scoring average's move and the server's verdict on it, which the desktop tile shows.
     assert dashboard.scoring_average_change is not None
     assert dashboard.scoring_average_verdict == change_verdict(dashboard.scoring_average_change)
 

@@ -8,14 +8,11 @@ import { sampleGolfer } from "@/testing/fixtures/sampleGolfer";
 const golfer = sampleGolfer.analytics;
 const dashboard = sampleGolfer.dashboard;
 const scores = (rows: { total_score: number | null }[]) => rows.map((row) => row.total_score);
-/** How far a scoring average moved, unsigned, as its tile shows it. */
 const moved = (change: number | null | undefined) => formatOneDecimal(change != null ? Math.abs(change) : null);
-// The analytics page's scoring move is its headline's first figure.
 const golferMove = golfer.headline[0];
 const golferTone = golferMove.verdict ?? "neutral";
 const dashboardTone = dashboard.scoring_average_verdict ?? "neutral";
 
-/** A KPI tile in its own card, as the pages hold one. */
 function TileCard(props: ComponentProps<typeof StatTile>) {
   return (
     <Card size="sm">
@@ -52,7 +49,6 @@ export default function StatPreview() {
         <TileCard label="Rounds" value={String(golfer.kpis.total_rounds)} />
       </div>
 
-      {/* A row of tiles in one card: the delta beside the value, the line across. */}
       <Card className="grid grid-cols-2 gap-px bg-border py-0">
         <StatTile
           layout="strip"
@@ -67,7 +63,6 @@ export default function StatPreview() {
         <StatTile layout="strip" className="bg-card p-4" label="Rounds" value={String(golfer.kpis.total_rounds)} />
       </Card>
 
-      {/* Centred: the value over its label and move. */}
       <Card className="grid grid-cols-2 gap-0 py-3.5">
         <StatTile layout="center" label="Putts / round" value="31.4" delta="0.8" direction="down" tone="good" />
         <StatTile layout="center" label="3-putt rate" value="9%" delta="2" direction="up" tone="bad" className="border-l border-border" />
@@ -119,7 +114,6 @@ export default function StatPreview() {
         ))}
       </div>
 
-      {/* Round detail's summary: the score, then figures that shrink on a phone. */}
       <div className="flex items-end gap-6">
         <Stat>
           <StatLabel>Score</StatLabel>

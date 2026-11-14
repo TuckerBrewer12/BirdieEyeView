@@ -13,7 +13,6 @@ concurrency:
   group: mvvm-bot-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-# Write is for the fix job only. The review job below drops it back to read.
 permissions:
   contents: write
   pull-requests: write
@@ -29,8 +28,6 @@ jobs:
       has_fixes: ${{ steps.review.outputs.has_fixes }}
       findings: ${{ steps.review.outputs.findings }}
 
-    # Skip drafts, skip-bots, fork PRs (no CURSOR_API_KEY), and the PRs
-    # this bot itself opens.
     if: >-
       github.event.pull_request.draft == false &&
       !contains(github.event.pull_request.labels.*.name, 'skip-bots') &&

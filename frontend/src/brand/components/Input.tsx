@@ -21,7 +21,6 @@ function Input({
   );
 }
 
-/** A native checkbox, sized to a line of body text and ticked in the brand colour. */
 function Checkbox({ className, ...props }: Omit<React.ComponentProps<"input">, "type">) {
   return (
     <input

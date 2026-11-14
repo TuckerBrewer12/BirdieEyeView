@@ -20,16 +20,12 @@ export interface FriendsInboxPageViewModel {
   setTab: (tab: InboxTab) => void;
   receivedCount: number;
   sentCount: number;
-  /** The open tab's requests. */
   requests: Friendship[];
-  /** Empty copy — false while loading or when a load error is showing. */
   showEmpty: boolean;
 
   canRespond: (friendship: Friendship) => boolean;
-  /** Whether this request's answer is on its way to the server. */
   isResponding: (friendshipId: string) => boolean;
   respond: (friendshipId: string, answer: FriendshipAnswer) => void;
-  /** How the last request was answered; cleared on the next answer or tab change. */
   answered: FriendshipAnswer | null;
   respondError: string | null;
 }

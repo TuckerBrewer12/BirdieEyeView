@@ -14,21 +14,14 @@ export interface RegisterViewModel {
   confirm: string;
   setConfirm: (confirm: string) => void;
 
-  /** Why the password or its confirmation can't be sent, from the last submit; editing a field clears its own. */
   fieldErrors: NewPasswordErrors;
-  /** The server's refusal, such as an email already in use. */
   error: string | null;
   submitting: boolean;
-  /** Checks the password, then creates the account; `onRegistered` gets the email and the server's message. */
   submit: (onRegistered: (email: string, message: string) => void) => void;
 }
 
 const NO_ERRORS: NewPasswordErrors = { password: null, confirm: null };
 
-/**
- * Create account: a name, an email, and a password typed twice. The handicap and home course are
- * set later in Settings.
- */
 export function useRegisterViewModel(auth: Pick<AuthActions, "register">): RegisterViewModel {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

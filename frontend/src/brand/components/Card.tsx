@@ -4,19 +4,10 @@ import { cn } from "@/brand/cn";
 
 const CARD_CORNER = {
   default: "rounded-surface",
-  /** The card a page leads with, a step rounder than the cards under it. */
   lead: "rounded-lead",
   "lead-phone": "rounded-lead-phone",
 } as const;
 
-/**
- * The kit's card: a borderless surface resting on the page. `size` sets its inner spacing (`lg` for
- * a dashboard's figure cards). `render` makes the whole card another element: a router link
- * (`render={<Link to="…" />}`), a button, or a `<section>`. `interactive` is for a card the golfer
- * presses, which lifts on hover; a section stays put. `surface="none"` keeps the card's layout and
- * spacing but drops its surface, for a card's content set inside something that is already one,
- * like a sheet.
- */
 function Card({
   className,
   size = "default",
@@ -35,7 +26,6 @@ function Card({
   return useRender({
     render: render ?? <div />,
     props: {
-      // A caller's data-slot names the card for its page's tests and styles.
       "data-slot": "card",
       "data-size": size,
       ...props,
@@ -63,7 +53,6 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-/** A card's title. `level` makes it a heading, for a card that heads a section of the page. */
 function CardTitle({
   className,
   level,
@@ -89,10 +78,6 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-/**
- * A control or figure at the header's end. With `wrap`, a narrow header (under 24rem) drops it
- * under the title, start-aligned, rather than squeezing the title: a menu and a switch together.
- */
 function CardAction({ className, wrap = false, ...props }: React.ComponentProps<"div"> & { wrap?: boolean }) {
   return (
     <div

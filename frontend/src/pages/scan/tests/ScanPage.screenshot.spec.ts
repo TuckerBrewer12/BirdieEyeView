@@ -61,6 +61,15 @@ test("a failed scan", async ({ scan }) => {
   await scan.capture("scan-failed.png");
 });
 
+test("reporting a failed scan", async ({ scan }) => {
+  await scan.open({ scan: undefined });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.tapReportScan();
+  await scan.seesReportDisclaimer();
+  await scan.capture("scan-report-dialog.png");
+});
+
 test("the scanned card under review", async ({ scan }) => {
   await scan.open();
   await scan.chooseScorecard();

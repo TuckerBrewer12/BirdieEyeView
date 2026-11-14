@@ -3,7 +3,6 @@ import { BrandKitRobot } from "../../BrandKit.robot";
 import { enableDark } from "../../previewScreenshot";
 
 test.describe("ScorecardTable", () => {
-  // The board's width: the table is wider than the stage.
   test.use({ viewport: { width: 960, height: 1500 } });
 
   test("light", async ({ page }) => {

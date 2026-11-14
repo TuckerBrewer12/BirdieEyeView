@@ -2,21 +2,14 @@ import { buildRadarData, trendPointsFrom, type RadarEntry, type RoundTrendPoint,
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type { AnalyticsDto, MilestoneAchievementDto, MilestoneEventDto, NotableAchievementsDto } from "@/types/api";
 
-/**
- * Career reads every round the server will send, at every course, all time. It is the same
- * request as the Analytics page's "All" rounds, so the two share one cache entry.
- */
 export const CAREER_FILTERS: AnalyticsFilters = { limit: 500, timeframe: "all", courseId: "all" };
 
-/** Every round, or only the last `windowDays` of them, as the server splits its records and milestones. */
 export const CAREER_WINDOWS = ["lifetime", "one_year"] as const;
 export type CareerWindow = (typeof CAREER_WINDOWS)[number];
 
-/** The milestone lists. The phone shows one at a time; desktop shows them all. */
 export const MILESTONE_GROUPS = ["scoring", "putting", "gir"] as const;
 export type MilestoneGroup = (typeof MILESTONE_GROUPS)[number];
 
-/** The round a record or milestone was set in. `date` is the server's, as 2026/5/28. */
 export interface CareerEvent {
   date: string;
   course: string;
@@ -31,7 +24,6 @@ export type RecordKind =
   | "birdie-streak"
   | "par-streak";
 
-/** One record over the window, and the round it was set in. Null until a round sets it. */
 export interface CareerRecord {
   kind: RecordKind;
   value: number | null;
@@ -56,39 +48,27 @@ export interface CareerTotal {
   value: number;
 }
 
-/** A milestone, reached or not. `roundId` is the round it was first reached in. */
 export type Milestone = (
   | { kind: "score-break" | "putt-break" | "gir-break"; threshold: number }
   | { kind: "under-par" | "first-eagle" | "hole-in-one" }
 ) & { achieved: boolean; roundId: string | null };
 
-/** The handicap trend, records, totals and milestones over one window. */
 export interface CareerWindowFigures {
-  /** The index after each round in the window, oldest first: the rounds the server marks as in it. */
   handicapTrend: RoundTrendPoint[];
   records: CareerRecord[];
   totals: CareerTotal[];
-  /**
-   * Score milestones. Over a lifetime, every one, reached or not. Over the last year, only the
-   * new personal records: the ones the server says were first reached in it.
-   */
   scoring: Milestone[];
-  /** How many new personal records the server counted in the window; null over a lifetime. */
   newRecords: number | null;
   putting: Milestone[];
   gir: Milestone[];
 }
 
-/** The career page's figures, from the server's analytics over every round. */
 export interface Career {
   roundCount: number;
   holesPlayed: number;
   handicapIndex: number | null;
-  /** Each score kind's share of every counted hole. */
   scoreMix: ScoreMix;
-  /** The radar's axes the golfer has figures for. */
   profile: RadarEntry[];
-  /** How many days "the last year" spans. */
   windowDays: number;
   windows: Record<CareerWindow, CareerWindowFigures>;
 }
@@ -99,7 +79,6 @@ function eventFrom(event: MilestoneEventDto | null | undefined): CareerEvent | n
   return event ? { date: event.date, course: event.course, roundId: event.round_id ?? null } : null;
 }
 
-/** Over a lifetime, a milestone counts once reached; over the last year, only if the server says it was first reached in it. */
 function reached(achievement: MilestoneAchievementDto | null | undefined, timeWindow: CareerWindow): boolean {
   return timeWindow === "lifetime" ? achievement != null : achievement?.in_window === true;
 }
@@ -146,7 +125,6 @@ function totalsFrom(a: Achievements, timeWindow: CareerWindow): CareerTotal[] {
       { kind: "hole-in-ones", value: t.total_hole_in_ones },
     ];
   }
-  // The server counts pars and bogeys over a lifetime only.
   const t = a.career_totals.one_year;
   return [
     { kind: "rounds", value: t.rounds_played },
@@ -163,10 +141,6 @@ function totalsFrom(a: Achievements, timeWindow: CareerWindow): CareerTotal[] {
 
 type ThresholdRow = Achievements["round_milestones"]["lifetime"]["score_breaks"][number];
 
-/**
- * Score milestones. Over a lifetime, every one, reached or not. Over the last year, only the
- * new personal records: the ones the server says were first reached in it.
- */
 function scoringMilestones(a: Achievements, timeWindow: CareerWindow): Milestone[] {
   const m = a.round_milestones.lifetime;
   const breaks = (rows: ThresholdRow[]): Milestone[] =>
@@ -180,7 +154,6 @@ function scoringMilestones(a: Achievements, timeWindow: CareerWindow): Milestone
     kind: "under-par" | "first-eagle" | "hole-in-one",
     achievement: MilestoneAchievementDto | null | undefined,
   ): Milestone => ({ kind, achieved: reached(achievement, timeWindow), roundId: achievement?.round_id ?? null });
-  // The server places a round under par among the breaks by the par the golfer plays, so the list climbs in order.
   const all = [
     ...breaks(m.score_breaks.slice(0, m.under_par_position)),
     first("under-par", m.first_round_under_par),
@@ -191,7 +164,6 @@ function scoringMilestones(a: Achievements, timeWindow: CareerWindow): Milestone
   return timeWindow === "lifetime" ? all : all.filter((milestone) => milestone.achieved);
 }
 
-/** Putt and GIR milestones, each reached or not over the window. */
 function thresholdMilestones(rows: ThresholdRow[], kind: "putt-break" | "gir-break", timeWindow: CareerWindow): Milestone[] {
   return rows.map((row) => ({
     kind,
@@ -213,7 +185,6 @@ function windowFrom(a: Achievements, trend: RoundTrendPoint[], timeWindow: Caree
   };
 }
 
-/** The career page's figures from the server's analytics over every round. */
 export function careerFrom(dto: AnalyticsDto): Career {
   const a = dto.notable_achievements;
   const trend = trendPointsFrom(dto);

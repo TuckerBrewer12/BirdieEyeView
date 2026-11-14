@@ -77,7 +77,6 @@ describe("the server's figures", () => {
     expect(peak.rounds[0]).toEqual({ roundId: "lab-6", courseName: "Half Moon Bay", score: 89 });
     expect(peak.average).toBe(89.7);
     expect(peak.gapToGoal).toBe(0.7);
-    // Before the goal's report loads, the peak stands without a gap.
     expect(peakGameFrom(labAnalytics, 89, null)?.gapToGoal).toBeNull();
   });
 
@@ -118,7 +117,6 @@ describe("profilePresent", () => {
       { label: "Best", value: "89", tone: "good" },
       { label: "To go", value: "2.7", tone: "bad" },
     ]);
-    // Met is the server's call: on track, the gap reads as how far under.
     expect(goalFigures({ ...goal, gap: -1.2, onTrack: true })[2]).toEqual({ label: "Under by", value: "1.2", tone: "good" });
     expect(saversHeading(goal)).toBe("Where to find 2.7 strokes");
     expect(saversHeading({ ...goal, gap: 0, onTrack: true })).toBeNull();

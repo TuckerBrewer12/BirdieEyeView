@@ -6,7 +6,6 @@ import type { CourseDto } from "@/types/api";
 export interface CoursesRepository {
   getCourses(userId?: string, limit?: number, offset?: number): Promise<CourseSummary[]>;
   searchCourses(query: string, userId?: string, includeExternal?: boolean): Promise<CourseSummary[]>;
-  /** The course list's search: each course carries the golfer's record there, as the list does. */
   searchCourseList(query: string, userId: string): Promise<CourseSummary[]>;
   getCourse(courseId: string): Promise<CourseDto>;
   getCourseAnalytics(userId: string, courseId: string): Promise<CourseAnalytics>;

@@ -2,11 +2,9 @@ import { Button } from "@/brand";
 import { useCopyText } from "@/platform/useCopyText";
 
 interface YourCodeProps {
-  /** The golfer's own friend code; null until the server has one. */
   code: string | null;
 }
 
-/** "Your code TGOLF7Q2" with a button to copy it, for the golfer to hand to a friend. */
 export function YourCode({ code }: YourCodeProps) {
   const { copy, copied, failed } = useCopyText();
 

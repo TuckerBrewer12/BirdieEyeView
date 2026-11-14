@@ -1,7 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 import { fontsLoaded } from "../../testing/fontsLoaded";
 
-/** Screen robot for isolated brand-kit stories. */
 export class BrandKitRobot {
   private readonly page: Page;
 
@@ -22,7 +21,6 @@ export class BrandKitRobot {
     return this;
   }
 
-  /** Opens a story that fills the window, as the app shell does, rather than sitting in the stage. */
   async openFrame(story: string): Promise<this> {
     await this.page.goto(`/__brand__/${story}`);
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
@@ -30,7 +28,6 @@ export class BrandKitRobot {
     return this;
   }
 
-  /** The whole window, for stories opened with `openFrame`. */
   async captureFrame(name: string): Promise<this> {
     await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name);

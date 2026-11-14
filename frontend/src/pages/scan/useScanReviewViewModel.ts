@@ -29,51 +29,33 @@ const defaultRepositories: ScanReviewRepositories = {
 };
 
 export interface ScanReviewViewModel {
-  /** The card as it will save, with the golfer's edits. Null until there is a card to check. */
   round: Round | null;
-  /** Holes whose score the scan wasn't sure of, until the golfer types over them. */
   toCheck: number[];
   setStrokes: (hole: number, strokes: number | null) => void;
   setPutts: (hole: number, putts: number | null) => void;
   setGir: (hole: number, gir: boolean | null) => void;
 
-  /** Search over saved and the course provider's courses, to link the round to. */
   courseSearch: CourseSearch;
-  /** The course the round is linked to. */
   linkedName: string | undefined;
-  /** The name the round is saved under, without a link. */
   customName: string | undefined;
-  /** The name read off the card, offered while picking with an empty search. */
   nameToKeep: string | null;
   pickCourse: (course: CourseSummary) => void;
-  /** Saves the round without a link, under this name. */
   nameCourse: (name: string) => void;
-  /** Back to picking, with the search open on the current name. */
   changeCourse: () => void;
 
-  /** The tees to choose from: the linked course's, else the ones read off the card. */
   tees: TeeChoice[];
   teeBox: string;
   setTeeBox: (teeBox: string) => void;
-  /** `YYYY-MM-DD`. */
   date: string;
   setDate: (date: string) => void;
-  /** The latest date a round can be played on. */
   today: string;
 
   saving: boolean;
-  /** Why the last course pick or save failed. */
   error: string | null;
   save: () => void;
-  /** Forgets the search and any failed save, for the next card. */
   reset: () => void;
 }
 
-/**
- * Checking a card before it is saved: typed-over scores, the course and tee, the date. The card
- * lives in the scan session, so the edits survive leaving the page; saving goes through
- * `useSaveScan`, and a saved card ends the session on the saved round.
- */
 export function useScanReviewViewModel(
   userId: string,
   repositories: ScanReviewRepositories = defaultRepositories,
@@ -138,7 +120,6 @@ export function useScanReviewViewModel(
     setLinkError(null);
     saveScan(saveRequestFrom(userId, draft))
       .then((roundId) => setSession({ ...newScanSession(), savedRoundId: roundId }))
-      // The mutation holds the failure, and the review shows it.
       .catch(() => undefined);
   }, [draft, saving, saveScan, userId, setSession]);
 

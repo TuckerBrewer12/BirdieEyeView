@@ -10,7 +10,6 @@ const themes = [
 
 const noop = () => {};
 
-/** Every kind of row, as the settings page uses them: Golf, App, and Sign out on its own. */
 export default function SettingsRowPreview() {
   const [updates, setUpdates] = useState(true);
   const [theme, setTheme] = useState<(typeof themes)[number]["value"]>("system");

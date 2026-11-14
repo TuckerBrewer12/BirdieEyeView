@@ -2,7 +2,6 @@ import { ChevronLeft, Ellipsis, Plus, Share } from "lucide-react";
 import { Button, RowButton } from "@/brand/components/Button";
 import { cn } from "@/brand/cn";
 
-/* Every variant the app uses, under the board's name where it has one. */
 const rows = [
   { name: "Primary", variant: "default", label: "Save" },
   { name: "Secondary", variant: "outline", label: "Cancel" },
@@ -16,10 +15,6 @@ const rows = [
 
 const grid = "grid grid-cols-state-grid items-center gap-2";
 
-/**
- * One theme's panel of the board: every variant at rest and disabled, then the
- * sizes. Hover is a pointer state, so the spec captures it by hovering each row.
- */
 function Panel({ theme }: { theme: "Light" | "Dark" }) {
   return (
     <div
@@ -110,7 +105,6 @@ function Panel({ theme }: { theme: "Light" | "Dark" }) {
   );
 }
 
-/** The canvas board: the light and dark panels side by side. */
 export default function ButtonPreview() {
   return (
     <div data-testid="brand-frame" className="fixed inset-0 grid grid-cols-2 gap-4 bg-background p-6">

@@ -1,5 +1,3 @@
-"""One handicap index and one best round: every screen that shows either reads the same one."""
-
 import importlib.util
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -24,7 +22,6 @@ _spec.loader.exec_module(sample_golfer)
 
 
 def _database(user: User, rounds: list[Round]):
-    """The golfer and their rounds, answering the queries the stats and round endpoints make."""
     newest_first = sorted(rounds, key=lambda r: r.date, reverse=True)
 
     async def get_user(_user_id):
@@ -64,8 +61,6 @@ def _database(user: User, rounds: list[Round]):
 
 @pytest.fixture
 def golfer():
-    """The demo golfer's 24 rounds, for a golfer who gave a 6.0 halfway through: the rounds
-    before it only count where they beat it, so their index is not the plain WHS one."""
     rounds = sample_golfer._season()
     user = sample_golfer.USER.model_copy(update={"handicap": 6.0, "last_handicap_update": rounds[12].date})
     return user, rounds, _database(user, rounds)
@@ -77,7 +72,6 @@ async def test_every_screen_shows_the_golfers_own_index(golfer):
     user_id = UUID(user.id)
     index = await player_handicap_index(db, user)
     assert index is not None
-    # The handicap they gave holds rounds back, so the plain WHS figure over the same rounds differs.
     assert index != hcap.handicap_index(rounds[-20:])
 
     dashboard = await stats_router.get_dashboard(user_id, db, user)
@@ -92,13 +86,10 @@ async def test_every_screen_shows_the_golfers_own_index(golfer):
         assert response.kpis.handicap_index == index
     assert career.handicap_trend[-1].handicap_index == index
 
-    # Narrowed to a course, each round still shows the golfer's index after it, not one worked
-    # out from that course's rounds alone.
     after = {row.round_id: row.handicap_index for row in career.handicap_trend}
     assert [row.round_id for row in by_course.handicap_trend] == [row.round_id for row in by_course.score_trend]
     assert all(row.handicap_index == after[row.round_id] for row in by_course.handicap_trend)
 
-    # The round page's course handicap starts from the same index.
     latest = rounds[-1]
     detail = await rounds_router.get_round(UUID(latest.id), db, user)
     tee = latest.get_tee()
@@ -127,14 +118,11 @@ async def test_the_dashboards_breakdown_and_change_add_up_to_the_index_shown(gol
     used = [row.differential for row in whs.rows if row.used]
     assert len(used) == whs.count_used
     assert round(sum(used) / len(used) + whs.adjustment, 1) == dashboard.handicap_index
-    # The rows marked counting on the trend are the ones the breakdown counts.
     counting = [row for row in dashboard.handicap_trend if row.differential_status == "counting"]
     assert len(counting) == whs.count_used
 
 
 def test_the_trend_reads_the_20_rounds_ending_with_each_round():
-    """Past 20 rounds, the oldest falls out of the window, so a great round 21 rounds ago no
-    longer holds the index down."""
     course = Course(
         id="c", name="C", par=72,
         holes=[Hole(number=i, par=4) for i in range(1, 19)],
@@ -149,10 +137,9 @@ def test_the_trend_reads_the_20_rounds_ending_with_each_round():
 
     rounds = [played(0, 0)] + [played(10, day) for day in range(1, 21)]
     trend = hcap.player_handicap_trend(None, rounds)
-    # Differentials: 0 (par at a 72 rating), then twenty 10s; the best 8 of 20 count.
     assert trend[19]["handicap_index"] == round((0 + 10 * 7) / 8, 1)
     assert trend[20]["handicap_index"] == 10.0 == hcap.player_handicap_index(None, rounds)
-    assert trend[0]["differential_status"] == "out"  # outside the current window
+    assert trend[0]["differential_status"] == "out"
 
 
 def _round(round_id, strokes_over, *, holes=18, par=4, day=0, course=None):
@@ -170,8 +157,6 @@ def _round(round_id, strokes_over, *, holes=18, par=4, day=0, course=None):
 
 
 def _mixed_season():
-    """An 18 at par 72 three over (75), an 18 at par 70 four over (74), a level-par nine (36) and
-    an 18 six over (78). The 75 is the best round; the nine is never best over a full round."""
     par_70 = Course(id="par-70", name="Seventy", par=70, holes=[
         Hole(number=i + 1, par=p) for i, p in enumerate([4, 4, 4, 3, 4, 4, 3, 4, 5] * 2)
     ])
@@ -194,10 +179,8 @@ def test_best_is_the_round_lists_best_lowest_to_par_full_rounds_first():
     assert stats.best_round(newest_first).id == "75"
     places = stats.best_round_ranks(newest_first)
     assert newest_first[next(i for i, p in places.items() if p == 1)].id == "75"
-    # Only nines: the best nine.
     assert stats.best_round([_round("nine-a", 2, holes=9), _round("nine-b", 1, holes=9)]).id == "nine-b"
     assert stats.best_round([Round(id="blank")]) is None
-    # A tie goes to the earlier in the list: the newest, as lists come.
     assert stats.best_round([_round("newer", 3, day=5), _round("older", 3, day=1)]).id == "newer"
 
 
@@ -232,13 +215,13 @@ def test_records_and_milestones_set_by_a_rounds_total_count_full_rounds_only():
     season = _mixed_season()
     achievements = stats.notable_achievements(season, reference_date=date(2026, 5, 1))
     records = achievements["scoring_records"]["lifetime"]
-    assert records["lowest_round"] == 74  # the lowest 18, a record by score: not the nine's 36
+    assert records["lowest_round"] == 74
     assert achievements["scoring_records_events"]["lifetime"]["lowest_round"]["round_id"] == "74-at-70"
-    assert records["fewest_putts_in_round"] == 18  # the 75's 18 one-putts, not the nine's 9
+    assert records["fewest_putts_in_round"] == 18
     breaks = {row["threshold"]: row["achievement"] for row in achievements["round_milestones"]["lifetime"]["score_breaks"]}
-    assert breaks[75] is not None and breaks[70] is None  # the nine's 36 breaks nothing
+    assert breaks[75] is not None and breaks[70] is None
     gir = {row["threshold"]: row["achievement"] for row in achievements["gir_milestones"]["lifetime"]["gir_breaks"]}
-    assert gir[18]["round_id"] in {"75", "78"}  # 18 of 18 greens, on a full round
+    assert gir[18]["round_id"] in {"75", "78"}
     assert achievements["round_milestones"]["lifetime"]["first_round_under_par"] is None
 
 

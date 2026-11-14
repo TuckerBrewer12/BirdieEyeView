@@ -6,7 +6,6 @@ interface ParTypeRowProps {
   children: ReactNode;
 }
 
-/** A labelled bar with its figure at the end: "Par 4 ▬▬▬ +0.58". */
 export function ParTypeRow({ label, value, children }: ParTypeRowProps) {
   return (
     <div data-slot="par-type-row" className="grid grid-cols-par-bar items-center gap-2.5">

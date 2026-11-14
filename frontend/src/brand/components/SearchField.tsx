@@ -10,24 +10,15 @@ import {
   InputGroupInput,
 } from "./InputGroup";
 
-/** Other input props (a placeholder, an `aria-label`, combobox ARIA, `onKeyDown`) go to the input. */
 interface SearchFieldProps
   extends Omit<React.ComponentProps<typeof InputGroupInput>, "value" | "onChange" | "type" | "size"> {
   value: string;
   onChange: (value: string) => void;
-  /**
-   * Puts the caret in the field when it appears. Only for a field the golfer just opened (a panel,
-   * a "Change course"), never one that is there when the page loads.
-   */
   focusOnOpen?: boolean;
   loading?: boolean;
   className?: string;
 }
 
-/**
- * Search, as the pages show it: 40 tall on the card's surface, a magnifier that darkens once
- * there's a query, and a button that clears it and keeps the caret in the field.
- */
 export function SearchField({
   id,
   value,

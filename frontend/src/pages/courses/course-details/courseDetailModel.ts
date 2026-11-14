@@ -14,23 +14,16 @@ import { formatAverageToParTenths, roundAverageToParTenths, toParLabel } from "@
 import type { RoundTrendPoint } from "@/domain/trend";
 import type { CourseDto, TeeDto } from "@/types/api";
 
-/** How many of the golfer's latest rounds here the page lists. */
 export const RECENT_ROUNDS = 5;
 
-/** The course's named tees, longest first as the server sends them. */
 export function namedTees(course: CourseDto): TeeDto[] {
   return course.tees.filter((tee) => !!tee.color);
 }
 
-/**
- * The tee the scorecard shows: the golfer's pick, or the longest until they pick one. A pick that
- * matches no tee falls back to the longest too.
- */
 export function selectedTee(course: CourseDto, picked: string | null): TeeDto | null {
   return (picked != null ? getTee(course, picked) : null) ?? namedTees(course)[0] ?? null;
 }
 
-/** The scorecard's bar for a tee: "Blue tees · 6,500 yds · 72.4 / 130 · hcp 12". */
 export function teeLine(tee: TeeDto): string {
   return [
     tee.color ? formatTeeName(tee.color) : null,
@@ -42,7 +35,6 @@ export function teeLine(tee: TeeDto): string {
     .join(" · ");
 }
 
-/** An average to par as the scorecard shows it: rounded to a tenth, so its colour follows what it reads. */
 export interface AverageToPar {
   value: number;
   label: string;
@@ -58,13 +50,10 @@ export interface ScorecardHole {
   par: number | null;
   handicap: number | null;
   yards: number | null;
-  /** The golfer's average here to par, once they have played the hole. */
   averageToPar: AverageToPar | null;
-  /** The greens they have hit here (0-100), once one is recorded. */
   greens: number | null;
 }
 
-/** A nine's figures where it closes: Out or In, and on the back nine also the course's Tot. */
 export interface ScorecardTotals {
   par: number | null;
   yards: number | null;
@@ -72,19 +61,15 @@ export interface ScorecardTotals {
   greens: number | null;
 }
 
-/** One nine of the course scorecard. */
 export interface ScorecardNine {
   side: "front" | "back";
   holes: ScorecardHole[];
-  /** Out or In. */
   nine: ScorecardTotals;
-  /** The course's totals, carried by the back nine. */
   course: ScorecardTotals | null;
 }
 
 const NO_NINES: NineFigures = { front: null, back: null, total: null };
 
-/** One nine of the scorecard off `tee`, with the golfer's rows when they have played here. */
 export function nineFrom(
   course: CourseDto,
   side: "front" | "back",
@@ -98,7 +83,6 @@ export function nineFrom(
   return {
     side,
     holes: (back ? BACK_HOLES : FRONT_HOLES).map((n) => {
-      // A 0 is a yardage the card didn't have, not a hole with no length.
       const yards = tee?.hole_yardages[n];
       return {
         hole: n,
@@ -126,19 +110,14 @@ export function nineFrom(
   };
 }
 
-/** One figure of the golfer's record here: the figure, and under or beside it its to par and when. */
 export interface RecordFigure {
   label: string;
   value: string;
-  /** The to par to colour, and how it reads. */
   toPar: { value: number; label: string } | null;
-  /** When, or how long ago: "Jun 15". */
   note: string | null;
-  /** The round the figure is, for a best or worst that opens it. */
   roundId: string | null;
 }
 
-/** Rounds, average, best and worst: the golfer's record at the course, every figure the server's. */
 export function recordFigures(analytics: CourseAnalytics): RecordFigure[] {
   const round = (label: string, played: CourseAnalytics["bestRound"]): RecordFigure => ({
     label,
@@ -163,7 +142,6 @@ export function recordFigures(analytics: CourseAnalytics): RecordFigure[] {
   ];
 }
 
-/** The course page's two views: the card and the golfer's record, or how they play it hole by hole. */
 export type CourseView = "course" | "performance";
 
 export const COURSE_VIEWS: { value: CourseView; label: string }[] = [
@@ -171,7 +149,6 @@ export const COURSE_VIEWS: { value: CourseView; label: string }[] = [
   { value: "performance", label: "My performance" },
 ];
 
-/** The hole chart's two orders: 1 to 18, or the holes that cost the most first. */
 export type HoleOrder = "course" | "hardest";
 
 export const HOLE_ORDERS: { value: HoleOrder; label: string }[] = [
@@ -179,13 +156,11 @@ export const HOLE_ORDERS: { value: HoleOrder; label: string }[] = [
   { value: "hardest", label: "Hardest first" },
 ];
 
-/** The holes in the order asked: as the course runs, or hardest first by the server's rank. */
 export function holesInOrder(holes: readonly HoleStats[], order: HoleOrder): HoleStats[] {
   if (order === "course") return [...holes];
   return [...holes].sort((a, b) => a.difficultyRank - b.difficultyRank);
 }
 
-/** The greens hit over each nine and the course, for the greens chart's header: "Out 72%". */
 export function greensFigures(nines: NineFigures): { label: string; value: string }[] {
   return [
     { label: "Out", value: formatPercent(nines.front) },
@@ -194,7 +169,6 @@ export function greensFigures(nines: NineFigures): { label: string; value: strin
   ];
 }
 
-/** One round on the course's score trend, as the trend chart takes it. */
 export interface TrendPoint {
   tick: number;
   title: string;
@@ -202,7 +176,6 @@ export interface TrendPoint {
   notes: { label: string; value: string }[];
 }
 
-/** Each round here, oldest first: its score beside its five-round average, and its to par in the tooltip. */
 export function trendPoints(trend: readonly RoundTrendPoint[]): TrendPoint[] {
   return trend.map((point, i) => ({
     tick: i + 1,

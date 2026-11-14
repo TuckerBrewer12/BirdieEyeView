@@ -69,7 +69,6 @@ describe("present", () => {
     const [scoring, greens] = headlineTiles(analytics.headline);
     expect(scoring).toMatchObject({ label: "Scoring avg", value: "82.9", delta: "3.9", direction: "down", tone: "good" });
     expect(greens).toMatchObject({ label: "Greens hit", value: "33%", delta: "17", direction: "up" });
-    // Under five rounds there is no move to show.
     const nine = headlineTiles([{ metric: "average_putts", value: 30, change: null, verdict: null, trend: [] }])[0];
     expect(nine).toMatchObject({ delta: "", direction: null, tone: "neutral" });
   });

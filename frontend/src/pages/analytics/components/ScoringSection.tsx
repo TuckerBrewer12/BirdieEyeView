@@ -30,10 +30,6 @@ const READINGS: { value: ScoreReading; label: string }[] = [
   { value: "net", label: "Net" },
 ];
 
-/**
- * Scoring: the score each round with its five-round line, and the holes of each kind turned on
- * counted on it (any of them, the score too, can be off), then by par type and by hole difficulty.
- */
 export function ScoringSection({ analytics, reading, onReadingChange, lines, onLinesChange, shown, onShownChange }: ScoringSectionProps) {
   const series = reading === "net" ? analytics.netTrend : analytics.scoreTrend;
   const note = benchmarkNote(analytics.benchmarkHandicap);

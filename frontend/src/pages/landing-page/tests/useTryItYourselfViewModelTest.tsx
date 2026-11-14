@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type { ReactNode } from "react";
 import { FakeScanRepository, type FakeScanRepositorySeed } from "@/testing/fakes/FakeScanRepository";
+import { FakeScanReportRepository } from "@/testing/fakes/FakeScanReportRepository";
 import { SCANNED_COURSE_NAME, scannedCard } from "@/testing/fixtures/scan";
 import { useTryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
@@ -13,8 +14,9 @@ function wrapper({ children }: { children: ReactNode }) {
 
 function renderVm(seed: FakeScanRepositorySeed = { result: scannedCard }) {
   const repository = new FakeScanRepository(seed);
-  const view = renderHook(() => useTryItYourselfViewModel(repository), { wrapper });
-  return { repository, ...view };
+  const reports = new FakeScanReportRepository();
+  const view = renderHook(() => useTryItYourselfViewModel(repository, reports), { wrapper });
+  return { repository, reports, ...view };
 }
 
 const photo = () => new File(["card"], "card.jpg", { type: "image/jpeg" });
@@ -100,5 +102,24 @@ describe("useTryItYourselfViewModel", () => {
     expect(result.current.step).toBe("upload");
     expect(result.current.photo).toBeNull();
     expect(result.current.round).toBeNull();
+  });
+
+  it("offers a failed scan as a report, and a new photo or a reset drops it", async () => {
+    const { result, reports } = renderVm({ extractError: "We couldn't read that card." });
+    await pick(result);
+    act(() => result.current.extract());
+    await waitFor(() => expect(result.current.report.available).toBe(true));
+
+    await act(async () => result.current.report.submit());
+    await act(async () => reports.saveNext());
+    await waitFor(() => expect(result.current.report.status).toBe("sent"));
+
+    await pick(result);
+    expect(result.current.report.available).toBe(false);
+
+    act(() => result.current.extract());
+    await waitFor(() => expect(result.current.report.available).toBe(true));
+    act(() => result.current.reset());
+    expect(result.current.report.available).toBe(false);
   });
 });

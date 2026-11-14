@@ -1,7 +1,5 @@
-/** What the player chose. "system" follows the device's light or dark setting. */
 export type ThemePreference = "light" | "dark" | "system";
 
-/** The theme actually showing. */
 export type ResolvedTheme = "light" | "dark";
 
 const THEME_PREFERENCES: readonly ThemePreference[] = ["light", "dark", "system"];

@@ -4,19 +4,14 @@ import { useCopyText } from "@/platform/useCopyText";
 const HANDICAP_ID = "settings-handicap";
 
 interface GolfGroupProps {
-  /** The handicap as typed. */
   handicap: string;
-  /** Why it can't be saved, or null. */
   handicapError: string | null;
   onHandicapChange: (value: string) => void;
-  /** The home course's name as shown, or null for none. */
   homeCourse: string | null;
   onOpenHomeCourse: () => void;
-  /** Null until the server has given the player one. */
   friendCode: string | null;
 }
 
-/** The golf settings: the handicap index set by hand, the home course, and the friend code to copy. */
 export function GolfGroup({
   handicap,
   handicapError,
@@ -38,7 +33,6 @@ export function GolfGroup({
             <Input
               id={HANDICAP_ID}
               size="value"
-              // Wide enough for the longest index a golfer types, "+5.6" or "54.0", and no more.
               className="w-14"
               type="text"
               inputMode="decimal"

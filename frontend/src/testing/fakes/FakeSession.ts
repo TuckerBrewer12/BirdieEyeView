@@ -1,7 +1,6 @@
 import type { Page } from "@playwright/test";
 import { FakeBackend, type FakeBackendSeed } from "./FakeBackend";
 
-/** Points Playwright's `/api/**` routes at a FakeBackend. */
 export class FakeSession {
   static async install(
     page: Page,
@@ -28,10 +27,6 @@ export class FakeSession {
   }
 }
 
-/**
- * A multipart body's text fields by name (`user_context`, `course_id`, …). Files are left out:
- * the fake reads what was said about the card, not the photo.
- */
 function formFields(data: Buffer | null): Record<string, string> {
   const fields: Record<string, string> = {};
   if (!data) return fields;

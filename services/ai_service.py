@@ -1,5 +1,3 @@
-"""Rule-based AI insight engine for golf performance suggestions."""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -10,7 +8,6 @@ from analytics import stats as analytics
 from api.schemas import AIComparisonItem, AIInsightItem, AIStrengthItem, AISuggestionsResponse
 from database.db_manager import DatabaseManager
 
-# ─── Benchmark table ──────────────────────────────────────────────────────────
 
 _TARGET_LABELS: Dict[float, str] = {
     0.0:  "Scratch",
@@ -92,8 +89,6 @@ def _trend_direction(
     return "improving" if delta > 0 else "declining"
 
 
-# ─── Service ──────────────────────────────────────────────────────────────────
-
 class AIService:
     def __init__(self, db: DatabaseManager) -> None:
         self._db = db
@@ -105,9 +100,8 @@ class AIService:
         rounds_desc = await self._db.rounds.get_rounds_for_user(
             user_id, limit=limit, offset=0
         )
-        rounds = list(reversed(rounds_desc))  # chronological order
+        rounds = list(reversed(rounds_desc))
 
-        # The golfer's own index, over their last 20 rounds, as every screen shows it.
         hi = hcap.player_handicap_index(user, rounds)
         if target_handicap is not None:
             benchmark, _ = _get_benchmark(target_handicap)
@@ -143,7 +137,6 @@ class AIService:
             if item is not None:
                 insights.append(item)
 
-        # Sort: highest priority first; tie-break declining before stable/improving
         insights.sort(
             key=lambda x: (-x.priority_score, 0 if x.trend_direction == "declining" else 1)
         )
@@ -164,7 +157,6 @@ class AIService:
             generated_at=datetime.now(timezone.utc).isoformat(),
         )
 
-    # ── Raw data pipeline ─────────────────────────────────────────────────────
 
     def _compute_raw(self, rounds: list) -> Dict[str, Any]:
         gir_data = analytics.overall_gir_percentage(rounds)
@@ -227,7 +219,6 @@ class AIService:
 
     @staticmethod
     def _par_stats_per_round(rounds: list) -> Dict[int, List[Optional[float]]]:
-        """Per-round avg to par by par type — used for trend detection."""
         result: Dict[int, List[Optional[float]]] = {3: [], 4: [], 5: []}
         for r in rounds:
             by_par: Dict[int, List[float]] = {}
@@ -251,7 +242,6 @@ class AIService:
 
     @staticmethod
     def _par_stats(rounds: list) -> tuple[Dict[int, float], Dict[int, int]]:
-        """Single-pass: returns (avg_to_par_by_par, hole_count_by_par)."""
         by_par: Dict[int, List[float]] = {}
         for r in rounds:
             for hs in r.hole_scores:
@@ -284,7 +274,6 @@ class AIService:
             )
         return results
 
-    # ── Insight generators ────────────────────────────────────────────────────
 
     def _insight_par_performance(
         self, raw: Dict[str, Any], benchmark: Dict[str, float]
@@ -513,7 +502,6 @@ class AIService:
             ),
         )
 
-    # ── Comparisons ───────────────────────────────────────────────────────────
 
     def _build_comparisons(
         self, raw: Dict[str, Any], benchmark: Dict[str, float]
@@ -554,7 +542,6 @@ class AIService:
             _item("3-Putts per Round", "Putting", raw.get("avg_three_putts"), "three_putts_per_round", " putts", True),
         ]
 
-    # ── Strengths ─────────────────────────────────────────────────────────────
 
     def _compute_strengths(
         self, raw: Dict[str, Any], benchmark: Dict[str, float]

@@ -5,7 +5,6 @@ import { Button, Card, CardContent, EmptyNote, PageTitle, RoundScorecard } from 
 import { tokens } from "@/brand/theme";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
-/** The visitor's own card read back: "Here's your round.", the scorecard, and a way to keep it. */
 export function ScannedSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
   return (
     <motion.section

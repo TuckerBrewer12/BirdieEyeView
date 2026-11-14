@@ -15,10 +15,6 @@ import {
   standingLines,
 } from "../profilePresent";
 
-/**
- * The golfer's shape on the radar against a handicap, a friend or their peak: the axes ahead and
- * behind beside it, and a way down to where the strokes are.
- */
 export function ShapeCard({ profile, improveId }: { profile: ProfileViewModel; improveId: string | null }) {
   const name = comparisonName(profile.comparison, profile.selectedFriend);
   const note = profile.friendComparison ? friendNote(profile.friendComparison, profile.selectedFriend) : null;
@@ -29,7 +25,6 @@ export function ShapeCard({ profile, improveId }: { profile: ProfileViewModel; i
 
   return (
     <Card size="lg" data-slot="shape-card" className="@container gap-4 px-(--card-spacing)">
-      {/* The card's own padding holds the radar's container, so the header takes none of its own. */}
       <CardHeader className="items-center px-0">
         <CardTitle level={2} className="text-body-lg font-semibold">
           {SHAPE_COPY.title}

@@ -4,23 +4,14 @@ import { scoreMixEntries, scoreMixKinds } from "./scoreMixEntries";
 import { ShareBar, ShareLegend } from "./ShareBar";
 
 interface ScoreMixBarProps {
-  /** Each kind's share of the holes, or with `counted`, the server's count of holes of each kind. */
   mix: ScoreMix;
-  /** The mix is hole counts (a round's `scoreCounts`): the legend reads "10 pars" rather than "52% par". */
   counted?: boolean;
-  /** Triples and worse as one segment, "Triple+". */
   fold?: boolean;
-  /** `sm` is the thin bar; `lg` prints each share inside it. */
   size?: "sm" | "lg";
-  /**
-   * `figures`: each kind's figure and word after the bar ("**40%** par"). `none`: the bar alone, for
-   * a stack of bars under one {@link ScoreMixLegend}.
-   */
   legend?: "figures" | "none";
   className?: string;
 }
 
-/** How a player's holes split across score kinds: one {@link ShareBar}, then each kind's figure. */
 export function ScoreMixBar({
   mix,
   counted = false,
@@ -55,7 +46,6 @@ export function ScoreMixBar({
   );
 }
 
-/** The key under a stack of score-mix bars: the kinds any of them show. */
 export function ScoreMixLegend({ mixes, fold = false, className }: { mixes: readonly ScoreMix[]; fold?: boolean; className?: string }) {
   return (
     <ShareLegend

@@ -8,7 +8,6 @@ import type {
 import { populatedRounds } from "./rounds";
 import { countsFor } from "./scoreCounts";
 
-/** Five-round window: one used differential, no WHS adjustment. */
 const scoreTrend: ScoreTrendRowDto[] = [
   { round_index: 1, round_id: "round-4", total_score: 85, to_par: 13, par: 72, rolling_average: 85, course_name: "Scanned Scorecard", score_counts: countsFor(13) },
   { round_index: 2, round_id: "round-3", total_score: 69, to_par: -3, par: 72, rolling_average: 77, course_name: "Blue Rock", score_counts: countsFor(-3) },
@@ -24,7 +23,6 @@ const handicapTrend: HandicapTrendRowDto[] = scoreTrend.map((row, i) => ({
   used_in_hi: row.round_id === "round-3",
   differential: [18.2, 4.1, 8.0, 11.5, 13.0][i],
   hi_threshold: 6,
-  // 8.0 sits two strokes off the 6 cut-off, so the server reads it as close.
   differential_status: (["out", "counting", "close", "out", "out"] as const)[i],
   in_window: true,
 }));
@@ -48,11 +46,9 @@ export const populatedDashboard: DashboardDto = {
   best_round_date: "2026-04-18T18:00:00.000Z",
   handicap_index: 12.4,
   recent_rounds: populatedRounds,
-  // The last five come in 2.1 under the last 20 (76.8).
   scoring_average_l5: 74.7,
   scoring_average_change: -2.1,
   scoring_average_verdict: "good",
-  // The index stood at 14.0 after May 2, the last round before June began.
   handicap_change: { this_month: -1.6, this_month_verdict: "good" },
   recent_score_mix: { eagle: 0, birdie: 10, par: 40, bogey: 35, double: 10, triple: 5, quad: 0 },
   whs: {
@@ -71,7 +67,6 @@ export const populatedDashboard: DashboardDto = {
   },
   score_trend: scoreTrend,
   handicap_trend: handicapTrend,
-  // Mar 9, Apr 18, May 2 and Jun 15, seen from mid-June.
   rounds_this_year: 4,
 };
 
@@ -79,11 +74,9 @@ export const dashboardGoalReport: GoalReportDto = {
   scoring_average: 76.8,
   lowest_score: 69,
   scoring_goal: 79,
-  // The 76.8 average sits 2.2 inside the goal of breaking 80.
   gap: -2.2,
   on_track: true,
   progress_pct: 82,
-  // The 69, 72 and 78 meet it; their average of 73 is six strokes inside it.
   rounds_meeting_goal: 3,
   peak_gap: -6,
   peak_meets_goal: true,

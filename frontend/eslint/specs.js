@@ -1,19 +1,5 @@
-/**
- * Lint rules for Playwright screenshot specs and page robots.
- *
- * A page's look is pinned by `*.screenshot.spec.ts`: a robot drives the page into a state, waits
- * until that state is on screen, then `capture()` takes a full-page shot. Reviews kept catching the
- * same two slips: a capture with no wait before it (the shot lands mid-animation and flakes), and a
- * robot whose `capture()` shoots one element instead of the page (so the rest of the page can
- * change without failing anything). These rules catch both as you type.
- *
- * Wiring: capture-after-sees is for `src/pages/**\/*.screenshot.spec.ts`; full-page-capture is
- * for `src/pages/**\/*.robot.ts` (the kit's BrandKit robot shoots its preview stage on purpose).
- */
-
 const WAIT_METHOD = /^(?:sees|doesNotSee)/;
 
-/** The statement list a node sits in, and the statement that holds it. */
 function enclosingStatement(node) {
   let current = node;
   while (current.parent) {
@@ -27,7 +13,6 @@ function enclosingStatement(node) {
   return null;
 }
 
-/** `await robot.method(...)` as `{ object, method }`, or null for anything else. */
 function awaitedRobotCall(statement) {
   if (statement?.type !== "ExpressionStatement") return null;
   const awaited = statement.expression;
@@ -66,7 +51,6 @@ const captureAfterSees = {
   },
 };
 
-/** The `expect(...)` call at the root of `expect(x).not.toHaveScreenshot`, if there is one. */
 function expectCall(node) {
   let current = node;
   while (current) {

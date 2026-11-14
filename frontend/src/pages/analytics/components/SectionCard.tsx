@@ -5,7 +5,6 @@ import { cn } from "@/brand/cn";
 interface SectionCardProps {
   title: string;
   description?: ReactNode;
-  /** A control or figure at the header's end. */
   action?: ReactNode;
   className?: string;
   contentClassName?: string;
@@ -13,7 +12,6 @@ interface SectionCardProps {
   "data-slot"?: string;
 }
 
-/** One of the page's cards: a title, perhaps a line under it and a control beside it, then what it shows. */
 export function SectionCard({
   title,
   description,

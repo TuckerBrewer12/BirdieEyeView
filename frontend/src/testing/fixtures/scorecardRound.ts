@@ -2,19 +2,13 @@ import type { RoundDto } from "../../types/api";
 import { roundResponse } from "../fakes/roundResponses";
 
 const PAR = [4, 4, 3, 5, 4, 4, 3, 4, 5, 4, 4, 3, 5, 4, 4, 3, 4, 5];
-/** The card as written: a 78 with a birdie on the last. */
 const STROKES = [5, 4, 3, 6, 5, 4, 4, 4, 5, 4, 5, 3, 6, 4, 4, 4, 4, 4];
 const PUTTS = [2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 2, 2, 2, 2, 2, 1];
 const GREENS = [false, true, true, false, false, true, false, true, false, true, false, false, false, true, true, false, true, true];
-/** No fairway on a par 3. */
 const FAIRWAYS = [true, false, null, true, false, true, null, false, true, true, false, null, true, false, true, null, false, true];
 const YARDS = [388, 402, 176, 512, 371, 395, 158, 410, 528, 362, 415, 191, 540, 384, 377, 172, 401, 515];
 const HANDICAP = [7, 3, 15, 1, 11, 5, 17, 9, 13, 8, 2, 16, 4, 12, 6, 18, 10, 14];
 
-/**
- * A full card as the scorecard board draws it: Half Moon Bay from the blue tees, with yardage, handicap,
- * putts, greens and fairways on every hole (none on a par 3's fairway), as the fake server answers it.
- */
 export const fullCardRound: RoundDto = roundResponse({
   id: "round-full-card",
   course: {

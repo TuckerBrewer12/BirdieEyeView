@@ -21,7 +21,6 @@ export async function pickImageNative(source: 'camera' | 'photos'): Promise<File
       type: blob.type || (photo.format === 'png' ? 'image/png' : 'image/jpeg'),
     });
   } catch {
-    // User cancelled or permission denied — not an error
     return null;
   }
 }

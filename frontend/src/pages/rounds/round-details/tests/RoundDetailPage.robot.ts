@@ -6,7 +6,6 @@ import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { formatCourseName } from "../../../../domain/course";
 import { fontsLoaded } from "../../../../testing/fontsLoaded";
 
-/** Screen robot for /rounds/:id — same idea as an Android Espresso robot. */
 export class RoundDetailRobot {
   private readonly page: Page;
 
@@ -46,7 +45,6 @@ export class RoundDetailRobot {
     return this;
   }
 
-  /** Edit mode: the round's actions are Save and Cancel. */
   async seesEditing(): Promise<this> {
     await expect(this.page.getByRole("button", { name: "Save", exact: true })).toBeVisible();
     return this;
@@ -57,7 +55,6 @@ export class RoundDetailRobot {
     return this;
   }
 
-  /** Out of edit mode: Edit is back in place of Save. */
   async seesViewActions(): Promise<this> {
     await expect(this.page.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
@@ -86,14 +83,12 @@ export class RoundDetailRobot {
     return this;
   }
 
-  /** The net score in the summary and the course handicap it came off, as the server sent them. */
   async seesNet(net: number, courseHandicap: number): Promise<this> {
     const summary = this.page.locator('[data-slot="round-summary"]');
     await expect(summary.getByText(`Net · hcp ${courseHandicap}`, { exact: true }).locator("..")).toContainText(String(net));
     return this;
   }
 
-  /** A dash where the net was: no net until the edit is saved. */
   async seesNoNet(): Promise<this> {
     const summary = this.page.locator('[data-slot="round-summary"]');
     await expect(summary.getByText("Net", { exact: true }).locator("..")).toContainText("—");
@@ -105,7 +100,6 @@ export class RoundDetailRobot {
     return this;
   }
 
-  /** The text field a round gets when its course has no tees to pick from. */
   async seesTeeField(): Promise<this> {
     await expect(this.page.getByRole("textbox", { name: "Tee" })).toBeVisible();
     return this;
@@ -116,13 +110,11 @@ export class RoundDetailRobot {
     return this;
   }
 
-  /** The tee on the date line over the course name. */
   async seesTee(tee: string): Promise<this> {
     await expect(this.page.locator('[data-slot="round-title"]')).toContainText(`${tee} tees`);
     return this;
   }
 
-  /** Delete sits in the More menu. */
   async tapDelete(): Promise<this> {
     await this.page.getByRole("button", { name: "More actions" }).click();
     await this.page.getByRole("menuitem", { name: "Delete round" }).click();
@@ -147,7 +139,6 @@ export class RoundDetailRobot {
     return this;
   }
 
-  /** "Link to a course" sits in the More menu of a round with no course behind it. */
   async tapLinkCourse(): Promise<this> {
     await this.page.getByRole("button", { name: "More actions" }).click();
     await this.page.getByRole("menuitem", { name: "Link to a course" }).click();
@@ -219,7 +210,6 @@ export class RoundDetailRobot {
     return this;
   }
 
-  /** A linked round's More menu holds Delete alone. */
   async doesNotSeeLinkCourse(): Promise<this> {
     await this.page.getByRole("button", { name: "More actions" }).click();
     await expect(this.page.getByRole("menuitem", { name: "Delete round" })).toBeVisible();
@@ -233,7 +223,6 @@ export class RoundDetailRobot {
     return this;
   }
 
-  /** "vs your average", on the window picked, with a figure's row: its name, this round, the average, the difference. */
   async seesComparison(window: string, row: { label: string; average: string; difference: string }): Promise<this> {
     const card = this.page.locator('[data-slot="round-comparison"]');
     await expect(card.getByText("vs your average")).toBeVisible();
@@ -254,7 +243,6 @@ export class RoundDetailRobot {
     return this;
   }
 
-  /** `fullPage: false` for a dialog, which sits over the viewport, not the page. */
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
     if (await this.page.locator('[data-slot="round-flow"]').isVisible()) {
       await expect(this.page.locator("svg circle").last()).toBeVisible();

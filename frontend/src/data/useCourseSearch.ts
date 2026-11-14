@@ -24,8 +24,6 @@ export function useCourseSearch(
   const [results, setResults] = useState<CourseSummary[]>([]);
   const [searching, setSearching] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Bumped per search, and on reset/unmount/short query, so a slow earlier
-  // response cannot overwrite a newer one or leave the spinner stuck.
   const latestRequest = useRef(0);
 
   useEffect(() => () => {

@@ -1,13 +1,3 @@
-/**
- * Lint rules for kit pieces rebuilt by hand in a page: a card made from the card's own classes,
- * a to-par pill made from the to-par colour, a tone painted over the component that owns it,
- * styling picked in JS by breakpoint.
- *
- * A copy looks right the day it's written and drifts the day the kit changes. These rules point
- * at the kit piece to use instead; kit.js covers the class strings themselves.
- */
-
-/** Every string a class expression carries: a literal, a template's text, cn()'s arguments, both sides of a ternary. */
 function classStrings(node) {
   if (!node) return [];
   switch (node.type) {
@@ -32,7 +22,6 @@ function classStrings(node) {
   }
 }
 
-/** The calls inside a class expression: `toParTextClass(x)` in `cn("…", toParTextClass(x))`. */
 function calleeNames(node, names = []) {
   if (!node || typeof node !== "object") return names;
   if (node.type === "CallExpression" && node.callee.type === "Identifier") names.push(node.callee.name);
@@ -47,7 +36,6 @@ function calleeNames(node, names = []) {
 
 const hasClass = (strings, cls) => strings.some((s) => new RegExp(`(?:^|[\\s:])${cls}(?![\\w-])`).test(s));
 
-/** The class strings a JSX element is given. */
 function classNameOf(opening) {
   const attr = opening.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === "className");
   return attr?.value ? attr.value : null;
@@ -65,7 +53,6 @@ const noHandmadeCard = {
     },
   },
   create(context) {
-    // Card itself is where the surface's classes live.
     if (/[\\/]brand[\\/]components[\\/]Card\.tsx$/.test(context.filename)) return {};
     const check = (node) => {
       const strings = classStrings(node);
@@ -74,7 +61,6 @@ const noHandmadeCard = {
       if (other) context.report({ node, messageId: "card", data: { other } });
     };
     return {
-      // One report per class expression: the outermost literal or call a string sits in.
       "JSXAttribute[name.name='className'] > JSXExpressionContainer"(node) {
         check(node.expression);
       },
@@ -86,9 +72,7 @@ const noHandmadeCard = {
   },
 };
 
-/** Text colour utilities a tone sets: the brand, the inks and the score colours. */
 const TEXT_COLOR = /(?:^|[\s:])text-(?:primary|destructive|foreground|foreground-secondary|muted-foreground|card-foreground|score-[a-z]+)(?![\w-])/;
-/** Kit components that paint their own text by a tone or a value. */
 const TONED = new Set(["StatDelta", "ToParFigure", "ToParPill"]);
 
 const noToneOverride = {
@@ -127,12 +111,10 @@ const noHandmadeToParPill = {
     },
   },
   create(context) {
-    // Outside the kit, no-to-par-tone already reports any toParTextClass(). ToParPill is where the pill is built.
     if (!inKit(context.filename) || /[\\/]brand[\\/]components[\\/]ToParPill\.tsx$/.test(context.filename)) return {};
     return {
       CallExpression(node) {
         if (node.callee.type !== "Identifier" || node.callee.name !== "cn") return;
-        // Only the outermost cn() reports, so a nested one isn't counted twice.
         if (node.parent?.type === "CallExpression" && node.parent.callee.name === "cn") return;
         if (!hasClass(classStrings(node), "rounded-full")) return;
         if (calleeNames(node).includes("toParTextClass")) context.report({ node, messageId: "pill" });
@@ -161,7 +143,6 @@ const noBreakpointStyling = {
   },
   create(context) {
     const fromBreakpoint = new Set();
-    /** The breakpoint value itself, or its negation. */
     const isValue = (node) =>
       (node.type === "Identifier" && fromBreakpoint.has(node.name)) ||
       (node.type === "UnaryExpression" && node.operator === "!" && isValue(node.argument));
@@ -173,7 +154,6 @@ const noBreakpointStyling = {
       },
       Identifier(node) {
         if (!fromBreakpoint.has(node.name) || node.parent.type === "VariableDeclarator") return;
-        // Inside a className, or inside a cn() call.
         for (let at = node.parent; at; at = at.parent) {
           const inClassName = at.type === "JSXAttribute" && at.name.name === "className";
           const inCn = at.type === "CallExpression" && at.callee.type === "Identifier" && at.callee.name === "cn";
@@ -184,13 +164,10 @@ const noBreakpointStyling = {
           if (at.type === "JSXOpeningElement" || at.type.startsWith("Function") || at.type === "ArrowFunctionExpression") return;
         }
       },
-      // `<Table wide={wide} />`: the value passed on for the component to style by.
       "JSXAttribute > JSXExpressionContainer"(node) {
         if (node.parent.name.name === "className" || !isValue(node.expression)) return;
         context.report({ node, messageId: "passThrough", data: { name: nameOf(node.expression) } });
       },
-      // `wide ? "Your avg" : "Avg"`: words by breakpoint. A prop's value picked this way is behaviour
-      // (`side={wide ? "right" : "bottom"}`), so only words outside a prop are flagged.
       ConditionalExpression(node) {
         if (!isValue(node.test) || !isText(node.consequent) || !isText(node.alternate)) return;
         if (node.parent.type === "JSXExpressionContainer" && node.parent.parent.type === "JSXAttribute") return;
@@ -200,7 +177,6 @@ const noBreakpointStyling = {
   },
 };
 
-/** A page's file, as against the kit's: the kit is where headings, figures and sizes are built. */
 const inKit = (filename) => /[\\/]src[\\/]brand[\\/]/.test(filename);
 
 const noRawHeading = {
@@ -229,7 +205,6 @@ const noRawHeading = {
   },
 };
 
-/** The type roles a kit piece owns: figures (Stat), page headings and headlines (PageTitle). */
 const FIGURE_TYPE = /(?:^|[\s:])text-(figure(?:-sm|-lg)?|display(?:-sm|-lg)?|hero|heading|stat)(?![\w-])/;
 
 const noFigureType = {
@@ -263,9 +238,7 @@ const noFigureType = {
   },
 };
 
-/** Kit controls sized by their `size` variant. */
 const SIZED = new Set(["Button", "DropdownMenuTrigger", "ToggleGroupItem"]);
-/** Classes that size a control: its height, box, corners and padding. */
 const SIZE_CLASS = /(?:^|[\s:])(h|size|rounded|p|px|py|pl|pr|pt|pb)-[\w.]+/;
 
 const noButtonSizeOverride = {
@@ -322,7 +295,6 @@ const noHandmadeRadio = {
   },
 };
 
-/** The two files numbers and dates are worded in. */
 const FORMAT_HOME = /[\\/]src[\\/]domain[\\/](format|date)\.ts$/;
 
 const noFormatOutsideDomain = {
@@ -392,10 +364,8 @@ const noRawTable = {
   },
 };
 
-/** The name of a JSX element: `Card`, `CardTitle`, `div`. */
 const elementName = (node) => (node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : null);
 
-/** The nearest JSX element around a node. */
 function parentElement(node) {
   for (let up = node.parent; up; up = up.parent) if (up.type === "JSXElement") return up;
   return null;
@@ -419,7 +389,6 @@ const noLooseCardTitle = {
         if (elementName(node) !== "CardTitle") return;
         const parent = parentElement(node);
         if (parent && elementName(parent) === "CardHeader") return;
-        // Only a title inside a card: a heading over a group of cards is the section's own.
         for (let up = parent; up; up = parentElement(up)) {
           if (elementName(up) === "Card") return context.report({ node, messageId: "header" });
         }
@@ -428,7 +397,6 @@ const noLooseCardTitle = {
   },
 };
 
-/** The JSX element names under a node, a few levels down. */
 function namesWithin(node, depth, names = new Set()) {
   if (depth < 0) return names;
   for (const child of node.children ?? []) {
@@ -437,7 +405,6 @@ function namesWithin(node, depth, names = new Set()) {
       if (name) names.add(name);
       namesWithin(child, depth - 1, names);
     } else if (child.type === "JSXExpressionContainer") {
-      // `{tile.trend && <Sparkline … />}`, `{cond ? <A /> : <B />}`
       const stack = [child.expression];
       while (stack.length) {
         const e = stack.pop();
@@ -472,7 +439,6 @@ const noHandmadeStatTile = {
     return {
       JSXElement(node) {
         if (!isHandmadeTile(node)) return;
-        // Report the innermost element that holds the whole tile.
         const inner = node.children.some((child) => child.type === "JSXElement" && isHandmadeTile(child));
         if (!inner) context.report({ node: node.openingElement, messageId: "tile" });
       },
@@ -509,7 +475,6 @@ const noVerdictTone = {
   },
 };
 
-/** Whether a node sits in JSX, outside a `style` prop (where `${x}%` is a length, not words). */
 function inShownJsx(node) {
   let shown = false;
   for (let up = node.parent; up; up = up.parent) {
@@ -543,7 +508,6 @@ const noPercentTemplate = {
   },
 };
 
-/** A JSX attribute's string value, when it is a plain string. */
 function attrString(opening, name) {
   const attr = opening.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
   if (!attr?.value) return null;

@@ -48,7 +48,6 @@ function Panel({ children }: { children: ReactNode }) {
   );
 }
 
-/** Every hole across with Out, In and Tot; then one nine closed by its own total, as a phone draws it. */
 export default function ScorecardGridPreview() {
   return (
     <div data-testid="brand-frame" className="fixed inset-0 flex flex-col gap-6 overflow-auto bg-background p-6">

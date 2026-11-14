@@ -10,19 +10,12 @@ import { api } from "@/lib/api";
 import type { PlayedCourseDto } from "@/types/api";
 import type { PlayedCourse } from "./model";
 
-/**
- * The analytics page reads the shared analytics (its filters', and the profile's last 20), the
- * goal report, the golfer and their friends, and its own course menu and comparison. It writes
- * one thing: the golfer's goal.
- */
 export interface AnalyticsRepository
   extends SharedAnalyticsRepository,
     GoalReportRepository,
     Pick<UserRepository, "getUser" | "updateUser">,
     Pick<FriendsRepository, "getFriendships"> {
-  /** The courses the golfer has a round at, for the course menu. */
   getPlayedCourses(userId: string): Promise<PlayedCourse[]>;
-  /** The golfer's last 20 rounds against a handicap's shape or a friend's, as the server compared them. */
   getBenchmarkComparison(userId: string, target: BenchmarkTarget): Promise<BenchmarkComparison>;
 }
 

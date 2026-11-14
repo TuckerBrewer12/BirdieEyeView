@@ -5,15 +5,10 @@ import { Avatar } from "./Avatar";
 
 interface PersonRowProps {
   name: string;
-  /** Two letters for the avatar. Defaults to the first letters of the first two words of `name`. */
   initials?: string;
-  /** The line under the name: a handicap and when they last played, an email, a date. */
   detail?: ReactNode;
-  /** A quieter third line, such as when the row last changed. Makes the row taller than 64. */
   meta?: ReactNode;
-  /** Buttons, a status or a chevron at the end of the row. */
   actions?: ReactNode;
-  /** A row that's settled (a request answered): its avatar and words recede, its status doesn't. */
   settled?: boolean;
   className?: string;
 }
@@ -28,11 +23,6 @@ function initialsOf(name: string): string {
   return letters.toUpperCase() || "?";
 }
 
-/**
- * One person in a list: a quiet initials avatar, their name and a line or two about them, with
- * whatever can be done about them at the end. Built on `ListRow`, so it sits in a
- * `Collection layout="divided"`, which draws the rules between rows.
- */
 function PersonRow({ name, initials, detail, meta, actions, settled = false, className }: PersonRowProps) {
   return (
     <ListRow slot="person-row" className={className}>

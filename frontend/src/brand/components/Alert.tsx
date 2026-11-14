@@ -5,11 +5,6 @@ import { alertVariants } from "./variants";
 
 type AlertVariantProps = VariantProps<typeof alertVariants>;
 
-/**
- * Every alert names its `tone`; there is no default colour. Danger interrupts
- * a screen reader; the other tones are news and wait their turn. Pass `role`
- * to say otherwise.
- */
 function Alert({
   className,
   tone,
@@ -56,11 +51,6 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
   );
 }
 
-/**
- * What to do about it: a retry, another photo. From `md` it takes a column of its own at the
- * alert's end, centred beside the title and description, which keep their stack (and the icon its
- * column); on a phone it sits under them, in the text's column.
- */
 function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

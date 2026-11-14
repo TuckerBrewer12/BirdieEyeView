@@ -4,21 +4,10 @@ import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { cn } from "@/brand/cn";
 import { Button } from "./Button";
 
-/**
- * The desktop menu for picking one: a button with a card of rows opening
- * under it, on Base UI's Menu (arrow keys move, Enter picks, Escape closes).
- * Rows are 40 tall, against 52 in a mobile `Sheet`; the chosen row is shaded
- * and checked.
- */
-
 function DropdownMenu(props: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root {...props} />;
 }
 
-/**
- * The button that opens the menu, a kit `Button` (outline unless `variant`
- * says otherwise) whose chevron flips while it is open.
- */
 function DropdownMenuTrigger({
   className,
   children,
@@ -28,7 +17,6 @@ function DropdownMenuTrigger({
   ...props
 }: MenuPrimitive.Trigger.Props &
   Pick<ComponentProps<typeof Button>, "variant" | "size"> & {
-    /** Leave it off for an icon trigger, like a "More" button's dots. */
     chevron?: boolean;
   }) {
   return (
@@ -74,7 +62,6 @@ function DropdownMenuRadioGroup(props: MenuPrimitive.RadioGroup.Props) {
   return <MenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />;
 }
 
-/** A row of `DropdownMenuRadioGroup`: shaded and checked when it is the chosen one. */
 function DropdownMenuRadioItem({ className, children, ...props }: MenuPrimitive.RadioItem.Props) {
   return (
     <MenuPrimitive.RadioItem
@@ -93,7 +80,6 @@ function DropdownMenuRadioItem({ className, children, ...props }: MenuPrimitive.
   );
 }
 
-/** A row that does something, like "Delete round": `destructive` for one that can't be undone. */
 function DropdownMenuItem({
   className,
   destructive = false,

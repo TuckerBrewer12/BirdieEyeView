@@ -12,7 +12,6 @@ test.describe("PhotoSourceSheet", () => {
     await capturePreview(page, "PhotoSourceSheet", "photo-source-sheet-dark.png");
   });
 
-  // On a phone the trigger opens the sheet over the screen: Take Photo, Photo Library, Choose File.
   test("open on a phone", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 664 });
     const kit = new BrandKitRobot(page);

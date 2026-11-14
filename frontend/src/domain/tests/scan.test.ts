@@ -90,7 +90,6 @@ describe("cardRows", () => {
 });
 
 describe("nameRowOf", () => {
-  // Name dragged to shots to green, shots to green turned off, putts above the score.
   const facts = {
     ...NO_CARD_FACTS,
     putts: true,

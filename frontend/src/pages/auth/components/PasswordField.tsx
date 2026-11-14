@@ -17,23 +17,14 @@ interface PasswordFieldProps {
   onChange: (value: string) => void;
   autoComplete: "current-password" | "new-password";
   placeholder?: string;
-  /** Why this password can't be sent; shown under the field and announced. */
   error?: string | null;
-  /** What the reveal button shows, for its name: "Show password", "Show confirm password". */
   revealName?: string;
-  /** A link at the end of the label's row: sign in's "Forgot?". */
   labelAction?: ReactNode;
-  /** Marks the field wrong without a message of its own, as a refused sign-in does. */
   invalid?: boolean;
-  /** The id of a message elsewhere that says why it's wrong: a refused sign-in's alert. */
   describedBy?: string;
   children?: ReactNode;
 }
 
-/**
- * A password input with a button that shows what was typed. Whether it is showing is the
- * field's own business, so the view model never hears about it.
- */
 export function PasswordField({
   id,
   label,

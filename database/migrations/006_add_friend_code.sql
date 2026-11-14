@@ -1,11 +1,8 @@
--- Migration 006: add users.friend_code for friend invites without exposing UUIDs
-
 BEGIN;
 
 ALTER TABLE users.users
     ADD COLUMN IF NOT EXISTS friend_code VARCHAR(12);
 
--- Backfill existing users with a deterministic, unique code based on UUID.
 UPDATE users.users
 SET friend_code = 'GC' || UPPER(SUBSTRING(REPLACE(id::text, '-', '') FROM 1 FOR 10))
 WHERE friend_code IS NULL OR friend_code = '';

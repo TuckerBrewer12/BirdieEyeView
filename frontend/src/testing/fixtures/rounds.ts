@@ -4,12 +4,10 @@ import { listRanks, summaryResponse, type StoredRound } from "../fakes/roundResp
 
 const STANDARD_PAR = [4, 4, 3, 5, 4, 4, 4, 3, 5, 4, 4, 3, 5, 4, 4, 4, 3, 5];
 
-/** A course as the round list knows it: name and par, no holes or tees. */
 function listedCourse(id: string, name: string, location: string | null): StoredCourse {
   return { id, name, location, par: 72, holes: [], tees: [] };
 }
 
-/** Round totals, spread over the holes: one-putts first, then greens and fairways hit on the opening holes. */
 interface Totals {
   putts: number;
   gir: number;
@@ -79,12 +77,9 @@ export const storedRounds: StoredRound[] = [
   ),
 ];
 
-/** The round list as the server sends it. */
 const storedRanks = listRanks(storedRounds);
-/** The list as the server sends it, each round placed in the Best and Worst orders. */
 export const populatedRounds: RoundSummaryDto[] = storedRounds.map((round, i) => summaryResponse(round, storedRanks[i]));
 
-/** `count` rounds at different courses, scoring 70, 71, 72… by giving the first holes a shot back or extra. */
 export function nRounds(count: number): StoredRound[] {
   return Array.from({ length: count }, (_, i) => {
     const toPar = i - 2;

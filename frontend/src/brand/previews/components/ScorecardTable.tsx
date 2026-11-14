@@ -6,13 +6,10 @@ import { scannedTeeCard, unsureCard } from "@/testing/fixtures/scan";
 import { fullCardRound } from "@/testing/fixtures/scorecardRound";
 
 const linked = Round.fromDto(fullCardRound);
-/** A card the scan read scores and shots-to-green from, but no putts or greens. */
 const scanned = Round.fromScan(scannedTeeCard);
-/** A card the scan couldn't read every score on. */
 const unsure = Round.fromScan(unsureCard.round);
 const noop = () => {};
 
-/** The card a table sits in on a scorecard, so the preview reads like the board. */
 function Panel({ children }: { children: ReactNode }) {
   return (
     <Card className="gap-0 overflow-x-auto py-0">
@@ -21,7 +18,6 @@ function Panel({ children }: { children: ReactNode }) {
   );
 }
 
-/** The table is wider than the stage, so the preview fills the window: capture it at the board's width. */
 export default function ScorecardTablePreview() {
   return (
     <div data-testid="brand-frame" className="fixed inset-0 flex flex-col gap-6 overflow-auto bg-background p-6">
@@ -31,7 +27,6 @@ export default function ScorecardTablePreview() {
       <Panel>
         <ScorecardTable round={scanned} teeBox={scanned.teeBox} />
       </Panel>
-      {/* A scan being checked: one score in doubt, one not read at all. */}
       <Panel>
         <ScorecardTable
           round={unsure}
@@ -39,11 +34,9 @@ export default function ScorecardTablePreview() {
           toCheck={[2, ...strokesToCheck(unsureCard)]}
         />
       </Panel>
-      {/* The same doubt on a card that isn't being edited. */}
       <Panel>
         <ScorecardTable round={unsure} toCheck={[2]} />
       </Panel>
-      {/* One nine, closed by its own total, as a phone stacks them. */}
       <Card className="w-preview gap-0 py-0">
         <ScorecardTable round={linked} teeBox="Blue" nine="back" />
       </Card>

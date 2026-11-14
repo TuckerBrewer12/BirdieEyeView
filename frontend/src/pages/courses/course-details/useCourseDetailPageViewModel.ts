@@ -31,56 +31,37 @@ import {
 export interface CourseDetailPageViewModel {
   loading: boolean;
   loadError: string | null;
-  /** The golfer's record here didn't load: the course still shows, without "not played" in its place. */
   recordError: string | null;
   retryRecord: () => void;
   course: CourseDto | null;
   courseName: string;
-  /** "Half Moon Bay, CA · Par 72". */
   courseLine: string | null;
-  /** The tees by name, longest first, with their yardage. */
   tees: { name: string; yards: number | null }[];
-  /** The tee the scorecard reads. */
   selectedTee: string | null;
   selectTee: (name: string) => void;
-  /** The scorecard's bar: "Blue tees · 6,500 yds · 72.4 / 130 · hcp 12". */
   teeLine: string | null;
   nines: ScorecardNine[];
-  /** Whether the golfer has a round here: their record and rounds show, or the prompt to scan one. */
   played: boolean;
   record: RecordFigure[];
-  /** Their latest rounds here, newest first. */
   recentRounds: RoundSummary[];
-  /** The card and record, or how they play the course; the switch shows once they have played it. */
   view: CourseView;
   views: typeof COURSE_VIEWS;
   pickView: (view: string | undefined) => void;
-  /** Their rounds here, oldest first: each one's score beside its five-round average. */
   scoreTrend: TrendPoint[];
-  /** Their average here, drawn across the trend. */
   averageLine: AverageLine | null;
-  /** How each hole plays for them, in course order. */
   courseHoles: HoleStats[];
-  /** The same, in the order picked for the hole-by-hole chart. */
   holes: HoleStats[];
   holeOrder: HoleOrder;
   holeOrders: typeof HOLE_ORDERS;
   pickHoleOrder: (order: string | undefined) => void;
-  /** The greens they hit over each nine and the course: "Out 72%". */
   greens: { label: string; value: string }[];
 }
 
-/**
- * The course page: the scorecard off the tee the golfer picks, with their average to par and greens
- * per hole once they have played here, their record, and their latest rounds. The server works out
- * every figure.
- */
 export function useCourseDetailPageViewModel(
   userId: string,
   courseId: string | undefined,
   repository: CoursesRepository = coursesRepository,
 ): CourseDetailPageViewModel {
-  // Null until the golfer picks: the scorecard then follows the longest tee.
   const [picked, setPicked] = useState<string | null>(null);
   const [view, setView] = useState<CourseView>("course");
   const [holeOrder, setHoleOrder] = useState<HoleOrder>("course");

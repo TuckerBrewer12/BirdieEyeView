@@ -26,7 +26,6 @@ BOT_LEAD = os.environ.get("BOT_LEAD", "to look at")
 
 
 def added_source(diff: str) -> dict[str, dict[int, str]]:
-    """Map file path -> {line number: added source text}."""
     out: dict[str, dict[int, str]] = {}
     path: str | None = None
     lineno = 0
@@ -49,17 +48,10 @@ def added_source(diff: str) -> dict[str, dict[int, str]]:
 
 
 def added_lines(diff: str) -> dict[str, set[int]]:
-    """Map file path -> line numbers the diff adds (valid inline targets)."""
     return {path: set(lines) for path, lines in added_source(diff).items()}
 
 
 def extract_balanced(text: str, open_ch: str, close_ch: str) -> str:
-    """Pull the first balanced JSON array or object out of the model's stdout.
-
-    Model stdout may wrap the reply in prose or a code fence. Scanning for a
-    balanced value survives that, and a code
-    fence, and any stray prose the model adds.
-    """
     start = text.find(open_ch)
     if start == -1:
         return ""
@@ -95,7 +87,6 @@ def extract_array(text: str) -> str:
 
 
 def parse_model_output(raw: str) -> tuple[list[object], dict[str, str], bool]:
-    """Return (findings, previous_status_by_id, used_object_format)."""
     obj_text = extract_balanced(raw, "{", "}")
     if obj_text:
         try:
@@ -161,7 +152,6 @@ def suggestion_span(
     start_line: object,
     valid: set[int],
 ) -> tuple[int | None, int] | None:
-    """Return (start_line or None, line) if the comment can carry a suggestion."""
     if not isinstance(line, int) or line not in valid:
         return None
     start = start_line if isinstance(start_line, int) else line
@@ -183,7 +173,6 @@ def collect_findings(
     valid: dict[str, set[int]],
     source: dict[str, dict[int, str]] | None = None,
 ) -> list[dict]:
-    """Normalize model output into findings that can be commented and auto-fixed."""
     source = source or {}
     staged: list[dict] = []
     for item in raw_findings:

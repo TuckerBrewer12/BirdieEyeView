@@ -1,7 +1,6 @@
 const CLIENT_UPLOAD_LONG_EDGE = 2000;
 const CLIENT_UPLOAD_QUALITY = 0.8;
 
-/** Shrink a photo on a canvas before upload. Web-only. */
 export async function compressImageForUpload(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
   if (file.type === "image/gif") return file;

@@ -2,11 +2,6 @@ import { Card, ScoreMixBar, Stat, StatLabel, StatUnit, StatValue, ToParPill } fr
 import type { Round } from "@/domain";
 import { summaryFigures } from "../roundDetailModel";
 
-/**
- * The round at a glance: the score and its to-par, net, putts and greens, then the score mix with its
- * counts. One card in five columns on a wide screen; on a phone the figures sit in a row over the mix,
- * each over its label. Every figure is the server's.
- */
 export function RoundSummaryCard({ round }: { round: Round }) {
   return (
     <Card

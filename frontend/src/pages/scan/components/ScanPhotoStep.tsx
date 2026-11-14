@@ -11,6 +11,7 @@ import {
   Dropzone,
   FileButton,
   PhotoSourceSheet,
+  ScanReport,
   type PhotoSource,
 } from "@/brand";
 import { formatFileSize } from "@/domain";
@@ -25,6 +26,7 @@ type PhotoStep = Pick<
   | "pickPhoto"
   | "extract"
   | "error"
+  | "report"
   | "card"
   | "setCard"
   | "courseSearch"
@@ -35,39 +37,40 @@ type PhotoStep = Pick<
 
 interface ScanPhotoStepProps {
   step: PhotoStep;
-  /** The picked photo, as an image. */
   previewUrl: string | null;
 }
 
 const ACCEPT = "image/*,application/pdf";
 const ANOTHER_PHOTO = "Try another photo";
 
-/** Reads the picked photo with what the form says now; after a failure, with whatever was changed. */
 const READ_CARD = "Read card";
 
-/**
- * Why the read failed: "Couldn't read this card." in bold with what to try beside it (under it on a
- * phone), and the way to another photo at the end.
- */
-function ScanFailed({ error, action }: { error: string | null; action: ReactNode }) {
-  if (!error) return null;
-  const { title, detail } = scanFailure(error);
+function ScanFailed({ step, action }: { step: PhotoStep; action: ReactNode }) {
+  if (!step.error) return null;
+  const { title, detail } = scanFailure(step.error);
+  const { report } = step;
   return (
     <Alert tone="danger" data-slot="scan-failed" className="px-4 py-3.5 text-body-lg">
       <CircleAlert className="size-5" />
       <AlertDescription>
         <strong className="block font-semibold md:inline">{title}</strong> {detail}
+        {report.available && (
+          <>
+            {" "}
+            <ScanReport
+              status={report.status}
+              error={report.error}
+              onSend={report.submit}
+              className="text-body-lg"
+            />
+          </>
+        )}
       </AlertDescription>
       <AlertAction>{action}</AlertAction>
     </Alert>
   );
 }
 
-/**
- * A computer's scan: a drop zone with the course under it, then once a photo is picked, the photo
- * beside what's on the card, and the button that reads it. Another photo comes from the button
- * under the photo, or from the failed read's banner.
- */
 export function ScanPhotoStepWide({ step, previewUrl }: ScanPhotoStepProps) {
   const { photo } = step;
 
@@ -101,7 +104,7 @@ export function ScanPhotoStepWide({ step, previewUrl }: ScanPhotoStepProps) {
 
   return (
     <>
-      <ScanFailed error={step.error} action={anotherPhoto("outline")} />
+      <ScanFailed step={step} action={anotherPhoto("outline")} />
       <Card data-slot="scan-upload">
         <CardContent className="grid grid-cols-scan-photo gap-6">
           <div data-slot="scan-photo" className="flex flex-col gap-3">
@@ -129,11 +132,6 @@ export function ScanPhotoStepWide({ step, previewUrl }: ScanPhotoStepProps) {
   );
 }
 
-/**
- * A phone's scan: what's on the card first, then the photo from the camera, the library or a
- * file, which shows above the form with the button that reads it. Retake opens the same sheet,
- * from the photo's row or the failed read's banner.
- */
 export function ScanPhotoStepPhone({
   step,
   previewUrl,
@@ -144,7 +142,7 @@ export function ScanPhotoStepPhone({
   return (
     <>
       <ScanFailed
-        error={step.error}
+        step={step}
         action={
           <PhotoSourceSheet
             title="Retake scorecard photo"

@@ -31,7 +31,10 @@ def test_suppressed_putts_still_keep_internal_rows_for_disambiguation() -> None:
 def test_to_par_plus_one_is_flipped_to_birdie_using_internal_rows() -> None:
     parsed = parse_mistral_scorecard_rows(
         SAMPLE_2D,
-        user_context="my name is G. scores written to par. no putts recorded.",
+        user_context=(
+            "my name is G. scores written to par. no putts recorded. "
+            "name on score row. row order: score, putts, shots to green"
+        ),
     )
 
     round_payload, fields = _build_round_from_parsed_rows(
@@ -40,9 +43,30 @@ def test_to_par_plus_one_is_flipped_to_birdie_using_internal_rows() -> None:
         to_par_scoring=None,
     )
 
-    # Hole 1: raw to-par "1" + internal rows (shots=1, putts=2, par=4) => -1 (birdie)
     assert round_payload["hole_scores"][0]["strokes"] == 3
     assert any("score sign corrected" in f for f in fields)
+
+
+def test_untrusted_auxiliary_rows_do_not_flip_valid_plus_one() -> None:
+    from services.mistral_scorecard_parser import ParsedScorecardRows
+
+    parsed = ParsedScorecardRows(
+        par_row=[4],
+        score_row=[1],
+        score_to_par_hint=True,
+        raw_putts_row=[1],
+        raw_shots_to_green_row=[2],
+        sign_evidence_trusted=False,
+    )
+
+    round_payload, fields = _build_round_from_parsed_rows(
+        parsed,
+        course_model=None,
+        to_par_scoring=None,
+    )
+
+    assert round_payload["hole_scores"][0]["strokes"] == 5
+    assert not any("score sign corrected" in field for field in fields)
 
 
 def _load_hmb_markdown() -> str:
@@ -67,12 +91,9 @@ def test_half_moon_bay_score_only_keeps_hidden_rows_and_front9_strokes() -> None
         to_par_scoring=None,
     )
 
-    # UI-visible putts are intentionally suppressed in score-only mode.
     assert parsed.putts_row == []
-    # But internal evidence rows should still be available for sign disambiguation.
     assert sum(v is not None for v in parsed.raw_putts_row) >= 9
     assert sum(v is not None for v in parsed.raw_shots_to_green_row) >= 9
 
-    # Real Half Moon Bay sample, player G, front 9 expected strokes.
     front9 = [h["strokes"] for h in round_payload["hole_scores"][:9]]
     assert front9 == [5, 3, 3, 5, 4, 3, 3, 5, 4]

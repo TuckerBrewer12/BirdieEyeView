@@ -1,10 +1,5 @@
 import { Round, type RoundSummary } from "@/domain/round";
 
-/**
- * The round on the hero's photo, written the way the server sends a round summary, so the page
- * shows it as any saved round is shown and works nothing out itself: 79 (+8) at Half Moon Bay off
- * the blue tees, ten pars and eight bogeys.
- */
 const KINDS = ["bogey", "par", "par", "bogey", "bogey", "par", "bogey", "par", "par",
   "par", "bogey", "bogey", "par", "bogey", "par", "par", "bogey", "par"] as const;
 const STROKES = [5, 4, 3, 6, 5, 4, 4, 5, 3, 4, 6, 5, 3, 5, 4, 5, 4, 4];

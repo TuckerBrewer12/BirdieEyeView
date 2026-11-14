@@ -8,7 +8,6 @@ import { useSignOut } from "./useSignOut";
 
 const routerLink: RenderLink = (href) => <Link to={href} />;
 
-/** The signed-in frame: hands the route and the golfer to the kit's shell. */
 export function AppLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const auth = useAuth();

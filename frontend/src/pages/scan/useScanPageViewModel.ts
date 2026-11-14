@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { preparePhotoForUpload } from "@/data/photoUpload";
+import { scanReportRepository, type ScanReportRepository } from "@/data/scanReportRepository";
 import { scanRepository, type ScanRepository } from "@/data/scanRepository";
 import { useCardText } from "@/data/useCardText";
 import { useExtractScorecard, useIsExtractingScorecard } from "@/data/useExtractScorecard";
+import { useFailedScanReport, type FailedScanReport } from "@/data/useFailedScanReport";
 import type { RoundDetail } from "@/domain";
 import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
+import { failedScanAttempt, scanFailureOf } from "@/lib/scanReports";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/domain/course";
 import { SCAN_STEPS, SCAN_STEP_HOLD_MS, cardContext, type CardFacts } from "@/domain/scan";
@@ -27,73 +30,52 @@ export interface ScanPageRepositories {
   scan: ScanRepository;
   courses: CoursesRepository;
   rounds: Pick<RoundsRepository, "getRound">;
+  reports: ScanReportRepository;
 }
 
 const defaultRepositories: ScanPageRepositories = {
   scan: scanRepository,
   courses: coursesRepository,
   rounds: roundsRepository,
+  reports: scanReportRepository,
 };
 
 export interface ScanPageViewModel {
   step: ScanStep;
   mode: ScanMode;
-  /** Switching starts the card over: a photo or course picked for one mode doesn't carry. */
   setMode: (mode: ScanMode) => void;
-  /** Why the last scan failed. */
   error: string | null;
+  report: FailedScanReport;
   startOver: () => void;
 
-  // Upload
-  /** The picked photo, readied for upload. */
   photo: File | null;
   pickPhoto: (photo: File) => void;
-  /** What the golfer says is on the card: their name, how scores are written, which rows it has. */
   card: CardFacts;
   setCard: (patch: Partial<CardFacts>) => void;
-  /** Reads the picked photo. */
   extract: () => void;
-  /** A saved course to read the card against, picked before scanning. */
   presetCourse: PickedCourse | null;
-  /** Search over the golfer's saved courses, for the preset course. */
   courseSearch: CourseSearch;
   pickPresetCourse: (course: CourseSummary) => void;
   clearPresetCourse: () => void;
 
-  // Processing
-  /** Which step of reading the card is showing, from 0 to `SCAN_STEPS.length - 1`. */
   phase: number;
 
-  // Setup
-  /** Choosing the course, tee and date before typing scores in by hand. */
   setup: ScanSetupViewModel;
 
-  // Review
-  /** Checking the card, once there is one. */
   review: ScanReviewViewModel;
 
-  // Success
-  /** The round as saved, once it has loaded. */
   savedRound: RoundDetail | null;
-  /** Leaves the saved round for a fresh card. */
   scanAnother: () => void;
-  /** Ends the scan and hands the saved round's id to `open`. */
   openSavedRound: (open: (roundId: string) => void) => void;
 }
 
-/**
- * The scan screen's step machine: upload → processing → review → success, or setup → review
- * for typing scores in by hand. The card being worked on lives in the app-wide scan session,
- * so it survives leaving the page; searches and the processing phase start fresh each visit.
- */
 export function useScanPageViewModel(
   userId: string,
   repositories: ScanPageRepositories = defaultRepositories,
 ): ScanPageViewModel {
-  const { scan, courses, rounds } = repositories;
+  const { scan, courses, rounds, reports } = repositories;
   const { session, setSession } = useScanSession();
   const [phase, setPhase] = useState(0);
-  // A later pick wins over an earlier one still being readied.
   const latestPick = useRef(0);
 
   const courseSearch = useCourseSearch(userId, courses);
@@ -104,6 +86,7 @@ export function useScanPageViewModel(
   const { mutateAsync: extractCard } = useExtractScorecard(scan);
   const extracting = useIsExtractingScorecard();
   const savedRound = useSavedRound(session.savedRoundId, rounds);
+  const report = useFailedScanReport(session.failedScan, reports);
 
   const step: ScanStep = session.savedRoundId
     ? "success"
@@ -115,7 +98,6 @@ export function useScanPageViewModel(
           ? "setup"
           : "upload";
 
-  // Restarting at zero each time keeps a second scan from opening on the last phase.
   useEffect(() => {
     if (step !== "processing") return;
     const timer = setInterval(
@@ -157,7 +139,7 @@ export function useScanPageViewModel(
       void preparePhotoForUpload(picked).then((file) => {
         if (pick !== latestPick.current) return;
         const id = `${file.name}-${file.size}-${Date.now()}`;
-        setSession((current) => ({ ...current, photo: { id, file }, error: null }));
+        setSession((current) => ({ ...current, photo: { id, file }, error: null, failedScan: null }));
       });
     },
     [setSession],
@@ -184,21 +166,24 @@ export function useScanPageViewModel(
   const extract = useCallback(() => {
     const { photo, card, presetCourse } = session;
     if (!photo) return;
-    // Only the scan of the photo still picked may land, so starting over mid-scan sticks.
     const stillPicked = (current: typeof session) => current.photo?.id === photo.id;
-    setSession((current) => ({ ...current, error: null }));
+    setSession((current) => ({ ...current, error: null, failedScan: null }));
     extractCard({ photo: photo.file, userContext: cardContext(card), ocrText: cardText, courseId: presetCourse?.id ?? null })
       .then((result) => {
         setSession((current) =>
           stillPicked(current) ? { ...current, review: reviewFromScan(result, todayIso()) } : current,
         );
-        // With a course picked up front, the review offers the matches for the name read off
-        // the card. Without one, a noisy name is better left out of the search.
         if (presetCourse) setReviewQuery(courseQueryFrom(result.round.course?.name));
       })
       .catch((err: unknown) => {
         setSession((current) =>
-          stillPicked(current) ? { ...current, error: messageFrom(err, USER_FACING_ERRORS.scan) } : current,
+          stillPicked(current)
+            ? {
+                ...current,
+                error: messageFrom(err, USER_FACING_ERRORS.scan),
+                failedScan: failedScanAttempt(photo.file, scanFailureOf(err)),
+              }
+            : current,
         );
       });
   }, [session, setSession, extractCard, cardText, setReviewQuery]);
@@ -219,6 +204,7 @@ export function useScanPageViewModel(
     mode: session.mode,
     setMode,
     error: session.error,
+    report,
     startOver,
 
     photo: session.photo?.file ?? null,

@@ -7,23 +7,14 @@ import { indexScale, paddedExtent } from "./scales";
 import { useChartWidth } from "./useChartWidth";
 
 interface ScoreGoalChartProps {
-  /** Rounds, oldest first, each marked met or not as the server judged it. */
   attempts: GoalAttempt[];
-  /** The highest score that meets the goal, 79 to break 80: where the goal line is drawn. */
   goal: number;
-  /** The goal's words at the end of its line: "Break 80". */
   goalLabel?: string;
-  /** Each round's score over its dot, the ones that met the goal in bold. */
   scoreLabels?: boolean;
   className?: string;
   "aria-label"?: string;
 }
 
-/**
- * Rounds against a scoring goal: one dot per round, lower scores higher up, joined by a
- * faint line, with the goal dashed across and named at its end, past the last round. A round that met the goal is
- * filled; with `scoreLabels` each dot carries its score. It draws at its box's width, so the labels keep their size.
- */
 export function ScoreGoalChart({
   attempts,
   goal,
@@ -41,12 +32,10 @@ export function ScoreGoalChart({
 
   const scores = attempts.map((attempt) => attempt.score);
   const x = indexScale(scores.length, pad.x, W - pad.x - labelRoom);
-  // A stroke of room past the lowest and highest, so no dot sits on the edge.
   const y = scaleLinear()
     .domain(paddedExtent([...scores, goal], 1)!)
     .range([pad.y, H - pad.y]);
   const goalY = y(goal);
-  // The line runs just past the last round's dot; its name sits after it.
   const lineEnd = W - pad.x - labelRoom + dotReached;
 
   return (

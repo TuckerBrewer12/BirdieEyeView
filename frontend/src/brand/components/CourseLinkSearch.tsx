@@ -12,24 +12,18 @@ interface CourseLinkSearchProps {
   searching: boolean;
   onQueryChange: (q: string) => void;
   onSelectCourse: (course: CourseSummary) => void;
-  /** Esc, while the search is open. */
   onClose: () => void;
   title?: string;
   linking?: boolean;
   reviewVariant?: boolean;
   onUseCustomName?: (name: string) => void;
-  /** Puts the caret in the search when it appears: only where the golfer just opened it. */
   focusOnOpen?: boolean;
   linkedName?: string;
-  /** Heads the picked course's line: "Linked" or "Selected". */
   linkedTitle?: string;
   customName?: string;
   onClear?: () => void;
-  /** The picked course's button. */
   clearLabel?: string;
-  /** The search input's id, so a FieldLabel outside can name it. */
   inputId?: string;
-  /** `plain` drops the card, for a sheet that is already the surface. */
   surface?: "card" | "plain";
 }
 
@@ -106,14 +100,12 @@ export function CourseLinkSearch({
     <div className="flex flex-col gap-2.5">
       <Card
         surface={plain ? "none" : "raised"}
-        // Plain, nothing clips the field: its corners and its focus ring sit at the box's edge.
         className={cn("gap-0 p-0 text-foreground", plain && "overflow-visible", !plain && results.length > 0 && "shadow-card")}
       >
         <div className={cn("flex flex-col gap-2.5", plain ? "pb-2.5" : "px-3.5 pt-3.5 pb-2.5")}>
           {title && (
             <div className="flex items-start gap-2">
               <div className="flex-1 text-sm font-semibold">{title}</div>
-              {/* Esc closes it from a keyboard; a phone has no Esc. */}
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -234,7 +226,6 @@ function StatusRow({
   );
 }
 
-/** Bolds the first stretch of `text` that the search typed. */
 function Highlight({
   text,
   query,
@@ -310,7 +301,6 @@ function ResultRow({
         <Loader2 className="size-3 animate-spin text-muted-foreground" />
       ) : (
         active && (
-          // The key that links it, shown on the row the arrow keys are on.
           <span aria-hidden className="flex items-center gap-1 text-label font-semibold text-foreground-secondary">
             Enter
             <CornerDownLeft className="size-3" />

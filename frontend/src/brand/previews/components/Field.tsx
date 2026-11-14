@@ -42,7 +42,6 @@ export default function FieldPreview() {
         </FieldError>
       </Field>
 
-      {/* Password reveal composes out of InputGroup — no separate component. */}
       <Field>
         <FieldLabel htmlFor="preview-password">Password</FieldLabel>
         <InputGroup>

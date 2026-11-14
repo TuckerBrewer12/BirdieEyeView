@@ -9,7 +9,6 @@ export default function SwatchChipsPreview() {
   const [many, setMany] = useState(["birdie", "double"]);
   return (
     <div className="flex flex-col gap-4">
-      {/* One picked, with a figure after each name. */}
       <SwatchChips
         label="Tee"
         value={one}
@@ -19,7 +18,6 @@ export default function SwatchChipsPreview() {
           { value: "blue", label: "Blue", swatch: <TeeSwatch color="blue" className="size-3.5 rounded-full" />, detail: "6,697" },
         ]}
       />
-      {/* Any number on. */}
       <SwatchChips
         multiple
         label="Show"

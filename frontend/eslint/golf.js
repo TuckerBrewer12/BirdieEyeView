@@ -1,45 +1,25 @@
-/**
- * Lint rules for golf logic that has been copied into a view instead of coming from the one
- * place that owns it.
- *
- * The backend works out a round's figures (api/round_responses.py), `domain/` holds the
- * frontend's golf rules, and `brand/theme/` holds how a score is painted and worded. A view
- * that rebuilds any of these drifts from the original: a second label table, a second
- * "under par is green" branch, a second `strokes - par`.
- */
-
 const SCORE_KEYS = new Set([
   "eagle", "birdie", "par", "bogey", "double", "triple", "quad",
-  // Older spellings the legacy analytics types still use.
   "double_bogey", "triple_bogey", "quad_bogey", "double-bogey", "worse",
 ]);
 
-/** A name that holds a score against par: toPar, to_par, holeToPar, diff. */
 const TO_PAR_NAME = /(^|[a-z_])(to_?par|diff)$/i;
 const STROKES_NAME = /^(strokes|score|totalScore|total_score|gross)$/i;
 const PAR_NAME = /^(par|par_played|parPlayed|coursePar|course_par|holePar)$/i;
 
-/** Golf types the domain and API already model. Declaring another type by one of these names shadows it. */
 const GOLF_TYPE_NAMES = new Set([
   "Round", "HoleScore", "Hole", "Nine", "Course", "Tee", "ScoreCounts", "ScoreKind", "RoundCourse", "UserTee",
 ]);
 
-/** Operators that take one value or fall back to another. */
 const FALLBACK_OPS = new Set(["??", "||"]);
 
-/** Comparison operators that sort a value against another. */
 const COMPARE_OPS = new Set(["<", ">", "<=", ">=", "===", "!==", "==", "!="]);
 
-/**
- * The name a value is read by: `toPar`, `hole.par` → `par`, `SAMPLE.strokes[i]` → `strokes`,
- * `(round.toPar ?? 0)` → `toPar`, `x as number` → `x`.
- */
 function nameOf(node) {
   if (!node) return null;
   if (node.type === "Identifier") return node.name;
   if (node.type === "MemberExpression" && !node.computed) return node.property.name;
   if (node.type === "MemberExpression") {
-    // `row["par"]` reads `par`; `strokes[i]` reads one of the `strokes`.
     if (node.property.type === "Literal" && typeof node.property.value === "string") return node.property.value;
     return nameOf(node.object);
   }
@@ -84,7 +64,6 @@ const noScoreKindTable = {
     return {
       ObjectExpression(node) {
         const scoreProps = node.properties.filter((prop) => SCORE_KEYS.has(propertyKey(prop)));
-        // Numbers per score type are data (a round's counts, a mix), not a table to look a type up in.
         if (scoreProps.every((prop) => isNumber(prop.value))) return;
         const keys = scoreProps.map(propertyKey);
         if (new Set(keys).size >= 4) {
@@ -175,7 +154,6 @@ const noParFallback = {
     },
   },
   create(context) {
-    // A nested fallback (`a ?? b ?? c`) is reported once, on the pair that names two pars.
     const side = (node) => (node.type === "LogicalExpression" ? null : nameOf(node));
     return {
       LogicalExpression(node) {
@@ -216,7 +194,6 @@ const noShadowedGolfType = {
   },
 };
 
-/** The words a missing course name falls back to. */
 const COURSE_FALLBACK = /^(?:unknown|unnamed|untitled) course$/i;
 
 const noCourseFallback = {

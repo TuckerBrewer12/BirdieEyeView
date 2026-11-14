@@ -87,7 +87,6 @@ export function SettingsPage({ userId }: { userId: string }) {
         )}
       </div>
 
-      {/* While something has changed: pinned at the foot, above the tab bar on a phone. */}
       {viewModel.dirty && (
         <ActionBar pinned="always" contentClassName="max-w-2xl">
           <span className="flex-1 text-sm text-foreground-secondary">Unsaved changes</span>

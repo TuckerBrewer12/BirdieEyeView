@@ -8,14 +8,12 @@ const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
 ];
 
 interface PreferencesSectionProps {
-  /** Applies and is kept the moment it is picked, like the device's own setting. */
   theme: ThemePreference;
   onThemeChange: (theme: ThemePreference) => void;
   getUpdates: boolean;
   onGetUpdatesChange: (on: boolean) => void;
 }
 
-/** The app's own settings: theme, and email updates (kept with Save). */
 export function PreferencesSection({ theme, onThemeChange, getUpdates, onGetUpdatesChange }: PreferencesSectionProps) {
   return (
     <SettingsGroup title="App">

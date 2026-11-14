@@ -1,9 +1,3 @@
-"""Write the API's OpenAPI schema to frontend/openapi.json, where the frontend's types are generated from.
-
-Run from the repo root: python scripts/dump_openapi.py
-CI runs it with --check and fails if the committed schema is stale.
-"""
-
 import json
 import sys
 from pathlib import Path

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { tokens } from "@/brand/theme";
 
-/** A tick or a label on a trend chart: body-sized and dark, with a halo of the card so a line under it can't cut it. */
 export function AxisLabel({
   x,
   y,
@@ -32,7 +31,6 @@ export function AxisLabel({
   );
 }
 
-/** A figure in a trend's hover card: its name, then its value. */
 export function TooltipRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3">

@@ -1,5 +1,3 @@
-"""Round detail's "vs your average": a round against the rounds before it, worked out on the server."""
-
 from analytics.round_comparison import round_vs_average
 from models import HoleScore, Round
 
@@ -22,7 +20,6 @@ def _figure(window, metric):
 def test_a_round_is_set_against_the_rounds_before_it_not_itself():
     rounds = [_round([5] * 18), _round([4] * 18), _round([4] * 18, putts=1)]
     score = _figure(_window(round_vs_average(rounds, 2), "all"), "score")
-    # 72 against the 90 and 72 before it.
     assert score == {"metric": "score", "value": 72.0, "average": 81.0, "difference": -9.0, "verdict": "good"}
 
 

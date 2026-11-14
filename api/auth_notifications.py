@@ -1,5 +1,3 @@
-"""Email notifications for auth flows (verification and password reset)."""
-
 import hashlib
 import logging
 import os

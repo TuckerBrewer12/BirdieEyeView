@@ -13,7 +13,6 @@ export async function enableDark(page: Page) {
   });
 }
 
-/** A preview's light and dark captures, as `{file}.png` and `{file}-dark.png` beside the calling spec. */
 export function previewScreenshots(name: string, file: string) {
   test.describe(name, () => {
     test("light", async ({ page }) => {

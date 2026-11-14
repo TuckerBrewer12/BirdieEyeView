@@ -8,20 +8,15 @@ import { milestoneKey, milestoneLabel } from "../present";
 interface MilestonesCardProps {
   title: string;
   milestones: Milestone[];
-  /** A line under the title, like how many records fell this year. */
   note?: string | null;
-  /** Shown when there are no milestones to list. */
   empty?: string;
-  /** Opens the round a milestone was reached in. */
   onOpenRound: (roundId: string) => void;
-  /** Sits above the list: the phone's milestone tabs. */
   controls?: ReactNode;
   className?: string;
 }
 
 const ROW = "flex w-full items-center gap-3 py-1.5 text-left";
 
-/** Milestones reached and still to reach. A reached one opens the round it fell in. */
 export function MilestonesCard({
   title,
   milestones,

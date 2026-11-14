@@ -2,25 +2,10 @@ import * as React from "react";
 import { cn } from "@/brand/cn";
 
 type ActionBarProps = React.ComponentProps<"div"> & {
-  /**
-   * `phone` (the default): in line where the page puts it from `md`, pinned above the tab bar on a
-   * phone. `always`: pinned at every width, along the foot of the window beside the side rail from
-   * `md`, for actions that only matter while something is pending, such as unsaved changes.
-   */
   pinned?: "phone" | "always";
-  /** For `always`: the width the actions line up to, the page's own (`max-w-2xl`). */
   contentClassName?: string;
 };
 
-/**
- * A page's main actions. From `md` they sit in line where the page puts them (beside its title,
- * under a form); on a phone they pin to the bottom, just above the tab bar, over a glass strip.
- * With `pinned="always"` they pin from `md` too, along the foot of the window. `AppShell` sees one
- * on the page and pads the page's end by the bar's height (`action-bar`), so nothing stays hidden
- * under it.
- *
- * A button that should take the phone's row gets `className="flex-1 md:flex-none"`.
- */
 function ActionBar({ pinned = "phone", contentClassName, className, children, ...props }: ActionBarProps) {
   const always = pinned === "always";
   return (

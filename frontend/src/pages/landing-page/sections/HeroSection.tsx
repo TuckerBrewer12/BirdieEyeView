@@ -12,6 +12,7 @@ import {
   FileChip,
   PageTitle,
   ScanProgress,
+  ScanReport,
 } from "@/brand";
 import { tokens } from "@/brand/theme";
 import { SCAN_STEPS } from "@/domain/scan";
@@ -19,11 +20,6 @@ import { useFilePreview } from "@/platform/useFilePreview";
 import { ScannerDemo } from "../components/ScannerDemo";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
-/**
- * The hero: the headline, Try it with a photo and Sign up free, beside the scanner demo: a photo of a
- * card, read, then a tour of the app it lands in. Once a photo is picked, what's on the card and
- * Scan my scorecard take the demo's place; while it reads, the scan's progress does.
- */
 export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
   const previewUrl = useFilePreview(viewModel.photo);
 
@@ -89,7 +85,19 @@ export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }
                 <CardFactsForm card={viewModel.card} onChange={viewModel.setCard} idPrefix="try-it" />
                 {viewModel.error && (
                   <Alert tone="danger">
-                    <AlertDescription>{viewModel.error}</AlertDescription>
+                    <AlertDescription>
+                      {viewModel.error}
+                      {viewModel.report.available && (
+                        <>
+                          {" "}
+                          <ScanReport
+                            status={viewModel.report.status}
+                            error={viewModel.report.error}
+                            onSend={viewModel.report.submit}
+                          />
+                        </>
+                      )}
+                    </AlertDescription>
                   </Alert>
                 )}
                 <Button size="lg" onClick={viewModel.extract}>

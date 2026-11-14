@@ -1,24 +1,16 @@
 import type { ExtractRequest, ScanRepository } from "../../data/scanRepository";
 import type { SaveScanRequestDto, ScanDto } from "../../types/api";
 import { InMemoryRounds } from "./InMemoryRounds";
+import { ScanFailedError } from "@/lib/scanReports";
 
 export interface FakeScanRepositorySeed {
-  /** What extract reads off any card. Unset, extract fails. */
   result?: ScanDto;
-  /** What reading the card ahead of time returns. */
   text?: string | null;
-  /** Extract fails with this, as the server's user-facing message. */
   extractError?: string;
-  /** Extract waits for `finishExtract()`, so a test can see the scan in progress. */
   holdExtract?: boolean;
-  /**
-   * Where saved scans go. Share a FakeRoundsRepository's store and the saved round can be
-   * read back; set its `saveError` to make saving fail.
-   */
   store?: InMemoryRounds;
 }
 
-/** Stands in for the scan endpoints and records what the page sent. */
 export class FakeScanRepository implements ScanRepository {
   readonly readPhotos: File[] = [];
   readonly extractRequests: ExtractRequest[] = [];
@@ -31,7 +23,6 @@ export class FakeScanRepository implements ScanRepository {
     this.store = seed.store ?? new InMemoryRounds();
   }
 
-  /** Every scan saved, as sent. */
   get saveRequests(): SaveScanRequestDto[] {
     return this.store.savedScans;
   }
@@ -48,8 +39,9 @@ export class FakeScanRepository implements ScanRepository {
         this.release = resolve;
       });
     }
-    if (this.seed.extractError) throw new Error(this.seed.extractError);
-    if (!this.seed.result) throw new Error("Could not read this scorecard.");
+    const failure = { category: "extraction_failed", stage: "parse", http_status: 500 } as const;
+    if (this.seed.extractError) throw new ScanFailedError(this.seed.extractError, failure);
+    if (!this.seed.result) throw new ScanFailedError("Could not read this scorecard.", failure);
     return this.seed.result;
   }
 
@@ -57,7 +49,6 @@ export class FakeScanRepository implements ScanRepository {
     return this.store.saveScan(request);
   }
 
-  /** Lets a held extract answer. */
   finishExtract(): void {
     this.release?.();
     this.release = null;

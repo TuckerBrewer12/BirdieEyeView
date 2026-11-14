@@ -9,10 +9,6 @@ interface CheckChipProps {
   className?: string;
 }
 
-/**
- * Something that's there or not, as a box you tick inside a bordered chip: "Putts" on the card. A
- * row of them sits in a group named for what they answer (`role="group"` with an `aria-label`).
- */
 function CheckChip({ checked, onCheckedChange, children, className }: CheckChipProps) {
   return (
     <label

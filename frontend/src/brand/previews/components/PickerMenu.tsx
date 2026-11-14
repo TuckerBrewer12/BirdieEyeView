@@ -19,9 +19,7 @@ export default function PickerMenuPreview() {
 
   return (
     <>
-      {/* A filter: boxed, 32 tall in a card's header. */}
       <PickerMenu aria-label="Course" label="All courses" value="all" options={courses} onChange={() => {}} />
-      {/* A page's sort: "Sort Newest" set in the text, an icon alone on a phone. */}
       <PickerMenu
         aria-label="Sort by"
         label={label}
@@ -33,7 +31,6 @@ export default function PickerMenuPreview() {
         variant="ghost"
         size="default"
       />
-      {/* A page's filter beside its search, shorter on a phone. */}
       <PickerMenu
         aria-label="Course"
         label="All courses"
@@ -43,12 +40,10 @@ export default function PickerMenuPreview() {
         onChange={() => {}}
         size="default"
       />
-      {/* Two menus sharing a phone's row, each stretched to half. */}
       <div className="flex w-80 gap-2">
         <PickerMenu aria-label="Rounds" label="Last 50 rounds" value="all" options={courses} onChange={() => {}} size="default" fill />
         <PickerMenu aria-label="Course" label="All courses" value="all" options={courses} onChange={() => {}} size="default" fill />
       </div>
-      {/* While a pick saves. */}
       <PickerMenu aria-label="Scoring goal" label="Break 90" value="all" options={courses} onChange={() => {}} disabled />
     </>
   );

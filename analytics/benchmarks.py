@@ -1,10 +1,3 @@
-"""What golfers at each scoring level look like, and how a player's par types stand against them.
-
-Profile holds a player's shape up against a benchmark: a handicap's or a friend's. A shape is in golf terms (GIR%, scrambling%, putts per GIR,
-and each par type's average to par); the page scales it for the radar. Every function takes the
-rounds oldest first.
-"""
-
 from typing import Any, Dict, List, Literal, Optional
 
 from analytics import stats as analytics
@@ -14,9 +7,6 @@ Against = Literal["handicap", "friend"]
 Verdict = Literal["ahead", "even", "behind"]
 PARS = (3, 4, 5)
 
-# Amateurs by the score they break, from "Representative amateur golf statistics by score and
-# skill band": the goal as stored (89 is breaking 90), the handicap it stands for, and the shape.
-# Breaking 75 sits between breaking 80 and scratch, so it has no handicap of its own.
 BENCHMARKS: List[Dict[str, Any]] = [
     {"goal": 71, "handicap": 0, "gir_percentage": 61, "scrambling_percentage": 47, "putts_per_gir": 1.84,
      "par3_to_par": -0.025, "par4_to_par": 0.175, "par5_to_par": 0.0},
@@ -34,7 +24,6 @@ BENCHMARKS: List[Dict[str, Any]] = [
      "par3_to_par": 0.975, "par4_to_par": 1.85, "par5_to_par": 2.0},
 ]
 
-# What tour players average around the green: the marks on the analytics page's short-game bars.
 TOUR_SHORT_GAME = {"scrambling_percentage": 57.0, "up_and_down_percentage": 50.0}
 
 SHAPE_FIELDS = (
@@ -47,14 +36,11 @@ def _shape(row: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def handicap_benchmark(handicap: int) -> Optional[Dict[str, Any]]:
-    """The shape of a golfer playing to `handicap`. Null for a handicap with no benchmark."""
     row = next((r for r in BENCHMARKS if r["handicap"] == handicap), None)
     return _shape(row) if row else None
 
 
 def next_level_handicap(index: Optional[float]) -> Optional[int]:
-    """The benchmark handicap a step better than `index`: the highest one below it, scratch for an
-    index at or under scratch, the highest benchmark for one past it. Null without an index."""
     if index is None:
         return None
     handicaps = sorted(row["handicap"] for row in BENCHMARKS if row["handicap"] is not None)
@@ -72,8 +58,6 @@ def _par_averages(scoring_by_par: List[Dict[str, Any]]) -> Dict[int, Optional[fl
 
 
 def player_shape(rounds: List[Round]) -> Optional[Dict[str, Any]]:
-    """A player's shape over their rounds, each figure as the analytics KPIs report it.
-    A figure they have nothing for is null. Null without a round."""
     if not rounds:
         return None
     scrambling = [
@@ -90,7 +74,6 @@ def player_shape(rounds: List[Round]) -> Optional[Dict[str, Any]]:
 
 
 def _gap(mine: float, theirs: float) -> float:
-    """Mine less theirs to a hundredth, a half away from zero, as the page shows an average to par."""
     gap = mine - theirs
     rounded = analytics.round_half_up(abs(gap), 2)
     return -rounded if gap < 0 else rounded
@@ -99,9 +82,6 @@ def _gap(mine: float, theirs: float) -> float:
 def par_type_comparison(
     scoring_by_par: List[Dict[str, Any]], benchmark: Optional[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
-    """Each par type's average to par against the benchmark's: the gap, negative when the player
-    scores lower, and whether that puts them ahead, even or behind. Rounded before it is judged,
-    so a gap that reads 0.00 is even. Null where either side has no figure."""
     rows = []
     for par, mine in _par_averages(scoring_by_par).items():
         theirs = benchmark.get(f"par{par}_to_par") if benchmark else None
@@ -113,16 +93,12 @@ def par_type_comparison(
     return rows
 
 
-# The figures a player wants higher; on the rest (putts per GIR, each par type to par) lower is better.
 HIGHER_IS_BETTER = ("gir_percentage", "scrambling_percentage")
 
 
 def shape_verdicts(
     mine: Optional[Dict[str, Any]], benchmark: Optional[Dict[str, Any]], par_types: List[Dict[str, Any]]
 ) -> Dict[str, Optional[Verdict]]:
-    """Each radar axis judged against the benchmark: ahead, even or behind, at the precision the
-    shape is given in. The par types take their row's verdict, so the radar and the par rows agree.
-    Null where either side has no figure."""
     verdicts: Dict[str, Optional[Verdict]] = {f"par{row['par']}_to_par": row["verdict"] for row in par_types}
     for field in ("gir_percentage", "scrambling_percentage", "putts_per_gir"):
         a = mine.get(field) if mine else None
@@ -142,7 +118,6 @@ def comparison(
     benchmark: Optional[Dict[str, Any]],
     handicap: Optional[int] = None,
 ) -> Dict[str, Any]:
-    """The player's par types and radar axes against `benchmark`, and which benchmark it was."""
     par_types = par_type_comparison(analytics.scoring_by_par(rounds), benchmark)
     return {
         "against": against,

@@ -3,10 +3,6 @@ import { Link } from "react-router-dom";
 import { BrandMark, Button } from "@/brand";
 import { useTheme } from "@/context/theme";
 
-/**
- * The signed-out header: the brand, then Sign in and Sign up. A phone keeps Sign in alone, in
- * green, since the hero's "or sign up free" sits right under it. The theme toggle stays beside them.
- */
 export function PublicNav() {
   const { toggle: toggleTheme } = useTheme();
 
@@ -21,7 +17,6 @@ export function PublicNav() {
           <Moon className="dark:hidden" />
           <Sun className="hidden dark:block" />
         </Button>
-        {/* Sign in is ink beside Sign up from md, and the phone's one link, in green, without it. */}
         <Button variant="ghost" className="max-md:hidden" render={<Link to="/login" />}>
           Sign in
         </Button>

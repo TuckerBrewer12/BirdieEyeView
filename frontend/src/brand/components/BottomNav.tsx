@@ -7,17 +7,12 @@ import { Sheet, SheetContent, SheetTrigger } from "./Sheet";
 import type { SideNavUser } from "./SideNav";
 
 interface BottomNavProps {
-  /** The tabs along the bar. Four, so with "More" five fit a phone. */
   tabs: NavItem[];
-  /** The `href` of the tab raised in a filled circle, the one action the app is for. Put it mid-bar. */
   featuredHref?: string;
-  /** Everything else, in a sheet the last tab opens. */
   moreItems?: NavItem[];
   moreLabel?: string;
-  /** The signed-in golfer, at the top of the More sheet. */
   user?: SideNavUser;
   renderLink?: RenderLink;
-  /** The nav landmark's name. */
   label?: string;
   className?: string;
 }
@@ -25,18 +20,10 @@ interface BottomNavProps {
 const tabClass =
   "group flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-meta font-medium text-muted-foreground transition-colors data-active:font-bold data-active:text-foreground data-panel-open:font-bold data-panel-open:text-foreground [&_svg]:size-5 [&_svg]:stroke-icon";
 
-/** The icon's round holder: bare on a tab, a lifted filled disc on the featured one. */
 const iconClass = "flex size-7 items-center justify-center rounded-full transition-colors";
 const plainIconClass = "group-data-active:text-primary group-data-panel-open:text-primary";
 const featuredIconClass = "-mt-3.5 size-11 bg-primary text-primary-foreground";
 
-/**
- * The phone's tab bar: a few tabs and a "More" tab that opens a bottom sheet
- * of the rest (`MoreMenu`). One tab can be featured: its icon sits in a filled
- * disc raised above the bar. Taking a link closes the sheet, as does tapping
- * the dimmed page, dragging it down or pressing Escape. `AppShell` pins the
- * bar to the bottom edge.
- */
 function BottomNav({
   tabs,
   featuredHref,
@@ -54,7 +41,6 @@ function BottomNav({
   return (
     <nav aria-label={label} data-slot="bottom-nav" className={cn("relative", className)}>
       <div className="border-t border-border bg-card px-2 pb-safe-bottom">
-        {/* `h-nav` is the measure `ActionBar` and the shell's padding take the bar's height from. */}
         <div className="flex h-nav items-stretch pt-1.5">
           {tabs.map((item) => (
             <NavLink key={item.href} item={item} renderLink={renderLink} className={tabClass}>

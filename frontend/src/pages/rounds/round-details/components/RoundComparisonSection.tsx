@@ -7,7 +7,6 @@ interface RoundComparisonSectionProps {
   className?: string;
 }
 
-/** "vs your average": each figure of this round beside the golfer's average and the difference. */
 export function RoundComparisonSection({ userId, roundId, className }: RoundComparisonSectionProps) {
   const viewModel = useRoundComparisonViewModel(userId, roundId);
   if (!viewModel.show) return null;

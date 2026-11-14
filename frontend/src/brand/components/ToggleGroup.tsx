@@ -15,23 +15,11 @@ const ToggleGroupContext = React.createContext<{ size: SegmentedSize; fill: bool
 });
 
 type ToggleGroupProps = ToggleGroupPrimitive.Props & {
-  /** `default` is 32 on the page; `sm` is the compact 28 for a card header. */
   size?: SegmentedSize;
-  /** Stretch to the row, the options sharing its width equally (a phone). */
   fill?: boolean;
-  /**
-   * `segmented` (the default) is options on a recessed pill track, for a view switched in place in a
-   * card. `boxed` is the same on a rounded-rectangle track with square-cornered options, for a form's
-   * choice or a page's mode (Scan's Photo / By hand). `chips` is a row of separate pills a gap apart, the
-   * picked one filled green, for a page's own switch.
-   */
   look?: ToggleLook;
 };
 
-/**
- * One of a few options: two to four short ones on a recessed pill track, one raised (`segmented`), or a
- * row of chips a gap apart (`chips`). More options, or long labels, belong in a menu.
- */
 function ToggleGroup({
   className,
   size = "default",

@@ -7,8 +7,6 @@ logger = logging.getLogger(__name__)
 
 
 class DatabasePool:
-    """Manages the asyncpg connection pool lifecycle."""
-
     def __init__(self):
         self._pool: Optional[asyncpg.Pool] = None
 
@@ -25,7 +23,6 @@ class DatabasePool:
         max_size: int = 10,
         connect_timeout: Optional[float] = None,
     ) -> None:
-        """Create the connection pool. Call once at app startup."""
         if self._pool is not None:
             return
         pool_kwargs = {}
@@ -44,14 +41,12 @@ class DatabasePool:
         )
 
     async def close(self) -> None:
-        """Close all connections. Call at app shutdown."""
         if self._pool:
             await self._pool.close()
             self._pool = None
 
     @property
     def pool(self) -> asyncpg.Pool:
-        """Get the pool, raising if not initialized."""
         if self._pool is None:
             raise RuntimeError(
                 "Database pool not initialized. Call await db.initialize() first."
@@ -60,11 +55,9 @@ class DatabasePool:
 
     @property
     def is_initialized(self) -> bool:
-        """Whether the pool has been initialized."""
         return self._pool is not None
 
     async def health_check(self) -> bool:
-        """Test connectivity with SELECT 1."""
         try:
             async with self.pool.acquire() as conn:
                 await conn.fetchval("SELECT 1")
@@ -74,5 +67,4 @@ class DatabasePool:
             return False
 
 
-# Module-level singleton for convenience
 db = DatabasePool()

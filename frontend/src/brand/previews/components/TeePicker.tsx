@@ -13,7 +13,6 @@ export default function TeePickerPreview() {
   return (
     <>
       <TeePicker tees={TEES} value={tee} onChange={setTee} />
-      {/* A tee with no yardage on file shows its name alone. */}
       <TeePicker tees={[{ name: "Gold", yards: null }, { name: "Combo", yards: 6420 }]} value="" onChange={() => {}} />
     </>
   );

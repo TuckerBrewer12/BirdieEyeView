@@ -12,12 +12,10 @@ import {
 } from "../present";
 import { SectionCard } from "./SectionCard";
 
-/** Putting: putts each round, the rounds' three-putts, and how the holes split by putts. */
 export function PuttingSection({ analytics, shown, onShownChange }: { analytics: Analytics } & TrendWindow) {
   const segments = puttsPerHoleSegments(analytics.puttsPerHole);
   return (
     <div data-slot="putting-section" className="flex flex-col gap-4">
-      {/* A phone has no room for the headline's putting figures above, so they lead the section. */}
       <Card data-slot="putting-figures" className="grid grid-cols-3 gap-0 py-3.5 md:hidden">
         {puttingFigures(analytics).map(({ key, ...figure }, i) => (
           <StatTile {...figure} key={key} layout="center" className={cn(i > 0 && "border-l border-border")} />

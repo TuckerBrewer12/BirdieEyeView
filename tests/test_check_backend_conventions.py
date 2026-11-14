@@ -18,9 +18,6 @@ def lines(source: str) -> list[int]:
     return [lineno for lineno, _ in check_source(textwrap.dedent(source))]
 
 
-# --- exception text in HTTPException detail ---------------------------------
-
-
 @pytest.mark.parametrize(
     "raise_line",
     [
@@ -81,9 +78,6 @@ def test_ignores_str_of_same_name_outside_except():
         raise HTTPException(400, str(exc))
     """
     assert lines(source) == []
-
-
-# --- hard-coded hole counts --------------------------------------------------
 
 
 @pytest.mark.parametrize(

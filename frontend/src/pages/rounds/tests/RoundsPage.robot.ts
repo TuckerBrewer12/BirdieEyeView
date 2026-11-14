@@ -5,7 +5,6 @@ import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBa
 import type { StoredRound } from "../../../testing/fakes/roundResponses";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
 
-/** Screen robot for /rounds — same idea as an Android Espresso robot. */
 export class RoundsRobot {
   private readonly page: Page;
   private backend: FakeBackend | null = null;
@@ -37,7 +36,6 @@ export class RoundsRobot {
     return this;
   }
 
-  /** The rounds list answers with a server error until `listingRecovers()`. */
   async openFailing(rounds: StoredRound[]): Promise<this> {
     this.backend = await FakeSession.install(this.page, { rounds, roundsError: "Rounds are down." });
     await this.page.goto("/rounds");
@@ -49,7 +47,6 @@ export class RoundsRobot {
     return this;
   }
 
-  /** The page says the load failed, in place of an empty list. */
   async seesLoadError(): Promise<this> {
     await expect(this.page.locator("[data-slot=alert]")).toBeVisible();
     await expect(this.page.getByText("No rounds found.")).toHaveCount(0);
@@ -66,7 +63,6 @@ export class RoundsRobot {
     return this;
   }
 
-  /** A phone keeps the search behind an icon. */
   async openSearch(): Promise<this> {
     await this.page.getByRole("button", { name: "Search", exact: true }).click();
     await expect(this.page.getByLabel("Search rounds")).toBeFocused();
@@ -85,7 +81,6 @@ export class RoundsRobot {
     return this;
   }
 
-  /** The course menu: a dropdown on desktop, a bottom sheet on a phone. */
   async filterByCourse(name: string): Promise<this> {
     await this.page.getByRole("button", { name: "Course", exact: true }).click();
     await this.page
@@ -95,7 +90,6 @@ export class RoundsRobot {
     return this;
   }
 
-  /** The sort menu open: a dropdown on desktop, a bottom sheet from the title row's icon on a phone. */
   async openSortMenu(): Promise<this> {
     await this.page.getByRole("button", { name: /^Sort by(: .+)?$/ }).click();
     return this;
@@ -127,13 +121,11 @@ export class RoundsRobot {
     return this;
   }
 
-  /** Esc closes the panel from its search. */
   async closeLink(): Promise<this> {
     await this.page.getByPlaceholder("Search courses…").press("Escape");
     return this;
   }
 
-  /** The phone's sheet, closed by keeping the round's own name. */
   async keepName(name: string): Promise<this> {
     await this.page.getByRole("button", { name: `Keep as “${name}”` }).click();
     return this;
@@ -224,13 +216,11 @@ export class RoundsRobot {
     return this;
   }
 
-  /** The round listed first, by its course name. */
   async seesFirstRound(courseName: string): Promise<this> {
     await expect(this.page.locator('[data-slot="round-preview"]').first()).toContainText(courseName);
     return this;
   }
 
-  /** The count beside the title: the rounds on screen. */
   async seesRoundCount(n: number): Promise<this> {
     await expect(this.page.locator("[data-slot=round-count]")).toHaveText(String(n));
     return this;
@@ -241,7 +231,6 @@ export class RoundsRobot {
     return this;
   }
 
-  /** `fullPage: false` for an open sheet or menu, which sits over the viewport, not the page. */
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
     await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });

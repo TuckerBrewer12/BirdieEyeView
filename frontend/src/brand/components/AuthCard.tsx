@@ -5,24 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader } from "./Card";
 import { PageTitle } from "./PageTitle";
 
 interface AuthCardProps extends Omit<React.ComponentProps<"div">, "title"> {
-  /** The page's heading. It renders as the h1, so it names the screen. */
   title: React.ReactNode;
-  /** A line under the title, only where the screen needs one: "We'll email you a reset link." */
   description?: string;
-  /** The way to the neighbouring screen, under the card: "New here? Create an account". */
   footer?: React.ReactElement;
   children: React.ReactNode;
 }
 
-/**
- * The frame every signed-out screen sits in: the brand mark, a card with the title and the form,
- * and the way to the neighbouring screen under it, in a 380px column near the top of the page.
- *
- * On a computer the card rests on the page's grey with the mark centred over it. On a phone the
- * page is the card's white, the card's edges and padding fall away, and the mark sits at the
- * left, so the form reads as the screen itself. Pass `className` to change the outer frame when it
- * sits inside something else, as the kit preview does.
- */
 function AuthCard({ title, description, footer, children, className, ...props }: AuthCardProps) {
   return (
     <div

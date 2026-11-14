@@ -2,14 +2,6 @@ import * as React from "react";
 import { Flag } from "lucide-react";
 import { cn } from "@/brand/cn";
 
-/**
- * The logo lockup: the flag badge, and the wordmark beside it.
- *
- * The landing nav and both auth screens each had their own `Logo()` with the
- * same markup, so a change to the mark meant finding all three. `iconOnly`
- * drops the wordmark for places too narrow to carry it, and labels the badge
- * "BirdieEyeView" so the mark still has an accessible name.
- */
 const SIZES = {
   default: { root: "gap-2.5", badge: "size-9 [&_svg]:size-4", word: "text-xl" },
   sm: { root: "gap-2", badge: "size-8 [&_svg]:size-3.5", word: "text-lg" },

@@ -24,7 +24,6 @@ function Flow({ round }: { round: Round }) {
   );
 }
 
-/** At a phone's width the plot scrolls: the start of a round, the end of it, and an under-par round's end. */
 export default function RoundFlowChartScrolledPreview() {
   return (
     <>
