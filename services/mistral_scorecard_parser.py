@@ -9,7 +9,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 from pydantic import Field
 
 from models.base import BaseGolfModel
-from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
+from models.hole import BACK_NINE, FRONT_NINE, HOLES_PER_NINE, HOLES_PER_ROUND
 
 logger = logging.getLogger(__name__)
 
@@ -610,9 +610,9 @@ def _extract_split_table_blocks(
         if col_map is None:
             continue
         holes = sorted(col_map)
-        if holes == list(range(1, 10)) and front is None:
+        if holes == list(FRONT_NINE) and front is None:
             front = (block, col_map)
-        elif holes == list(range(10, 19)) and back is None:
+        elif holes == list(BACK_NINE) and back is None:
             back = (block, col_map)
 
     if front is None or back is None:
