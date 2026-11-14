@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""Every runtime dependency must be pinned to an exact version.
-
-CLAUDE.md documents a `pip freeze > requirements.txt` workflow, but unpinned
-entries still creep in. An unpinned dep means the deployed image can differ
-from what CI tested.
-"""
 from __future__ import annotations
 
 import sys

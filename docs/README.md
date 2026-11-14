@@ -16,7 +16,7 @@ This is the shared starting point for understanding and changing the project. `d
 
 ## Current implementation versus refactor direction
 
-These guides describe the inspected working tree as of **October 17, 2026**. They do not certify what is deployed. The backend model refactor is local work awaiting cross-domain integration. The frontend has both view-model-based pages and older pages with inline orchestration. Each guide identifies relevant differences; a proposed convention is not evidence that every file follows it.
+These guides describe the working tree as of **November 13, 2026**. They do not certify what is deployed. The frontend guides describe the redesigned pages, all on MVVM and the brand kit.
 
 ## Maintaining the guides
 

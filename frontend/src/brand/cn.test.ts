@@ -1,0 +1,24 @@
+import { describe, expect, it } from "vitest";
+import { cn } from "./cn";
+import { buttonVariants } from "./components/variants";
+
+describe("cn", () => {
+  it("keeps primary foreground when merging a type-scale size", () => {
+    expect(cn("bg-primary text-primary-foreground", "text-body-sm")).toContain(
+      "text-primary-foreground",
+    );
+  });
+
+  it("keeps white label on a primary sm button", () => {
+    const classes = cn(buttonVariants({ variant: "default", size: "sm", className: "px-3.5 text-[13px]" }));
+    expect(classes).toContain("text-primary-foreground");
+  });
+
+  it("keeps a callout border width beside a status border colour", () => {
+    expect(cn("border-callout", "border-status-info")).toBe("border-callout border-status-info");
+  });
+
+  it("takes a card's surface shadow off for shadow-none", () => {
+    expect(cn("shadow-surface", "shadow-none")).toBe("shadow-none");
+  });
+});

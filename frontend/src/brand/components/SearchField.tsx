@@ -1,59 +1,76 @@
-import { Search, Loader2 } from "lucide-react";
-import { useTheme } from "@/brand/theme";
+import type * as React from "react";
+import { useEffect, useId, useRef } from "react";
+import { Loader2, Search, X } from "lucide-react";
+import { cn } from "@/brand/cn";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupAddonLabel,
+  InputGroupButton,
+  InputGroupInput,
+} from "./InputGroup";
 
-interface SearchFieldProps {
+interface SearchFieldProps
+  extends Omit<React.ComponentProps<typeof InputGroupInput>, "value" | "onChange" | "type" | "size"> {
   value: string;
   onChange: (value: string) => void;
-  placeholder?: string;
-  autoFocus?: boolean;
+  focusOnOpen?: boolean;
   loading?: boolean;
+  className?: string;
 }
 
-export function SearchField({ value, onChange, placeholder, autoFocus, loading }: SearchFieldProps) {
-  const theme = useTheme();
+export function SearchField({
+  id,
+  value,
+  onChange,
+  focusOnOpen = false,
+  loading,
+  className,
+  ...inputProps
+}: SearchFieldProps) {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+  const input = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (focusOnOpen) input.current?.focus();
+  }, [focusOnOpen]);
 
   return (
-    <div style={{ position: "relative" }}>
-      <Search
-        size={14}
-        color={theme.fgMuted}
-        style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
-      />
-      <input
+    <InputGroup size="inline" className={className}>
+      <InputGroupInput
+        ref={input}
+        id={inputId}
         type="search"
-        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        autoFocus={autoFocus}
-        style={{
-          width: "100%",
-          height: 36,
-          paddingLeft: 34,
-          paddingRight: loading ? 32 : 12,
-          fontSize: 13,
-          color: theme.fg,
-          background: theme.card,
-          border: `1px solid ${theme.border}`,
-          borderRadius: 99,
-          outline: "none",
-          boxSizing: "border-box",
-        }}
+        className="[&::-webkit-search-cancel-button]:hidden"
+        {...inputProps}
       />
+      <InputGroupAddonLabel htmlFor={inputId} className={cn(value && "text-foreground")}>
+        <Search />
+      </InputGroupAddonLabel>
       {loading && (
-        <div
-          style={{
-            position: "absolute",
-            right: 12,
-            top: 0,
-            bottom: 0,
-            display: "flex",
-            alignItems: "center",
-            pointerEvents: "none",
-          }}
-        >
-          <Loader2 size={12} color={theme.fgMuted} className="animate-spin" />
-        </div>
+        <InputGroupAddonLabel htmlFor={inputId} align="inline-end">
+          <Loader2 className="animate-spin" />
+        </InputGroupAddonLabel>
       )}
-    </div>
+      {value && !loading && (
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            size="icon-sm"
+            variant="secondary"
+            className="size-7"
+            aria-label="Clear search"
+            onClick={() => {
+              onChange("");
+              input.current?.focus();
+            }}
+          >
+            <X className="size-3.5" />
+          </InputGroupButton>
+        </InputGroupAddon>
+      )}
+    </InputGroup>
   );
 }

@@ -72,12 +72,24 @@ def test_goal_report_without_scores_returns_empty_report():
 
     assert report == {
         "scoring_average": None,
-        "best_score": None,
+        "lowest_score": None,
         "scoring_goal": 85,
         "gap": None,
         "on_track": False,
+        "progress_pct": None,
+        "rounds_meeting_goal": 0,
+        "peak_gap": None,
+        "peak_meets_goal": None,
+        "attempts": [],
         "savers": [],
     }
+
+
+def test_goal_progress_measures_from_the_first_round_toward_the_goal():
+    assert goals._progress_pct(95, 91.0, 85, on_track=False) == 40.0
+    assert goals._progress_pct(95, 99.0, 85, on_track=False) == 0.0
+    assert goals._progress_pct(84, 88.0, 85, on_track=False) == 100.0
+    assert goals._progress_pct(95, 91.0, 85, on_track=True) == 100.0
 
 
 def test_goal_report_calculates_score_summary(monkeypatch):
@@ -88,7 +100,7 @@ def test_goal_report_calculates_score_summary(monkeypatch):
 
     assert (
         report["scoring_average"],
-        report["best_score"],
+        report["lowest_score"],
         report["gap"],
         report["on_track"],
     ) == (90.0, 90, 5.0, False)
@@ -122,13 +134,13 @@ def test_on_track_goal_uses_zero_gap_percentages(monkeypatch):
     assert all(saver["percentage_of_gap"] == 0.0 for saver in report["savers"])
 
 
-def test_on_track_goal_uses_maintenance_copy(monkeypatch):
+def test_on_track_goal_still_names_each_saver(monkeypatch):
     patch_goal_inputs(monkeypatch)
 
     savers = goals.goal_report([make_scoring_round(72)], 72)["savers"]
     three_putt_saver = next(saver for saver in savers if saver["type"] == "three_putt_bleed")
 
-    assert "keep eliminating" in three_putt_saver["detail"]
+    assert (three_putt_saver["headline"], three_putt_saver["detail"]) == ("Cut out 3-putts", "2.0 a round")
 
 
 def test_goal_report_omits_non_actionable_inputs(monkeypatch):

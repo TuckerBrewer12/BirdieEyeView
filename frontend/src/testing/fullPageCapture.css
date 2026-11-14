@@ -1,0 +1,5 @@
+/* A full-page capture is one tall viewport, so bars fixed to the screen land mid-page. */
+[data-slot="app-shell-bottom"],
+[data-slot="action-bar"] {
+  position: static !important;
+}

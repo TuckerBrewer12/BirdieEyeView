@@ -1,14 +1,27 @@
-from unittest.mock import AsyncMock
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
 import pytest
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from api.routers import users
-from database.exceptions import DuplicateError, NotFoundError
-from models import UserTee
-from tests.helpers import make_course, make_friendship_row, make_mock_database, make_user
+from analytics import handicap as hcap
+from api.main import app
+from api.round_responses import round_summary
+from api.routers import ai_insights, courses, rounds, stats, users
+from database.exceptions import DuplicateError, IntegrityError, NotFoundError
+from models import Course, Hole, HoleScore, Round, User, UserTee
+from models.course import CourseSummary
+from tests.helpers import make_course, make_friendship_row, make_http_request, make_mock_database, make_user
+from tests.route_fixtures import (
+    friendship_row,
+    listed_round,
+    pebble_beach,
+    pebble_beach_summary,
+    played_round,
+    profile_user,
+)
 
 
 def test_create_user_tee_request_normalizes_hole_numbers():
@@ -57,23 +70,6 @@ def user_database():
 
 
 @pytest.mark.asyncio
-async def test_get_user_by_email_normalizes_lookup(user_database):
-    _, user, db = user_database
-
-    result = await users.get_user_by_email("GOLFER@example.com", db, user)
-
-    assert result == user
-    db.users.get_user_by_email.assert_awaited_once_with("golfer@example.com")
-
-
-@pytest.mark.asyncio
-async def test_get_user_returns_requested_user(user_database):
-    user_id, user, db = user_database
-
-    assert await users.get_user(user_id, db, user) == user
-
-
-@pytest.mark.asyncio
 async def test_get_user_forbids_other_profile(user_database):
     _, user, db = user_database
 
@@ -81,33 +77,6 @@ async def test_get_user_forbids_other_profile(user_database):
         await users.get_user(uuid4(), db, user)
 
     assert raised.value.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_update_user_maps_profile_fields(user_database):
-    user_id, user, db = user_database
-    course_id = uuid4()
-    db.courses.get_course = AsyncMock(return_value=make_course(course_id))
-    request = users.UpdateUserRequest(home_course_id=course_id, handicap="+2", scoring_goal=85)
-
-    result = await users.update_user(user_id, request, db, user)
-
-    assert result == user
-    assert db.users.update_user.await_args.kwargs == {
-        "home_course_id": str(course_id),
-        "handicap_index": -2.0,
-        "scoring_goal": 85,
-    }
-
-
-@pytest.mark.asyncio
-async def test_get_user_handicap_returns_calculated_index(monkeypatch, user_database):
-    user_id, user, db = user_database
-    monkeypatch.setattr(users.hcap, "handicap_index", lambda *args, **kwargs: 12.0)
-
-    result = await users.get_user_handicap(user_id, db, user)
-
-    assert result == {"handicap_index": 12.0}
 
 
 @pytest.fixture
@@ -201,7 +170,7 @@ def friendship_database():
 
 @pytest.mark.asyncio
 async def test_send_friend_request_resolves_code_and_returns_record(friendship_database):
-    user_id, other_id, user, record, db = friendship_database
+    user_id, other_id, user, _record, db = friendship_database
 
     response = await users.send_friend_request(users.SendFriendRequest(addressee_friend_code="ABCD"), db, user)
 
@@ -240,3 +209,149 @@ async def test_list_friendships_returns_serialized_records(friendship_database):
 
     assert [(response.id, response.status) for response in responses] == [(str(record["id"]), "pending")]
     db.friendships.list_for_user.assert_awaited_once_with(str(user_id), status=None)
+
+
+def test_user_response_is_the_profile_only():
+    user = profile_user(
+        uuid4(),
+        friend_code="BIRD-1234",
+        handicap=7.5,
+        scoring_goal=79,
+        email_verified=True,
+        created_at=datetime(2026, 2, 20, tzinfo=timezone.utc),
+        last_handicap_update=datetime(2026, 3, 1, tzinfo=timezone.utc),
+        rounds=[played_round(uuid4())],
+    )
+    assert users.user_response(user).model_dump() == {
+        "id": user.id,
+        "friend_code": "BIRD-1234",
+        "name": "Golfer",
+        "email": "golfer@example.com",
+        "home_course_id": None,
+        "handicap": 7.5,
+        "created_at": datetime(2026, 2, 20, tzinfo=timezone.utc),
+        "scoring_goal": 79,
+    }
+
+    schemas = app.openapi()["components"]["schemas"]
+    assert set(schemas["UserResponse"]["required"]) == set(users.UserResponse.model_fields)
+    assert "/api/users/{user_id}/handicap" not in app.openapi()["paths"]
+    for path, method in [
+        ("/api/users/{user_id}", "get"),
+        ("/api/users/{user_id}", "patch"),
+        ("/api/users/by-email/{email}", "get"),
+    ]:
+        response = app.openapi()["paths"][path][method]["responses"]["200"]
+        assert response["content"]["application/json"]["schema"] == {"$ref": "#/components/schemas/UserResponse"}
+
+
+@pytest.mark.asyncio
+async def test_user_get_and_update():
+    user_id = uuid4()
+    course_id = uuid4()
+    user = profile_user(user_id, handicap=12.0)
+    db = make_mock_database()
+    db.users.get_user_by_email = AsyncMock(return_value=user)
+    db.users.get_user = AsyncMock(return_value=user)
+    db.users.update_user = AsyncMock(return_value=user)
+    db.courses.get_course = AsyncMock(return_value=pebble_beach(course_id))
+
+    profile = users.user_response(user)
+    assert await users.get_user_by_email("GOLFER@example.com", db, user) == profile
+    assert await users.get_user(user_id, db, user) == profile
+    request = users.UpdateUserRequest(home_course_id=course_id, handicap="+2", scoring_goal=85)
+    assert await users.update_user(user_id, request, db, user) == profile
+    assert db.users.update_user.await_args.kwargs == {
+        "home_course_id": str(course_id),
+        "handicap_index": -2.0,
+        "scoring_goal": 85,
+    }
+
+    with pytest.raises(HTTPException) as exc:
+        await users.get_user(uuid4(), db, user)
+    assert exc.value.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_user_tee_crud_and_friendship_flows():
+    user_id = uuid4()
+    other_id = uuid4()
+    tee_id = uuid4()
+    user = profile_user(user_id)
+    user_tee = UserTee(id=str(tee_id), user_id=str(user_id), name="Blue")
+    friendship_record = friendship_row(user_id, other_id)
+    db = make_mock_database()
+    db.user_tees.get_user_tees = AsyncMock(return_value=[user_tee])
+    db.user_tees.create_user_tee = AsyncMock(return_value=user_tee)
+    db.user_tees.update_user_tee = AsyncMock(return_value=user_tee)
+    db.user_tees.delete_user_tee = AsyncMock(return_value=True)
+    db.users.get_user_by_friend_code = AsyncMock(return_value=profile_user(other_id))
+    db.friendships.send_request = AsyncMock(return_value=friendship_record)
+    db.friendships.update_status = AsyncMock(return_value=friendship_record)
+    db.friendships.list_for_user = AsyncMock(return_value=[friendship_record])
+
+    assert await users.get_user_tees(user_id, None, db, user) == [user_tee]
+    created_tee = await users.create_user_tee(
+        user_id,
+        users.CreateUserTeeRequest(name="Blue", hole_yardages={"1": 400}),
+        db,
+        user,
+    )
+    assert created_tee == user_tee
+    assert await users.update_user_tee(
+        user_id, tee_id, users.UpdateUserTeeRequest(name="White"), db, user
+    ) == user_tee
+    await users.delete_user_tee(user_id, tee_id, db, user)
+
+    friend_request_response = await users.send_friend_request(
+        users.SendFriendRequest(addressee_friend_code="ABCD"), db, user
+    )
+    assert friend_request_response.model_dump() == {
+        "id": str(friendship_record["id"]),
+        "requester_id": str(user_id),
+        "addressee_id": str(other_id),
+        "status": "pending",
+        "created_at": friendship_record["created_at"].isoformat(),
+        "updated_at": friendship_record["updated_at"].isoformat(),
+        "requester_name": "One",
+        "requester_email": None,
+        "addressee_name": "Two",
+        "addressee_email": None,
+        "friend_handicap_index": None,
+        "friend_last_played": None,
+    }
+    db.users.get_user_by_friend_code.assert_awaited_once_with("ABCD")
+    db.friendships.send_request.assert_awaited_once_with(str(user_id), str(other_id))
+
+    accepted_friendship = {**friendship_record, "status": "accepted"}
+    db.friendships.update_status.return_value = accepted_friendship
+    db.friendships.list_for_user.return_value = [accepted_friendship]
+    friendship_status_response = await users.update_friendship_status(
+        UUID(str(friendship_record["id"])), users.FriendshipStatusRequest(status="accepted"), db, user
+    )
+    assert friendship_status_response.status == "accepted"
+    assert friendship_status_response.id == str(friendship_record["id"])
+    db.friendships.update_status.assert_awaited_once_with(
+        str(friendship_record["id"]), str(user_id), "accepted"
+    )
+
+    friend = User(id=str(other_id), name="Two", handicap=12.0)
+    db.users.get_user = AsyncMock(return_value=friend)
+    last_round = Round(date=datetime(2026, 10, 28, 9, 30, tzinfo=timezone.utc), hole_scores=[])
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=[last_round])
+    friendship_responses = await users.list_friendships(None, db, user)
+    assert [response.model_dump() for response in friendship_responses] == [
+        {**friendship_status_response.model_dump(), "friend_handicap_index": 12.0, "friend_last_played": "2026-10-28"}
+    ]
+    db.users.get_user.assert_awaited_once_with(str(other_id))
+    assert db.friendships.list_for_user.await_args.args == (str(user_id),)
+    assert db.friendships.list_for_user.await_args.kwargs == {"status": None}
+
+    db.user_tees.create_user_tee.side_effect = DuplicateError()
+    with pytest.raises(HTTPException) as exc:
+        await users.create_user_tee(user_id, users.CreateUserTeeRequest(name="Blue"), db, user)
+    assert exc.value.status_code == 409
+    db.user_tees.update_user_tee.side_effect = NotFoundError()
+    with pytest.raises(HTTPException) as exc:
+        await users.update_user_tee(user_id, tee_id, users.UpdateUserTeeRequest(name="Blue"), db, user)
+    assert exc.value.status_code == 404

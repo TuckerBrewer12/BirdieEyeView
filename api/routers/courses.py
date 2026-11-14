@@ -1,17 +1,19 @@
-"""Course API endpoints."""
-
 import logging
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from typing import List, Optional
+from typing import Dict, List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from api.dependencies import get_db, get_optional_current_user, get_current_user
+from api.player_handicap import player_handicap_index
 from api.error_responses import COURSE_SAVE_FAILED
 from api.input_validation import normalize_course_display_name, sanitize_search_query, sanitize_user_text
-from api.schemas import CourseSummaryResponse
-from models import Course, Hole, Tee, User
+from api.course_responses import course_detail
+from api.schemas import CourseResponse, CourseSummaryResponse
+from analytics.stats import course_record
+from models import Course, Hole, Round, Tee, User
+from models.course import CourseSummary
 from services import GolfCourseAPIService
 from services.golfcourse_api_service import _normalize_course_name
 
@@ -112,7 +114,44 @@ def _summarize_course(c) -> CourseSummaryResponse:
         par=c.get_par(),
         total_holes=len(c.holes),
         tee_count=len(c.tees),
+        tees=[t.color for t in c.tees_by_length() if t.color],
     )
+
+
+def _summary_response(s: CourseSummary, record: Optional[dict] = None) -> CourseSummaryResponse:
+    best = record["best_round"] if record else None
+    return CourseSummaryResponse(
+        id=s.id,
+        name=s.name,
+        external_course_id=s.external_course_id,
+        source="local",
+        location=s.location,
+        par=s.par,
+        total_holes=s.hole_count,
+        tee_count=s.tee_count,
+        tees=s.tee_colors,
+        rounds_played=record["rounds_played"] if record else 0,
+        scoring_average=record["scoring_average"] if record else None,
+        best_score=best.calculate_total_score() if best else None,
+    )
+
+
+async def _summary_responses(
+    db: DatabaseManager, summaries: List[CourseSummary], user: Optional[User]
+) -> List[CourseSummaryResponse]:
+    if not user or not summaries:
+        return [_summary_response(s) for s in summaries]
+    rounds = await db.rounds.get_round_summaries_for_user(
+        str(user.id), limit=None, course_ids=[s.id for s in summaries]
+    )
+    by_course: Dict[str, List[Round]] = {}
+    for r in rounds:
+        if r.course and r.course.id:
+            by_course.setdefault(str(r.course.id), []).append(r)
+    return [
+        _summary_response(s, course_record(by_course[s.id]) if s.id in by_course else None)
+        for s in summaries
+    ]
 
 
 def _summarize_external_course(item: dict) -> CourseSummaryResponse:
@@ -134,7 +173,6 @@ def _summarize_external_course(item: dict) -> CourseSummaryResponse:
     )
 
 
-
 @router.get("", response_model=List[CourseSummaryResponse])
 async def list_courses(
     limit: int = Query(50, ge=1, le=100),
@@ -146,8 +184,10 @@ async def list_courses(
     if user_id:
         if not current_user or str(current_user.id) != str(user_id):
             raise HTTPException(403, "Forbidden")
-    courses = await db.courses.list_courses(limit=limit, offset=offset, user_id=str(user_id) if user_id else None)
-    return [_summarize_course(c) for c in courses]
+    summaries = await db.courses.list_course_summaries(
+        limit=limit, offset=offset, user_id=str(user_id) if user_id else None
+    )
+    return await _summary_responses(db, summaries, current_user if user_id else None)
 
 
 @router.get("/search", response_model=List[CourseSummaryResponse])
@@ -158,13 +198,17 @@ async def search_courses(
         False,
         description="When true, include GolfCourseAPI fallback results after local search.",
     ),
+    include_record: bool = Query(
+        False,
+        description="When true, each course carries the user's record there, as the course list shows it.",
+    ),
     db: DatabaseManager = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
     try:
         q = sanitize_search_query(q, max_length=120)
-    except ValueError as exc:
-        raise HTTPException(422, str(exc))
+    except ValueError:
+        raise HTTPException(422, "q must be plain text of at most 120 characters.") from None
 
     if user_id:
         if not current_user or str(current_user.id) != str(user_id):
@@ -172,12 +216,11 @@ async def search_courses(
     if include_external and not current_user:
         raise HTTPException(401, "Authentication required for external course lookup")
     effective_user_id = str(user_id) if user_id else (str(current_user.id) if current_user else None)
-    courses = await db.courses.search_courses(q, user_id=effective_user_id)
-    out = [_summarize_course(c) for c in courses]
+    summaries = await db.courses.search_course_summaries(q, user_id=effective_user_id)
+    out = await _summary_responses(db, summaries, current_user if user_id and include_record else None)
     if not include_external:
         return out
 
-    # Enrich with external fallback without breaking existing local-first behavior.
     try:
         ext_items = await GolfCourseAPIService().search_external_courses(q, limit=20)
     except Exception as exc:  # noqa: BLE001
@@ -207,7 +250,6 @@ async def search_courses(
 
     for item in ext_items:
         ext_summary = _summarize_external_course(item)
-        # External selections must carry a stable provider ID.
         if not ext_summary.external_course_id:
             continue
         ext_key = (
@@ -219,13 +261,11 @@ async def search_courses(
         if ext_summary.external_course_id and ext_summary.external_course_id in seen_local_external_ids:
             continue
         if ext_key in seen_local_keys:
-            # Enrich existing local hit with provider ID when missing.
             idx = local_index_by_key.get(ext_key)
             if idx is not None and not out[idx].external_course_id:
                 out[idx].external_course_id = ext_summary.external_course_id
                 seen_local_external_ids.add(ext_summary.external_course_id)
             continue
-        # Fallback: when locations differ/missing, match by name-only to backfill local rows.
         if ext_name_key in local_indices_by_name:
             for idx in local_indices_by_name[ext_name_key]:
                 if not out[idx].external_course_id:
@@ -233,7 +273,6 @@ async def search_courses(
                     seen_local_external_ids.add(ext_summary.external_course_id)
                     break
             continue
-        # Fallback: normalized name similarity for slight naming differences.
         if ext_norm_name:
             matched = False
             if ext_norm_name in local_indices_by_norm_name:
@@ -263,7 +302,7 @@ async def search_courses(
     return out[:20]
 
 
-@router.get("/{course_id}")
+@router.get("/{course_id}", response_model=CourseResponse)
 async def get_course(
     course_id: UUID,
     db: DatabaseManager = Depends(get_db),
@@ -274,7 +313,7 @@ async def get_course(
         raise HTTPException(404, "Course not found")
     if course.user_id and (not current_user or str(current_user.id) != str(course.user_id)):
         raise HTTPException(403, "Forbidden")
-    return course
+    return course_detail(course, await player_handicap_index(db, current_user))
 
 
 @router.post("", status_code=201)
@@ -284,7 +323,6 @@ async def create_course(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Create a custom course for a user."""
     holes = [Hole(number=h.number, par=h.par, handicap=h.handicap) for h in req.holes]
     tees = [
         Tee(
@@ -310,10 +348,10 @@ async def create_course(
         created = await db.courses.create_course(course, user_id=effective_user_id)
         return _summarize_course(created)
     except DuplicateError:
-        raise HTTPException(409, "A course with that name already exists for this user")
+        raise HTTPException(409, "A course with that name already exists for this user") from None
     except IntegrityError:
         logger.exception("Course creation integrity failure")
-        raise HTTPException(500, COURSE_SAVE_FAILED)
+        raise HTTPException(500, COURSE_SAVE_FAILED) from None
 
 
 @router.put("/{course_id}")
@@ -323,7 +361,6 @@ async def update_course(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Update a custom course. Only the owner can edit; master courses are protected."""
     existing = await db.courses.get_course(str(course_id))
     if not existing:
         raise HTTPException(404, "Course not found")
@@ -343,7 +380,6 @@ async def clone_course(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Clone a master course as a user-owned custom course."""
     try:
         source = await db.courses.get_course(str(course_id))
         if not source:
@@ -353,6 +389,6 @@ async def clone_course(
         cloned = await db.courses.clone_course(str(course_id), str(current_user.id))
         return _summarize_course(cloned)
     except NotFoundError:
-        raise HTTPException(404, "Source course not found")
+        raise HTTPException(404, "Source course not found") from None
     except DuplicateError:
-        raise HTTPException(409, "You already have a custom copy of this course")
+        raise HTTPException(409, "You already have a custom copy of this course") from None

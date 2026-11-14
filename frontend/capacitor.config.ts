@@ -9,7 +9,7 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 1500,
-      backgroundColor: '#2d7a3a',
+      backgroundColor: '#1f6e3c',
       showSpinner: false,
     },
     Camera: {
@@ -18,7 +18,7 @@ const config: CapacitorConfig = {
     StatusBar: {
       overlaysWebView: false,
       style: 'DEFAULT',
-      backgroundColor: '#f8faf8',
+      backgroundColor: '#f3f4ef',
     },
   },
   ...(devServerUrl
@@ -33,7 +33,7 @@ const config: CapacitorConfig = {
     contentInset: 'automatic',
   },
   android: {
-    backgroundColor: '#f8faf8',
+    backgroundColor: '#f3f4ef',
   },
 };
 

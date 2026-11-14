@@ -1,14 +1,3 @@
-"""Run a live scorecard accuracy evaluation suite.
-
-Usage:
-    python -m scripts.quick_scan_eval
-    python -m scripts.quick_scan_eval --suite large
-
-The runner mirrors the production frontend flow: OCR each unique image once,
-then pass the prefetched OCR text through the production extract path for each
-target player. Accuracy failures are reported but do not fail the process.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -50,7 +39,7 @@ ExtractCallable = Callable[..., Awaitable[Any]]
 
 
 class EvalConfigurationError(ValueError):
-    """Raised when the evaluator cannot start with a trustworthy configuration."""
+    ...
 
 
 @dataclass(frozen=True)
@@ -61,7 +50,6 @@ class EvalCase:
     source_score_format: str
     user_context: str
     expected: Mapping[str, Mapping[int, int]]
-    # A layout the scanner doesn't support yet: still graded, but reported as a known gap.
     known_gap: Optional[str] = None
 
     @property
@@ -133,7 +121,6 @@ def load_cases(
     *,
     scorecard_dir: Path = SCORECARD_DIR,
 ) -> list[EvalCase]:
-    """Load and validate the quick-suite answer key."""
     try:
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
@@ -174,8 +161,6 @@ def load_cases(
                 f"{label}: source_score_format must be one of {sorted(SUPPORTED_SCORE_FORMATS)}"
             )
         user_context = _require_string(raw, "user_context", label)
-        # `user_context` is exactly what the app would send. People-only remarks go in `notes`,
-        # which the scanner never sees; `known_gap` names an unsupported layout.
         for optional in ("notes", "known_gap"):
             if optional in raw and (not isinstance(raw[optional], str) or not raw[optional].strip()):
                 raise EvalConfigurationError(f"{label}: {optional} must be a non-empty string when present")
@@ -239,7 +224,6 @@ def grade_case(
     extraction_seconds: float = 0.0,
     effective_seconds: float = 0.0,
 ) -> CaseResult:
-    """Compare final production hole scores to one numeric answer key."""
     actual_by_hole: dict[int, Mapping[str, Any]] = {}
     for row in hole_scores:
         hole_number = row.get("hole_number")
@@ -295,7 +279,6 @@ def _make_upload(image_name: str, image_bytes: bytes) -> UploadFile:
 
 
 def prepare_image_for_upload(image_name: str, image_bytes: bytes) -> tuple[str, bytes]:
-    """Apply the Scan UI's 2000px/Q80 image policy to one eval fixture."""
     content_type = mimetypes.guess_type(image_name)[0] or ""
     if not content_type.startswith("image/") or content_type == "image/gif":
         return image_name, image_bytes
@@ -348,7 +331,6 @@ async def run_suite(
     extract: Optional[ExtractCallable] = None,
     clock: Callable[[], float] = time.perf_counter,
 ) -> SuiteRun:
-    """Run each unique image through production OCR once, then grade every case."""
     if prefetch is None or extract is None:
         from api.routers.scan import extract_scan, prefetch_ocr
 
@@ -518,7 +500,6 @@ def render_report(run: SuiteRun, *, suite: str = "quick") -> str:
 
 
 def exit_code_for_run(run: SuiteRun) -> int:
-    """Accuracy failures are informational; only a wholly unusable run fails."""
     return 0 if run.completed_cases > 0 else 2
 
 

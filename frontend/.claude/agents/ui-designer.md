@@ -61,7 +61,6 @@ This project has a defined visual language. All plans must adhere to it unless e
 
 ### Dark Mode & Accessibility
 - Dark mode via `:root.dark`. Card bg `#18191A`, borders `#2a2d30`, text `#f1f5f9`
-- Always use `getColorBlindPalette()` overrides from `src/lib/accessibility.ts` when rendering score colors in charts
 
 ---
 
@@ -109,8 +108,8 @@ Every plan MUST include all of the following sections:
 Exhaustive list of every screen or component being added or changed:
 ```
 - /src/pages/NewPage.tsx              → new page
-- /src/components/ExistingCard.tsx    → modified: add new metrics row
-- /src/components/NewModal.tsx        → new component
+- /src/brand/components/ExistingCard.tsx → modified: add new metrics row
+- /src/pages/<page>/components/NewSheet.tsx → new component
 ```
 Check existing files before listing new ones — reuse first.
 
@@ -153,14 +152,14 @@ Always use actual field names from the backend models/API. Reference CLAUDE.md a
 
 ## Rules
 
-1. **Reuse before inventing.** Always check for existing components before designing new ones. Reference `src/components/`, `src/pages/`, and your memory file.
+1. **Reuse before inventing.** Always check for existing components before designing new ones. Reference `src/brand/`, `src/pages/`, and your memory file.
 2. **Match the visual language.** Follow the established design system exactly unless explicitly directed to deviate — and document any deviation.
 3. **Design all states.** Never spec only the happy path. Empty, error, and loading states are required for every data-displaying component.
 4. **Align with the API.** If a backend plan or existing API exists, confirm your data mapping uses the correct field names. Reference `api/request_models.py` and model definitions in `models/` for field names.
 5. **Be precise about copy.** Write exact label text, button labels, empty state messages, and error messages. The engineer should not need to invent copy.
 6. **No implementation code.** Do not write React, TypeScript, CSS, or any other code. Describe intent; let the engineer implement.
 7. **Confidence display rule.** Per project convention: only `strokes` fields count as actionable review items. Null putts shows N/A. Respect this in any scan-related UI.
-8. **Score colors are semantic.** Always specify score type colors by their semantic meaning (birdie = `#059669`, bogey = `#ef4444`, etc.) and note that color-blind palette overrides must be used in charts.
+8. **Score colors are semantic.** Always specify score type colors by their semantic meaning (birdie = `#059669`, bogey = `#ef4444`, etc.).
 
 ---
 

@@ -72,7 +72,6 @@ class StatefulPrivateS3:
         class Paginator:
             def paginate(self, **params):
                 assert params == {"Bucket": "private-test", "Prefix": PREFIX}
-                # One item per page exercises real iteration across page boundaries.
                 yield {}
                 for key in owner.objects:
                     if key.startswith(params["Prefix"]):
@@ -193,7 +192,6 @@ def test_listing_is_paginated_and_deletion_only_targets_the_selected_report():
     store = make_store()
     first, second = report(), report()
     store.save_sync(first)
-    # An existing report written before timestamp naming remains unchanged.
     from services.scan_report_sanitizer import sanitize_scorecard
     image, media = sanitize_scorecard(second.image, second.media_type)
     legacy = report_object_key(second.retry_key)
@@ -304,7 +302,7 @@ def test_retry_recovers_lost_acknowledgement_without_rewriting_timestamp_or_ciph
 
 
 @pytest.mark.parametrize("timestamp,content", [
-    (None, b""), ("2026-10-05T06:07:52Z", b""), (datetime(2026, 10, 5), b""),
+    (None, b""), ("2026-10-05T06:07:52Z", b""), (datetime(2026, 10, 5), b""),  # noqa: DTZ001
     (datetime(2026, 10, 5, tzinfo=timezone.utc), b"nonempty"),
 ])
 def test_invalid_reservation_fails_closed_without_writing_an_encrypted_report(timestamp, content):

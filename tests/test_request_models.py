@@ -1,15 +1,34 @@
-from uuid import uuid4
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID, uuid4
 
 import pytest
+from fastapi import HTTPException
 from pydantic import ValidationError
 
+from analytics import handicap as hcap
 from api.auth_schemas import (
     ForgotPasswordRequest,
     LoginRequest,
     RegisterRequest,
     ResendVerificationRequest,
 )
+from api.main import app
 from api.request_models import HoleScoreInput, SaveRoundRequest, TeeInput
+from api.round_responses import round_summary
+from api.routers import ai_insights, courses, rounds, stats, users
+from database.exceptions import DuplicateError, IntegrityError, NotFoundError
+from models import Course, Hole, HoleScore, Round, User, UserTee
+from models.course import CourseSummary
+from tests.helpers import make_http_request, make_mock_database
+from tests.route_fixtures import (
+    friendship_row,
+    listed_round,
+    pebble_beach,
+    pebble_beach_summary,
+    played_round,
+    profile_user,
+)
 
 
 def test_register_request_normalizes_profile_fields():
@@ -99,3 +118,35 @@ def test_save_round_request_preserves_partial_tee_yardages():
 def test_save_round_request_rejects_invalid_payload(payload):
     with pytest.raises(ValidationError):
         SaveRoundRequest.model_validate(payload)
+
+
+def test_user_request_validation():
+    assert users.CreateUserTeeRequest(name="Blue", hole_yardages={"1": 400}).hole_yardages == {1: 400}
+    assert users.UpdateUserRequest(handicap="+3").handicap == -3
+    assert users.SendFriendRequest(addressee_friend_code=" ab-12 ").addressee_friend_code == "AB-12"
+    with pytest.raises(ValidationError):
+        users.SendFriendRequest()
+    with pytest.raises(ValidationError):
+        users.SendFriendRequest(addressee_user_id=uuid4(), addressee_friend_code="ABCD")
+    with pytest.raises(ValidationError):
+        users.CreateUserTeeRequest(name="Blue", hole_yardages={"bad": 400})
+
+
+def test_friendship_status_is_typed():
+    response_status = users.FriendshipResponse.model_json_schema()["properties"]["status"]
+    assert response_status["enum"] == ["pending", "accepted", "declined", "blocked"]
+
+    request_status = users.FriendshipStatusRequest.model_json_schema()["properties"]["status"]
+    assert request_status["enum"] == ["accepted", "declined", "blocked"]
+    assert users.FriendshipStatusRequest(status="declined").status == "declined"
+    with pytest.raises(ValidationError):
+        users.FriendshipStatusRequest(status="pending")
+    with pytest.raises(ValidationError):
+        users.FriendshipResponse(
+            id="f-1",
+            requester_id="u-1",
+            addressee_id="u-2",
+            status="maybe",
+            created_at="",
+            updated_at="",
+        )

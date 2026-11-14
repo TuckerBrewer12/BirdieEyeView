@@ -1,8 +1,10 @@
 # Failed scan reporting
 
-The signed-in scan page and public scanner share a Report failed scan control.
-It submits only after a click. Replacing the file or starting a new scan clears
-the old report state. A report retry keeps its independent retry key.
+The scan page and the landing page's try-it share one control: "Report scan",
+a small link in the failed scan's banner. It opens a dialog that says what is
+sent (the photo and why it failed, nothing about the account), and nothing is
+sent until the golfer taps Send report. A new photo or a new scan clears the old
+report. A retry keeps the report's retry key.
 
 ## Durable storage and rollout
 
@@ -212,34 +214,33 @@ encryption without requesting those APIs. See
 
 ## Frontend integration
 
-- `ReportFailedScan` shows the error beside a red brand Button, with the action
-  wrapping below on mobile. The button matches the error's light/dark red.
-- `useFailedScanReport` holds submission state and accepts a repository.
-- `scanReportRepository` owns anonymous multipart transport.
-- `useScan` and `usePublicScan` capture the failed attempt; each UI renders the
-  same reporting component.
-
-This branch remains based on main. Tucker's unmerged frontend refactor moves
-the public scan UI into `pages/landing-page/sections/TryItYourselfSection.tsx`
-and exposes its state through `useTryItYourselfViewModel`. When combining the
-branches, pass through `report` from `usePublicScan` and render the shared report
-component there. Preserve the brand Button's `danger` variant and theme tokens
-when combining the branches; they reference the existing red error colors.
+- `ScanReport` (`brand/components`) is the banner's link and its
+  `ConfirmDialog`. A failed send shows in the dialog; once sent, the link reads
+  "Report sent" with a check and keeps focus.
+- `useFailedScanReport` is a `useMutation` keyed by the report's retry key
+  (`queryKeys.scanReport`) and read back with `useMutationState`, so a sent
+  report still shows as sent after the golfer leaves the scan page and returns.
+- `scanReportRepository` calls `api.reportFailedScan`, which sends the multipart
+  form without credentials or a referrer. The endpoint's responses are typed
+  (`ScanReportResponse`, and `ScanReportErrorResponse` for a 503).
+- `useScanPageViewModel` and `useTryItYourselfViewModel` keep the failed attempt
+  and pass `report` to the banner.
 
 ## Focused verification
 
 ```bash
 .venv/bin/python -m pytest -q tests/test_scan_report_sanitizer.py tests/test_scan_report_crypto.py tests/test_scan_report_storage.py tests/test_scan_report_cli.py tests/test_scan_report_logging.py tests/test_scan_report_routes.py tests/test_scan_report_service.py tests/test_scan_router_helpers.py tests/test_api_main.py
 cd frontend
-npm test -- src/data/scanReportRepository.test.ts src/hooks/tests/useFailedScanReport.test.tsx src/hooks/tests/scanFailureLifecycle.test.tsx
-npm run test:screenshots -- src/components/scan/tests/ScanReport.screenshot.spec.ts --workers=1
+npx vitest run src/data/tests/scanReportRepository.test.ts src/data/tests/useFailedScanReportTest.tsx
+npm run test:espresso -- src/pages/scan/tests/ScanPage.espresso.spec.ts src/pages/landing-page/tests/LandingPage.espresso.spec.ts
+npm run test:screenshots -- src/brand/tests/screenshots/components/ScanReport.screenshot.spec.ts src/pages/scan/tests/ScanPage.screenshot.spec.ts
 ```
 
-The browser tests use a named stateful fake backend and a screen robot. They
-exercise both scan entrypoints, retry, pending/saved/unavailable states, and
-credential omission at desktop/mobile sizes in light/dark modes. Screenshots
-are attached for visual review, not compared to committed baselines. No live
-OCR or database is contacted.
+The espresso flows run on `FakeBackend` through each page's robot: a sent
+report, one that can't be stored, a sent report after leaving the page, a new
+photo clearing it, and a report from the landing page without an account. The
+screenshots cover the banner, sent and not, and the dialog. No live OCR or
+database is contacted.
 
 Storage tests use real decoders and AES-GCM with synthetic metadata-bearing files,
 a stateful S3 fake for retry/failure behavior, and SDK request stubs for

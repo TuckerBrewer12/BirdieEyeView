@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
@@ -49,8 +49,8 @@ def auth_isolation(monkeypatch):
     monkeypatch.setattr(auth, "hash_one_time_token", lambda value: f"digest:{value}")
     monkeypatch.setattr(auth, "generate_one_time_token", lambda: "t" * 32)
     monkeypatch.setattr(auth, "create_access_token", lambda user_id: f"jwt:{user_id}")
-    monkeypatch.setattr(auth, "send_verification_email", MagicMock())
-    monkeypatch.setattr(auth, "send_password_reset_email", MagicMock())
+    monkeypatch.setattr(auth, "send_verification_email", AsyncMock())
+    monkeypatch.setattr(auth, "send_password_reset_email", AsyncMock())
 
 
 @pytest.mark.parametrize(
@@ -146,7 +146,7 @@ async def test_register_creates_user_and_verification(auth_user):
     assert response.requires_email_verification is True
     db.users.create_user.assert_awaited_once()
     db.users.create_auth_token.assert_awaited_once()
-    auth.send_verification_email.assert_called_once()
+    auth.send_verification_email.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -229,7 +229,7 @@ async def test_resend_verification_returns_neutral_response(auth_user):
     response = await auth.resend_verification(ResendVerificationRequest(email=auth_user.email), make_http_request(), db)
 
     assert "if this account exists" in response.message.lower()
-    auth.send_verification_email.assert_called_once()
+    auth.send_verification_email.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -241,13 +241,13 @@ async def test_resend_verification_skips_ineligible_account(auth_user, account_e
 
     await auth.resend_verification(ResendVerificationRequest(email=auth_user.email), make_http_request(), db)
 
-    auth.send_verification_email.assert_not_called()
+    auth.send_verification_email.assert_not_awaited()
 
 
 @pytest.mark.asyncio
 async def test_verification_email_failure_does_not_escape(monkeypatch, auth_user):
     db = make_auth_database(auth_user)
-    monkeypatch.setattr(auth, "send_verification_email", MagicMock(side_effect=RuntimeError("smtp")))
+    monkeypatch.setattr(auth, "send_verification_email", AsyncMock(side_effect=RuntimeError("smtp")))
 
     await auth._issue_verification_token(db, auth_user, make_http_request())
 
@@ -364,7 +364,7 @@ async def test_forgot_password_issues_reset_token(auth_user):
 
     assert "if this account exists" in response.message.lower()
     db.users.create_auth_token.assert_awaited_once()
-    auth.send_password_reset_email.assert_called_once()
+    auth.send_password_reset_email.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -377,7 +377,7 @@ async def test_forgot_password_skips_ineligible_account(auth_user, account_exist
 
     await auth.forgot_password(ForgotPasswordRequest(email=auth_user.email), make_http_request(), db)
 
-    auth.send_password_reset_email.assert_not_called()
+    auth.send_password_reset_email.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -385,7 +385,7 @@ async def test_password_reset_email_failure_does_not_escape(monkeypatch, auth_us
     auth_user.email_verified = True
     db = make_auth_database(auth_user)
     db.users.get_user_by_email.return_value = auth_user
-    monkeypatch.setattr(auth, "send_password_reset_email", MagicMock(side_effect=RuntimeError("smtp")))
+    monkeypatch.setattr(auth, "send_password_reset_email", AsyncMock(side_effect=RuntimeError("smtp")))
 
     await auth.forgot_password(ForgotPasswordRequest(email=auth_user.email), make_http_request(), db)
 

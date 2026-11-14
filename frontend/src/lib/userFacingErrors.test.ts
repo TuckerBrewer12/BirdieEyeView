@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fetchWithUserFacingError,
   getUserFacingError,
+  messageFrom,
   parseJsonResponse,
   USER_FACING_ERRORS,
 } from "./userFacingErrors";
@@ -10,10 +11,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("messageFrom", () => {
+  it("keeps an Error message and falls back otherwise", () => {
+    expect(messageFrom(new Error("Course not found."), "Missing.")).toBe("Course not found.");
+    expect(messageFrom("nope", "Missing.")).toBe("Missing.");
+  });
+});
+
 describe("fetchWithUserFacingError", () => {
   it("hides network failure details", async () => {
     const networkError = "getaddrinfo ENOTFOUND internal-api.example";
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error(networkError)));
+    vi.stubGlobal("fetch", () => Promise.reject(new Error(networkError)));
 
     await expect(
       fetchWithUserFacingError("/api/scan", undefined, USER_FACING_ERRORS.scan),

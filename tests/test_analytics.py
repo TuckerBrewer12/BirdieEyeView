@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, timezone
 
 import pytest
 
@@ -18,7 +18,10 @@ from analytics.stats import (
     putts_per_gir,
     putts_per_gir_comparison,
     putts_per_round,
+    rolling_average,
+    round_half_up,
     round_summary,
+    score_mix_from_to_par,
     scrambling_comparison,
     score_comparison,
     score_variance_by_hole,
@@ -76,8 +79,8 @@ def _build_rounds():
         for i in range(1, 19)
     ]
 
-    round_1 = Round(id="r1", course=course, date=datetime(2026, 2, 1), hole_scores=round_1_scores)
-    round_2 = Round(id="r2", course=course, date=datetime(2026, 2, 2), hole_scores=round_2_scores)
+    round_1 = Round(id="r1", course=course, date=datetime(2026, 2, 1, tzinfo=timezone.utc), hole_scores=round_1_scores)
+    round_2 = Round(id="r2", course=course, date=datetime(2026, 2, 2, tzinfo=timezone.utc), hole_scores=round_2_scores)
     return [round_1, round_2]
 
 
@@ -235,7 +238,6 @@ def test_score_variance_by_hole():
     assert rows[1]["variance_rank"] == 2
 
     by_hole = {row["hole_number"]: row for row in rows}
-    # Hole 2 scores are 4 and 4 in synthetic data: zero variance.
     assert by_hole[2]["score_variance"] == pytest.approx(0.0)
     assert by_hole[2]["score_std_dev"] == pytest.approx(0.0)
     assert by_hole[2]["sample_size"] == 2
@@ -245,12 +247,10 @@ def test_three_putts_per_round():
     rounds = _build_rounds()
     rows = three_putts_per_round(rounds)
 
-    # In round 1, all holes are 2-putts.
     assert rows[0]["three_putt_count"] == 0
     assert rows[0]["holes_with_putt_data"] == 18
     assert rows[0]["three_putt_percentage"] == 0.0
 
-    # In round 2, odd holes are 2-putts and even holes are 1-putts.
     assert rows[1]["three_putt_count"] == 0
     assert rows[1]["holes_with_putt_data"] == 18
     assert rows[1]["three_putt_percentage"] == 0.0
@@ -260,14 +260,10 @@ def test_scrambling_per_round():
     rounds = _build_rounds()
     rows = scrambling_per_round(rounds)
 
-    # Round 1: holes 11-18 are missed GIRs; par4 on 11-14 are 4 (success),
-    # par5 on 15-18 are 4 (not par, no success).
     assert rows[0]["scramble_opportunities"] == 8
     assert rows[0]["scramble_successes"] == 4
     assert rows[0]["scrambling_percentage"] == 50.0
 
-    # Round 2: missed GIR on odd holes only (9 opps), all odd scores are 5.
-    # Success only on odd par5 holes (15,17): 2 successes.
     assert rows[1]["scramble_opportunities"] == 9
     assert rows[1]["scramble_successes"] == 2
     assert rows[1]["scrambling_percentage"] == pytest.approx((2 / 9) * 100)
@@ -279,6 +275,7 @@ def test_score_trend():
 
     assert [row["total_score"] for row in rows] == [72, 81]
     assert [row["to_par"] for row in rows] == [0, 9]
+    assert [row["par"] for row in rows] == [72, 72]
 
 
 def test_score_trend_on_this_course_orders_by_date():
@@ -314,8 +311,8 @@ def test_scoring_by_yardage_buckets_handles_tee_label_variants():
     round_obj = Round(
         id="r-yardage-1",
         course=course,
-        tee_box="Blue tees",  # Would not match Course.get_tee strict equality
-        date=datetime(2026, 3, 1),
+        tee_box="Blue tees",
+        date=datetime(2026, 3, 1, tzinfo=timezone.utc),
         hole_scores=hole_scores,
     )
 
@@ -346,7 +343,7 @@ def test_scoring_by_yardage_buckets_falls_back_to_user_tee_yardages():
         course=course,
         tee_box="Unknown Tee",
         user_tee=user_tee,
-        date=datetime(2026, 3, 2),
+        date=datetime(2026, 3, 2, tzinfo=timezone.utc),
         hole_scores=hole_scores,
     )
 
@@ -382,11 +379,9 @@ def test_course_difficulty_profile_by_hole():
     assert rows[0]["difficulty_rank"] == 1
     assert rows[1]["difficulty_rank"] == 2
 
-    # Synthetic data: hole 1 is hardest at +1.5
     assert rows[0]["hole_number"] == 1
     assert rows[0]["average_to_par"] == pytest.approx(1.5)
 
-    # Lowest-difficulty hole should be under par on this dataset.
     assert rows[-1]["average_to_par"] == pytest.approx(-1.0)
 
 
@@ -397,12 +392,10 @@ def test_gir_percentage_by_hole():
     assert len(rows) == 18
     by_hole = {row["hole_number"]: row for row in rows}
 
-    # Hole 1: GIR true in round 1, false in round 2 -> 50%
     assert by_hole[1]["sample_size"] == 2
     assert by_hole[1]["gir_hits"] == 1
     assert by_hole[1]["gir_percentage"] == pytest.approx(50.0)
 
-    # Hole 2: GIR true in both rounds -> 100%
     assert by_hole[2]["sample_size"] == 2
     assert by_hole[2]["gir_hits"] == 2
     assert by_hole[2]["gir_percentage"] == pytest.approx(100.0)
@@ -415,11 +408,9 @@ def test_average_putts_by_hole():
     assert len(rows) == 18
     by_hole = {row["hole_number"]: row for row in rows}
 
-    # Hole 1: putts are 2 and 2 -> 2.0 avg
     assert by_hole[1]["sample_size"] == 2
     assert by_hole[1]["average_putts"] == pytest.approx(2.0)
 
-    # Hole 2: putts are 2 and 1 -> 1.5 avg
     assert by_hole[2]["sample_size"] == 2
     assert by_hole[2]["average_putts"] == pytest.approx(1.5)
 
@@ -430,13 +421,11 @@ def test_score_type_distribution_by_hole():
     assert len(rows) == 18
     by_hole = {row["hole_number"]: row for row in rows}
 
-    # Hole 1 (par 3): scores are 4 and 5 -> bogey 50%, double 50%
     assert by_hole[1]["sample_size"] == 2
     assert by_hole[1]["bogey"] == pytest.approx(50.0)
     assert by_hole[1]["double_bogey"] == pytest.approx(50.0)
     assert by_hole[1]["par"] == 0.0
 
-    # Hole 2 (par 3): scores are 4 and 4 -> bogey 100%
     assert by_hole[2]["sample_size"] == 2
     assert by_hole[2]["bogey"] == pytest.approx(100.0)
 
@@ -456,15 +445,10 @@ def test_score_type_distribution_per_round():
     rounds = _build_rounds()
     rows = score_type_distribution_per_round(rounds)
 
-    # Round 1: all strokes=4; holes 1-4 par3 (+1 bogey), holes 5-14 par4 (par), holes 15-18 par5 (birdie)
     assert rows[0]["bogey"] == pytest.approx((4 / 18) * 100)
     assert rows[0]["par"] == pytest.approx((10 / 18) * 100)
     assert rows[0]["birdie"] == pytest.approx((4 / 18) * 100)
 
-    # Round 2 on this synthetic dataset:
-    # holes 1-4 (par3): +2 on odd, +1 on even -> 2 double, 2 bogey
-    # holes 5-14 (par4): +1 on odd, 0 on even -> 5 bogey, 5 par
-    # holes 15-18 (par5): 0 on odd, -1 on even -> 2 par, 2 birdie
     assert rows[1]["double_bogey"] == pytest.approx((2 / 18) * 100)
     assert rows[1]["bogey"] == pytest.approx((7 / 18) * 100)
     assert rows[1]["par"] == pytest.approx((7 / 18) * 100)
@@ -498,7 +482,7 @@ def test_scoring_vs_hole_handicap():
 
 def test_notable_achievements_lifetime_and_one_year():
     rounds = _build_rounds()
-    summary = notable_achievements(rounds, reference_date=datetime(2026, 2, 15), days=365)
+    summary = notable_achievements(rounds, reference_date=date(2026, 2, 15), days=365)
 
     assert summary["window_days"] == 365
     assert summary["scoring_records"]["lifetime"]["lowest_round"] == 72
@@ -529,6 +513,7 @@ def test_notable_achievements_lifetime_and_one_year():
     assert summary["best_performance_streaks_events"]["lifetime"]["longest_par_streak"] == {
         "date": "2026/2/1",
         "course": "Demo Course",
+        "round_id": "r1",
     }
 
     assert summary["home_course_records"]["lifetime"]["home_course_name"] is None
@@ -565,3 +550,87 @@ def test_notable_achievements_lifetime_and_one_year():
     assert summary["gir_milestones"]["one_year"]["highest_gir_percentage"] == pytest.approx((10 / 18) * 100)
     assert summary["gir_milestones"]["one_year"]["gir_milestones_achieved_from_lifetime_set"] == 3
     assert summary["gir_milestones_events"]["lifetime"]["most_gir_in_round"] == {"date": "2026/2/1", "course": "Demo Course", "round_id": "r1"}
+
+
+def test_round_half_up_takes_a_half_up_as_the_app_always_has():
+    assert round_half_up(82.25) == 82.3
+    assert round_half_up(82.24) == 82.2
+    assert round_half_up(0.125, 2) == 0.13
+    assert round_half_up(-0.25) == -0.2
+
+
+def test_rolling_average_over_five_rounds_skips_unscored_ones():
+    assert rolling_average([80, None, 90, 85, 75, 70, 100]) == [80.0, 80.0, 85.0, 85.0, 82.5, 80.0, 84.0]
+    assert rolling_average([82, 83, 82, 82]) == [82.0, 82.5, 82.3, 82.3]
+    assert rolling_average([None, 80]) == [None, 80.0]
+    assert rolling_average([]) == []
+
+
+def test_score_mix_from_to_par_shares_every_kind_to_a_hundredth():
+    assert score_mix_from_to_par([-3, -1, 0, 0, 1, 4, 6]) == {
+        "eagle": 14.29,
+        "birdie": 14.29,
+        "par": 28.57,
+        "bogey": 14.29,
+        "double": 0.0,
+        "triple": 0.0,
+        "quad": 28.57,
+    }
+    assert set(score_mix_from_to_par([]).values()) == {0.0}
+
+
+def test_scoring_by_yardage_buckets_send_each_bands_average_and_score_mix():
+    course = _build_course_with_yardages()
+    strokes = {1: 2, 2: 5}
+    hole_scores = [
+        HoleScore(hole_number=i, strokes=strokes.get(i, course.get_hole(i).par), green_in_regulation=True)
+        for i in range(1, 19)
+    ]
+    round_obj = Round(id="r-yardage", course=course, tee_box="Blue", date=datetime(2026, 3, 1, tzinfo=timezone.utc), hole_scores=hole_scores)
+
+    par3 = next(row for row in scoring_by_yardage_buckets([round_obj]) if row["par"] == 3)
+    assert par3["bucket_label"] == "150–199"
+    assert par3["average_to_par"] == pytest.approx(0.25)
+    assert par3["average_strokes"] == pytest.approx(3.25)
+    assert par3["score_mix"] == {
+        "eagle": 0.0, "birdie": 25.0, "par": 50.0, "bogey": 0.0, "double": 25.0, "triple": 0.0, "quad": 0.0,
+    }
+
+
+def test_notable_achievements_mark_each_milestone_first_reached_in_the_window():
+    rounds = _build_rounds()
+    course = rounds[0].course
+    ace = Round(
+        id="r3",
+        course=course,
+        date=datetime(2026, 2, 10, tzinfo=timezone.utc),
+        hole_scores=[
+            HoleScore(
+                hole_number=i,
+                strokes=1 if i == 1 else course.get_hole(i).par,
+                putts=0 if i == 1 else 2,
+                green_in_regulation=False,
+            )
+            for i in range(1, 19)
+        ],
+    )
+    summary = notable_achievements([*rounds, ace], reference_date=date(2026, 2, 12), days=10)
+
+    putt_breaks = {row["threshold"]: row["achievement"] for row in summary["putting_milestones"]["lifetime"]["putt_breaks"]}
+    assert {t: putt_breaks[t]["in_window"] for t in (45, 42, 39, 36, 33, 30)} == {
+        45: False, 42: False, 39: False, 36: True, 33: True, 30: True,
+    }
+    assert summary["putting_milestones"]["one_year"]["putting_milestones_achieved_from_lifetime_set"] == 3
+
+    gir_breaks = [row["achievement"] for row in summary["gir_milestones"]["lifetime"]["gir_breaks"] if row["achievement"]]
+    assert [event["in_window"] for event in gir_breaks] == [False, False, False]
+    assert summary["gir_milestones"]["one_year"]["gir_milestones_achieved_from_lifetime_set"] == 0
+
+    lifetime = summary["round_milestones"]["lifetime"]
+    assert all(not row["achievement"]["in_window"] for row in lifetime["score_breaks"] if row["achievement"])
+    for key in ("first_round_under_par", "first_eagle", "first_hole_in_one"):
+        assert lifetime[key]["round_id"] == "r3"
+        assert lifetime[key]["in_window"] is True
+    assert summary["round_milestones"]["one_year"] == {"new_personal_records_achieved_count": 3}
+
+    assert "in_window" not in summary["scoring_records_events"]["lifetime"]["lowest_round"]

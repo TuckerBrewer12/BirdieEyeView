@@ -31,7 +31,6 @@ def test_download_authenticates_then_writes_only_generic_private_files(tmp_path,
     store = make_store()
     item = report()
     if legacy:
-        # A report saved before images were stored as JPEG holds a clean PNG.
         output = BytesIO()
         Image.new("RGB", (30, 20), "white").save(output, "PNG")
         store.client.objects[report_object_key(item.retry_key)] = store.cipher.encrypt(item, output.getvalue(), "image/png")
@@ -132,9 +131,8 @@ def test_smoke_exercises_private_storage_retries_and_cleans_synthetic_data(monke
         status_code = 403
     urls = []
     def private_get(url, **kwargs):
-        # A 403/404 for a fabricated UUID-only URL would not verify the saved object.
         key = url.split(".storage.invalid/", 1)[1]
-        assert key in store.client.objects and store.client.objects[key]
+        assert store.client.objects.get(key)
         urls.append(url)
         return Denied()
     monkeypatch.setattr(cli.httpx, "get", private_get)

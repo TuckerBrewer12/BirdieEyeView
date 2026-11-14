@@ -7,7 +7,6 @@ from .tee import Tee
 from .user import User
 from .user_tee import UserTee
 
-# Resolve forward refs like User.rounds -> Round once at import time.
 User.model_rebuild()
 
 __all__ = ["BaseGolfModel", "Course", "Hole", "HoleScore", "Round", "Tee", "User"]

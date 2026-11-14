@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
+import { fontsLoaded } from "../../testing/fontsLoaded";
 
-/** Screen robot for isolated brand-kit stories. */
 export class BrandKitRobot {
   private readonly page: Page;
 
@@ -9,9 +9,6 @@ export class BrandKitRobot {
   }
 
   async open(story: string): Promise<this> {
-    await this.page.route("**/api/**", async (route) => {
-      await route.fulfill({ status: 401, contentType: "application/json", body: "{}" });
-    });
     await this.page.goto(`/__brand__/${story}`);
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.page.getByTestId("brand-stage")).toBeVisible();
@@ -19,14 +16,36 @@ export class BrandKitRobot {
   }
 
   async capture(name: string): Promise<this> {
+    await fontsLoaded(this.page);
     await expect(this.page.getByTestId("brand-stage")).toHaveScreenshot(name);
     return this;
   }
-}
 
-export async function onBrandKit(
-  page: Page,
-  run: (kit: BrandKitRobot) => Promise<void>,
-): Promise<void> {
-  await run(new BrandKitRobot(page));
+  async openFrame(story: string): Promise<this> {
+    await this.page.goto(`/__brand__/${story}`);
+    await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await expect(this.page.getByTestId("brand-frame")).toBeVisible();
+    return this;
+  }
+
+  async captureFrame(name: string): Promise<this> {
+    await fontsLoaded(this.page);
+    await expect(this.page).toHaveScreenshot(name);
+    return this;
+  }
+
+  async tap(name: string): Promise<this> {
+    await this.page.getByRole("button", { name, exact: true }).first().click();
+    return this;
+  }
+
+  async hover(text: string): Promise<this> {
+    await this.page.getByText(text, { exact: true }).first().hover();
+    return this;
+  }
+
+  async sees(selector: string): Promise<this> {
+    await expect(this.page.locator(selector).first()).toBeVisible();
+    return this;
+  }
 }

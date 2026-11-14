@@ -1,10 +1,36 @@
-import type { DashboardData, RoundSummary, Round, CourseSummary, Course, User, Milestone, Friendship } from "@/types/golf";
-import type { AnalyticsData, AnalyticsFilters, CourseAnalyticsData, RoundComparison, GoalReport } from "@/types/analytics";
+import type { AnalyticsFilters } from "@/domain/analyticsFilters";
+import type { BenchmarkTarget } from "@/domain/benchmark";
+import type {
+  AnalyticsDto,
+  AuthUserDto,
+  BenchmarkComparisonDto,
+  CourseAnalyticsDto,
+  CourseDto,
+  CourseSummaryDto,
+  DashboardDto,
+  FriendshipDto,
+  FriendshipStatusRequestDto,
+  GoalReportDto,
+  OcrTextDto,
+  PlayedCourseDto,
+  RoundComparisonDto,
+  RoundDto,
+  RoundSummaryDto,
+  SaveScanDto,
+  SaveScanRequestDto,
+  ScanDto,
+  ScanReportDto,
+  ScanReportErrorDto,
+  UserDto,
+} from "@/types/api";
 import { apiUrl } from "@/lib/apiBase";
 import { withAuthHeaders } from "@/lib/sessionToken";
+import type { FailedScanAttempt } from "@/domain/scanReport";
+import { readScanFailure, ScanFailedError } from "@/lib/scanReports";
 import {
   fetchWithUserFacingError,
   getUserFacingError,
+  messageFrom,
   parseJsonResponse,
   USER_FACING_ERRORS,
 } from "@/lib/userFacingErrors";
@@ -20,17 +46,40 @@ async function fetchJSON<T>(path: string): Promise<T> {
   return parseJsonResponse<T>(res);
 }
 
-async function postJSON<T>(path: string, body: unknown): Promise<T> {
+async function postJSON<T>(path: string, body: unknown, fallback?: string): Promise<T> {
   const res = await fetchWithUserFacingError(apiUrl(`/api${path}`), {
     method: "POST",
     credentials: "include",
     headers: withAuthHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
-  });
+  }, fallback);
   if (!res.ok) {
-    throw new Error(await getUserFacingError(res));
+    throw new Error(await getUserFacingError(res, fallback));
   }
-  return parseJsonResponse<T>(res);
+  return parseJsonResponse<T>(res, fallback);
+}
+
+async function postForm(path: string, fields: Record<string, string | File>, fallback?: string): Promise<Response> {
+  const form = new FormData();
+  for (const [name, value] of Object.entries(fields)) form.append(name, value);
+  return fetchWithUserFacingError(apiUrl(`/api${path}`), {
+    method: "POST",
+    credentials: "include",
+    headers: withAuthHeaders(),
+    body: form,
+  }, fallback);
+}
+
+function isReportError(payload: unknown): payload is ScanReportErrorDto {
+  return typeof payload === "object" && payload !== null && "code" in payload;
+}
+
+async function reportFailure(res: Response): Promise<string> {
+  if (res.status === 429) return USER_FACING_ERRORS.tooManyReports;
+  const payload: unknown = await res.json().catch(() => null);
+  return isReportError(payload) && payload.code === "report_storage_unavailable"
+    ? USER_FACING_ERRORS.reportUnavailable
+    : USER_FACING_ERRORS.reportNotSaved;
 }
 
 async function putJSON<T>(path: string, body: unknown): Promise<T> {
@@ -60,14 +109,81 @@ async function patchJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 export const api = {
+  getAuthSession: async (): Promise<AuthUserDto | null> => {
+    const res = await fetchWithUserFacingError(apiUrl("/api/auth/me"), {
+      credentials: "include",
+      headers: withAuthHeaders(),
+    }, USER_FACING_ERRORS.account);
+    if (res.status === 401 || res.status === 403) return null;
+    if (!res.ok) {
+      throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.account));
+    }
+    return parseJsonResponse<AuthUserDto>(res, USER_FACING_ERRORS.account);
+  },
+
+  readScanText: async (photo: File): Promise<string | null> => {
+    const res = await postForm("/scan/ocr", { file: photo });
+    if (!res.ok) return null;
+    const body = await parseJsonResponse<OcrTextDto>(res);
+    return body.ocr_text || null;
+  },
+
+  extractScan: async (fields: Record<string, string | File>): Promise<ScanDto> => {
+    let res: Response;
+    try {
+      res = await postForm("/scan/extract", fields, USER_FACING_ERRORS.scan);
+    } catch (error) {
+      throw new ScanFailedError(messageFrom(error, USER_FACING_ERRORS.scan), {
+        category: "network_error", stage: "unknown", http_status: null,
+      });
+    }
+    if (!res.ok) {
+      const failure = await readScanFailure(res);
+      throw new ScanFailedError(await getUserFacingError(res, USER_FACING_ERRORS.scan), failure);
+    }
+    try {
+      return await parseJsonResponse<ScanDto>(res, USER_FACING_ERRORS.scan);
+    } catch (error) {
+      throw new ScanFailedError(messageFrom(error, USER_FACING_ERRORS.scan), {
+        category: "invalid_response", stage: "unknown", http_status: res.status,
+      });
+    }
+  },
+
+  reportFailedScan: async (attempt: FailedScanAttempt): Promise<ScanReportDto> => {
+    const form = new FormData();
+    form.append("file", attempt.image, `scorecard.${attempt.extension}`);
+    form.append("metadata", JSON.stringify({
+      schema_version: 1,
+      retry_key: attempt.retryKey,
+      category: attempt.failure.category,
+      stage: attempt.failure.stage,
+      http_status: attempt.failure.http_status,
+    }));
+    const res = await fetchWithUserFacingError(apiUrl("/api/scan/reports"), {
+      method: "POST",
+      credentials: "omit",
+      referrerPolicy: "no-referrer",
+      cache: "no-store",
+      body: form,
+    }, USER_FACING_ERRORS.reportNotSaved);
+    if (!res.ok) throw new Error(await reportFailure(res));
+    const report = await parseJsonResponse<ScanReportDto>(res, USER_FACING_ERRORS.reportNotSaved);
+    if (report.status !== "saved") throw new Error(USER_FACING_ERRORS.reportNotSaved);
+    return report;
+  },
+
+  saveScan: (request: SaveScanRequestDto) =>
+    postJSON<SaveScanDto>("/scan/save", request, USER_FACING_ERRORS.saveRound),
+
   getDashboard: (userId: string) =>
-    fetchJSON<DashboardData>(`/stats/dashboard/${userId}`),
+    fetchJSON<DashboardDto>(`/stats/dashboard/${userId}`),
 
   getRoundsForUser: (userId: string, limit = 100, offset = 0) =>
-    fetchJSON<RoundSummary[]>(`/rounds/user/${userId}?limit=${limit}&offset=${offset}`),
+    fetchJSON<RoundSummaryDto[]>(`/rounds/user/${userId}?limit=${limit}&offset=${offset}`),
 
   getRound: (roundId: string) =>
-    fetchJSON<Round>(`/rounds/${roundId}`),
+    fetchJSON<RoundDto>(`/rounds/${roundId}`),
 
   updateRound: (
     roundId: string,
@@ -78,10 +194,10 @@ export const api = {
       weather_conditions?: string;
       course_name_played?: string | null;
     }
-  ) => putJSON<Round>(`/rounds/${roundId}`, body),
+  ) => putJSON<RoundDto>(`/rounds/${roundId}`, body),
 
   linkCourse: (roundId: string, courseId: string) =>
-    postJSON<RoundSummary>(`/rounds/${roundId}/link-course`, { course_id: courseId }),
+    postJSON<RoundSummaryDto>(`/rounds/${roundId}/link-course`, { course_id: courseId }),
 
   deleteRound: async (roundId: string) => {
     const res = await fetchWithUserFacingError(apiUrl(`/api/rounds/${roundId}`), {
@@ -97,33 +213,31 @@ export const api = {
   getCourses: (userId?: string, limit = 50, offset = 0) => {
     const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
     if (userId) params.set("user_id", userId);
-    return fetchJSON<CourseSummary[]>(`/courses?${params}`);
+    return fetchJSON<CourseSummaryDto[]>(`/courses?${params}`);
   },
 
-  searchCourses: (query: string, userId?: string, includeExternal = false) => {
+  searchCourses: (query: string, userId?: string, includeExternal = false, includeRecord = false) => {
     const params = new URLSearchParams({ q: query });
     if (userId) params.set("user_id", userId);
     if (includeExternal) params.set("include_external", "true");
-    return fetchJSON<CourseSummary[]>(`/courses/search?${params}`);
+    if (includeRecord) params.set("include_record", "true");
+    return fetchJSON<CourseSummaryDto[]>(`/courses/search?${params}`);
   },
 
   getCourse: (courseId: string) =>
-    fetchJSON<Course>(`/courses/${courseId}`),
+    fetchJSON<CourseDto>(`/courses/${courseId}`),
 
   getUser: (userId: string) =>
-    fetchJSON<User>(`/users/${userId}`),
+    fetchJSON<UserDto>(`/users/${userId}`),
 
   updateUser: (userId: string, body: { home_course_id?: string | null; handicap?: number | null; scoring_goal?: number | null }) =>
-    patchJSON<User>(`/users/${userId}`, body),
+    patchJSON<UserDto>(`/users/${userId}`, body),
 
   getGoalReport: (userId: string, limit = 50) =>
-    fetchJSON<GoalReport>(`/stats/${userId}/goal-report?limit=${limit}`),
+    fetchJSON<GoalReportDto>(`/stats/${userId}/goal-report?limit=${limit}`),
 
   cloneCourse: (courseId: string, userId: string) =>
-    postJSON<CourseSummary>(`/courses/${courseId}/clone?user_id=${encodeURIComponent(userId)}`, {}),
-
-  getUserHandicap: (userId: string) =>
-    fetchJSON<{ handicap_index: number | null }>(`/users/${userId}/handicap`),
+    postJSON<CourseSummaryDto>(`/courses/${courseId}/clone?user_id=${encodeURIComponent(userId)}`, {}),
 
   getAnalytics: (userId: string, filters: AnalyticsFilters | number = 50) => {
     const f: AnalyticsFilters = typeof filters === "number"
@@ -132,43 +246,35 @@ export const api = {
     const p = new URLSearchParams({ limit: String(f.limit) });
     if (f.timeframe !== "all") p.set("timeframe", f.timeframe);
     if (f.courseId !== "all") p.set("course_id", f.courseId);
-    return fetchJSON<AnalyticsData>(`/stats/analytics/${userId}?${p}`);
+    return fetchJSON<AnalyticsDto>(`/stats/analytics/${userId}?${p}`);
+  },
+
+  getBenchmarkComparison: (userId: string, target: BenchmarkTarget, limit = 20) => {
+    const p = new URLSearchParams({ against: target.against, limit: String(limit) });
+    if (target.against === "handicap") p.set("handicap", String(target.handicap));
+    if (target.against === "friend") p.set("friend_id", target.friendId);
+    return fetchJSON<BenchmarkComparisonDto>(`/stats/${userId}/benchmark?${p}`);
   },
 
   getPlayedCourses: (userId: string) =>
-    fetchJSON<{ id: string; name: string | null; location: string | null }[]>(
-      `/stats/${userId}/played-courses`
-    ),
+    fetchJSON<PlayedCourseDto[]>(`/stats/${userId}/played-courses`),
 
   getRoundComparison: (userId: string, roundId: string) =>
-    fetchJSON<RoundComparison>(`/stats/compare/${userId}/${roundId}`),
+    fetchJSON<RoundComparisonDto>(`/stats/compare/${userId}/${roundId}`),
 
   getCourseAnalytics: (userId: string, courseId: string) =>
-    fetchJSON<CourseAnalyticsData>(`/stats/course-analytics/${userId}/${courseId}`),
+    fetchJSON<CourseAnalyticsDto>(`/stats/course-analytics/${userId}/${courseId}`),
 
-  getMilestones: (userId: string, limit = 12) =>
-    fetchJSON<{ milestones: Milestone[] }>(`/stats/milestones/${userId}?limit=${limit}`),
-
-  getAISuggestions: (userId: string, limit = 50, targetHandicap?: number | null) => {
-    const params = new URLSearchParams({ limit: String(limit) });
-    if (targetHandicap != null) params.set("target_handicap", String(targetHandicap));
-    return fetchJSON<import("@/types/suggestions").AISuggestionsResponse>(
-      `/ai-insights/${userId}?${params}`
-    );
-  },
-
-  getFriendships: (status?: "pending" | "accepted" | "declined" | "blocked") => {
+  getFriendships: (status?: FriendshipDto["status"]) => {
     const params = new URLSearchParams();
     if (status) params.set("status", status);
     const suffix = params.toString() ? `?${params.toString()}` : "";
-    return fetchJSON<Friendship[]>(`/users/me/friends${suffix}`);
+    return fetchJSON<FriendshipDto[]>(`/users/me/friends${suffix}`);
   },
 
   sendFriendRequest: (addresseeFriendCode: string) =>
-    postJSON<Friendship>(`/users/me/friends`, { addressee_friend_code: addresseeFriendCode }),
+    postJSON<FriendshipDto>(`/users/me/friends`, { addressee_friend_code: addresseeFriendCode }),
 
-  updateFriendshipStatus: (
-    friendshipId: string,
-    status: "accepted" | "declined" | "blocked",
-  ) => patchJSON<Friendship>(`/users/me/friends/${friendshipId}`, { status }),
+  updateFriendshipStatus: (friendshipId: string, status: FriendshipStatusRequestDto["status"]) =>
+    patchJSON<FriendshipDto>(`/users/me/friends/${friendshipId}`, { status }),
 };

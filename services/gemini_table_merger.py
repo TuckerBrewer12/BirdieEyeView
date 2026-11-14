@@ -67,7 +67,6 @@ def _split_pipe_row(line: str) -> List[str]:
 
 
 def _source_has_separator_after_out(markdown: str) -> bool:
-    """Return whether the source header proves a non-hole column after OUT."""
     for line in markdown.splitlines():
         cells = _split_pipe_row(line)
         upper = [cell.upper() for cell in cells]
@@ -93,7 +92,6 @@ def _small_value_count(cells: List[str]) -> int:
 
 
 def _normalize_and_validate_merge(source: str, merged: str) -> Optional[str]:
-    """Normalize a provable separator shift and reject malformed merge output."""
     source_has_separator = _source_has_separator_after_out(source)
     normalized_rows: List[List[str]] = []
     header_found = False
@@ -127,8 +125,6 @@ def _normalize_and_validate_merge(source: str, merged: str) -> Optional[str]:
         else:
             front_count = _small_value_count(cells[1:10])
             back_count = _small_value_count(cells[11:20])
-            # A populated half paired with an entirely empty half is not a
-            # valid 18-hole merge. Fall back to the untouched source tables.
             if (front_count >= 4 and back_count == 0) or (back_count >= 4 and front_count == 0):
                 return None
 
@@ -144,14 +140,13 @@ def _normalize_and_validate_merge(source: str, merged: str) -> Optional[str]:
 
 
 async def merge_split_tables(markdown: str) -> str:
-    """Send *markdown* to Gemini Flash; return merged table (or original on failure)."""
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         logger.debug("GOOGLE_API_KEY not set; skipping Gemini merge step")
         return markdown
 
     try:
-        from google import genai  # imported lazily so missing package doesn't break startup
+        from google import genai
 
         client = genai.Client(api_key=api_key)
         prompt = _MERGE_PROMPT.format(markdown=markdown)
@@ -193,5 +188,5 @@ async def merge_split_tables(markdown: str) -> str:
         return markdown
 
     except Exception as exc:
-        logger.warning("Gemini table merge failed; using original markdown. err=%s", exc)
+        logger.warning("Gemini table merge failed; using original markdown. err=%s", exc, exc_info=True)
         return markdown

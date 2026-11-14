@@ -1,23 +1,23 @@
-# Landing and public scanner
+# Landing and try it
 
-Route: `/`. Access: Signed out.
+Route: `/` when signed out. Access: Public.
 
-Introduces BirdieEyeView and lets a visitor try scanning before creating an account.
+The public page: the hero with its scan demo and app tour, and trying a scan without an account.
 
 ## Entry points
 
-- [LandingPage.tsx](../../../frontend/src/pages/public/LandingPage.tsx)
-- [HeroSection.tsx](../../../frontend/src/pages/public/sections/HeroSection.tsx)
-- [HowItWorksSection.tsx](../../../frontend/src/pages/public/sections/HowItWorksSection.tsx)
-- [usePublicScan.ts](../../../frontend/src/hooks/usePublicScan.ts)
-- [PublicScanHero.tsx](../../../frontend/src/components/public/PublicScanHero.tsx)
+- [LandingPage.tsx](../../../frontend/src/pages/landing-page/LandingPage.tsx)
+- [useTryItYourselfViewModel.ts](../../../frontend/src/pages/landing-page/useTryItYourselfViewModel.ts)
+- [ScannerDemo.tsx](../../../frontend/src/pages/landing-page/components/ScannerDemo.tsx)
+- [useScannerDemoViewModel.ts](../../../frontend/src/pages/landing-page/components/useScannerDemoViewModel.ts)
+- [HeroSection.tsx](../../../frontend/src/pages/landing-page/sections/HeroSection.tsx)
 
 ## How it works
 
-LandingPage composes PublicNav, HeroSection, and HowItWorksSection. HeroSection contains an animated demo; HowItWorksSection mounts the interactive PublicScanHero. The public scanner uses its own hook while sharing extraction/report support. App routing switches the same root URL to Dashboard after authentication.
+A picked photo brings `CardFactsForm` and then the scan's progress into the photo's place; the scanned card becomes "Here's your round" with a sign-up strip. Nothing is saved. The demo's tour shows captures in `public/demo-tour/`, made by the `demo-tour` Playwright project. A failed scan can be reported, anonymously, as on the scan page.
 
 ## Boundaries and checks when changing it
 
-Do not assume every section file in the public folder is currently mounted. Preserve anonymous failure reporting and keep private round-saving actions behind the intended account flow. Public theme preferences are separate from signed-in preferences.
+Recapture the tour (`--project=demo-tour --update-snapshots=all`) when the dashboard, analytics or Profile change. Check a failed scan and its report.
 
 These checks describe useful validation scenarios, not a claim that dedicated tests already cover every case. Shared conventions are in [frontend practices](../../practices/frontend.md). Return to the [page index](../README.md).

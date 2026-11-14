@@ -1,12 +1,10 @@
-"""Reporting is anonymous even when called from the signed-in scan screen."""
-
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
 from api.routers.scan import MAX_UPLOAD_BYTES, _extract_upload_suffix, _save_upload_to_temp, _validate_upload_payload
-from api.scan_report_schemas import ScanReportMetadata
+from api.scan_report_schemas import ReportErrorCode, ScanReportErrorResponse, ScanReportMetadata, ScanReportResponse
 from services.scan_report_service import (
     AnonymousScanReport,
     ReportNotSaved,
@@ -19,8 +17,12 @@ router = APIRouter()
 
 
 def get_scan_report_store() -> ScanReportStore | None:
-    """Application setup overrides this when private durable storage is configured."""
     return None
+
+
+def _unavailable(code: ReportErrorCode, detail: str | None = None) -> JSONResponse:
+    body = ScanReportErrorResponse(code=code, detail=detail)
+    return JSONResponse(status_code=503, content=body.model_dump(exclude_none=True))
 
 
 def _validated_image(file: UploadFile) -> tuple[bytes, str]:
@@ -37,7 +39,11 @@ def _validated_image(file: UploadFile) -> tuple[bytes, str]:
         path.unlink(missing_ok=True)
 
 
-@router.post("/reports")
+@router.post(
+    "/reports",
+    response_model=ScanReportResponse,
+    responses={503: {"model": ScanReportErrorResponse}},
+)
 async def report_failed_scan(
     request: Request,
     file: UploadFile = File(...),
@@ -65,10 +71,7 @@ async def report_failed_scan(
     # Do not read/copy the image when nothing can store it. UploadFile is closed
     # by FastAPI after the request; there is no temporary report archive.
     if store is None:
-        return JSONResponse(
-            status_code=503,
-            content={"code": "report_storage_unavailable", "detail": "Reporting is not available yet. Your report was not saved."},
-        )
+        return _unavailable("report_storage_unavailable", "Reporting is not available yet. Your report was not saved.")
 
     try:
         image, media_type = await run_in_threadpool(_validated_image, file)
@@ -79,10 +82,7 @@ async def report_failed_scan(
     try:
         await submit_scan_report(report, store)
     except ReportStorageUnavailable:
-        return JSONResponse(status_code=503, content={"code": "report_storage_unavailable"})
+        return _unavailable("report_storage_unavailable")
     except ReportNotSaved:
-        return JSONResponse(
-            status_code=503,
-            content={"code": "report_not_saved", "detail": "Your report was not saved. Please try again."},
-        )
-    return {"status": "saved"}
+        return _unavailable("report_not_saved", "Your report was not saved. Please try again.")
+    return ScanReportResponse(status="saved")

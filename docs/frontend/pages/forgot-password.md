@@ -1,20 +1,21 @@
-# Forgot password
+# Reset password
 
-Route: `/forgot-password`. Access: Signed out.
+Route: `/forgot-password`. Access: Public.
 
-Requests a password-reset email without exposing whether an address belongs to an account.
+Part of signing in and account recovery, on `AuthCard`.
 
 ## Entry points
 
-- [ForgotPasswordPage.tsx](../../../frontend/src/pages/ForgotPasswordPage.tsx)
+- [ForgotPasswordPage.tsx](../../../frontend/src/pages/auth/forgot-password/ForgotPasswordPage.tsx)
+- [useForgotPasswordViewModel.ts](../../../frontend/src/pages/auth/forgot-password/useForgotPasswordViewModel.ts)
 - [AuthContext.tsx](../../../frontend/src/context/AuthContext.tsx)
 
 ## How it works
 
-The form sends an email address through useAuth().forgotPassword() and displays the API message or a safe transport error. Token generation and email delivery belong to the backend.
+Sends a reset link; the answer is the same whether or not the account exists. Requests go through `AuthContext`'s actions.
 
 ## Boundaries and checks when changing it
 
-Keep account-enumeration protections in the copy and status handling. Check empty/invalid input, pending submission, transport failure, and the generic success state. A successful request is not confirmation that an email arrived.
+Don't reveal whether an account exists. Check a refused request, an expired token and a slow network.
 
 These checks describe useful validation scenarios, not a claim that dedicated tests already cover every case. Shared conventions are in [frontend practices](../../practices/frontend.md). Return to the [page index](../README.md).

@@ -39,7 +39,7 @@ async def test_search_courses_matches_location(database_manager):
         location="Monterey, CA",
     )
 
-    results = await database_manager.courses.search_courses("Monterey")
+    results = await database_manager.courses.search_course_summaries("Monterey")
 
     assert [result.id for result in results] == [course.id]
 
@@ -79,8 +79,8 @@ async def test_list_courses_includes_master_and_owned_courses(database_manager):
         user_id=owner.id,
     )
 
-    owner_courses = await database_manager.courses.list_courses(user_id=owner.id)
-    other_courses = await database_manager.courses.list_courses(user_id=other_user.id)
+    owner_courses = await database_manager.courses.list_course_summaries(user_id=owner.id)
+    other_courses = await database_manager.courses.list_course_summaries(user_id=other_user.id)
 
     assert {course.id for course in owner_courses} == {master_course.id, custom_course.id}
     assert {course.id for course in other_courses} == {master_course.id}

@@ -1,5 +1,3 @@
-"""Client for querying external GolfCourseAPI course search."""
-
 import os
 import re
 from typing import Any, Dict, List, Optional
@@ -10,21 +8,12 @@ _GOLF_STOP_WORDS = re.compile(r"\b(golf|course|club|country|links|gc|cc)\b")
 
 
 def _normalize_course_name(value: str) -> str:
-    """Lowercase, strip punctuation and common golf-specific words for comparison."""
     base = re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).strip()
     base = _GOLF_STOP_WORDS.sub(" ", base)
     return " ".join(base.split())
 
 
 class GolfCourseAPIService:
-    """Thin wrapper around GolfCourseAPI search.
-
-    Env vars:
-    - GOLFCOURSE_API_KEY (preferred) or golfcourse_api_key
-    - GOLFCOURSE_API_BASE_URL (optional, default: https://api.golfcourseapi.com)
-    - GOLFCOURSE_API_SEARCH_PATH (optional, default: /v1/search)
-    """
-
     def __init__(
         self,
         *,
@@ -46,18 +35,6 @@ class GolfCourseAPIService:
         self._timeout = timeout_seconds
 
     async def search_external_courses(self, query: str, *, limit: int = 10) -> List[Dict[str, Any]]:
-        """Search courses from GolfCourseAPI and return normalized rows.
-
-        Normalized shape:
-        {
-          "external_course_id": str|None,
-          "name": str|None,
-          "city": str|None,
-          "state": str|None,
-          "source": "golfcourseapi",
-          "raw": <original item>
-        }
-        """
         q = self._normalize_search_query(query)
         if len(q) < 2:
             return []
@@ -77,16 +54,14 @@ class GolfCourseAPIService:
                 data = resp.json()
                 items = self._extract_items(data)
                 return self._normalize_items(items, limit=limit)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise RuntimeError(f"GolfCourseAPI search failed: {exc}") from exc
 
     def _normalize_search_query(self, query: str) -> str:
-        """Normalize user query to provider-friendly form while keeping one request."""
         cleaned = _normalize_course_name(query)
         return cleaned or " ".join((query or "").strip().split())
 
     def _extract_items(self, payload: Any) -> List[Dict[str, Any]]:
-        """Extract a list of course objects from varying JSON response shapes."""
         if isinstance(payload, list):
             return [x for x in payload if isinstance(x, dict)]
         if not isinstance(payload, dict):
@@ -133,7 +108,6 @@ class GolfCourseAPIService:
         return out
 
     def _extract_external_id(self, row: Dict[str, Any]) -> Optional[Any]:
-        """Best-effort external ID extraction across common API response shapes."""
         direct_keys = (
             "id",
             "course_id",

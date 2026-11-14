@@ -1,5 +1,3 @@
-"""CRUD operations for user-owned tee configurations."""
-
 import json
 import asyncpg
 from typing import List, Optional
@@ -11,15 +9,12 @@ from database.exceptions import DuplicateError, NotFoundError
 
 
 class UserTeeRepositoryDB:
-    """Async CRUD for users.user_tees."""
-
     def __init__(self, pool: asyncpg.Pool):
         self._pool = pool
 
     async def get_user_tees(
         self, user_id: str, *, course_id: Optional[str] = None
     ) -> List[UserTee]:
-        """List a user's custom tees, optionally filtered by course."""
         async with self._pool.acquire() as conn:
             if course_id:
                 rows = await conn.fetch(
@@ -37,7 +32,6 @@ class UserTeeRepositoryDB:
             return [user_tee_from_row(r) for r in rows]
 
     async def get_user_tee(self, tee_id: str, *, user_id: Optional[str] = None) -> Optional[UserTee]:
-        """Get a single user tee by ID."""
         async with self._pool.acquire() as conn:
             if user_id:
                 row = await conn.fetchrow(
@@ -53,7 +47,6 @@ class UserTeeRepositoryDB:
             return user_tee_from_row(row) if row else None
 
     async def create_user_tee(self, user_tee: UserTee) -> UserTee:
-        """Create a user tee configuration."""
         row_data = user_tee_to_row(user_tee)
         try:
             async with self._pool.acquire() as conn:
@@ -71,7 +64,6 @@ class UserTeeRepositoryDB:
             raise DuplicateError(str(e)) from e
 
     async def update_user_tee(self, tee_id: str, *, user_id: Optional[str] = None, **fields) -> Optional[UserTee]:
-        """Update a user tee configuration."""
         allowed = {"name", "slope_rating", "course_rating", "hole_yardages"}
         updates = {k: v for k, v in fields.items() if k in allowed}
         if not updates:
@@ -84,7 +76,7 @@ class UserTeeRepositoryDB:
             )
 
         set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates))
-        values = [UUID(tee_id)] + list(updates.values())
+        values = [UUID(tee_id), *updates.values()]
         where_clause = "id = $1"
         if user_id:
             values.append(UUID(user_id))
@@ -100,7 +92,6 @@ class UserTeeRepositoryDB:
             return user_tee_from_row(row)
 
     async def delete_user_tee(self, tee_id: str, *, user_id: Optional[str] = None) -> bool:
-        """Delete a user tee. Returns True if deleted."""
         async with self._pool.acquire() as conn:
             if user_id:
                 result = await conn.execute(

@@ -9,35 +9,55 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-# Deliberately narrow. These are correctness/dead-code rules, not style rules.
-# Style-only families (E501 line length, UP modernization) are intentionally
-# excluded so the signal here stays actionable. Widen this list over time.
 select = [
-    "E4",   # imports
-    "E7",   # statement-level mistakes
-    "E9",   # syntax / IO errors
-    "F",    # pyflakes: undefined names, unused imports/vars
-    "B",    # flake8-bugbear: likely bugs
-    "C4",   # flake8-comprehensions
-    "SIM",  # flake8-simplify
-    "RET",  # flake8-return
+    "E4",
+    "E7",
+    "E9",
+    "F",
+    "B",
+    "C4",
+    "SIM",
+    "RET",
+    "ARG",
+    "BLE001",
+    "DTZ",
+    "ASYNC",
+    "TID251",
+    "SLF001",
+    "RUF",
+    "PGH003",
+    "PGH004",
+    "ERA001",
+    "T20",
+    "FAST001",
+    "FAST003",
 ]
 ignore = [
     "B008",   # function-call-in-default-argument: this IS the FastAPI Depends() idiom
-    "B904",   # raise-without-from-inside-except: 25 existing sites, cosmetic
-    "B905",   # zip-without-explicit-strict
-    "E402",   # module-import-not-at-top: intentional in scripts//conftest sys.path shims
-    "E731",   # lambda-assignment
-    "RET504", # unnecessary-assign: often clearer with the named intermediate
-    "SIM102", # collapsible-if
-    "SIM105", # suppressible-exception
-    "SIM112", # uncapitalized-environment-variables
-    "SIM117", # multiple-with-statements
-    "C420",   # unnecessary-dict-comprehension-for-iterable
+    "B905",
+    "E402",
+    "E731",
+    "RET504",
+    "SIM102",
+    "SIM105",
+    "SIM112",
+    "SIM117",
+    "C420",
+    "RUF001",
+    "RUF002",
+    "RUF003",
 ]
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"requests".msg = "Blocking HTTP client: it stalls the event loop when called from a FastAPI handler (api/auth_notifications.py). Use httpx.AsyncClient (httpx is already in requirements.txt)."
+"time.sleep".msg = "Blocks the event loop. Use `await asyncio.sleep(...)`."
+
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["F401", "F811"]
+"tests/**" = ["F401", "F811", "ARG", "SLF001", "T20", "TID251"]
+"scripts/**" = ["T20", "TID251"]
+".github/**" = ["T20", "TID251"]
+"analytics/demo.py" = ["T20"]
+"analytics/visualize*.py" = ["T20"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

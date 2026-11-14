@@ -1,0 +1,154 @@
+import { useState, useMemo, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/data/queryKeys";
+import { roundLine, type RoundSummary } from "@/domain";
+import { formatCourseName } from "@/domain/course";
+import { messageFrom } from "@/lib/userFacingErrors";
+import { roundsRepository, type RoundsRepository } from "./roundsRepository";
+import {
+  ALL_COURSES,
+  ALL_COURSES_LABEL,
+  SCOPE_OPTIONS,
+  SORT_LABELS,
+  SORT_OPTIONS,
+  courseOptions,
+  effectiveSort,
+  filterRounds,
+  scopeAfterPickingSort,
+  type Option,
+  type Scope,
+  type SortKey,
+} from "./roundsModel";
+
+export type { Option, Scope, SortKey };
+
+export interface LinkingRound {
+  id: string;
+  line: string;
+  keepLabel: string;
+}
+
+export interface RoundsUiState {
+  loading: boolean;
+  loadError: string | null;
+  rounds: RoundSummary[];
+  filteredRounds: RoundSummary[];
+  visibleRounds: RoundSummary[];
+  remainingCount: number;
+  search: string;
+  searchOpen: boolean;
+  scope: Scope;
+  scopeOptions: readonly Option<Scope>[];
+  course: string;
+  courseOptions: Option<string>[];
+  courseLabel: string;
+  sortKey: SortKey;
+  sortLabel: string;
+  sortOptions: readonly Option<SortKey>[];
+  linking: LinkingRound | null;
+}
+
+export interface RoundsPageViewModel extends RoundsUiState {
+  retry: () => void;
+  loadMore: () => void;
+  setSearch: (q: string) => void;
+  toggleSearch: () => void;
+  pickScope: (value: string | undefined) => void;
+  setCourse: (course: string) => void;
+  selectSort: (key: SortKey) => void;
+  closeLink: () => void;
+  isLinkOpen: (roundId: string) => boolean;
+  toggleLink: (roundId: string) => void;
+}
+
+function linkingRound(round: RoundSummary): LinkingRound {
+  const name = round.course?.name;
+  return {
+    id: round.id,
+    line: roundLine(round),
+    keepLabel: name ? `Keep as “${formatCourseName(name)}”` : "Leave it unlinked",
+  };
+}
+
+export function useRoundsPageViewModel(
+  userId: string,
+  repository: RoundsRepository = roundsRepository,
+): RoundsPageViewModel {
+  const { data, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: queryKeys.rounds(userId),
+    queryFn: () => repository.getRoundsForUser(userId, 100),
+  });
+  const rounds = useMemo(() => data ?? [], [data]);
+
+  const [search, setSearch] = useState("");
+  const [searchShown, setSearchShown] = useState(false);
+  const [sort, setSort] = useState<SortKey>("newest");
+  const [scope, setScope] = useState<Scope>("all");
+  const [course, setCourse] = useState(ALL_COURSES);
+  const [visibleCount, setVisibleCount] = useState(20);
+  const [linkingRoundId, setLinkingRoundId] = useState<string | null>(null);
+
+  const courses = useMemo(() => courseOptions(rounds), [rounds]);
+
+  const closeLink = useCallback(() => setLinkingRoundId(null), []);
+  const isLinkOpen = useCallback((roundId: string) => linkingRoundId === roundId, [linkingRoundId]);
+
+  const toggleLink = useCallback((roundId: string) => {
+    setLinkingRoundId((open) => (open === roundId ? null : roundId));
+  }, []);
+
+  const selectSort = useCallback((key: SortKey) => {
+    setScope(scopeAfterPickingSort);
+    setSort(key);
+  }, []);
+
+  const pickScope = useCallback((value: string | undefined) => {
+    const picked = SCOPE_OPTIONS.find((option) => option.value === value);
+    if (picked) setScope(picked.value);
+  }, []);
+
+  const toggleSearch = useCallback(() => setSearchShown((shown) => !shown), []);
+
+  const loadMore = useCallback(() => {
+    setVisibleCount((n) => n + 50);
+  }, []);
+
+  const filteredRounds = useMemo(
+    () => filterRounds(rounds, { scope, course, search, sort }),
+    [rounds, scope, course, search, sort],
+  );
+  const visibleRounds = filteredRounds.slice(0, visibleCount);
+  const remainingCount = Math.max(0, filteredRounds.length - visibleCount);
+  const sortKey = effectiveSort(scope, sort);
+  const linkingSummary = rounds.find((round) => round.id === linkingRoundId);
+
+  return {
+    loading,
+    loadError: isError && !data ? messageFrom(error, "Could not load your rounds.") : null,
+    retry: () => void refetch(),
+    rounds,
+    filteredRounds,
+    visibleRounds,
+    remainingCount,
+    loadMore,
+    search,
+    setSearch,
+    searchOpen: searchShown || search !== "",
+    toggleSearch,
+    scope,
+    scopeOptions: SCOPE_OPTIONS,
+    pickScope,
+    course,
+    courseOptions: courses,
+    courseLabel: courses.find((option) => option.value === course)?.label ?? ALL_COURSES_LABEL,
+    setCourse,
+    sortKey,
+    sortLabel: SORT_LABELS[sortKey],
+    sortOptions: SORT_OPTIONS,
+    selectSort,
+    linking: linkingSummary ? linkingRound(linkingSummary) : null,
+    closeLink,
+    isLinkOpen,
+    toggleLink,
+  };
+}

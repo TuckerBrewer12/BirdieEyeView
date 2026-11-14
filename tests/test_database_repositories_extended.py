@@ -561,39 +561,6 @@ async def test_course_repository_returns_none_for_missing_name(mock_pool):
     assert found is None
 
 
-@pytest.mark.parametrize("user_scoped", [True, False])
-@pytest.mark.asyncio
-async def test_course_repository_lists_courses(mock_pool, user_scoped):
-    pool, conn = mock_pool
-    repository = CourseRepositoryDB(pool)
-    course = Course(id=str(uuid4()), name="Pebble", holes=[], tees=[])
-    conn.fetch.return_value = [{"id": uuid4(), "user_id": None}]
-    repository._assemble = AsyncMock(return_value=course)
-
-    courses = await repository.list_courses(
-        user_id=str(uuid4()) if user_scoped else None
-    )
-
-    assert courses == [course]
-
-
-@pytest.mark.parametrize("user_scoped", [True, False])
-@pytest.mark.asyncio
-async def test_course_repository_searches_courses(mock_pool, user_scoped):
-    pool, conn = mock_pool
-    repository = CourseRepositoryDB(pool)
-    course = Course(id=str(uuid4()), name="Pebble", holes=[], tees=[])
-    conn.fetch.return_value = [{"id": uuid4(), "user_id": None}]
-    repository._assemble = AsyncMock(return_value=course)
-
-    courses = await repository.search_courses(
-        "Peb",
-        user_id=str(uuid4()) if user_scoped else None,
-    )
-
-    assert courses == [course]
-
-
 @pytest.mark.asyncio
 async def test_course_repository_promotes_course_to_master(mock_pool):
     pool, conn = mock_pool
@@ -862,3 +829,20 @@ async def test_round_repository_lists_scans(mock_pool):
     scans = await RoundRepositoryDB(pool, AsyncMock()).get_scans_for_round(str(uuid4()))
 
     assert scans == [scan]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("scored", "on_card", "complete"),
+    [(9, 9, True), (8, 9, False), (18, 18, True), (17, 18, False)],
+)
+async def test_editing_scores_marks_a_nine_or_eighteen_complete(mock_pool, scored, on_card, complete):
+    pool, conn = mock_pool
+    round_repository = RoundRepositoryDB(pool, AsyncMock())
+    round_repository.get_round = AsyncMock(return_value="updated")
+    conn.fetchrow.return_value = {"course_id": None}
+    conn.fetch.return_value = [{"strokes": 4 if n < scored else None} for n in range(on_card)]
+
+    assert await round_repository.update_hole_scores(str(uuid4()), [HoleScore(hole_number=1, strokes=4)]) == "updated"
+    *_, holes_played, is_complete = conn.execute.await_args.args
+    assert (holes_played, is_complete) == (scored, complete)

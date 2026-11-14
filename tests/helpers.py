@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from types import SimpleNamespace
+from typing import ClassVar
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
@@ -23,7 +24,7 @@ class FakeHttpResponse:
 
 class FakeAsyncHttpClient:
     response = FakeHttpResponse({})
-    calls = []
+    calls: ClassVar[list] = []
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
@@ -113,7 +114,7 @@ def make_round(round_id: UUID, course: Course | None = None) -> Round:
         course=course,
         course_name_played="Played Course" if course is None else None,
         tee_box="Blue",
-        date=datetime(2026, 1, 2),
+        date=datetime(2026, 1, 2, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(
                 hole_number=1,
@@ -142,7 +143,7 @@ def make_round_summary(round_id: UUID) -> dict:
         "course_location": "Monterey",
         "course_par": 72,
         "tee_box": "Blue",
-        "round_date": datetime(2026, 1, 2),
+        "round_date": datetime(2026, 1, 2, tzinfo=timezone.utc),
         "total_score": 80,
         "front_nine": 40,
         "back_nine": 40,
@@ -155,7 +156,7 @@ def make_round_summary(round_id: UUID) -> dict:
 
 
 def make_friendship_row(requester: UUID, addressee: UUID) -> dict:
-    now = datetime(2026, 1, 1)
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
     return {
         "id": uuid4(),
         "requester_id": requester,

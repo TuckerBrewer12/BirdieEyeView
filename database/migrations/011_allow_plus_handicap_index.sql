@@ -1,8 +1,5 @@
--- Migration 011: allow plus handicaps and scratch (range: [-10, 54])
-
 BEGIN;
 
--- Remove any previous handicap-only check constraints (legacy names included).
 DO $$
 DECLARE
     rec RECORD;

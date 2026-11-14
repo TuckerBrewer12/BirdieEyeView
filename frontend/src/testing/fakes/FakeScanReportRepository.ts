@@ -1,5 +1,5 @@
 import type { ScanReportRepository } from "@/data/scanReportRepository";
-import type { FailedScanAttempt } from "@/types/scanReport";
+import type { FailedScanAttempt } from "@/domain/scanReport";
 
 export class FakeScanReportRepository implements ScanReportRepository {
   readonly attempts: FailedScanAttempt[] = [];

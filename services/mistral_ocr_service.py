@@ -1,14 +1,13 @@
-"""Client for calling Mistral OCR API with local files."""
-
 from __future__ import annotations
 
+import asyncio
 import base64
 import logging
 import mimetypes
 import os
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, override
 
 import httpx
 try:
@@ -20,15 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 class MistralOCRService:
-    """Thin wrapper around Mistral OCR API.
-
-    Env vars:
-    - MISTRAL_API_KEY (required)
-    - MISTRAL_BASE_URL (optional, default: https://api.mistral.ai)
-    - MISTRAL_OCR_PATH (optional, default: /v1/ocr)
-    - MISTRAL_OCR_MODEL (optional, default: mistral-ocr-latest)
-    """
-
     def __init__(
         self,
         *,
@@ -53,15 +43,10 @@ class MistralOCRService:
         include_headers: bool = False,
         include_footers: bool = False,
     ) -> Dict[str, Any]:
-        """OCR a local file and return raw Mistral JSON response."""
         if not self._api_key:
             raise EnvironmentError("MISTRAL_API_KEY environment variable is not set")
 
-        path = Path(file_path)
-        if not path.exists():
-            raise FileNotFoundError(f"File not found: {path}")
-
-        data_url = self._build_data_url(path)
+        data_url = await asyncio.to_thread(self._build_data_url, Path(file_path))
         payload: Dict[str, Any] = {
             "model": self._model,
             "document": {"type": "document_url", "document_url": data_url},
@@ -85,10 +70,12 @@ class MistralOCRService:
                 resp = await client.post(path_part, headers=headers, json=payload)
                 resp.raise_for_status()
                 return resp.json()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise RuntimeError(f"Mistral OCR failed: {exc}") from exc
 
     def _build_data_url(self, path: Path) -> str:
+        if not path.exists():
+            raise FileNotFoundError(f"File not found: {path}")
         mime_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         raw = path.read_bytes()
         b64 = base64.b64encode(raw).decode("ascii")
@@ -96,11 +83,6 @@ class MistralOCRService:
 
     @staticmethod
     def extract_markdown_text(ocr_response: Dict[str, Any]) -> str:
-        """Convert Mistral OCR HTML tables to markdown for downstream Gemini merge.
-
-        Each HTML table is converted individually to a markdown pipe table.
-        Gemini handles merging split front/back nine tables.
-        """
         pages = ocr_response.get("pages")
         if not isinstance(pages, list):
             output_text = ocr_response.get("markdown") or ocr_response.get("text")
@@ -124,7 +106,6 @@ class MistralOCRService:
             text = page.get("markdown") or page.get("text")
             if isinstance(text, str) and text.strip():
                 if html_tables:
-                    # Keep non-table page text (notes/labels) even when table blocks exist.
                     non_table = MistralOCRService._extract_non_table_text(text)
                     if non_table:
                         chunks.append(non_table)
@@ -135,7 +116,6 @@ class MistralOCRService:
 
     @staticmethod
     def _html_to_rows(html: str) -> List[List[str]]:
-        """Parse an HTML table into a list of row cell-lists."""
         if BeautifulSoup is not None:
             soup = BeautifulSoup(html, "html.parser")
             return [
@@ -152,6 +132,7 @@ class MistralOCRService:
                 self._cell_parts: List[str] = []
                 self._current_row: List[str] = []
 
+            @override
             def handle_starttag(self, tag: str, attrs: List[tuple[str, Optional[str]]]) -> None:
                 lower = tag.lower()
                 if lower == "tr":
@@ -161,10 +142,12 @@ class MistralOCRService:
                     self._in_cell = True
                     self._cell_parts = []
 
+            @override
             def handle_data(self, data: str) -> None:
                 if self._in_cell:
                     self._cell_parts.append(data)
 
+            @override
             def handle_endtag(self, tag: str) -> None:
                 lower = tag.lower()
                 if self._in_row and lower in {"td", "th"} and self._in_cell:
@@ -184,7 +167,6 @@ class MistralOCRService:
 
     @staticmethod
     def _rows_to_markdown(rows: List[List[str]]) -> str:
-        """Convert a list of rows to a markdown pipe table string."""
         if not rows:
             return ""
         return "\n".join(
@@ -194,7 +176,6 @@ class MistralOCRService:
 
     @staticmethod
     def _extract_non_table_text(text: str) -> str:
-        """Remove markdown table lines and keep surrounding non-table text."""
         kept_lines: List[str] = []
         for raw_line in text.splitlines():
             line = raw_line.strip()

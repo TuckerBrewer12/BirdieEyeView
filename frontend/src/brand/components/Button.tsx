@@ -1,46 +1,42 @@
-import type { ReactNode } from "react";
-import { useTheme } from "@/brand/theme";
+import { useRender } from "@base-ui/react/use-render";
+import type * as React from "react";
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
+import { type VariantProps } from "class-variance-authority";
+import { cn } from "@/brand/cn";
+import { buttonVariants } from "./variants";
 
-interface ButtonProps {
-  children: ReactNode;
-  onClick?: () => void;
-  type?: "button" | "submit";
-  variant?: "secondary" | "primary" | "danger";
-  disabled?: boolean;
-  block?: boolean;
-}
-
-export function Button({
-  children,
-  onClick,
-  type = "button",
-  variant = "secondary",
-  disabled,
-  block,
-}: ButtonProps) {
-  const theme = useTheme();
-  const primary = variant === "primary";
-  const background = variant === "danger" ? theme.danger : primary ? theme.primary : theme.card;
-  const foreground = variant === "danger" ? theme.onDanger : primary ? theme.onPrimary : theme.fgMuted;
-
+function Button({
+  className,
+  variant = "default",
+  size = "default",
+  shape = "default",
+  ...props
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        padding: "10px",
-        fontSize: 13,
-        fontWeight: 600,
-        color: foreground,
-        background,
-        border: `1px solid ${variant === "secondary" ? theme.border : background}`,
-        borderRadius: 10,
-        cursor: disabled ? "default" : "pointer",
-        width: block ? "100%" : undefined,
-      }}
-    >
-      {children}
-    </button>
+    <ButtonPrimitive
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, shape, className }))}
+      {...props}
+    />
   );
 }
+
+function RowButton({
+  className,
+  type = "button",
+  render,
+  ...props
+}: React.ComponentProps<"button"> & { render?: useRender.RenderProp }) {
+  return useRender({
+    defaultTagName: "button",
+    render,
+    props: {
+      "data-slot": "row-button",
+      ...props,
+      type: render ? undefined : type,
+      className: cn("text-left transition-colors", className),
+    },
+  });
+}
+
+export { Button, RowButton };

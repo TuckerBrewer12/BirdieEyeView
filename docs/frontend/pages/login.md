@@ -1,21 +1,21 @@
-# Login
+# Sign in
 
-Route: `/login`. Access: Signed out.
+Route: `/login`. Access: Public.
 
-Authenticates an existing account and hands session state back to the shared auth provider.
+Part of signing in and account recovery, on `AuthCard`.
 
 ## Entry points
 
-- [LoginPage.tsx](../../../frontend/src/pages/LoginPage.tsx)
+- [LoginPage.tsx](../../../frontend/src/pages/auth/login/LoginPage.tsx)
+- [useLoginViewModel.ts](../../../frontend/src/pages/auth/login/useLoginViewModel.ts)
 - [AuthContext.tsx](../../../frontend/src/context/AuthContext.tsx)
-- [sessionToken.ts](../../../frontend/src/lib/sessionToken.ts)
 
 ## How it works
 
-The page owns form/loading/error presentation and calls useAuth().login(). AuthContext handles the request and updates shared session state; App then selects signed-in routes. Account transport is separate from ordinary golf-data API helpers.
+Email and password, with "Forgot?" beside the password. A refused sign-in marks both fields until either changes and points them at the alert. Requests go through `AuthContext`'s actions.
 
 ## Boundaries and checks when changing it
 
-Keep credentials out of URLs, logs, fixtures, and persistent draft state. Check invalid credentials, network failure, pending submissions, and verification-related feedback using the server response contract.
+Don't reveal whether an account exists. Check a refused request, an expired token and a slow network.
 
 These checks describe useful validation scenarios, not a claim that dedicated tests already cover every case. Shared conventions are in [frontend practices](../../practices/frontend.md). Return to the [page index](../README.md).

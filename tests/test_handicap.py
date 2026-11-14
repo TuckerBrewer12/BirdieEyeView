@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
 import analytics.handicap as handicap
-from models import Round
+from models import Round, User
 from tests.helpers import make_scoring_round
 
 
@@ -83,9 +83,9 @@ def test_handicap_index_uses_seed_without_rounds():
 @pytest.fixture
 def dated_rounds(monkeypatch):
     rounds = [
-        Round(id="old-high", date=datetime(2025, 1, 1)),
-        Round(id="old-low", date=datetime(2025, 1, 2)),
-        Round(id="new-high", date=datetime(2025, 2, 1)),
+        Round(id="old-high", date=datetime(2025, 1, 1, tzinfo=timezone.utc)),
+        Round(id="old-low", date=datetime(2025, 1, 2, tzinfo=timezone.utc)),
+        Round(id="new-high", date=datetime(2025, 2, 1, tzinfo=timezone.utc)),
     ]
     differentials = {"old-high": 20.0, "old-low": 10.0, "new-high": 22.0}
     monkeypatch.setattr(
@@ -104,7 +104,7 @@ def test_seed_handicap_honors_seed_date(dated_rounds):
     assert handicap._eligible_differentials(
         dated_rounds,
         seed_handicap=15.0,
-        seed_set_at=datetime(2025, 1, 15),
+        seed_set_at=datetime(2025, 1, 15, tzinfo=timezone.utc),
     ) == [10.0, 22.0]
 
 
@@ -127,26 +127,37 @@ def test_handicap_trend_calculates_rolling_index(monkeypatch):
     assert [entry["handicap_index"] for entry in trend] == [None, None, 8.0, 9.0]
 
 
-def test_handicap_annotation_prefers_recent_tie():
-    trend = [
-        {"differential": 12.0, "handicap_index": None},
-        {"differential": 10.0, "handicap_index": None},
-        {"differential": 10.0, "handicap_index": 8.0},
-        {"differential": 14.0, "handicap_index": 9.0},
-    ]
+def test_handicap_trend_marks_the_counting_rounds_and_prefers_a_recent_tie(monkeypatch):
+    rounds = [Round(id=str(index)) for index in range(4)]
+    differentials_by_round = {"0": 12.0, "1": 10.0, "2": 10.0, "3": 14.0}
+    monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: differentials_by_round[item.id])
 
-    handicap.annotate_used_in_hi(trend)
+    trend = handicap.player_handicap_trend(None, rounds)
 
+    assert [entry["handicap_index"] for entry in trend] == [None, None, 8.0, 9.0]
     assert (trend[1]["used_in_hi"], trend[2]["used_in_hi"]) == (False, True)
     assert all(entry["hi_threshold"] == 10.0 for entry in trend)
+    assert [entry["differential_status"] for entry in trend] == ["close", "close", "counting", "out"]
 
 
-def test_handicap_annotation_handles_short_history():
-    trend = [{"differential": None}, {"differential": 8.0}]
+def test_handicap_trend_handles_a_short_history(monkeypatch):
+    rounds = [Round(id=str(index)) for index in range(2)]
+    monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: {"0": None, "1": 8.0}[item.id])
 
-    handicap.annotate_used_in_hi(trend)
+    trend = handicap.player_handicap_trend(None, rounds)
 
-    assert trend == [
-        {"differential": None, "hi_threshold": None, "used_in_hi": None},
-        {"differential": 8.0, "hi_threshold": None, "used_in_hi": False},
+    assert [(e["used_in_hi"], e["hi_threshold"], e["differential_status"]) for e in trend] == [
+        (None, None, "unrated"),
+        (False, None, "out"),
     ]
+
+
+def test_a_handicap_the_golfer_gave_holds_the_trend_until_rounds_count(monkeypatch):
+    rounds = [Round(id=str(index)) for index in range(2)]
+    monkeypatch.setattr(handicap, "_get_differential_for_round", lambda item: {"0": 20.0, "1": 9.0}[item.id])
+    user = User(id="u", handicap=12.0)
+
+    trend = handicap.player_handicap_trend(user, rounds)
+
+    assert [entry["handicap_index"] for entry in trend] == [12.0, 9.0]
+    assert handicap.player_handicap_index(user, rounds) == 9.0
