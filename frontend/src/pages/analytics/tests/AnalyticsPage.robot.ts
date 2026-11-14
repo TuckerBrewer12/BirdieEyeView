@@ -6,6 +6,7 @@ import { withoutRounds } from "../../../testing/fakes/analyticsResponses";
 import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
 import { avery, friendshipsOf } from "../../../testing/fixtures/friendships";
 import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
+import { fontsLoaded } from "../../../testing/fontsLoaded";
 
 // A few days after the sample golfer's last round, the way the demo tour sees them.
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
@@ -346,6 +347,7 @@ export class AnalyticsRobot {
   }
 
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;
   }

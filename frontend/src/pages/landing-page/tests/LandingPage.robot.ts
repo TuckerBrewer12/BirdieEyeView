@@ -4,6 +4,7 @@ import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import { SCANNED_COURSE_NAME, scannedCard } from "../../../testing/fixtures/scan";
 import { expectTheme } from "../../../testing/theme";
+import { fontsLoaded } from "../../../testing/fontsLoaded";
 
 /** The photo the hero shows, so an upload has a real card in its preview. */
 const CARD_PHOTO = fileURLToPath(new URL("../../../../public/hero/physical-card.jpg", import.meta.url));
@@ -130,6 +131,7 @@ export class LandingRobot {
   async capture(name: string): Promise<this> {
     // Tapping into the card scrolls the page; capture from the top.
     await this.page.evaluate(() => window.scrollTo(0, 0));
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });
     return this;
   }

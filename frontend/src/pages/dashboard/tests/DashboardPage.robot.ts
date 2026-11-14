@@ -8,6 +8,7 @@ import {
   populatedDashboard,
 } from "../../../testing/fixtures/dashboard";
 import { storedRounds } from "../../../testing/fixtures/rounds";
+import { fontsLoaded } from "../../../testing/fontsLoaded";
 
 const FROZEN_NOW = "2026-06-15T18:00:00.000Z";
 
@@ -135,6 +136,7 @@ export class DashboardRobot {
   }
 
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;
   }

@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { BrandKitRobot } from "../../BrandKit.robot";
+import { fontsLoaded } from "../../../../testing/fontsLoaded";
 
 const variants = ["default", "outline", "secondary", "ghost", "link", "linkMuted", "destructive"] as const;
 
@@ -21,6 +22,7 @@ test.describe("Button", () => {
       for (const variant of variants) {
         const row = page.getByTestId(`button-row-${theme}-${variant}`);
         await row.getByRole("button").first().hover();
+        await fontsLoaded(page);
         await expect(row).toHaveScreenshot(`button-hover-${theme}-${variant}.png`);
       }
     });

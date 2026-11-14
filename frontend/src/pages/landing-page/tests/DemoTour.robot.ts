@@ -3,6 +3,7 @@ import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
 import { HANDICAP_TAP, TOUR_LAYOUTS, type TourLayout } from "../components/demoTour";
+import { fontsLoaded } from "../../../testing/fontsLoaded";
 
 // A few days after the sample golfer's last round, so "this week" reads true.
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
@@ -80,6 +81,7 @@ export class DemoTourRobot {
   async capture(name: string): Promise<this> {
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     // Device scale, so the phone captures stay sharp on a phone.
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { scale: "device" });
     return this;
   }

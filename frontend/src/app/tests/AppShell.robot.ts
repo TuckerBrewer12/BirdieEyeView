@@ -3,6 +3,7 @@ import { test as base, expect } from "../../testing/playwright";
 import { FakeSession } from "../../testing/fakes/FakeSession";
 import { FakeBackend, type FakeBackendSeed } from "../../testing/fakes/FakeBackend";
 import { storedRounds } from "../../testing/fixtures/rounds";
+import { fontsLoaded } from "../../testing/fontsLoaded";
 
 /** Screen robot for the signed-in shell: the side rail, the tab bar and its More menu. */
 export class AppShellRobot {
@@ -128,6 +129,7 @@ export class AppShellRobot {
   }
 
   async capture(name: string): Promise<this> {
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: true });
     return this;
   }

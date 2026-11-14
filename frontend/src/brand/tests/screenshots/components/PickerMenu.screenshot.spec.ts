@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { capturePreview, enableDark } from "../../previewScreenshot";
 import { BrandKitRobot } from "../../BrandKit.robot";
+import { fontsLoaded } from "../../../../testing/fontsLoaded";
 
 test.describe("PickerMenu", () => {
   test("light", async ({ page }) => {
@@ -17,6 +18,7 @@ test.describe("PickerMenu", () => {
     await kit.open("PickerMenu");
     await page.getByRole("button", { name: "Sort by", exact: true }).first().click();
     await expect(page.getByRole("menu")).toBeVisible();
+    await fontsLoaded(page);
     await expect(page.locator("[data-slot=picker-options]")).toHaveScreenshot(
       "picker-menu-menu.png",
     );
@@ -28,6 +30,7 @@ test.describe("PickerMenu", () => {
     await kit.open("PickerMenu");
     await page.getByRole("button", { name: "Sort by", exact: true }).first().click();
     await expect(page.getByRole("menu")).toBeVisible();
+    await fontsLoaded(page);
     await expect(page.locator("[data-slot=picker-options]")).toHaveScreenshot("picker-menu-menu-dark.png");
   });
 });

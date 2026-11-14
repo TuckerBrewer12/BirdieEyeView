@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { fontsLoaded } from "../../testing/fontsLoaded";
 
 /** Screen robot for isolated brand-kit stories. */
 export class BrandKitRobot {
@@ -16,6 +17,7 @@ export class BrandKitRobot {
   }
 
   async capture(name: string): Promise<this> {
+    await fontsLoaded(this.page);
     await expect(this.page.getByTestId("brand-stage")).toHaveScreenshot(name);
     return this;
   }
@@ -30,6 +32,7 @@ export class BrandKitRobot {
 
   /** The whole window, for stories opened with `openFrame`. */
   async captureFrame(name: string): Promise<this> {
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name);
     return this;
   }

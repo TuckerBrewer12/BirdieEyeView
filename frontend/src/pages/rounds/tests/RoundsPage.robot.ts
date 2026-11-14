@@ -3,6 +3,7 @@ import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import type { StoredRound } from "../../../testing/fakes/roundResponses";
+import { fontsLoaded } from "../../../testing/fontsLoaded";
 
 /** Screen robot for /rounds — same idea as an Android Espresso robot. */
 export class RoundsRobot {
@@ -242,6 +243,7 @@ export class RoundsRobot {
 
   /** `fullPage: false` for an open sheet or menu, which sits over the viewport, not the page. */
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;
   }

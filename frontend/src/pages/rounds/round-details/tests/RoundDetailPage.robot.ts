@@ -4,6 +4,7 @@ import type { RoundDto } from "../../../../types/api";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { formatCourseName } from "../../../../domain/course";
+import { fontsLoaded } from "../../../../testing/fontsLoaded";
 
 /** Screen robot for /rounds/:id — same idea as an Android Espresso robot. */
 export class RoundDetailRobot {
@@ -258,6 +259,7 @@ export class RoundDetailRobot {
     if (await this.page.locator('[data-slot="round-flow"]').isVisible()) {
       await expect(this.page.locator("svg circle").last()).toBeVisible();
     }
+    await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name, { fullPage: options.fullPage ?? true });
     return this;
   }
