@@ -61,6 +61,31 @@ export class ScanRobot {
     return this;
   }
 
+  private photoSource() {
+    return this.page.locator("[data-slot=action-sheet-content]");
+  }
+
+  async openPhotoSource(): Promise<this> {
+    await this.page.getByRole("button", { name: "Add scorecard photo" }).click();
+    return this;
+  }
+
+  async seesPhotoSource(): Promise<this> {
+    const sheet = this.photoSource();
+    await expect(sheet.getByText("Add scorecard photo", { exact: true })).toBeVisible();
+    await expect(sheet.getByRole("button", { name: "Take Photo" })).toBeVisible();
+    await expect(sheet.getByRole("button", { name: "Photo Library" })).toBeVisible();
+    await expect(sheet.getByRole("button", { name: "Choose File" })).toBeVisible();
+    return this;
+  }
+
+  async pickPhotoSource(source: "Take Photo" | "Photo Library" | "Choose File"): Promise<this> {
+    const chooser = this.page.waitForEvent("filechooser");
+    await this.photoSource().getByRole("button", { name: source, exact: true }).click();
+    await (await chooser).setFiles(CARD_PHOTO);
+    return this;
+  }
+
   private readButton() {
     return this.page.getByRole("button", { name: "Read card", exact: true });
   }

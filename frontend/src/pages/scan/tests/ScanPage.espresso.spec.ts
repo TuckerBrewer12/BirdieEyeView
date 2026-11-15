@@ -364,3 +364,15 @@ test("a saved round shows its score against par, and shares as an image", async 
   await scan.tapShare();
   await scan.seesSharedImage("scorecard-half-moon-bay-golf-links.png");
 });
+
+test.describe("on a phone", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test("Photo Library on the source sheet is the card", async ({ scan }) => {
+    await scan.open();
+    await scan.openPhotoSource();
+    await scan.seesPhotoSource();
+    await scan.pickPhotoSource("Photo Library");
+    await scan.seesChosenCard();
+  });
+});

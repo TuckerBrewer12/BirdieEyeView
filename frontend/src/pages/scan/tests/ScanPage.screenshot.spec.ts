@@ -21,6 +21,15 @@ test("upload in dark mode", async ({ scan }) => {
   await scan.capture("scan-upload-dark.png");
 });
 
+test.describe("on a phone", { tag: "@phone" }, () => {
+  test("adding a photo opens the source sheet", async ({ scan }) => {
+    await scan.open();
+    await scan.openPhotoSource();
+    await scan.seesPhotoSource();
+    await scan.capture("scan-photo-source.png");
+  });
+});
+
 test("a chosen card, ready to scan", async ({ scan }) => {
   await scan.open();
   await scan.chooseScorecard();
