@@ -1,6 +1,52 @@
 {
  "runs": [
   {
+   "file": "runs/2026-11-15-quick-43697946085-1.json",
+   "run": {
+    "branch": "scan-stats-refactor",
+    "commit": "1c7e382c143788cda3fca774ee9b4c4f61b16d39",
+    "created_at": "2026-11-15T09:11:09.952999Z",
+    "dirty": false,
+    "head_commit": "26b61a4f2471798c95da61bf62aaf35686203069",
+    "id": "43697946085-1",
+    "models": {
+     "merge": "gemini-3.1-flash-lite-preview",
+     "ocr": "mistral-ocr-latest"
+    },
+    "pr": 681,
+    "run_url": "https://github.com/TuckerBrewer12/BirdieEyeView/actions/runs/43697946085",
+    "suite": "quick"
+   },
+   "summary": {
+    "at_least_80": 0,
+    "at_least_90": 0,
+    "cases": 4,
+    "failed": 4,
+    "images": 3,
+    "known_gaps": 0,
+    "matched_cells": 0,
+    "merge_rejected_images": 0,
+    "operational_errors": 4,
+    "perfect": 0,
+    "suite_seconds": 20.624037575000003,
+    "total_cells": 144
+   },
+   "without_known_gaps": {
+    "at_least_80": 0,
+    "at_least_90": 0,
+    "cases": 4,
+    "failed": 4,
+    "images": 3,
+    "known_gaps": 0,
+    "matched_cells": 0,
+    "merge_rejected_images": 0,
+    "operational_errors": 4,
+    "perfect": 0,
+    "suite_seconds": 20.624037575000003,
+    "total_cells": 144
+   }
+  },
+  {
    "file": "runs/2026-11-13-quick-43519339174-1.json",
    "run": {
     "branch": "scan-eval-dashboard",

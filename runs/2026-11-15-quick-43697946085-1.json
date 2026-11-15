@@ -1,0 +1,111 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "effective_seconds": 7.542418057000006,
+   "extraction_seconds": 0.0,
+   "fingerprint": "558cbc738240047e754c13a9683987c38ee5bdecc4198c202621748ed9f7f30c",
+   "id": "half_moon_bay_g",
+   "image": "half_moon_bay_round.png",
+   "known_gap": null,
+   "matched_cells": 0,
+   "mismatches": [],
+   "operational_error": "OCR failed: RuntimeError: OCR prefetch returned an invalid response",
+   "player": "G",
+   "status": "ERROR",
+   "total_cells": 54
+  },
+  {
+   "diagnostics": [],
+   "effective_seconds": 7.542418057000006,
+   "extraction_seconds": 0.0,
+   "fingerprint": "1d4b9e822780c9276954cf562953cdf1fc780897ba8d464c32c6bafaea05af55",
+   "id": "half_moon_bay_t",
+   "image": "half_moon_bay_round.png",
+   "known_gap": null,
+   "matched_cells": 0,
+   "mismatches": [],
+   "operational_error": "OCR failed: RuntimeError: OCR prefetch returned an invalid response",
+   "player": "T",
+   "status": "ERROR",
+   "total_cells": 54
+  },
+  {
+   "diagnostics": [],
+   "effective_seconds": 6.945463889999999,
+   "extraction_seconds": 0.0,
+   "fingerprint": "845bc29681ec911c91554535483abcc400859e2ea9fee825c6bc805aeb5e50f0",
+   "id": "blue_rock_tucker",
+   "image": "blue_rock_round.png",
+   "known_gap": null,
+   "matched_cells": 0,
+   "mismatches": [],
+   "operational_error": "OCR failed: RuntimeError: OCR prefetch returned an invalid response",
+   "player": "Tucker",
+   "status": "ERROR",
+   "total_cells": 18
+  },
+  {
+   "diagnostics": [],
+   "effective_seconds": 5.738873413000007,
+   "extraction_seconds": 0.0,
+   "fingerprint": "9837c6b070bd9e03916e218bc15b1155667566b9f65083d8fdd6f49f08d1eff4",
+   "id": "eagle_vines_tucker",
+   "image": "eaglevins_90.jpg",
+   "known_gap": null,
+   "matched_cells": 0,
+   "mismatches": [],
+   "operational_error": "OCR failed: RuntimeError: OCR prefetch returned an invalid response",
+   "player": "Tucker",
+   "status": "ERROR",
+   "total_cells": 18
+  }
+ ],
+ "images": [
+  {
+   "diagnostics": [],
+   "image": "half_moon_bay_round.png",
+   "ocr_seconds": 7.542418057000006
+  },
+  {
+   "diagnostics": [],
+   "image": "blue_rock_round.png",
+   "ocr_seconds": 6.945463889999999
+  },
+  {
+   "diagnostics": [],
+   "image": "eaglevins_90.jpg",
+   "ocr_seconds": 5.738873413000007
+  }
+ ],
+ "run": {
+  "branch": "scan-stats-refactor",
+  "commit": "1c7e382c143788cda3fca774ee9b4c4f61b16d39",
+  "created_at": "2026-11-15T09:11:09.952999Z",
+  "dirty": false,
+  "head_commit": "26b61a4f2471798c95da61bf62aaf35686203069",
+  "id": "43697946085-1",
+  "models": {
+   "merge": "gemini-3.1-flash-lite-preview",
+   "ocr": "mistral-ocr-latest"
+  },
+  "pr": 681,
+  "run_url": "https://github.com/TuckerBrewer12/BirdieEyeView/actions/runs/43697946085",
+  "suite": "quick"
+ },
+ "schema_version": 1,
+ "summary": {
+  "at_least_80": 0,
+  "at_least_90": 0,
+  "cases": 4,
+  "failed": 4,
+  "images": 3,
+  "known_gaps": 0,
+  "matched_cells": 0,
+  "merge_rejected_images": 0,
+  "operational_errors": 4,
+  "perfect": 0,
+  "suite_seconds": 20.624037575000003,
+  "total_cells": 144
+ }
+}
