@@ -171,13 +171,12 @@ function RoundHighlight({
   }
 
   return (
-    <button
-      type="button"
+    <RowButton
       data-slot="round-preview"
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        "group flex w-full flex-wrap items-center gap-4 text-left",
+        "group flex w-full flex-wrap items-center gap-4",
         onClick ? "cursor-pointer" : "cursor-default",
       )}
     >
@@ -213,7 +212,7 @@ function RoundHighlight({
           {round.score ?? "—"}
         </div>
       </div>
-    </button>
+    </RowButton>
   );
 }
 
