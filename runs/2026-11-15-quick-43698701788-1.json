@@ -1,0 +1,126 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "effective_seconds": 7.766841255000003,
+   "extraction_seconds": 0.004023106000005328,
+   "fingerprint": "558cbc738240047e754c13a9683987c38ee5bdecc4198c202621748ed9f7f30c",
+   "id": "half_moon_bay_g",
+   "image": "half_moon_bay_round.png",
+   "known_gap": null,
+   "matched_cells": 54,
+   "mismatches": [],
+   "operational_error": null,
+   "player": "G",
+   "status": "PERFECT",
+   "total_cells": 54
+  },
+  {
+   "diagnostics": [],
+   "effective_seconds": 7.76613062399997,
+   "extraction_seconds": 0.003312474999972892,
+   "fingerprint": "1d4b9e822780c9276954cf562953cdf1fc780897ba8d464c32c6bafaea05af55",
+   "id": "half_moon_bay_t",
+   "image": "half_moon_bay_round.png",
+   "known_gap": null,
+   "matched_cells": 54,
+   "mismatches": [],
+   "operational_error": null,
+   "player": "T",
+   "status": "PERFECT",
+   "total_cells": 54
+  },
+  {
+   "diagnostics": [
+    "split tables: front 10 lines (holes 1-9), back 9 lines (holes 10-18)",
+    "back nine row paired by ordinal 2 of 4"
+   ],
+   "effective_seconds": 7.0652632850000145,
+   "extraction_seconds": 0.0044601410000097985,
+   "fingerprint": "845bc29681ec911c91554535483abcc400859e2ea9fee825c6bc805aeb5e50f0",
+   "id": "blue_rock_tucker",
+   "image": "blue_rock_round.png",
+   "known_gap": null,
+   "matched_cells": 18,
+   "mismatches": [],
+   "operational_error": null,
+   "player": "Tucker",
+   "status": "PERFECT",
+   "total_cells": 18
+  },
+  {
+   "diagnostics": [],
+   "effective_seconds": 6.7164436520000095,
+   "extraction_seconds": 0.0032805680000080883,
+   "fingerprint": "9837c6b070bd9e03916e218bc15b1155667566b9f65083d8fdd6f49f08d1eff4",
+   "id": "eagle_vines_tucker",
+   "image": "eaglevins_90.jpg",
+   "known_gap": null,
+   "matched_cells": 18,
+   "mismatches": [],
+   "operational_error": null,
+   "player": "Tucker",
+   "status": "PERFECT",
+   "total_cells": 18
+  }
+ ],
+ "images": [
+  {
+   "diagnostics": [
+    "Gemini table merge complete: input_chars=2586 output_chars=2341",
+    "ocr table 0: expanded 1 merged cell(s) into the grid",
+    "table merge accepted"
+   ],
+   "image": "half_moon_bay_round.png",
+   "ocr_seconds": 7.7628181489999974
+  },
+  {
+   "diagnostics": [
+    "Gemini table merge rejected: line 6 fills one nine and leaves the other empty; using original markdown",
+    "table merge rejected: line 6 fills one nine and leaves the other empty"
+   ],
+   "image": "blue_rock_round.png",
+   "ocr_seconds": 7.060803144000005
+  },
+  {
+   "diagnostics": [
+    "Gemini table merge complete: input_chars=2561 output_chars=1586",
+    "ocr table 2: expanded 1 merged cell(s) into the grid",
+    "ocr table 2 row 7: dropped 1 extra blank cell(s) in the separator gap at [11]",
+    "table merge accepted"
+   ],
+   "image": "eaglevins_90.jpg",
+   "ocr_seconds": 6.713163084000001
+  }
+ ],
+ "run": {
+  "branch": "scan-stats-refactor",
+  "commit": "597ce69aab9134eac95fdf0760bf7ad3f64fd5ca",
+  "created_at": "2026-11-15T09:20:21.127289Z",
+  "dirty": false,
+  "head_commit": "b7fcd17e1af38d7e2fafb8fabb57b373cd92d3ff",
+  "id": "43698701788-1",
+  "models": {
+   "merge": "gemini-3.1-flash-lite-preview",
+   "ocr": "mistral-ocr-latest"
+  },
+  "pr": 681,
+  "run_url": "https://github.com/TuckerBrewer12/BirdieEyeView/actions/runs/43698701788",
+  "suite": "quick"
+ },
+ "schema_version": 1,
+ "summary": {
+  "at_least_80": 4,
+  "at_least_90": 4,
+  "cases": 4,
+  "failed": 0,
+  "images": 3,
+  "known_gaps": 0,
+  "matched_cells": 144,
+  "merge_rejected_images": 1,
+  "operational_errors": 0,
+  "perfect": 4,
+  "suite_seconds": 22.073830560999994,
+  "total_cells": 144
+ }
+}
