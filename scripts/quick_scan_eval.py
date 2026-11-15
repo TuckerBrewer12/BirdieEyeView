@@ -599,7 +599,7 @@ def results_metadata(environment=None):
             return None
         return result.stdout.strip() if result.returncode == 0 else None
 
-    from api.routers.scan import MISTRAL_OCR_MODEL
+    from services.scan_ocr import MISTRAL_OCR_MODEL
     from services.gemini_table_merger import GEMINI_MERGE_MODEL
 
     state = git("status", "--porcelain", "--untracked-files=normal", "--", "api", "services", "scripts", "models", "analytics", "database")

@@ -19,6 +19,7 @@ import api.main as api_main
 from api import auth_utils
 from api import scan_uploads
 from api.routers import auth, scan, scan_reports
+from services import scan_ocr
 from database import DatabaseManager
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
@@ -298,8 +299,8 @@ def scan_providers(monkeypatch):
         calls["merge"].append(markdown)
         return markdown
 
-    monkeypatch.setattr(scan.MistralOCRService, "ocr_file", fake_ocr)
-    monkeypatch.setattr(scan, "merge_split_tables", fake_merge)
+    monkeypatch.setattr(scan_ocr.MistralOCRService, "ocr_file", fake_ocr)
+    monkeypatch.setattr(scan_ocr, "merge_split_tables", fake_merge)
     return calls
 
 
@@ -408,8 +409,8 @@ def mistral_capture(monkeypatch):
             state["merge_diagnostics"].append(diagnostics)
         return markdown
 
-    monkeypatch.setattr(scan.MistralOCRService, "ocr_file", fake_ocr)
-    monkeypatch.setattr(scan, "merge_split_tables", fake_merge)
+    monkeypatch.setattr(scan_ocr.MistralOCRService, "ocr_file", fake_ocr)
+    monkeypatch.setattr(scan_ocr, "merge_split_tables", fake_merge)
     return state
 
 
