@@ -19,6 +19,7 @@ import api.main as api_main
 from api import auth_utils
 from api import scan_uploads
 from api.routers import auth, scan, scan_reports
+from services import scan_ocr
 from database import DatabaseManager
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
@@ -298,8 +299,8 @@ def scan_providers(monkeypatch):
         calls["merge"].append(markdown)
         return markdown
 
-    monkeypatch.setattr(scan.MistralOCRService, "ocr_file", fake_ocr)
-    monkeypatch.setattr(scan, "merge_split_tables", fake_merge)
+    monkeypatch.setattr(scan_ocr.MistralOCRService, "ocr_file", fake_ocr)
+    monkeypatch.setattr(scan_ocr, "merge_split_tables", fake_merge)
     return calls
 
 
@@ -408,8 +409,8 @@ def mistral_capture(monkeypatch):
             state["merge_diagnostics"].append(diagnostics)
         return markdown
 
-    monkeypatch.setattr(scan.MistralOCRService, "ocr_file", fake_ocr)
-    monkeypatch.setattr(scan, "merge_split_tables", fake_merge)
+    monkeypatch.setattr(scan_ocr.MistralOCRService, "ocr_file", fake_ocr)
+    monkeypatch.setattr(scan_ocr, "merge_split_tables", fake_merge)
     return state
 
 
@@ -469,6 +470,131 @@ def test_scan_error_message_matches_what_was_detected(api, scan_providers):
     assert unreadable.json() == {
         "detail": UNREADABLE_SCORE_ROWS, "failure": {"category": "unreadable_scores", "stage": "parse"},
     }
+
+
+@pytest.fixture
+def scan_markdown(scan_providers, monkeypatch):
+    state = {"text": EAGLE_VINES_WITH_INITIALS, "merge_result": None}
+
+    async def fake_ocr(self, file_path, **kwargs):
+        return {"pages": [{"markdown": state["text"]}]}
+
+    async def fake_merge(markdown, diagnostics=None):
+        scan_providers["merge"].append(markdown)
+        return state["merge_result"] if state["merge_result"] is not None else markdown
+
+    monkeypatch.setattr(scan_ocr.MistralOCRService, "ocr_file", fake_ocr)
+    monkeypatch.setattr(scan_ocr, "merge_split_tables", fake_merge)
+    return state, scan_providers
+
+
+def scan_table(scores, pars):
+    def row(label, values):
+        return "| " + " | ".join([label, *[str(v) if v is not None else "" for v in values]]) + " |"
+
+    return "\n".join([row("HOLE", range(1, 19)), row("Golfer", scores), row("PAR", pars)])
+
+
+def test_scan_keeps_hole_identity_and_only_reports_complete_par(api, scan_markdown):
+    state, _ = scan_markdown
+    alice = api.user("scan-layout@example.com")
+    course_id = custom_course(api, alice)
+
+    async def remove_hole_rows():
+        conn = await asyncpg.connect(api.url)
+        try:
+            await conn.execute("DELETE FROM courses.holes WHERE course_id=$1 AND hole_number < 10", uuid.UUID(course_id))
+        finally:
+            await conn.close()
+
+    asyncio.run(remove_hole_rows())
+    state["text"] = scan_table([4] * 18, [4] * 18)
+    context = "my name is Golfer. scores written as raw strokes. no putts recorded."
+    response = api.client.post("/api/scan/extract", headers=alice["headers"], files=upload(),
+                               data={"course_id": course_id, "user_context": context})
+    assert response.status_code == 200, response.text
+    round_data = response.json()["round"]
+    assert [(h["hole_number"], h["strokes"]) for h in round_data["hole_scores"]] == [(n, 4) for n in range(1, 19)]
+    assert [h["number"] for h in round_data["course"]["holes"]] == list(range(1, 19))
+    assert round_data["course"]["holes"][9]["handicap"] == 10
+    assert round_data["course"]["holes"][0]["par"] == 4
+
+    state["text"] = scan_table([4] * 18, [4] * 9 + [None] * 9)
+    response = api.client.post("/api/scan/extract", headers=alice["headers"], files=upload(), data={"user_context": context})
+    assert response.status_code == 200, response.text
+    assert response.json()["round"]["course"]["par"] is None
+    assert len(response.json()["round"]["hole_scores"]) == 18
+
+
+def test_scan_misread_and_conflicting_scores_are_flagged_for_review(api, scan_markdown):
+    state, _ = scan_markdown
+    state["text"] = scan_table([-4] + [1] * 17, [4] * 18)
+    response = api.client.post("/api/scan/extract", files=upload(),
+                               data={"user_context": "my name is Golfer. scores written to par. no putts recorded."})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["round"]["hole_scores"][0]["strokes"] is None
+    assert "Hole 1 score couldn't be read; check it" in body["fields_needing_review"]
+    assert body["confidence"]["hole_scores"][0]["fields"]["strokes"]["level"] == "very_low"
+
+    state["text"] = "\n".join([
+        "| HOLE | " + " | ".join(map(str, range(1, 10))) + " |",
+        "| G | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |",
+        "| | 1 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |",
+        "| | 2 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 |",
+        "| Par | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |",
+    ])
+    response = api.client.post("/api/scan/extract", files=upload(), data={"user_context": (
+        "my name is G. scores written to par. name on score row. row order: score, putts, shots to green"
+    )})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["round"]["hole_scores"][0]["strokes"] == 3
+    assert "Hole 1 score sign corrected (birdie vs bogey disambiguated)" in body["fields_needing_review"]
+    assert body["confidence"]["hole_scores"][0]["fields"]["strokes"]["level"] == "high"
+    assert body["confidence"]["hole_scores"][1]["fields"]["strokes"]["level"] == "high"
+
+    state["text"] = state["text"].replace("| G | 1 |", "| G | 2 |", 1)
+    response = api.client.post("/api/scan/extract", files=upload(), data={"user_context": (
+        "my name is G. scores written to par. name on score row. row order: score, putts, shots to green"
+    )})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["round"]["hole_scores"][0]["strokes"] == 6
+    assert "Hole 1 score breakdown conflicts with total strokes" in body["fields_needing_review"]
+    assert body["confidence"]["hole_scores"][0]["fields"]["strokes"]["level"] == "medium"
+
+
+@pytest.mark.parametrize("route", ["ocr", "extract"])
+@pytest.mark.parametrize("source", ["provider", "merge"])
+def test_scan_rejects_oversized_ocr_at_both_boundaries(api, scan_markdown, route, source):
+    state, calls = scan_markdown
+    limit = scan.MAX_OCR_TEXT_CHARS
+    if source == "provider":
+        state["text"] = "x" * (limit + 1)
+    else:
+        state["merge_result"] = "x" * (limit + 1)
+    response = api.client.post(f"/api/scan/{route}", files=upload())
+    assert response.status_code == 422, response.text[:300]
+    expected = {"detail": "This file has more text than a scorecard. Try a photo of just the card."}
+    if route == "extract":
+        expected["failure"] = {"category": "unreadable_scores", "stage": "ocr"}
+    assert response.json() == expected
+    assert len(calls["merge"]) == (0 if source == "provider" else 1)
+
+
+@pytest.mark.parametrize("route", ["ocr", "extract"])
+def test_scan_accepts_ocr_exactly_at_the_limit(api, scan_markdown, route):
+    state, calls = scan_markdown
+    markdown = EAGLE_VINES_WITH_INITIALS + "\n"
+    state["text"] = markdown + "x" * (scan.MAX_OCR_TEXT_CHARS - len(markdown))
+    response = api.client.post(f"/api/scan/{route}", files=upload(), data={"user_context": EAGLE_VINES["user_context"]})
+    assert response.status_code == 200, response.text[:300]
+    assert len(calls["merge"][0]) == scan.MAX_OCR_TEXT_CHARS
+    if route == "ocr":
+        assert len(response.json()["ocr_text"]) == scan.MAX_OCR_TEXT_CHARS
+    else:
+        assert {h["hole_number"]: h["strokes"] for h in response.json()["round"]["hole_scores"]} == EAGLE_VINES_STROKES
 
 
 def mint_token(user_id: str, *, expires_in: timedelta, secret: str | None = None) -> str:

@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Literal, Optional, Tuple
 from analytics.verdicts import ChangeVerdict
 from models import Hole, UserTee
 from models.hole_score import ScoreKind
+from services.scan_assembly import ConfidenceLevel
 
 
 class ResponseModel(BaseModel):
@@ -857,10 +858,6 @@ class UserResponse(ResponseModel):
     handicap: Optional[float] = None
     created_at: Optional[datetime] = None
     scoring_goal: Optional[int] = None
-
-
-ConfidenceLevel = Literal["high", "medium", "low", "very_low"]
-"""How sure the scan is of a reading, from its 0-1 confidence."""
 
 
 class ScannedHole(ResponseModel):

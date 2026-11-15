@@ -82,11 +82,13 @@ Key files:
 
 ### `services/` — Business logic layer
 
-- `scan_service.py` — course resolution, par lookup, hole score building, user tee creation extracted from `api/routers/scan.py`. LLM-extracted values are clamped to valid ranges before constructing Hole/Tee/UserTee to prevent Pydantic validation errors on bad scan data.
+- `scan_service.py` — reviewed-save orchestration: validates the selected course and round, verifies provider-picked course data, and saves course and round in one transaction; rejected saves write nothing.
+- `scan_ocr.py` — OCR and table-merge orchestration; caps cleaned provider text before the paid merge and caps the merged result with `MAX_OCR_TEXT_CHARS`.
+- `scan_assembly.py` — parsed rows to round payloads, typed `ScanNote` issues and confidence. Known courses use hole identity and declared layout; unknown-course total par requires all 18 pars. Invalid strokes become unknown with a review note; a breakdown conflict lowers present strokes confidence to medium; a sign correction keeps its note at high confidence. No API imports.
 
 ### `api/` — FastAPI routers
 
-- `routers/scan.py` — `POST /api/scan/extract` (typed `ScanResponse`: the card as read, per-hole confidence, fields to review) and `POST /api/scan/save`. Save flow: looks up existing course; if not found, saves round without a course (no auto-creation). Populates `par_played` from `course_holes` param.
+- `routers/scan.py` — `POST /api/scan/ocr`, `POST /api/scan/extract` (typed `ScanResponse`) and `POST /api/scan/save`. Owns request checks, course access, HTTP errors, course handicaps and review-note wording from `api/messages.py`; delegates OCR and assembly to `services/scan_ocr.py` and `scan_assembly.py`, and reviewed saving to `ScanService`. Oversized provider or merged text gets 422 on both OCR routes. The frontend rings non-high strokes amber but does not display `fields_needing_review` text.
 - `routers/courses.py` — GET/POST/PUT + clone endpoint. `user_id IS NULL` = master/global course; `user_id IS NOT NULL` = user-owned custom course.
 - `routers/rounds.py` — GET/PUT/DELETE for rounds and hole scores
 - `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`; a user is sent as `UserResponse` (the profile, no rounds)

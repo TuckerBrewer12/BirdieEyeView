@@ -225,7 +225,7 @@ def test_extraction_returns_safe_failure_category_without_changing_public_detail
     async def unavailable_provider(path, diagnostics=None):
         raise EnvironmentError("MISTRAL_API_KEY=secret")
 
-    monkeypatch.setattr(scan, "_run_ocr_pipeline", unavailable_provider)
+    monkeypatch.setattr(scan, "read_scorecard", unavailable_provider)
     response = client.post("/api/scan/extract", files={"file": ("card.png", image_bytes(), "image/png")})
     assert response.status_code == 500
     assert response.json() == {
