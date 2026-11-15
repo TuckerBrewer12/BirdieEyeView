@@ -1,26 +1,19 @@
 """Scorecard scan/upload API endpoints."""
 
-import contextlib
-import hashlib
 import logging
 import os
-import tempfile
 import time
 from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from PIL import Image, ImageOps
 
 logger = logging.getLogger(__name__)
 
 from database.db_manager import DatabaseManager
 from database.exceptions import IntegrityError
 from api.messages import (
-    COURSE_ID_NOT_FOUND, FILENAME_REQUIRED, FILE_TOO_LARGE, FORBIDDEN, HEIC_UNAVAILABLE, IMAGE_DIMENSIONS_TOO_LARGE,
-    IMAGE_PIXELS_TOO_MANY, INVALID_IMAGE_DIMENSIONS, INVALID_PDF, UNCLEAR_PLAYER_NAME, UNREADABLE_IMAGE,
-    UNREADABLE_SCORE_ROWS, UNSUPPORTED_CONTENT_TYPE, UNSUPPORTED_FILE_TYPE, UNSUPPORTED_IMAGE_FORMAT,
-    UPLOAD_NOT_PROCESSED,
+    COURSE_ID_NOT_FOUND, FORBIDDEN, UNCLEAR_PLAYER_NAME, UNREADABLE_SCORE_ROWS, UPLOAD_NOT_PROCESSED,
 )
 from api.dependencies import get_current_user, get_optional_current_user, get_db
 from api.error_responses import EXTRACTION_FAILED, OCR_FAILED, ROUND_SAVE_FAILED, SCAN_FAILED, SCAN_SAVE_FAILED
@@ -28,6 +21,7 @@ from api.input_validation import ensure_uuid_str, sanitize_ocr_text, sanitize_us
 from api.request_models import SaveRoundRequest
 from api.schemas import ScanResponse
 from api.scan_errors import ScanExtractionError
+from api.scan_uploads import check_upload_name, prepared_upload
 from models import User
 from services.gemini_table_merger import merge_split_tables
 from services.mistral_ocr_service import MistralOCRService
@@ -36,57 +30,10 @@ from services.scan_service import ScanSaveRejected, ScanService
 
 router = APIRouter()
 
-OCR_LONG_EDGE_TARGET = 2000
-OCR_JPEG_QUALITY = 80
-PREPROCESS_CACHE_VERSION = "v3"
-MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
 MAX_OCR_TEXT_CHARS = 300_000
 MAX_USER_CONTEXT_CHARS = 1_500
-MAX_IMAGE_PIXELS = 40_000_000
-MAX_IMAGE_SIDE = 12_000
-PREPROCESS_CACHE_DIR = Path(tempfile.gettempdir()) / "scanscore_ocr_cache"
-PREPROCESS_CACHE_ENABLED = False
 MISTRAL_OCR_MODEL = os.environ.get("MISTRAL_OCR_MODEL") or "mistral-ocr-latest"
 MIN_SCORE_BREAKDOWN_EVIDENCE_HOLES = 9
-
-
-def _initialize_heic_decoder() -> bool:
-    try:
-        from pillow_heif import register_heif_opener
-
-        register_heif_opener()
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("HEIC/HEIF decoder initialization failed: %s", exc)
-        return False
-
-    registered_extensions = Image.registered_extensions()
-    return ".heic" in registered_extensions or ".heif" in registered_extensions
-
-
-HEIC_DECODE_AVAILABLE = _initialize_heic_decoder()
-BASE_UPLOAD_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".pdf"}
-ALLOWED_UPLOAD_SUFFIXES = set(BASE_UPLOAD_SUFFIXES)
-if HEIC_DECODE_AVAILABLE:
-    ALLOWED_UPLOAD_SUFFIXES.add(".heic")
-
-ALLOWED_UPLOAD_MIME_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "application/pdf",
-}
-if HEIC_DECODE_AVAILABLE:
-    ALLOWED_UPLOAD_MIME_TYPES.update(
-        {
-            "image/heic",
-            "image/heif",
-            "application/octet-stream",  # some mobile clients use this for HEIC
-        }
-    )
-
-ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP"}
-if HEIC_DECODE_AVAILABLE:
-    ALLOWED_IMAGE_FORMATS.update({"HEIC", "HEIF"})
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -98,59 +45,6 @@ def _env_bool(name: str, default: bool = False) -> bool:
 
 # Disabled by default to avoid leaking OCR/user content into aggregated logs.
 LOG_SENSITIVE_OCR_DEBUG = _env_bool("LOG_SENSITIVE_OCR_DEBUG", False)
-
-
-def _extract_upload_suffix(file: UploadFile) -> str:
-    filename = (file.filename or "").strip()
-    if not filename:
-        raise HTTPException(400, FILENAME_REQUIRED)
-    suffix = Path(filename).suffix.lower()
-    if suffix not in ALLOWED_UPLOAD_SUFFIXES:
-        if suffix == ".heic" and not HEIC_DECODE_AVAILABLE:
-            raise HTTPException(
-                400,
-                HEIC_UNAVAILABLE,
-            )
-        raise HTTPException(
-            400, UNSUPPORTED_FILE_TYPE.format(suffix=suffix, allowed=", ".join(sorted(ALLOWED_UPLOAD_SUFFIXES)))
-        )
-    content_type = (file.content_type or "").lower().strip()
-    if content_type and content_type not in ALLOWED_UPLOAD_MIME_TYPES:
-        raise HTTPException(400, UNSUPPORTED_CONTENT_TYPE.format(content_type=content_type))
-    return suffix
-
-
-def _validate_upload_payload(path: Path, suffix: str) -> None:
-    if suffix == ".pdf":
-        with open(path, "rb") as fh:
-            header = fh.read(5)
-        if header != b"%PDF-":
-            raise HTTPException(400, INVALID_PDF)
-        return
-
-    try:
-        with Image.open(path) as img:
-            img.verify()
-        with Image.open(path) as img:
-            fmt = (img.format or "").upper()
-            if fmt not in ALLOWED_IMAGE_FORMATS:
-                raise HTTPException(400, UNSUPPORTED_IMAGE_FORMAT.format(format=fmt or "unknown"))
-            width, height = img.size
-            if width <= 0 or height <= 0:
-                raise HTTPException(400, INVALID_IMAGE_DIMENSIONS)
-            if width > MAX_IMAGE_SIDE or height > MAX_IMAGE_SIDE:
-                raise HTTPException(400, IMAGE_DIMENSIONS_TOO_LARGE)
-            if width * height > MAX_IMAGE_PIXELS:
-                raise HTTPException(400, IMAGE_PIXELS_TOO_MANY)
-    except HTTPException:
-        raise
-    except Exception as exc:  # noqa: BLE001
-        if suffix == ".heic" and not HEIC_DECODE_AVAILABLE:
-            raise HTTPException(
-                400,
-                HEIC_UNAVAILABLE,
-            ) from exc
-        raise HTTPException(400, UNREADABLE_IMAGE) from exc
 
 
 def _confidence_level(score: float) -> str:
@@ -465,24 +359,6 @@ def _build_round_from_parsed_rows(
     return round_payload, fields_needing_review
 
 
-def _save_upload_to_temp(file: UploadFile, suffix: str) -> tuple[Path, str]:
-    """Stream upload to a temp file enforcing max size. Returns (path, sha256_hex)."""
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        hasher = hashlib.sha256()
-        total_bytes = 0
-        while True:
-            chunk = file.file.read(1024 * 1024)
-            if not chunk:
-                break
-            total_bytes += len(chunk)
-            if total_bytes > MAX_UPLOAD_BYTES:
-                Path(tmp.name).unlink(missing_ok=True)
-                raise HTTPException(413, FILE_TOO_LARGE)
-            tmp.write(chunk)
-            hasher.update(chunk)
-        return Path(tmp.name), hasher.hexdigest()
-
-
 async def _run_ocr_pipeline(ocr_path: Path) -> str:
     """Mistral OCR → Gemini merge → raw markdown string."""
     svc = MistralOCRService()
@@ -516,174 +392,24 @@ async def _run_ocr_pipeline(ocr_path: Path) -> str:
     return await merge_split_tables(raw_markdown)
 
 
-def _get_preprocess_cache_path(upload_digest: str) -> Path:
-    PREPROCESS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    key = f"{PREPROCESS_CACHE_VERSION}_le{OCR_LONG_EDGE_TARGET}_q{OCR_JPEG_QUALITY}_{upload_digest}"
-    return PREPROCESS_CACHE_DIR / f"{key}.jpg"
-
-
-def _save_jpeg(path: Path, img: Image.Image) -> None:
-    img.save(
-        path,
-        format="JPEG",
-        quality=OCR_JPEG_QUALITY,
-        optimize=True,
-        progressive=True,
-        exif=b"",
-        icc_profile=None,
-    )
-
-
-def _is_ocr_ready_jpeg(path: Path, img: Image.Image) -> bool:
-    """Return whether a browser-prepared JPEG can go to OCR unchanged."""
-    if path.suffix.lower() not in {".jpg", ".jpeg"}:
-        return False
-    if img.format != "JPEG" or img.mode != "RGB":
-        return False
-    if max(img.size) > OCR_LONG_EDGE_TARGET:
-        return False
-    if img.getexif():
-        return False
-
-    # Canvas-created JPEGs contain only ordinary JFIF/encoding information.
-    # Re-encode anything carrying payload metadata before sending it onward.
-    safe_info_keys = {
-        "dpi",
-        "jfif",
-        "jfif_density",
-        "jfif_unit",
-        "jfif_version",
-        "progression",
-        "progressive",
-    }
-    return not any(
-        value
-        for key, value in img.info.items()
-        if key not in safe_info_keys
-    )
-
-
-def _normalize_upload_for_ocr(path: Path, upload_digest: str) -> tuple[Path, bool]:
-    """
-    Normalize uploaded images to JPEG for faster, consistent OCR payloads.
-
-    Notes:
-    - PDF: attempts to render page 1 to JPEG, then applies the same preprocessing.
-      Falls back to original PDF if rendering is unavailable.
-    - If normalization fails (e.g., unsupported HEIC decoder), fall back to original.
-    """
-    cache_path = _get_preprocess_cache_path(upload_digest) if PREPROCESS_CACHE_ENABLED else None
-    is_pdf = path.suffix.lower() == ".pdf"
-    t0 = time.perf_counter()
-    try:
-        with Image.open(path) as img:
-            t_open = time.perf_counter()
-            if _is_ocr_ready_jpeg(path, img):
-                logger.info(
-                    "OCR preprocess pass-through: format=JPEG size=%sx%s bytes=%s",
-                    img.width,
-                    img.height,
-                    path.stat().st_size,
-                )
-                return path, False
-            if is_pdf:
-                # First page only for scorecard PDFs.
-                try:
-                    img.seek(0)
-                except Exception:
-                    pass
-            # Honor EXIF orientation before re-encoding.
-            img = ImageOps.exif_transpose(img)
-            if img.mode != "RGB":
-                img = img.convert("RGB")
-            t_orient = time.perf_counter()
-            original_size = img.size
-
-            # Resize large images before OCR (keep aspect ratio, do not upscale).
-            width, height = img.size
-            long_edge = max(width, height)
-            if long_edge > OCR_LONG_EDGE_TARGET:
-                scale = OCR_LONG_EDGE_TARGET / float(long_edge)
-                new_size = (max(1, int(width * scale)), max(1, int(height * scale)))
-                img = img.resize(new_size, Image.Resampling.LANCZOS)
-            t_resize = time.perf_counter()
-
-            # Explicitly strip metadata by creating a fresh pixel-only image.
-            # This prevents EXIF/ICC/comment payloads from carrying into OCR input.
-            stripped = Image.new("RGB", img.size)
-            stripped.paste(img)
-
-            if PREPROCESS_CACHE_ENABLED and cache_path is not None:
-                # Save into cache atomically.
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg", dir=PREPROCESS_CACHE_DIR) as out:
-                    temp_cache_path = Path(out.name)
-                _save_jpeg(temp_cache_path, stripped)
-                os.replace(temp_cache_path, cache_path)
-                output_path = cache_path
-            else:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as out:
-                    output_path = Path(out.name)
-                _save_jpeg(output_path, stripped)
-            t_save = time.perf_counter()
-            logger.info(
-                "OCR preprocess image: source=%s cache_enabled=%s original=%sx%s resized_to=%sx%s in_bytes=%s out_bytes=%s timing_ms(open=%.1f orient=%.1f resize=%.1f save=%.1f total=%.1f)",
-                "pdf" if is_pdf else "image",
-                PREPROCESS_CACHE_ENABLED,
-                original_size[0],
-                original_size[1],
-                stripped.size[0],
-                stripped.size[1],
-                path.stat().st_size if path.exists() else None,
-                output_path.stat().st_size if output_path.exists() else None,
-                (t_open - t0) * 1000.0,
-                (t_orient - t_open) * 1000.0,
-                (t_resize - t_orient) * 1000.0,
-                (t_save - t_resize) * 1000.0,
-                (t_save - t0) * 1000.0,
-            )
-            return output_path, False
-    except Exception as e:
-        logger.warning(
-            "Image normalization failed; using original upload. file=%s source=%s err=%s",
-            path.name,
-            "pdf" if is_pdf else "image",
-            e,
-        )
-        return path, False
-
-
 @router.post("/ocr")
-async def prefetch_ocr(
-    file: UploadFile = File(...),
-    current_user: Optional[User] = Depends(get_optional_current_user),
-):
+# No user or database dependency: OCR needs neither, so it keeps working when the database is down.
+async def prefetch_ocr(file: UploadFile = File(...)):
     """Run OCR on an uploaded image and return the raw markdown text.
 
     Called immediately on file selection so the slow OCR step is already
     complete by the time the user clicks Extract.
     """
-    suffix = _extract_upload_suffix(file)
-    original_tmp_path, upload_digest = _save_upload_to_temp(file, suffix)
-
-    ocr_path = original_tmp_path
-    cache_hit = False
     try:
-        _validate_upload_payload(original_tmp_path, suffix)
-        ocr_path, cache_hit = _normalize_upload_for_ocr(original_tmp_path, upload_digest)
-        markdown_text = await _run_ocr_pipeline(ocr_path)
-        logger.info("Prefetch OCR complete: user=%s chars=%d", getattr(current_user, "id", "anonymous"), len(markdown_text))
-        return {"ocr_text": markdown_text}
+        async with prepared_upload(file, for_ocr=True) as upload:
+            markdown_text = await _run_ocr_pipeline(upload.ocr_path)
     except HTTPException:
         raise
     except Exception:
         logger.exception("Prefetch OCR failed")
         raise HTTPException(500, OCR_FAILED)
-    finally:
-        if ocr_path != original_tmp_path and (not PREPROCESS_CACHE_ENABLED or not cache_hit):
-            with contextlib.suppress(OSError):
-                ocr_path.unlink()
-        with contextlib.suppress(OSError):
-            original_tmp_path.unlink()
+    logger.info("Prefetch OCR complete: chars=%d", len(markdown_text))
+    return {"ocr_text": markdown_text}
 
 
 @router.post("/extract")
@@ -705,7 +431,7 @@ async def extract_scan(
     )
     # Validate file type + metadata.
     try:
-        suffix = _extract_upload_suffix(file)
+        check_upload_name(file)  # checked first, so a bad file type wins over a bad text field
     except HTTPException as exc:
         raise ScanExtractionError(exc.status_code, exc.detail, category="invalid_upload", stage="upload")
     if user_context is not None:
@@ -732,116 +458,94 @@ async def extract_scan(
         except ValueError as exc:
             raise HTTPException(422, str(exc))
 
-    try:
-        original_tmp_path, upload_digest = _save_upload_to_temp(file, suffix)
-    except HTTPException as exc:
-        raise ScanExtractionError(exc.status_code, exc.detail, category="invalid_upload", stage="upload")
-
-    ocr_path = original_tmp_path
-    cache_hit = False
     failure_stage = "upload"
-
     try:
-        _validate_upload_payload(original_tmp_path, suffix)
+        # With prefetched OCR text the upload is still fully validated, but never re-encoded.
+        async with prepared_upload(file, for_ocr=not ocr_text) as upload:
+            # Scoring format is inferred from row parser + user_context hints.
+            to_par_scoring: Optional[bool] = None
 
-        t_pre_start = time.perf_counter()
-        ocr_path, cache_hit = _normalize_upload_for_ocr(original_tmp_path, upload_digest)
-        t_pre_end = time.perf_counter()
-        logger.info(
-            "Scan preprocessing complete: original=%s ocr_input=%s normalized=%s cache_enabled=%s cache_hit=%s pre_ms=%.1f",
-            original_tmp_path.name,
-            ocr_path.name,
-            ocr_path != original_tmp_path,
-            PREPROCESS_CACHE_ENABLED,
-            cache_hit,
-            (t_pre_end - t_pre_start) * 1000.0,
-        )
-
-        # Scoring format is inferred from row parser + user_context hints.
-        to_par_scoring: Optional[bool] = None
-
-        # Optional known course preload; extraction is always full Mistral parse.
-        failure_stage = "unknown"
-        course_model = None
-        t_course_lookup_start = time.perf_counter()
-        if course_id:
-            course_model = await db.courses.get_course(course_id)
-            if course_model is None:
-                raise HTTPException(404, COURSE_ID_NOT_FOUND.format(course_id=course_id))
-            if course_model.user_id and (current_user is None or str(course_model.user_id) != str(current_user.id)):
-                raise HTTPException(403, FORBIDDEN)
-        t_course_lookup_end = time.perf_counter()
-        logger.info(
-            "Scan stage complete: stage=course_lookup has_course_id=%s found=%s lookup_ms=%.1f",
-            bool(course_id),
-            course_model is not None,
-            (t_course_lookup_end - t_course_lookup_start) * 1000.0,
-        )
-        failure_stage = "ocr"
-        t_extract_start = time.perf_counter()
-        if ocr_text:
-            # Prefetch already ran OCR + Gemini merge — use it directly.
-            markdown_text = ocr_text
-            logger.info("Scan using prefetched OCR text: chars=%d", len(markdown_text))
-        else:
-            markdown_text = await _run_ocr_pipeline(ocr_path)
+            # Optional known course preload; extraction is always full Mistral parse.
+            failure_stage = "unknown"
+            course_model = None
+            t_course_lookup_start = time.perf_counter()
+            if course_id:
+                course_model = await db.courses.get_course(course_id)
+                if course_model is None:
+                    raise HTTPException(404, COURSE_ID_NOT_FOUND.format(course_id=course_id))
+                if course_model.user_id and (current_user is None or str(course_model.user_id) != str(current_user.id)):
+                    raise HTTPException(403, FORBIDDEN)
+            t_course_lookup_end = time.perf_counter()
             logger.info(
-                "Scan OCR+merge complete: extract_ms=%.1f chars=%d",
-                (time.perf_counter() - t_extract_start) * 1000.0,
-                len(markdown_text),
+                "Scan stage complete: stage=course_lookup has_course_id=%s found=%s lookup_ms=%.1f",
+                bool(course_id),
+                course_model is not None,
+                (t_course_lookup_end - t_course_lookup_start) * 1000.0,
+            )
+            failure_stage = "ocr"
+            t_extract_start = time.perf_counter()
+            if ocr_text:
+                # Prefetch already ran OCR + Gemini merge — use it directly.
+                markdown_text = ocr_text
+                logger.info("Scan using prefetched OCR text: chars=%d", len(markdown_text))
+            else:
+                markdown_text = await _run_ocr_pipeline(upload.ocr_path)
+                logger.info(
+                    "Scan OCR+merge complete: extract_ms=%.1f chars=%d",
+                    (time.perf_counter() - t_extract_start) * 1000.0,
+                    len(markdown_text),
+                )
+
+            if LOG_SENSITIVE_OCR_DEBUG:
+                logger.debug("Merged markdown:\n%s", markdown_text)
+            else:
+                logger.info("Merged OCR markdown chars=%d", len(markdown_text))
+
+            failure_stage = "parse"
+            t_parse_start = time.perf_counter()
+            parsed_rows = parse_mistral_scorecard_rows(markdown_text, user_context=user_context)
+            failure_stage = "assembly"
+            round_data, fields_needing_review = _build_round_from_parsed_rows(
+                parsed_rows,
+                course_model=course_model,
+                to_par_scoring=to_par_scoring,
             )
 
-        if LOG_SENSITIVE_OCR_DEBUG:
-            logger.debug("Merged markdown:\n%s", markdown_text)
-        else:
-            logger.info("Merged OCR markdown chars=%d", len(markdown_text))
-
-        failure_stage = "parse"
-        t_parse_start = time.perf_counter()
-        parsed_rows = parse_mistral_scorecard_rows(markdown_text, user_context=user_context)
-        failure_stage = "assembly"
-        round_data, fields_needing_review = _build_round_from_parsed_rows(
-            parsed_rows,
-            course_model=course_model,
-            to_par_scoring=to_par_scoring,
-        )
-
-        present_strokes = len(
-            [h for h in round_data.get("hole_scores", []) if h.get("strokes") is not None]
-        )
-        if present_strokes == 0:
-            if parsed_rows.player_name:
+            present_strokes = len(
+                [h for h in round_data.get("hole_scores", []) if h.get("strokes") is not None]
+            )
+            if present_strokes == 0:
+                if parsed_rows.player_name:
+                    raise ScanExtractionError(
+                        422,
+                        UNCLEAR_PLAYER_NAME,
+                        category="unreadable_scores", stage="parse",
+                    )
                 raise ScanExtractionError(
                     422,
-                    UNCLEAR_PLAYER_NAME,
+                    UNREADABLE_SCORE_ROWS,
                     category="unreadable_scores", stage="parse",
                 )
-            raise ScanExtractionError(
-                422,
-                UNREADABLE_SCORE_ROWS,
-                category="unreadable_scores", stage="parse",
+
+            confidence_data = _build_confidence_payload(round_data.get("hole_scores", []), fields_needing_review)
+            t_parse_end = time.perf_counter()
+            logger.info(
+                "Scan stage complete: stage=mistral_parse extraction_mode=%s parse_ms=%.1f score_cells=%d putt_cells=%d gir_cells=%d shots_cells=%d to_par_hint=%s warnings=%d",
+                parsed_rows.extraction_mode,
+                (t_parse_end - t_parse_start) * 1000.0,
+                len([h for h in round_data.get("hole_scores", []) if h.get("strokes") is not None]),
+                len([h for h in round_data.get("hole_scores", []) if h.get("putts") is not None]),
+                len([h for h in round_data.get("hole_scores", []) if h.get("green_in_regulation") is not None]),
+                len([v for v in parsed_rows.shots_to_green_row if v is not None]),
+                parsed_rows.score_to_par_hint is True,
+                len(fields_needing_review),
             )
 
-        confidence_data = _build_confidence_payload(round_data.get("hole_scores", []), fields_needing_review)
-        t_parse_end = time.perf_counter()
-        logger.info(
-            "Scan stage complete: stage=mistral_parse extraction_mode=%s parse_ms=%.1f score_cells=%d putt_cells=%d gir_cells=%d shots_cells=%d to_par_hint=%s warnings=%d",
-            parsed_rows.extraction_mode,
-            (t_parse_end - t_parse_start) * 1000.0,
-            len([h for h in round_data.get("hole_scores", []) if h.get("strokes") is not None]),
-            len([h for h in round_data.get("hole_scores", []) if h.get("putts") is not None]),
-            len([h for h in round_data.get("hole_scores", []) if h.get("green_in_regulation") is not None]),
-            len([v for v in parsed_rows.shots_to_green_row if v is not None]),
-            parsed_rows.score_to_par_hint is True,
-            len(fields_needing_review),
-        )
-
-        return ScanResponse(
-            round=round_data,
-            confidence=confidence_data,
-            fields_needing_review=fields_needing_review,
-        )
-
+            return ScanResponse(
+                round=round_data,
+                confidence=confidence_data,
+                fields_needing_review=fields_needing_review,
+            )
     except FileNotFoundError:
         raise ScanExtractionError(400, UPLOAD_NOT_PROCESSED, category="invalid_upload", stage=failure_stage)
     except EnvironmentError:
@@ -860,10 +564,6 @@ async def extract_scan(
             "Scan extract request complete: total_ms=%.1f",
             (time.perf_counter() - request_t0) * 1000.0,
         )
-        # Cache is disabled by default; remove generated OCR preprocess artifact.
-        if ocr_path != original_tmp_path and (not PREPROCESS_CACHE_ENABLED or not cache_hit):
-            ocr_path.unlink(missing_ok=True)
-        original_tmp_path.unlink(missing_ok=True)
 
 
 @router.post("/save")

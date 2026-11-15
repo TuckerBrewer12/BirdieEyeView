@@ -10,7 +10,9 @@ from api.messages import (
     REPORT_METADATA_INVALID,
 )
 from api.error_responses import REPORT_NOT_SAVED, REPORT_STORAGE_UNAVAILABLE
-from api.routers.scan import MAX_UPLOAD_BYTES, _extract_upload_suffix, _save_upload_to_temp, _validate_upload_payload
+from api.scan_uploads import (
+    MAX_UPLOAD_BYTES, check_upload_name, remove_quietly, save_upload_to_temp, validate_upload_payload,
+)
 from api.scan_report_schemas import ScanReportMetadata
 from services.scan_report_service import (
     AnonymousScanReport,
@@ -29,17 +31,17 @@ def get_scan_report_store() -> ScanReportStore | None:
 
 
 def _validated_image(file: UploadFile) -> tuple[bytes, str]:
-    suffix = _extract_upload_suffix(file)
-    path, _ = _save_upload_to_temp(file, suffix)
+    suffix = check_upload_name(file)
+    path = save_upload_to_temp(file, suffix)
     try:
-        _validate_upload_payload(path, suffix)
+        validate_upload_payload(path, suffix)
         media_type = {
             ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
             ".webp": "image/webp", ".heic": "image/heic", ".pdf": "application/pdf",
         }[suffix]
         return path.read_bytes(), media_type
     finally:
-        path.unlink(missing_ok=True)
+        remove_quietly(path)
 
 
 @router.post("/reports")
@@ -63,7 +65,7 @@ async def report_failed_scan(
     if file.size is not None and file.size > MAX_UPLOAD_BYTES:
         raise HTTPException(413, FILE_TOO_LARGE)
     try:
-        _extract_upload_suffix(file)
+        check_upload_name(file)
     except HTTPException:
         raise HTTPException(400, REPORT_FILE_TYPE_UNSUPPORTED) from None
 

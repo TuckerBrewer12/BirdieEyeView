@@ -7,6 +7,7 @@
 | Files | Responsibility |
 |---|---|
 | [scan_service.py](../../services/scan_service.py) | `ScanService.save_reviewed_scan()`: plan and validate the course and round, verify a provider-picked course, then write course and round in one transaction. |
+| [scan_image.py](../../services/scan_image.py) | `prepare_for_ocr()`: the image OCR receives (pass-through for a browser-ready JPEG or a PDF, otherwise a 2,000 px quality-80 JPEG without metadata); a failed re-encode falls back to the original. It writes into a file the caller created (opened with `open_existing()`, which fails rather than create a file) and never creates or deletes files itself; `new_temp_path()` and `remove_quietly()` (logs instead of raising) are the shared temporary-file helpers. Upload checks live in [api/scan_uploads.py](../../api/scan_uploads.py). |
 | [scan_normalization.py](../../services/scan_normalization.py) | Converts scan-derived numbers (`"5"`, `5.0`) to the types strict Models require and rejects values that would need guessing (`true`, `5.5`, words, non-finite numbers). Used by the save request models. |
 | [golfcourse_api_service.py](../../services/golfcourse_api_service.py) | External course search and per-tee course details used only for verification. |
 | `mistral_ocr_service.py`, `mistral_scorecard_parser.py`, `gemini_table_merger.py` | OCR, parsed observations, and optional table merging; see [extraction](extraction.md). |

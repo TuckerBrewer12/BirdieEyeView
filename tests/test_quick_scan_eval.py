@@ -170,10 +170,9 @@ async def test_runner_prepares_shared_image_once_and_reuses_bytes(monkeypatch, t
 
     monkeypatch.setattr(quick_eval, "prepare_image_for_upload", counted_prepare)
 
-    async def fake_prefetch(upload, *, current_user):
+    async def fake_prefetch(upload):
         calls["prefetch"] += 1
         assert upload.filename == "card.jpg"
-        assert current_user is None
         uploaded_payloads.append(upload.file.read())
         return {"ocr_text": "merged markdown"}
 

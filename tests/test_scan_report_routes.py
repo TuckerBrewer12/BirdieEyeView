@@ -12,6 +12,7 @@ from api.dependencies import get_db, get_optional_current_user
 from api.main import create_app
 from api.routers import scan, scan_reports
 from services.scan_report_service import AnonymousScanReport
+from tests.scan_report_fixtures import IDENTIFIER, pdf_card
 from tests.test_scan_report_storage import configure_environment, make_store
 
 
@@ -84,13 +85,22 @@ def test_app_configuration_wires_real_encryption_and_sanitation_without_database
 
 def test_configured_storage_sanitation_failure_is_safe_and_never_stored(caplog):
     store = make_store()
-    response = client_for(store).post(
+    client = client_for(store)
+    send = lambda contents: client.post(  # noqa: E731
         "/api/scan/reports", data={"metadata": json.dumps(metadata())},
-        files={"file": ("card.pdf", b"%PDF-malformed-private-user", "application/pdf")},
+        files={"file": ("card.pdf", contents, "application/pdf")},
     )
-    assert response.status_code == 503 and response.json()["code"] == "report_not_saved"
+
+    # An unparseable PDF fails early, at upload validation, with an input error.
+    malformed = send(b"%PDF-malformed-private-user")
+    assert malformed.status_code == 400
+    # A real PDF the sanitizer refuses (over its 10-page limit) fails late, as not saved.
+    too_long = send(pdf_card(pages=11))
+    assert too_long.status_code == 503 and too_long.json()["code"] == "report_not_saved"
+
     assert not store.client.objects
-    assert "private-user" not in response.text + caplog.text
+    for leaked in ("private-user", IDENTIFIER):
+        assert leaked not in malformed.text + too_long.text + caplog.text
 
 
 def test_anonymous_report_has_only_allowlisted_data_and_retries_are_idempotent():

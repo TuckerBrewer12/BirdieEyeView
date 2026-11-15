@@ -24,10 +24,12 @@ from PIL import Image
 
 import api.main as api_main
 from api import auth_utils
+from api import scan_uploads
 from api.routers import auth, scan, scan_reports
 from database import DatabaseManager
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
+from tests.scan_report_fixtures import pdf_card
 from tests.test_mistral_scorecard_parser import EAGLE_VINES_WITH_INITIALS
 
 pytestmark = pytest.mark.integration
@@ -311,11 +313,16 @@ def scan_providers(monkeypatch):
     OCR answers with the committed markdown for ``eaglevins_90.jpg``. Upload validation, image
     normalization, markdown extraction, parsing, assembly and saving all run for real.
     """
-    calls = {"ocr": [], "merge": []}
+    calls = {"ocr": [], "merge": [], "ocr_bytes": []}
 
     async def fake_ocr(self, file_path, **kwargs):
-        with Image.open(file_path) as image:  # the file the real provider would have received
-            calls["ocr"].append(image.format)
+        data = Path(file_path).read_bytes()  # the file the real provider would have received
+        calls["ocr_bytes"].append(data)
+        if data.startswith(b"%PDF-"):
+            calls["ocr"].append("PDF")
+        else:
+            with Image.open(file_path) as image:
+                calls["ocr"].append(image.format)
         return {"pages": [{"markdown": EAGLE_VINES_WITH_INITIALS}]}
 
     async def fake_merge(markdown):
@@ -754,7 +761,7 @@ def test_scan_uploads_are_rejected_before_ocr(api, scan_providers):
     assert extract("card.jpg", card, content_type="text/html").status_code == 400
     fake = extract("card.jpg", b"<html>not a scorecard</html>")
     assert (fake.status_code, fake.json()["failure"]) == (400, {"category": "invalid_upload", "stage": "upload"})
-    too_big = extract("card.jpg", b"\0" * (scan.MAX_UPLOAD_BYTES + 1))
+    too_big = extract("card.jpg", b"\0" * (scan_uploads.MAX_UPLOAD_BYTES + 1))
     assert (too_big.status_code, too_big.json()["failure"]["category"]) == (413, "invalid_upload")
     ocr = api.client.post("/api/scan/ocr", headers=alice["headers"],
                           files={"file": ("card.jpg", b"<html>not a scorecard</html>", "image/jpeg")})
@@ -840,3 +847,53 @@ def test_api_schema_has_unique_operation_ids_and_status_routes_still_answer(api)
         assert api.client.get(path).status_code == 200, path
         head = api.client.head(path)
         assert (head.status_code, head.content) == (200, b""), path
+
+
+
+# ================================================================
+# Scan uploads: PDFs, no database, no leftover temp files
+# ================================================================
+
+
+def test_scan_rejects_a_fake_pdf_and_sends_a_real_one_to_ocr_unchanged(api, scan_providers):
+    alice = api.user("alice@example.com")
+    fake = api.client.post("/api/scan/extract", headers=alice["headers"],
+                           files={"file": ("card.pdf", b"%PDF-but the rest is not a PDF", "application/pdf")})
+    assert (fake.status_code, fake.json()["failure"]) == (400, {"category": "invalid_upload", "stage": "upload"})
+    assert scan_providers["ocr"] == []  # rejected before OCR
+
+    real = pdf_card(pages=1)
+    ocr = api.client.post("/api/scan/ocr", headers=alice["headers"], files={"file": ("card.pdf", real, "application/pdf")})
+    assert ocr.status_code == 200, ocr.text
+    assert scan_providers["ocr_bytes"] == [real]
+
+
+def test_anonymous_ocr_works_without_a_database(api, scan_providers):
+    alice = api.user("alice@example.com")
+    database = api.client.app.state.db_manager
+    api.client.app.state.db_manager = None
+    try:
+        ocr = api.client.post("/api/scan/ocr", files=upload())
+        assert ocr.status_code == 200, ocr.text
+        assert scan_providers["ocr"] == ["JPEG"]
+        # Control: an endpoint that needs the database reports it unavailable in the same state.
+        assert api.client.get(f"/api/rounds/user/{alice['id']}", headers=alice["headers"]).status_code == 503
+    finally:
+        api.client.app.state.db_manager = database
+
+
+def test_scans_leave_no_temporary_files_behind(api, scan_providers, monkeypatch, tmp_path):
+    alice = api.user("alice@example.com")
+    monkeypatch.setattr("tempfile.tempdir", str(tmp_path))
+    raw_photo = io.BytesIO()
+    Image.new("RGB", (2400, 1800), "white").save(raw_photo, "PNG")  # large enough to be re-encoded for OCR
+    post = lambda path, files, **data: api.client.post(  # noqa: E731
+        path, headers=alice["headers"], files={"file": files}, data=data or None)
+
+    assert post("/api/scan/ocr", ("card.png", raw_photo.getvalue(), "image/png")).status_code == 200
+    assert post("/api/scan/extract", ("card.png", raw_photo.getvalue(), "image/png"),
+                user_context=EAGLE_VINES["user_context"]).status_code == 200
+    assert post("/api/scan/extract", ("card.jpg", b"not an image", "image/jpeg")).status_code == 400
+    assert post("/api/scan/extract", ("card.jpg", b"\0" * (scan_uploads.MAX_UPLOAD_BYTES + 1), "image/jpeg")).status_code == 413
+    assert scan_providers["ocr"] == ["JPEG", "JPEG"]  # both successful scans re-encoded the PNG
+    assert list(tmp_path.iterdir()) == []
