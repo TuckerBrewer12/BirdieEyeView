@@ -1,20 +1,23 @@
-# Social
+# Social and Requests
 
-Route: `/social`. Access: Signed in.
+Route: `/social` and `/inbox`. Access: Signed in.
 
-Lists accepted friendships and allows a player to send a friend request using a friend code.
+Friends with their handicap and last round, adding a friend by code, and the requests sent and received.
 
 ## Entry points
 
-- [SocialPage.tsx](../../../frontend/src/pages/SocialPage.tsx)
-- [AuthContext.tsx](../../../frontend/src/context/AuthContext.tsx)
+- [SocialPage.tsx](../../../frontend/src/pages/social/SocialPage.tsx)
+- [useSocialPageViewModel.ts](../../../frontend/src/pages/social/useSocialPageViewModel.ts)
+- [FriendsInboxPage.tsx](../../../frontend/src/pages/social/inbox/FriendsInboxPage.tsx)
+- [useFriendsInboxPageViewModel.ts](../../../frontend/src/pages/social/inbox/useFriendsInboxPageViewModel.ts)
+- [useFriendships.ts](../../../frontend/src/data/useFriendships.ts)
 
 ## How it works
 
-The page gets account context, queries accepted friendships, and manages the request form and feedback locally. The backend owns friendship authorization and state transitions. Inbox navigation handles pending requests separately.
+`GET /api/users/me/friends` lists friendships; accepted ones carry `friend_handicap_index` and `friend_last_played`. Compare opens Analytics' Profile against the friend. The More menu's request count reads only pending requests (`useOpenRequestCount`).
 
 ## Boundaries and checks when changing it
 
-Check invalid/self/duplicate codes, loading/error/empty states, and refreshing the accepted list. This page currently has inline query/form logic; separate it only as part of the agreed frontend refactor.
+Answering or sending a request updates the cached lists, so counts move at once. Check a bad code, a request already sent, and declining.
 
 These checks describe useful validation scenarios, not a claim that dedicated tests already cover every case. Shared conventions are in [frontend practices](../../practices/frontend.md). Return to the [page index](../README.md).

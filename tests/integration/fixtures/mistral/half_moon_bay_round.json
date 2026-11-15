@@ -1,0 +1,80 @@
+{
+ "document_annotation": null,
+ "model": "mistral-ocr-latest",
+ "pages": [
+  {
+   "blocks": [
+    {
+     "bottom_right_x": 1782,
+     "bottom_right_y": 1342,
+     "confidence_scores": null,
+     "content": "<table><tr><td>HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td><td rowspan=\"2\">P</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>Black 72.5/132</td><td>394</td><td>344</td><td>150</td><td>526</td><td>465</td><td>386</td><td>172</td><td>526</td><td>180</td><td>3143</td><td>565</td><td>437</td><td>220</td><td>431</td><td>527</td><td>411</td><td>403</td><td>184</td><td>533</td><td>3711</td><td>6854</td><td></td><td></td></tr><tr><td>Handicap</td><td>3</td><td>9</td><td>17</td><td>15</td><td>1</td><td>11</td><td>13</td><td>5</td><td>7</td><td></td><td>L</td><td>10</td><td>6</td><td>8</td><td>2</td><td>16</td><td>14</td><td>4</td><td>12</td><td>18</td><td></td><td></td><td></td><td></td></tr><tr><td>Blue 70.8/127</td><td>376</td><td>332</td><td>140</td><td>481</td><td>431</td><td>365</td><td>155</td><td>500</td><td>166</td><td>2946</td><td>A</td><td>539</td><td>422</td><td>195</td><td>409</td><td>506</td><td>385</td><td>381</td><td>149</td><td>527</td><td>3513</td><td>6459</td><td></td><td></td></tr><tr><td>Handicap</td><td>3</td><td>9</td><td>17</td><td>15</td><td>1</td><td>5</td><td>13</td><td>7</td><td>11</td><td></td><td>Y</td><td>12</td><td>4</td><td>8</td><td>2</td><td>14</td><td>10</td><td>6</td><td>16</td><td>18</td><td></td><td></td><td></td><td></td></tr><tr><td>White M: 69.1/123<br/>W: 74.8/133</td><td>360</td><td>297</td><td>118</td><td>446</td><td>408</td><td>351</td><td>143</td><td>475</td><td>156</td><td>2754</td><td>E</td><td>517</td><td>412</td><td>164</td><td>386</td><td>475</td><td>357</td><td>360</td><td>129</td><td>527</td><td>3327</td><td>6081</td><td></td><td></td></tr><tr><td>Handicap</td><td>3</td><td>7</td><td>17</td><td>15</td><td>1</td><td>5</td><td>11</td><td>13</td><td>9</td><td></td><td>R</td><td>8</td><td>6</td><td>16</td><td>4</td><td>12</td><td>14</td><td>2</td><td>18</td><td>10</td><td></td><td></td><td></td><td></td></tr><tr><td>G</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td></td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>2</td><td>0</td><td>0</td><td>5</td><td>77</td><td></td><td></td></tr><tr><td></td><td>3</td><td>2</td><td>1</td><td>3</td><td>2</td><td>2</td><td>1</td><td>3</td><td>2</td><td></td><td></td><td>4</td><td>3</td><td>2</td><td>2</td><td>3</td><td>2</td><td>3</td><td>1</td><td>3</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>3</td><td>3</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>x</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>x</td><td></td><td></td><td>x</td><td>x</td><td>x</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>x</td><td>\u221a</td><td>\u221a</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>Par</td><td>4</td><td>4/3</td><td>3</td><td>5</td><td>4</td><td>4</td><td>3</td><td>5</td><td>3</td><td>35/34</td><td></td><td>5</td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td><td>4</td><td>3</td><td>5</td><td>37</td><td>72/71</td><td></td><td></td></tr><tr><td>T</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>8</td><td></td><td>0</td><td>1</td><td>2</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>5</td><td>85</td><td></td><td></td></tr><tr><td></td><td>3</td><td>4</td><td>1</td><td>4</td><td>3</td><td>2</td><td>1</td><td>4</td><td>2</td><td></td><td></td><td>3</td><td>3</td><td>3</td><td>2</td><td>9</td><td>3</td><td>2</td><td>1</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>3</td><td>3</td><td>2</td><td>=</td><td></td><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>1</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>x</td><td>x</td><td>\u221a</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td></td><td></td><td>\u221a</td><td>x</td><td>x</td><td>\u221a</td><td>x</td><td>x</td><td>\u221a</td><td>\u221a</td><td>x</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>Gold M: 66.1/117<br/>W: 71.3/124</td><td>316</td><td>297</td><td>101</td><td>429</td><td>381</td><td>311</td><td>132</td><td>441</td><td>137</td><td>2545</td><td></td><td>468</td><td>364</td><td>146</td><td>328</td><td>450</td><td>336</td><td>316</td><td>111</td><td>397</td><td>2916</td><td>5461</td><td></td><td></td></tr><tr><td>Handicap</td><td>7</td><td>3</td><td>17</td><td>13</td><td>1</td><td>9</td><td>11</td><td>5</td><td>15</td><td></td><td></td><td>4</td><td>2</td><td>14</td><td>10</td><td>6</td><td>12</td><td>8</td><td>16</td><td>18</td><td></td><td></td><td></td><td></td></tr><tr><td>Red 68.2/117</td><td>316</td><td>147</td><td>82</td><td>397</td><td>356</td><td>272</td><td>77</td><td>433</td><td>121</td><td>2201</td><td></td><td>421</td><td>322</td><td>139</td><td>328</td><td>417</td><td>292</td><td>281</td><td>74</td><td>397</td><td>2671</td><td>4872</td><td></td><td></td></tr><tr><td>Handicap</td><td>5</td><td>7</td><td>15</td><td>9</td><td>1</td><td>11</td><td>17</td><td>3</td><td>13</td><td></td><td></td><td>10</td><td>6</td><td>14</td><td>2</td><td>4</td><td>12</td><td>8</td><td>18</td><td>16</td><td></td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-0.html",
+     "top_left_x": 404,
+     "top_left_y": 321,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 472,
+     "bottom_right_y": 1338,
+     "confidence_scores": null,
+     "content": "Scorer:",
+     "top_left_x": 384,
+     "top_left_y": 1308,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 989,
+     "bottom_right_y": 1315,
+     "confidence_scores": null,
+     "content": "\u00a9 Gold",
+     "top_left_x": 931,
+     "top_left_y": 1300,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 989,
+     "bottom_right_y": 1330,
+     "confidence_scores": null,
+     "content": "01/2000",
+     "top_left_x": 931,
+     "top_left_y": 1315,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1620,
+     "bottom_right_y": 1365,
+     "confidence_scores": null,
+     "content": "Date:",
+     "top_left_x": 1546,
+     "top_left_y": 1335,
+     "type": "text"
+    }
+   ],
+   "confidence_scores": null,
+   "dimensions": {
+    "dpi": 200,
+    "height": 1500,
+    "width": 2000
+   },
+   "footer": null,
+   "header": null,
+   "hyperlinks": [],
+   "images": [],
+   "index": 0,
+   "markdown": "[tbl-0.html](tbl-0.html)\n\nScorer:\n\n\u00a9 Gold\n\n01/2000\n\nDate:",
+   "tables": [
+    {
+     "content": "<table><tr><td>HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td><td rowspan=\"2\">P</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>Black 72.5/132</td><td>394</td><td>344</td><td>150</td><td>526</td><td>465</td><td>386</td><td>172</td><td>526</td><td>180</td><td>3143</td><td>565</td><td>437</td><td>220</td><td>431</td><td>527</td><td>411</td><td>403</td><td>184</td><td>533</td><td>3711</td><td>6854</td><td></td><td></td></tr><tr><td>Handicap</td><td>3</td><td>9</td><td>17</td><td>15</td><td>1</td><td>11</td><td>13</td><td>5</td><td>7</td><td></td><td>L</td><td>10</td><td>6</td><td>8</td><td>2</td><td>16</td><td>14</td><td>4</td><td>12</td><td>18</td><td></td><td></td><td></td><td></td></tr><tr><td>Blue 70.8/127</td><td>376</td><td>332</td><td>140</td><td>481</td><td>431</td><td>365</td><td>155</td><td>500</td><td>166</td><td>2946</td><td>A</td><td>539</td><td>422</td><td>195</td><td>409</td><td>506</td><td>385</td><td>381</td><td>149</td><td>527</td><td>3513</td><td>6459</td><td></td><td></td></tr><tr><td>Handicap</td><td>3</td><td>9</td><td>17</td><td>15</td><td>1</td><td>5</td><td>13</td><td>7</td><td>11</td><td></td><td>Y</td><td>12</td><td>4</td><td>8</td><td>2</td><td>14</td><td>10</td><td>6</td><td>16</td><td>18</td><td></td><td></td><td></td><td></td></tr><tr><td>White M: 69.1/123<br/>W: 74.8/133</td><td>360</td><td>297</td><td>118</td><td>446</td><td>408</td><td>351</td><td>143</td><td>475</td><td>156</td><td>2754</td><td>E</td><td>517</td><td>412</td><td>164</td><td>386</td><td>475</td><td>357</td><td>360</td><td>129</td><td>527</td><td>3327</td><td>6081</td><td></td><td></td></tr><tr><td>Handicap</td><td>3</td><td>7</td><td>17</td><td>15</td><td>1</td><td>5</td><td>11</td><td>13</td><td>9</td><td></td><td>R</td><td>8</td><td>6</td><td>16</td><td>4</td><td>12</td><td>14</td><td>2</td><td>18</td><td>10</td><td></td><td></td><td></td><td></td></tr><tr><td>G</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td></td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>2</td><td>0</td><td>0</td><td>5</td><td>77</td><td></td><td></td></tr><tr><td></td><td>3</td><td>2</td><td>1</td><td>3</td><td>2</td><td>2</td><td>1</td><td>3</td><td>2</td><td></td><td></td><td>4</td><td>3</td><td>2</td><td>2</td><td>3</td><td>2</td><td>3</td><td>1</td><td>3</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>3</td><td>3</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>x</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>x</td><td></td><td></td><td>x</td><td>x</td><td>x</td><td>\u221a</td><td>\u221a</td><td>\u221a</td><td>x</td><td>\u221a</td><td>\u221a</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>Par</td><td>4</td><td>4/3</td><td>3</td><td>5</td><td>4</td><td>4</td><td>3</td><td>5</td><td>3</td><td>35/34</td><td></td><td>5</td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td><td>4</td><td>3</td><td>5</td><td>37</td><td>72/71</td><td></td><td></td></tr><tr><td>T</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>8</td><td></td><td>0</td><td>1</td><td>2</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>5</td><td>85</td><td></td><td></td></tr><tr><td></td><td>3</td><td>4</td><td>1</td><td>4</td><td>3</td><td>2</td><td>1</td><td>4</td><td>2</td><td></td><td></td><td>3</td><td>3</td><td>3</td><td>2</td><td>9</td><td>3</td><td>2</td><td>1</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>3</td><td>3</td><td>2</td><td>=</td><td></td><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>1</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>x</td><td>x</td><td>\u221a</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td>x</td><td></td><td></td><td>\u221a</td><td>x</td><td>x</td><td>\u221a</td><td>x</td><td>x</td><td>\u221a</td><td>\u221a</td><td>x</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>Gold M: 66.1/117<br/>W: 71.3/124</td><td>316</td><td>297</td><td>101</td><td>429</td><td>381</td><td>311</td><td>132</td><td>441</td><td>137</td><td>2545</td><td></td><td>468</td><td>364</td><td>146</td><td>328</td><td>450</td><td>336</td><td>316</td><td>111</td><td>397</td><td>2916</td><td>5461</td><td></td><td></td></tr><tr><td>Handicap</td><td>7</td><td>3</td><td>17</td><td>13</td><td>1</td><td>9</td><td>11</td><td>5</td><td>15</td><td></td><td></td><td>4</td><td>2</td><td>14</td><td>10</td><td>6</td><td>12</td><td>8</td><td>16</td><td>18</td><td></td><td></td><td></td><td></td></tr><tr><td>Red 68.2/117</td><td>316</td><td>147</td><td>82</td><td>397</td><td>356</td><td>272</td><td>77</td><td>433</td><td>121</td><td>2201</td><td></td><td>421</td><td>322</td><td>139</td><td>328</td><td>417</td><td>292</td><td>281</td><td>74</td><td>397</td><td>2671</td><td>4872</td><td></td><td></td></tr><tr><td>Handicap</td><td>5</td><td>7</td><td>15</td><td>9</td><td>1</td><td>11</td><td>17</td><td>3</td><td>13</td><td></td><td></td><td>10</td><td>6</td><td>14</td><td>2</td><td>4</td><td>12</td><td>8</td><td>18</td><td>16</td><td></td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-0.html",
+     "word_confidence_scores": null
+    }
+   ]
+  }
+ ],
+ "usage_info": {
+  "doc_size_bytes": 335416,
+  "pages_processed": 1
+ }
+}

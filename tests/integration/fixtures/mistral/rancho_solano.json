@@ -1,0 +1,195 @@
+{
+ "document_annotation": null,
+ "model": "mistral-ocr-latest",
+ "pages": [
+  {
+   "blocks": [
+    {
+     "bottom_right_x": 751,
+     "bottom_right_y": 721,
+     "confidence_scores": null,
+     "content": "![img-0.jpeg](img-0.jpeg)",
+     "image_id": "img-0.jpeg",
+     "top_left_x": 54,
+     "top_left_y": 452,
+     "type": "image"
+    },
+    {
+     "bottom_right_x": 1476,
+     "bottom_right_y": 701,
+     "confidence_scores": null,
+     "content": "![img-1.jpeg](img-1.jpeg)",
+     "image_id": "img-1.jpeg",
+     "top_left_x": 751,
+     "top_left_y": 452,
+     "type": "image"
+    },
+    {
+     "bottom_right_x": 758,
+     "bottom_right_y": 1141,
+     "confidence_scores": null,
+     "content": "<table><tr><td>HOLE</td><td>Hocr</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td>Blue</td><td>0-12</td><td>497</td><td>348</td><td>385</td><td>378</td><td>186</td><td>365</td><td>471</td><td>213</td><td>417</td><td>3260</td></tr><tr><td colspan=\"2\">Blue/White Combo</td><td>497</td><td>348</td><td>364</td><td>360</td><td>162</td><td>365</td><td>454</td><td>213</td><td>417</td><td>3180</td></tr><tr><td>White</td><td>13+</td><td>475</td><td>334</td><td>364</td><td>360</td><td>162</td><td>334</td><td>454</td><td>169</td><td>386</td><td>3038</td></tr><tr><td colspan=\"2\">Gold</td><td>436</td><td>319</td><td>317</td><td>331</td><td>146</td><td>311</td><td>422</td><td>128</td><td>338</td><td>2748</td></tr><tr><td colspan=\"2\">Men's Handicap</td><td>3</td><td>15</td><td>1</td><td>13</td><td>7</td><td>17</td><td>5</td><td>11</td><td>9</td><td></td></tr><tr><td colspan=\"2\">G</td><td>3</td><td>2</td><td>3</td><td>3</td><td>2</td><td>2</td><td>4</td><td>2</td><td>3</td><td></td></tr><tr><td colspan=\"2\"></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>2</td><td></td></tr><tr><td colspan=\"2\"></td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>3</td></tr></table>",
+     "table_id": "tbl-0.html",
+     "top_left_x": 69,
+     "top_left_y": 725,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1476,
+     "bottom_right_y": 1129,
+     "confidence_scores": null,
+     "content": "<table><tr><td rowspan=\"6\">INITIAL</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td><td>Rating</td></tr><tr><td>578</td><td>427</td><td>228</td><td>404</td><td>352</td><td>152</td><td>358</td><td>521</td><td>352</td><td>3372</td><td>6632</td><td></td><td></td><td>71.8/133</td></tr><tr><td>578</td><td>375</td><td>192</td><td>404</td><td>344</td><td>152</td><td>343</td><td>521</td><td>338</td><td>3247</td><td>6427</td><td></td><td></td><td>70.9/131</td></tr><tr><td>566</td><td>375</td><td>192</td><td>364</td><td>344</td><td>140</td><td>343</td><td>492</td><td>338</td><td>3154</td><td>6192</td><td></td><td></td><td>70.0/128</td></tr><tr><td>536</td><td>363</td><td>156</td><td>325</td><td>336</td><td>121</td><td>329</td><td>439</td><td>325</td><td>2930</td><td>5678</td><td></td><td></td><td>67.8/120</td></tr><tr><td>8</td><td>2</td><td>4</td><td>6</td><td>14</td><td>18</td><td>16</td><td>12</td><td>10</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>3</td><td>3</td><td>3</td><td>4</td><td>3</td><td>1</td><td>4</td><td>4</td><td>3</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>2</td><td>2</td><td>0</td><td>0</td><td>2</td><td>0</td><td>1</td><td>8</td><td>11</td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-1.html",
+     "top_left_x": 761,
+     "top_left_y": 705,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 758,
+     "bottom_right_y": 1363,
+     "confidence_scores": null,
+     "content": "<table><tr><td>Par</td><td>5</td><td>4</td><td>4</td><td>4</td><td>3</td><td>4</td><td>5</td><td>3</td><td>4</td><td>36</td></tr><tr><td>0</td><td>3</td><td>3</td><td>5</td><td>2</td><td>1</td><td>3</td><td>3</td><td>2</td><td>3</td><td></td></tr><tr><td></td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>5</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td></td><td>0</td><td>0</td><td>3</td><td>0</td><td>0</td><td>2</td><td>0</td><td>1</td><td>1</td><td>7</td></tr></table>",
+     "table_id": "tbl-2.html",
+     "top_left_x": 54,
+     "top_left_y": 1143,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1476,
+     "bottom_right_y": 1363,
+     "confidence_scores": null,
+     "content": "<table><tr><td>5</td><td>4</td><td>3</td><td>4</td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td><td>36</td><td>72</td></tr><tr><td>4</td><td>3</td><td>2</td><td>2</td><td>2</td><td>1</td><td>3</td><td>2</td><td>2</td><td></td><td></td></tr><tr><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>3</td><td>2</td><td>2</td><td></td><td></td></tr><tr><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>2</td><td>0</td><td>0</td><td>4</td><td>11</td></tr></table>",
+     "table_id": "tbl-3.html",
+     "top_left_x": 761,
+     "top_left_y": 1143,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 758,
+     "bottom_right_y": 1451,
+     "confidence_scores": null,
+     "content": "<table><tr><td>Red</td><td>413</td><td>301</td><td>273</td><td>321</td><td>130</td><td>289</td><td>414</td><td>110</td><td>293</td><td>2544</td></tr><tr><td>Ladies' Handicap</td><td>3</td><td>7</td><td>11</td><td>9</td><td>15</td><td>13</td><td>1</td><td>17</td><td>5</td><td></td></tr></table>",
+     "table_id": "tbl-4.html",
+     "top_left_x": 54,
+     "top_left_y": 1365,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1476,
+     "bottom_right_y": 1451,
+     "confidence_scores": null,
+     "content": "<table><tr><td>485</td><td>323</td><td>146</td><td>305</td><td>328</td><td>107</td><td>285</td><td>410</td><td>281</td><td>2670</td><td>5214</td><td>70.3/123</td></tr><tr><td>8</td><td>6</td><td>14</td><td>12</td><td>2</td><td>18</td><td>16</td><td>10</td><td>4</td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-5.html",
+     "top_left_x": 761,
+     "top_left_y": 1365,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 758,
+     "bottom_right_y": 1502,
+     "confidence_scores": null,
+     "content": "<table><tr><td>Scorer:</td><td>\u00a9 Golf ScoreCards, Inc.<br/>8/2023 1-800-238-7267</td></tr></table>",
+     "table_id": "tbl-6.html",
+     "top_left_x": 54,
+     "top_left_y": 1455,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1476,
+     "bottom_right_y": 1502,
+     "confidence_scores": null,
+     "content": "<table><tr><td>Attest:</td><td>Date:</td></tr></table>",
+     "table_id": "tbl-7.html",
+     "top_left_x": 761,
+     "top_left_y": 1455,
+     "type": "table"
+    }
+   ],
+   "confidence_scores": null,
+   "dimensions": {
+    "dpi": 200,
+    "height": 2000,
+    "width": 1500
+   },
+   "footer": null,
+   "header": null,
+   "hyperlinks": [],
+   "images": [
+    {
+     "bottom_right_x": 751,
+     "bottom_right_y": 721,
+     "id": "img-0.jpeg",
+     "image_annotation": null,
+     "image_base64": null,
+     "top_left_x": 54,
+     "top_left_y": 452
+    },
+    {
+     "bottom_right_x": 1476,
+     "bottom_right_y": 701,
+     "id": "img-1.jpeg",
+     "image_annotation": null,
+     "image_base64": null,
+     "top_left_x": 751,
+     "top_left_y": 452
+    }
+   ],
+   "index": 0,
+   "markdown": "![img-0.jpeg](img-0.jpeg)\n\n![img-1.jpeg](img-1.jpeg)\n\n[tbl-0.html](tbl-0.html)\n\n[tbl-1.html](tbl-1.html)\n\n[tbl-2.html](tbl-2.html)\n\n[tbl-3.html](tbl-3.html)\n\n[tbl-4.html](tbl-4.html)\n\n[tbl-5.html](tbl-5.html)\n\n[tbl-6.html](tbl-6.html)\n\n[tbl-7.html](tbl-7.html)",
+   "tables": [
+    {
+     "content": "<table><tr><td>HOLE</td><td>Hocr</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td>Blue</td><td>0-12</td><td>497</td><td>348</td><td>385</td><td>378</td><td>186</td><td>365</td><td>471</td><td>213</td><td>417</td><td>3260</td></tr><tr><td colspan=\"2\">Blue/White Combo</td><td>497</td><td>348</td><td>364</td><td>360</td><td>162</td><td>365</td><td>454</td><td>213</td><td>417</td><td>3180</td></tr><tr><td>White</td><td>13+</td><td>475</td><td>334</td><td>364</td><td>360</td><td>162</td><td>334</td><td>454</td><td>169</td><td>386</td><td>3038</td></tr><tr><td colspan=\"2\">Gold</td><td>436</td><td>319</td><td>317</td><td>331</td><td>146</td><td>311</td><td>422</td><td>128</td><td>338</td><td>2748</td></tr><tr><td colspan=\"2\">Men's Handicap</td><td>3</td><td>15</td><td>1</td><td>13</td><td>7</td><td>17</td><td>5</td><td>11</td><td>9</td><td></td></tr><tr><td colspan=\"2\">G</td><td>3</td><td>2</td><td>3</td><td>3</td><td>2</td><td>2</td><td>4</td><td>2</td><td>3</td><td></td></tr><tr><td colspan=\"2\"></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>2</td><td></td></tr><tr><td colspan=\"2\"></td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>3</td></tr></table>",
+     "format": "html",
+     "id": "tbl-0.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td rowspan=\"6\">INITIAL</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td><td>Rating</td></tr><tr><td>578</td><td>427</td><td>228</td><td>404</td><td>352</td><td>152</td><td>358</td><td>521</td><td>352</td><td>3372</td><td>6632</td><td></td><td></td><td>71.8/133</td></tr><tr><td>578</td><td>375</td><td>192</td><td>404</td><td>344</td><td>152</td><td>343</td><td>521</td><td>338</td><td>3247</td><td>6427</td><td></td><td></td><td>70.9/131</td></tr><tr><td>566</td><td>375</td><td>192</td><td>364</td><td>344</td><td>140</td><td>343</td><td>492</td><td>338</td><td>3154</td><td>6192</td><td></td><td></td><td>70.0/128</td></tr><tr><td>536</td><td>363</td><td>156</td><td>325</td><td>336</td><td>121</td><td>329</td><td>439</td><td>325</td><td>2930</td><td>5678</td><td></td><td></td><td>67.8/120</td></tr><tr><td>8</td><td>2</td><td>4</td><td>6</td><td>14</td><td>18</td><td>16</td><td>12</td><td>10</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>3</td><td>3</td><td>3</td><td>4</td><td>3</td><td>1</td><td>4</td><td>4</td><td>3</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>2</td><td>2</td><td>0</td><td>0</td><td>2</td><td>0</td><td>1</td><td>8</td><td>11</td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-1.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>Par</td><td>5</td><td>4</td><td>4</td><td>4</td><td>3</td><td>4</td><td>5</td><td>3</td><td>4</td><td>36</td></tr><tr><td>0</td><td>3</td><td>3</td><td>5</td><td>2</td><td>1</td><td>3</td><td>3</td><td>2</td><td>3</td><td></td></tr><tr><td></td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>5</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td></td><td>0</td><td>0</td><td>3</td><td>0</td><td>0</td><td>2</td><td>0</td><td>1</td><td>1</td><td>7</td></tr></table>",
+     "format": "html",
+     "id": "tbl-2.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>5</td><td>4</td><td>3</td><td>4</td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td><td>36</td><td>72</td></tr><tr><td>4</td><td>3</td><td>2</td><td>2</td><td>2</td><td>1</td><td>3</td><td>2</td><td>2</td><td></td><td></td></tr><tr><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>3</td><td>2</td><td>2</td><td></td><td></td></tr><tr><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>2</td><td>0</td><td>0</td><td>4</td><td>11</td></tr></table>",
+     "format": "html",
+     "id": "tbl-3.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>Red</td><td>413</td><td>301</td><td>273</td><td>321</td><td>130</td><td>289</td><td>414</td><td>110</td><td>293</td><td>2544</td></tr><tr><td>Ladies' Handicap</td><td>3</td><td>7</td><td>11</td><td>9</td><td>15</td><td>13</td><td>1</td><td>17</td><td>5</td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-4.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>485</td><td>323</td><td>146</td><td>305</td><td>328</td><td>107</td><td>285</td><td>410</td><td>281</td><td>2670</td><td>5214</td><td>70.3/123</td></tr><tr><td>8</td><td>6</td><td>14</td><td>12</td><td>2</td><td>18</td><td>16</td><td>10</td><td>4</td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-5.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>Scorer:</td><td>\u00a9 Golf ScoreCards, Inc.<br/>8/2023 1-800-238-7267</td></tr></table>",
+     "format": "html",
+     "id": "tbl-6.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>Attest:</td><td>Date:</td></tr></table>",
+     "format": "html",
+     "id": "tbl-7.html",
+     "word_confidence_scores": null
+    }
+   ]
+  }
+ ],
+ "usage_info": {
+  "doc_size_bytes": 448486,
+  "pages_processed": 1
+ }
+}

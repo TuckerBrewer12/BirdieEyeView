@@ -37,7 +37,7 @@ def test_markdown_extraction_handles_top_level_shapes(response, expected):
 
 @pytest.mark.parametrize(("rows", "expected"), [([], ""), ([["a|b"]], "| a/b |")])
 def test_rows_to_markdown_escapes_cells(rows, expected):
-    assert MistralOCRService._rows_to_markdown(rows) == expected
+    assert MistralOCRService.rows_to_markdown(rows) == expected
 
 
 def test_html_parser_falls_back_without_beautiful_soup(monkeypatch):
@@ -100,3 +100,61 @@ async def test_ocr_file_wraps_provider_failure(monkeypatch, tmp_path):
 
     with pytest.raises(RuntimeError, match="Mistral OCR failed"):
         await MistralOCRService(api_key="key").ocr_file(image)
+
+
+SPANNED_TABLE = (
+    "<table>"
+    "<tr><th colspan='2'>HOLE</th><th>1</th><th>2</th></tr>"
+    "<tr><td rowspan='2'>G</td><td>x</td><td>4</td><td>5</td></tr>"
+    "<tr><td>y</td><td>2</td><td>1</td></tr>"
+    "</table>"
+)
+
+
+@pytest.mark.parametrize("without_soup", [False, True])
+def test_merged_cells_are_expanded_into_the_grid(monkeypatch, without_soup):
+    if without_soup:
+        monkeypatch.setattr(ocr_module, "BeautifulSoup", None)
+    diagnostics = []
+
+    rows = MistralOCRService._html_to_rows(SPANNED_TABLE, diagnostics)
+
+    assert rows == [["HOLE", "", "1", "2"], ["G", "x", "4", "5"], ["", "y", "2", "1"]]
+    assert diagnostics == ["ocr table 0: expanded 2 merged cell(s) into the grid"]
+
+
+HEADER = ["HOLE", "1", "2", "3", "4", "5", "6", "7", "8", "9", "OUT", "INITIALS", "10", "11", "12", "13", "14", "15", "16", "17", "18", "IN", "TOT"]
+FRONT = ["3", "4", "3", "4", "5", "4", "3", "4", "4"]
+BACK = ["4", "3", "4", "4", "5", "4", "3", "4", "5"]
+
+
+@pytest.mark.parametrize(
+    ("row", "expected", "note"),
+    [
+        (["", "D", *FRONT, "", "", *BACK, "", ""], ["D", *FRONT, "", "", *BACK, "", ""], "dropped 1 extra leading cell(s)"),
+        (["Blue", "72.2/135", *FRONT, "34", "", *BACK, "36", "70"], ["Blue", *FRONT, "34", "", *BACK, "36", "70"], "dropped 1 extra leading cell(s)"),
+        (["7", "3", *FRONT, "", "", *BACK, "", ""], ["7", "3", *FRONT, "", "", *BACK, "", ""], "left unaligned"),
+        (["D", *FRONT, "", *BACK, "", ""], ["D", *FRONT, "", "", *BACK, "", ""], "separator column(s) at [11]"),
+        # wider by one: a duplicated blank in the separator gap (Eagle Vines: INITIALS rowspan one row too long)
+        (["Tucker", *FRONT, "43", "", "", *BACK, "47", "90"], ["Tucker", *FRONT, "43", "", *BACK, "47", "90"], "extra blank cell(s) in the separator gap"),
+        (["Tucker", *FRONT, "43", "7", "", *BACK, "47", "90"], ["Tucker", *FRONT, "43", "7", "", *BACK, "47", "90"], "left unaligned"),
+        (["D", *FRONT, "", *BACK, "", "", ""], ["D", *FRONT, "", "", *BACK, "", ""], "shifted right past the separator"),
+        (["Red", *FRONT, "34", "", *BACK], ["Red", *FRONT, "34", "", *BACK, "", ""], "padded 2 missing trailing cell(s)"),
+    ],
+)
+def test_rows_are_aligned_to_the_hole_header(row, expected, note):
+    diagnostics = []
+
+    aligned = ocr_module.align_rows_to_header([HEADER, row], HEADER, diagnostics, where="t")
+
+    assert aligned == [HEADER, expected]
+    assert len(diagnostics) == 1 and note in diagnostics[0]
+
+
+def test_narrower_row_missing_its_label_cells_is_padded_in_front():
+    header = ["HOLE", "HDCP", "1", "2", "3", "4", "5", "6", "7", "8", "9", "OUT"]
+    row = ["Par", "5", "3", "4", "3", "4", "3", "5", "4", "5", "36"]
+
+    aligned = ocr_module.align_rows_to_header([header, row], header, None)
+
+    assert aligned[1] == ["Par", "", "5", "3", "4", "3", "4", "3", "5", "4", "5", "36"]

@@ -1,5 +1,3 @@
-"""Authentication endpoints: register/login/logout/me + verification/reset flows."""
-
 import hashlib
 import logging
 import os
@@ -158,8 +156,8 @@ async def _issue_verification_token(db: DatabaseManager, user: User, request: Re
     )
     verify_url = _build_verification_url(request, raw_token)
     try:
-        send_verification_email(user.email or "", verify_url)
-    except Exception:  # noqa: BLE001
+        await send_verification_email(user.email or "", verify_url)
+    except Exception:
         logger.exception(
             "Auth verification email send failed: user_id=%s email_fp=%s",
             user.id,
@@ -195,7 +193,6 @@ async def register(req: RegisterRequest, request: Request, db: DatabaseManager =
         raise HTTPException(409, EMAIL_ALREADY_REGISTERED)
 
     if req.home_course_id:
-        # A new account owns no courses yet, so only a master course can be its home course.
         await load_linkable_course(db, req.home_course_id, None, missing_detail=HOME_COURSE_NOT_FOUND)
 
     password_hash = hash_password(req.password)
@@ -211,7 +208,7 @@ async def register(req: RegisterRequest, request: Request, db: DatabaseManager =
             password_hash=password_hash,
         )
     except DuplicateError:
-        raise HTTPException(409, EMAIL_ALREADY_REGISTERED)
+        raise HTTPException(409, EMAIL_ALREADY_REGISTERED) from None
 
     await _issue_verification_token(db, user, request)
     logger.info(
@@ -428,8 +425,8 @@ async def forgot_password(
             )
             reset_url = _build_password_reset_url(request, raw_token)
             try:
-                send_password_reset_email(user.email or "", reset_url)
-            except Exception:  # noqa: BLE001
+                await send_password_reset_email(user.email or "", reset_url)
+            except Exception:
                 logger.exception(
                     "Auth forgot-password email send failed: user_id=%s email_fp=%s ip=%s",
                     user.id,
@@ -456,7 +453,6 @@ async def forgot_password(
             request_ip,
         )
 
-    # Always generic to avoid account enumeration.
     return MessageResponse(message=RESET_LINK_SENT_IF_ACCOUNT_EXISTS)
 
 

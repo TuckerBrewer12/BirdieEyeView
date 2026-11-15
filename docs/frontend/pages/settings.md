@@ -2,21 +2,21 @@
 
 Route: `/settings`. Access: Signed in.
 
-Edits player preferences/profile context and controls theme and accessibility preferences.
+The handicap, home course and friend code, theme and email updates, and sign out.
 
 ## Entry points
 
-- [SettingsPage.tsx](../../../frontend/src/pages/SettingsPage.tsx)
-- [handicap.ts](../../../frontend/src/lib/handicap.ts)
-- [theme.ts](../../../frontend/src/lib/theme.ts)
-- [accessibility.ts](../../../frontend/src/lib/accessibility.ts)
+- [SettingsPage.tsx](../../../frontend/src/pages/settings/SettingsPage.tsx)
+- [useSettingsPageViewModel.ts](../../../frontend/src/pages/settings/useSettingsPageViewModel.ts)
+- [useLeaveGuard.ts](../../../frontend/src/pages/settings/useLeaveGuard.ts)
+- [settingsRepository.ts](../../../frontend/src/pages/settings/settingsRepository.ts)
 
 ## How it works
 
-The page loads the user and course options, maintains editable drafts, saves supported profile fields, and refreshes displayed user data. Theme and color-blind preferences use shared browser helpers. Unsaved-change handling protects the local form.
+Edits gather in the page until saved; a bar pinned at the foot (`ActionBar pinned="always"`) offers Discard and Save, and leaving with unsaved changes asks first (`useLeaveGuard`).
 
 ## Boundaries and checks when changing it
 
-Keep user-entered plus handicaps, unset values, and course selection semantics explicit. Check save failures, discard/navigation behavior, and theme/accessibility propagation. New model fields are not automatically available through the current profile API or UI.
+Check leaving with unsaved changes, a failed save, and an out-of-range handicap.
 
 These checks describe useful validation scenarios, not a claim that dedicated tests already cover every case. Shared conventions are in [frontend practices](../../practices/frontend.md). Return to the [page index](../README.md).

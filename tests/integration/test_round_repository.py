@@ -48,17 +48,14 @@ async def test_round_summary_aggregates_hole_scores(database_manager):
 
     summaries = await database_manager.rounds.get_round_summaries_for_user(user.id)
 
-    summary_totals = {
-        key: summaries[0][key]
-        for key in ("total_score", "total_putts", "front_nine", "back_nine")
-    }
-    assert summary_totals == {
-        "total_score": 72,
-        "total_putts": 36,
-        "front_nine": 36,
-        "back_nine": 36,
-    }
-    assert len(summaries[0]["hole_scores_summary"]) == 18
+    summary = summaries[0]
+    assert (
+        summary.calculate_total_score(),
+        summary.get_total_putts(),
+        summary.calculate_front_nine(),
+        summary.calculate_back_nine(),
+    ) == (72, 36, 36, 36)
+    assert len(summary.hole_scores) == 18
 
 
 async def test_round_summary_reports_completeness_and_format(database_manager):
@@ -74,7 +71,7 @@ async def test_round_summary_reports_completeness_and_format(database_manager):
 
     summaries = await database_manager.rounds.get_round_summaries_for_user(user.id, limit=None)
 
-    assert [(row["is_complete"], row["hole_count"]) for row in summaries] == [(False, 18), (True, 18)]
+    assert [(row.is_complete(), len(row.get_intended_holes())) for row in summaries] == [(False, 18), (True, 18)]
 
 
 async def test_rounds_without_a_limit_return_the_full_history(database_manager):

@@ -1,9 +1,3 @@
-"""Conversion between asyncpg database rows and Pydantic domain models.
-
-Centralizes all mapping logic between the normalized DB schema
-and the nested Pydantic models.
-"""
-
 import json
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -16,13 +10,7 @@ from models.hole_layout import FRONT_NINE
 from database.exceptions import IntegrityError
 
 
-# ================================================================
-# Row -> Model (reads)
-# ================================================================
-
-
 def hole_from_row(row) -> Hole:
-    """courses.holes row -> Hole model."""
     return Hole(
         number=row["hole_number"],
         par=row["par"],
@@ -31,7 +19,6 @@ def hole_from_row(row) -> Hole:
 
 
 def tee_from_row(tee_row, yardage_rows: list, rating_rows=None) -> Tee:
-    """courses.tees row + courses.tee_yardages rows -> Tee model."""
     hole_yardages = {r["hole_number"]: r["yardage"] for r in yardage_rows}
     return Tee(
         color=tee_row["color"],
@@ -58,7 +45,6 @@ def course_from_rows(
     yardage_rows_by_tee: Dict[UUID, list],
     rating_rows_by_tee=None,
 ) -> Course:
-    """Assemble a course with its holes, tees, yardages and rating coverage."""
     holes = sorted(
         [hole_from_row(r) for r in hole_rows],
         key=lambda h: h.number or 0,
@@ -81,7 +67,6 @@ def course_from_rows(
 
 
 def hole_score_from_row(row) -> HoleScore:
-    """users.hole_scores row -> HoleScore model."""
     return HoleScore(
         hole_number=row["hole_number"],
         strokes=row["strokes"],
@@ -103,7 +88,6 @@ def round_from_rows(
     tee_color: Optional[str] = None,
     user_tee: Optional["UserTee"] = None,
 ) -> Round:
-    """Assemble a Round from DB rows + pre-loaded Course."""
     hole_scores = sorted(
         [hole_score_from_row(r) for r in hole_score_rows],
         key=lambda hs: hs.hole_number or 0,
@@ -125,7 +109,6 @@ def round_from_rows(
 
 
 def user_from_row(user_row, rounds: Optional[List[Round]] = None) -> User:
-    """users.users row -> User model."""
     return User(
         id=str(user_row["id"]),
         friend_code=user_row.get("friend_code"),
@@ -143,16 +126,9 @@ def user_from_row(user_row, rounds: Optional[List[Round]] = None) -> User:
     )
 
 
-# ================================================================
-# Model -> Row dict (writes)
-# ================================================================
-
-
 def course_to_row(course: Course, user_id: Optional[UUID] = None) -> dict:
-    """Course -> dict for courses.courses INSERT."""
     expected = course.get_expected_holes()
     if expected is None and sorted(h.number for h in course.holes if h.number is not None) == list(FRONT_NINE):
-        # Pre-refactor behavior for scanned nine-hole courses until Services declares the layout.
         expected = FRONT_NINE
     return {
         "name": course.name,
@@ -165,12 +141,10 @@ def course_to_row(course: Course, user_id: Optional[UUID] = None) -> dict:
 
 
 def hole_to_row(hole: Hole, course_id: UUID) -> tuple:
-    """Hole -> tuple for courses.holes INSERT (for executemany)."""
     return (course_id, hole.number, hole.par, hole.handicap)
 
 
 def tee_to_row(tee: Tee, course_id: UUID) -> tuple:
-    """Tee -> tuple for courses.tees INSERT."""
     return (
         course_id,
         tee.color,
@@ -187,12 +161,10 @@ def tee_ratings_to_rows(tee, tee_id: UUID) -> list:
 
 
 def tee_yardages_to_rows(tee: Tee, tee_id: UUID) -> list:
-    """Tee.hole_yardages -> list of tuples for courses.tee_yardages INSERT."""
     return [(tee_id, hole_num, yardage) for hole_num, yardage in sorted(tee.hole_yardages.items())]
 
 
 def hole_score_to_row(hs: HoleScore, round_id: UUID, hole_id: Optional[UUID]) -> tuple:
-    """HoleScore -> tuple for users.hole_scores INSERT (hole_id may be None)."""
     return (
         round_id,
         hole_id,
@@ -215,13 +187,11 @@ def round_to_row(
     course_id: Optional[UUID] = None,
     tee_id: Optional[UUID] = None,
 ) -> dict:
-    """Round -> dict for users.rounds INSERT."""
-    scored = round_._scored_holes()
+    scored = round_.scored_holes()
     if not scored or any(score.hole_number is None for score in round_.hole_scores):
         raise IntegrityError("A saved round requires unique numbered holes and at least one score")
 
     def supplied_total(field, getter):
-        # Observed values remain derived; only genuinely supplied summaries need storage.
         return None if any(getattr(score, field) is not None for score in scored) else getter()
 
     return {
@@ -243,7 +213,6 @@ def round_to_row(
 
 
 def user_to_row(user: User) -> dict:
-    """User -> dict for users.users INSERT."""
     return {
         "friend_code": user.friend_code,
         "name": user.name,
@@ -256,12 +225,10 @@ def user_to_row(user: User) -> dict:
 
 
 def user_tee_from_row(row, rating_rows=None) -> UserTee:
-    """users.user_tees row -> UserTee model."""
     hole_yardages = row["hole_yardages"] if row["hole_yardages"] is not None else {}
     try:
         if isinstance(hole_yardages, str):
             hole_yardages = json.loads(hole_yardages)
-        # Preserve raw keys until the shared validator can detect normalized aliases.
         return UserTee(
             id=str(row["id"]),
             user_id=str(row["user_id"]),
@@ -281,7 +248,6 @@ def user_tee_from_row(row, rating_rows=None) -> UserTee:
 
 
 def user_tee_to_row(ut: UserTee) -> dict:
-    """UserTee -> dict for users.user_tees INSERT."""
     return {
         "user_id": UUID(ut.user_id),
         "course_id": UUID(ut.course_id) if ut.course_id else None,
@@ -293,3 +259,40 @@ def user_tee_to_row(ut: UserTee) -> dict:
         "rating_holes": ut.rating_holes,
         "total_yardage": ut.get_total_yardage() if not ut.hole_yardages else None,
     }
+
+
+def round_from_summary_row(row) -> Round:
+    raw = row["hole_scores"]
+    holes = (json.loads(raw) if isinstance(raw, str) else raw) or []
+    course = None
+    if row["course_id"]:
+        course = Course(
+            id=str(row["course_id"]),
+            name=row["course_name"],
+            par=row["course_par"],
+            total_holes=row.get("course_total_holes"),
+            holes=[Hole(**h) for h in (json.loads(row["course_holes"]) if isinstance(row.get("course_holes"), str) else row.get("course_holes") or [])]
+                if "course_holes" in row else [Hole(number=h["hole_number"], par=h["course_par"]) for h in holes if h["course_par"] is not None],
+        )
+    return Round(
+        id=str(row["id"]),
+        course=course,
+        tee_box=row["tee_box_played"],
+        date=row["round_date"],
+        intended_holes=row.get("intended_holes"),
+        notes=row.get("notes"),
+        total_putts=row.get("supplied_total_putts"),
+        total_gir=row.get("supplied_total_gir"),
+        hole_scores=[
+            HoleScore(
+                hole_number=h["hole_number"],
+                strokes=h["strokes"],
+                played=h.get("played"),
+                putts=h["putts"],
+                green_in_regulation=h["green_in_regulation"],
+                par_played=h["par_played"],
+            )
+            for h in holes
+        ],
+        course_name_played=row["course_name_played"],
+    )

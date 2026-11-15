@@ -1,0 +1,241 @@
+{
+ "document_annotation": null,
+ "model": "mistral-ocr-latest",
+ "pages": [
+  {
+   "blocks": [
+    {
+     "bottom_right_x": 773,
+     "bottom_right_y": 883,
+     "confidence_scores": null,
+     "content": "<table><tr><td>Date:</td><td colspan=\"10\">Scorer:</td></tr><tr><td>Blue</td><td>367</td><td>301</td><td>169</td><td>314</td><td>336</td><td>518</td><td>110</td><td>536</td><td>379</td><td>3030</td></tr><tr><td>White</td><td>355</td><td>293</td><td>144</td><td>257</td><td>326</td><td>509</td><td>99</td><td>521</td><td>342</td><td>2846</td></tr><tr><td>Gold</td><td>335</td><td>258</td><td>111</td><td>238</td><td>312</td><td>498</td><td>85</td><td>503</td><td>336</td><td>2676</td></tr><tr><td>Men's Handicap</td><td>11</td><td>15</td><td>13</td><td>7</td><td>9</td><td>1</td><td>17</td><td>3</td><td>5</td><td></td></tr><tr><td>G</td><td>2</td><td>3</td><td>3</td><td>3</td><td>3</td><td>4</td><td>2</td><td>4</td><td>2</td><td></td></tr><tr><td></td><td>1</td><td>2</td><td>2</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>2</td><td></td></tr><tr><td></td><td>1</td><td>1</td><td>2</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>3</td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr></table>",
+     "table_id": "tbl-0.html",
+     "top_left_x": 45,
+     "top_left_y": 438,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 773,
+     "bottom_right_y": 1115,
+     "confidence_scores": null,
+     "content": "<table><tr><td>Par</td><td>4</td><td>4</td><td>3</td><td>4</td><td>4</td><td>5</td><td>3</td><td>5</td><td>4</td><td>36</td></tr><tr><td>D</td><td>2</td><td>3</td><td>2</td><td>4</td><td>3</td><td>5</td><td>2</td><td>4</td><td>3</td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>0</td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>1</td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>Red</td><td>316</td><td>241</td><td>93</td><td>238</td><td>305</td><td>458</td><td>78</td><td>472</td><td>316</td><td>2517</td></tr></table>",
+     "table_id": "tbl-1.html",
+     "top_left_x": 36,
+     "top_left_y": 887,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 773,
+     "bottom_right_y": 1207,
+     "confidence_scores": null,
+     "content": "<table><tr><td>Women's Handicap</td><td>9</td><td>11</td><td>17</td><td>13</td><td>7</td><td>1</td><td>15</td><td>3</td><td>5</td><td></td></tr></table>",
+     "table_id": "tbl-2.html",
+     "top_left_x": 35,
+     "top_left_y": 1119,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 330,
+     "bottom_right_y": 1291,
+     "confidence_scores": null,
+     "content": "# **USGA RULES GOVERN ALL PLAY EXCEPT LOCAL RULES OUTLINED BELOW:**",
+     "top_left_x": 35,
+     "top_left_y": 1209,
+     "type": "title"
+    },
+    {
+     "bottom_right_x": 356,
+     "bottom_right_y": 1506,
+     "confidence_scores": null,
+     "content": "- Colored flags are used to identify hole locations on the greens.\n- Red \u2013 Front; White \u2013 Middle; Blue \u2013 Back\n- Penalty areas are defined by red or yellow stakes.\n- Out of bounds is defined by white stakes and property lines fences.",
+     "top_left_x": 27,
+     "top_left_y": 1297,
+     "type": "list"
+    },
+    {
+     "bottom_right_x": 742,
+     "bottom_right_y": 1333,
+     "confidence_scores": null,
+     "content": "- In-course out of bounds is right of hole #4 and left of hole #13 on the west course, and right of holes #7 and #17 on the east course.\n- Rocks may be removed for all sand bunkers.",
+     "top_left_x": 386,
+     "top_left_y": 1213,
+     "type": "list"
+    },
+    {
+     "bottom_right_x": 691,
+     "bottom_right_y": 1393,
+     "confidence_scores": null,
+     "content": "### PACE OF PLAY EXPECTATIONS",
+     "top_left_x": 386,
+     "top_left_y": 1365,
+     "type": "title"
+    },
+    {
+     "bottom_right_x": 733,
+     "bottom_right_y": 1552,
+     "confidence_scores": null,
+     "content": "- Pace of play expectations: Early morning play should finish in 4 hours or less, midday and later play should finish in 4-1/2 hours or less.\n- For the enjoyment of all players please keep pace with the group in front of you.",
+     "top_left_x": 386,
+     "top_left_y": 1397,
+     "type": "list"
+    },
+    {
+     "bottom_right_x": 893,
+     "bottom_right_y": 470,
+     "confidence_scores": null,
+     "content": "Attest:",
+     "top_left_x": 818,
+     "top_left_y": 440,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1497,
+     "bottom_right_y": 887,
+     "confidence_scores": null,
+     "content": "<table><tr><td rowspan=\"5\">INITIALES</td><td>336</td><td>164</td><td>484</td><td>306</td><td>390</td><td>179</td><td>349</td><td>376</td><td>400</td><td>2984</td><td>6014</td><td>69.1/125</td></tr><tr><td>328</td><td>156</td><td>467</td><td>280</td><td>361</td><td>168</td><td>336</td><td>344</td><td>375</td><td>2815</td><td>5661</td><td>67.7/123</td></tr><tr><td>320</td><td>137</td><td>452</td><td>267</td><td>325</td><td>150</td><td>331</td><td>334</td><td>360</td><td>2676</td><td>5352</td><td>M 66.5/119<br/>W 70.5/116</td></tr><tr><td>14</td><td>8</td><td>12</td><td>18</td><td>2</td><td>16</td><td>10</td><td>6</td><td>4</td><td></td><td></td><td></td></tr><tr><td>2</td><td>2</td><td>3</td><td>2</td><td>3</td><td>1</td><td>2</td><td>3</td><td>4</td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>1</td><td>1</td><td>2</td><td>1</td><td>3</td><td>3</td><td>1</td><td>1</td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>3</td><td>77</td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP NET ADJ</td></tr></table>",
+     "table_id": "tbl-3.html",
+     "top_left_x": 779,
+     "top_left_y": 474,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1497,
+     "bottom_right_y": 1115,
+     "confidence_scores": null,
+     "content": "<table><tr><td></td><td>4</td><td>3</td><td>5</td><td>4</td><td>4</td><td>3</td><td>4</td><td>4</td><td>4</td><td>35</td><td>71</td><td>Rating/Slope</td></tr><tr><td></td><td>2</td><td>2</td><td>5</td><td>3</td><td>3</td><td>1</td><td>2</td><td>3</td><td>3</td><td></td><td></td><td></td></tr><tr><td></td><td>4</td><td>2</td><td>2</td><td>2</td><td>2</td><td>3</td><td>1</td><td>2</td><td>2</td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>9</td><td>89</td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-4.html",
+     "top_left_x": 779,
+     "top_left_y": 891,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1497,
+     "bottom_right_y": 1207,
+     "confidence_scores": null,
+     "content": "<table><tr><td></td><td>311</td><td>123</td><td>415</td><td>251</td><td>297</td><td>119</td><td>314</td><td>323</td><td>318</td><td>2471</td><td>4988</td><td>68.4/111</td></tr><tr><td></td><td>10</td><td>16</td><td>2</td><td>14</td><td>4</td><td>18</td><td>12</td><td>8</td><td>6</td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-5.html",
+     "top_left_x": 779,
+     "top_left_y": 1119,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1122,
+     "bottom_right_y": 1305,
+     "confidence_scores": null,
+     "content": "- If you are unable to keep pace with the group in front of you, you may be asked to move forward to help the pace of the golfers behind you.",
+     "top_left_x": 772,
+     "top_left_y": 1213,
+     "type": "list"
+    },
+    {
+     "bottom_right_x": 1065,
+     "bottom_right_y": 1363,
+     "confidence_scores": null,
+     "content": "### COURSE RULES | ETIQUETTE",
+     "top_left_x": 781,
+     "top_left_y": 1335,
+     "type": "title"
+    },
+    {
+     "bottom_right_x": 1123,
+     "bottom_right_y": 1516,
+     "confidence_scores": null,
+     "content": "- Golfers must abide by all cart path rules and signs. Golf carts must remain 30 feet from all tees and greens. Par 3's are cart path only.\n- No outside coolers, food, or beverages. Violation will result in loss of playing privileges.",
+     "top_left_x": 772,
+     "top_left_y": 1367,
+     "type": "list"
+    },
+    {
+     "bottom_right_x": 1497,
+     "bottom_right_y": 1421,
+     "confidence_scores": null,
+     "content": "- Only 2 people per golf cart, and every player must have a set of clubs.\n- Dress Code: Shirt and shoes must be worn at all times. No tank tops or cut-offs allowed.\n- You are responsible for any injury to people or damage to property caused by your actions, including errant golf shots.",
+     "top_left_x": 1153,
+     "top_left_y": 1213,
+     "type": "list"
+    },
+    {
+     "bottom_right_x": 1444,
+     "bottom_right_y": 1479,
+     "confidence_scores": null,
+     "content": "Cart path only on all par 3's.",
+     "top_left_x": 1156,
+     "top_left_y": 1451,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1497,
+     "bottom_right_y": 1532,
+     "confidence_scores": null,
+     "content": "\u00a9 Golf ScoreCards,",
+     "top_left_x": 1386,
+     "top_left_y": 1514,
+     "type": "footer"
+    },
+    {
+     "bottom_right_x": 1497,
+     "bottom_right_y": 1546,
+     "confidence_scores": null,
+     "content": "\u00a9 2005 1-800-318",
+     "top_left_x": 1386,
+     "top_left_y": 1532,
+     "type": "footer"
+    }
+   ],
+   "confidence_scores": null,
+   "dimensions": {
+    "dpi": 200,
+    "height": 2000,
+    "width": 1500
+   },
+   "footer": null,
+   "header": null,
+   "hyperlinks": [],
+   "images": [],
+   "index": 0,
+   "markdown": "[tbl-0.html](tbl-0.html)\n\n[tbl-1.html](tbl-1.html)\n\n[tbl-2.html](tbl-2.html)\n\n# **USGA RULES GOVERN ALL PLAY EXCEPT LOCAL RULES OUTLINED BELOW:**\n\n- Colored flags are used to identify hole locations on the greens.\n- Red \u2013 Front; White \u2013 Middle; Blue \u2013 Back\n- Penalty areas are defined by red or yellow stakes.\n- Out of bounds is defined by white stakes and property lines fences.\n\n- In-course out of bounds is right of hole #4 and left of hole #13 on the west course, and right of holes #7 and #17 on the east course.\n- Rocks may be removed for all sand bunkers.\n\n### PACE OF PLAY EXPECTATIONS\n\n- Pace of play expectations: Early morning play should finish in 4 hours or less, midday and later play should finish in 4-1/2 hours or less.\n- For the enjoyment of all players please keep pace with the group in front of you.\n\nAttest:\n\n[tbl-3.html](tbl-3.html)\n\n[tbl-4.html](tbl-4.html)\n\n[tbl-5.html](tbl-5.html)\n\n- If you are unable to keep pace with the group in front of you, you may be asked to move forward to help the pace of the golfers behind you.\n\n### COURSE RULES | ETIQUETTE\n\n- Golfers must abide by all cart path rules and signs. Golf carts must remain 30 feet from all tees and greens. Par 3's are cart path only.\n- No outside coolers, food, or beverages. Violation will result in loss of playing privileges.\n\n- Only 2 people per golf cart, and every player must have a set of clubs.\n- Dress Code: Shirt and shoes must be worn at all times. No tank tops or cut-offs allowed.\n- You are responsible for any injury to people or damage to property caused by your actions, including errant golf shots.\n\nCart path only on all par 3's.\n\n\u00a9 Golf ScoreCards,\n\n\u00a9 2005 1-800-318",
+   "tables": [
+    {
+     "content": "<table><tr><td>Date:</td><td colspan=\"10\">Scorer:</td></tr><tr><td>Blue</td><td>367</td><td>301</td><td>169</td><td>314</td><td>336</td><td>518</td><td>110</td><td>536</td><td>379</td><td>3030</td></tr><tr><td>White</td><td>355</td><td>293</td><td>144</td><td>257</td><td>326</td><td>509</td><td>99</td><td>521</td><td>342</td><td>2846</td></tr><tr><td>Gold</td><td>335</td><td>258</td><td>111</td><td>238</td><td>312</td><td>498</td><td>85</td><td>503</td><td>336</td><td>2676</td></tr><tr><td>Men's Handicap</td><td>11</td><td>15</td><td>13</td><td>7</td><td>9</td><td>1</td><td>17</td><td>3</td><td>5</td><td></td></tr><tr><td>G</td><td>2</td><td>3</td><td>3</td><td>3</td><td>3</td><td>4</td><td>2</td><td>4</td><td>2</td><td></td></tr><tr><td></td><td>1</td><td>2</td><td>2</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>2</td><td></td></tr><tr><td></td><td>1</td><td>1</td><td>2</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>3</td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr></table>",
+     "format": "html",
+     "id": "tbl-0.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>Par</td><td>4</td><td>4</td><td>3</td><td>4</td><td>4</td><td>5</td><td>3</td><td>5</td><td>4</td><td>36</td></tr><tr><td>D</td><td>2</td><td>3</td><td>2</td><td>4</td><td>3</td><td>5</td><td>2</td><td>4</td><td>3</td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>0</td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>1</td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>Red</td><td>316</td><td>241</td><td>93</td><td>238</td><td>305</td><td>458</td><td>78</td><td>472</td><td>316</td><td>2517</td></tr></table>",
+     "format": "html",
+     "id": "tbl-1.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>Women's Handicap</td><td>9</td><td>11</td><td>17</td><td>13</td><td>7</td><td>1</td><td>15</td><td>3</td><td>5</td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-2.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td rowspan=\"5\">INITIALES</td><td>336</td><td>164</td><td>484</td><td>306</td><td>390</td><td>179</td><td>349</td><td>376</td><td>400</td><td>2984</td><td>6014</td><td>69.1/125</td></tr><tr><td>328</td><td>156</td><td>467</td><td>280</td><td>361</td><td>168</td><td>336</td><td>344</td><td>375</td><td>2815</td><td>5661</td><td>67.7/123</td></tr><tr><td>320</td><td>137</td><td>452</td><td>267</td><td>325</td><td>150</td><td>331</td><td>334</td><td>360</td><td>2676</td><td>5352</td><td>M 66.5/119<br/>W 70.5/116</td></tr><tr><td>14</td><td>8</td><td>12</td><td>18</td><td>2</td><td>16</td><td>10</td><td>6</td><td>4</td><td></td><td></td><td></td></tr><tr><td>2</td><td>2</td><td>3</td><td>2</td><td>3</td><td>1</td><td>2</td><td>3</td><td>4</td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>1</td><td>1</td><td>2</td><td>1</td><td>3</td><td>3</td><td>1</td><td>1</td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>3</td><td>77</td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP NET ADJ</td></tr></table>",
+     "format": "html",
+     "id": "tbl-3.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td></td><td>4</td><td>3</td><td>5</td><td>4</td><td>4</td><td>3</td><td>4</td><td>4</td><td>4</td><td>35</td><td>71</td><td>Rating/Slope</td></tr><tr><td></td><td>2</td><td>2</td><td>5</td><td>3</td><td>3</td><td>1</td><td>2</td><td>3</td><td>3</td><td></td><td></td><td></td></tr><tr><td></td><td>4</td><td>2</td><td>2</td><td>2</td><td>2</td><td>3</td><td>1</td><td>2</td><td>2</td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>9</td><td>89</td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-4.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td></td><td>311</td><td>123</td><td>415</td><td>251</td><td>297</td><td>119</td><td>314</td><td>323</td><td>318</td><td>2471</td><td>4988</td><td>68.4/111</td></tr><tr><td></td><td>10</td><td>16</td><td>2</td><td>14</td><td>4</td><td>18</td><td>12</td><td>8</td><td>6</td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-5.html",
+     "word_confidence_scores": null
+    }
+   ]
+  }
+ ],
+ "usage_info": {
+  "doc_size_bytes": 462298,
+  "pages_processed": 1
+ }
+}

@@ -1,5 +1,3 @@
-"""CRUD operations for the users.users table."""
-
 import json
 import secrets
 from datetime import datetime, timezone
@@ -14,8 +12,6 @@ from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 
 
 class UserRepositoryDB:
-    """Async CRUD for users."""
-
     FRIEND_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     FRIEND_CODE_LEN = 8
 
@@ -29,36 +25,24 @@ class UserRepositoryDB:
     def _generate_friend_code(self) -> str:
         return "GC" + "".join(secrets.choice(self.FRIEND_CODE_ALPHABET) for _ in range(self.FRIEND_CODE_LEN))
 
-    # ================================================================
-    # Read
-    # ================================================================
-
     async def get_user(self, user_id: str) -> Optional[User]:
-        """Get user by ID (without rounds)."""
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow("SELECT * FROM users.users WHERE id = $1", UUID(user_id))
             return user_from_row(row) if row else None
 
     async def get_user_by_email(self, email: str) -> Optional[User]:
-        """Get user by email."""
         normalized = self._normalize_email(email)
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow("SELECT * FROM users.users WHERE LOWER(BTRIM(email)) = $1", normalized)
             return user_from_row(row) if row else None
 
     async def get_user_by_friend_code(self, friend_code: str) -> Optional[User]:
-        """Get user by friend code."""
         normalized = friend_code.strip().upper()
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow("SELECT * FROM users.users WHERE friend_code = $1", normalized)
             return user_from_row(row) if row else None
 
-    # ================================================================
-    # Create
-    # ================================================================
-
     async def get_password_hash(self, email: str) -> Optional[str]:
-        """Return only the password_hash for the given email (for auth use only)."""
         normalized = self._normalize_email(email)
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(
@@ -67,7 +51,6 @@ class UserRepositoryDB:
             return row["password_hash"] if row else None
 
     async def get_auth_user_by_email(self, email: str) -> Optional[dict]:
-        """Return auth fields for a user by email."""
         normalized = self._normalize_email(email)
         async with self._pool.acquire() as conn:
             try:
@@ -90,7 +73,6 @@ class UserRepositoryDB:
             }
 
     async def create_user(self, user: User, *, password_hash: Optional[str] = None) -> User:
-        """Create a new user. Returns User with DB-generated id."""
         data = user_to_row(user)
         normalized_email = self._normalize_email(data["email"])
         async with self._pool.acquire() as conn:
@@ -118,7 +100,6 @@ class UserRepositoryDB:
                     )
                     return user_from_row(row)
                 except asyncpg.UniqueViolationError as e:
-                    # Retry for friend_code collisions; fail fast for email collisions.
                     if e.constraint_name in {
                         "users_email_key",
                         "users_users_email_key",
@@ -138,12 +119,7 @@ class UserRepositoryDB:
                     raise IntegrityError("Invalid user data or course reference") from error
             raise DuplicateError("Could not allocate a unique friend code")
 
-    # ================================================================
-    # Update
-    # ================================================================
-
     async def update_user(self, user_id: str, **fields) -> Optional[User]:
-        """Update user fields (name, email, handicap_index, home_course_id, preferences)."""
         allowed = {
             "name",
             "email",
@@ -159,7 +135,6 @@ class UserRepositoryDB:
         if "email" in updates:
             updates["email"] = self._normalize_email(updates["email"])
 
-        # Convert home_course_id string to UUID if present
         if "home_course_id" in updates and updates["home_course_id"] is not None:
             updates["home_course_id"] = UUID(updates["home_course_id"])
         if "preferences" in updates and updates["preferences"] is not None:
@@ -187,7 +162,6 @@ class UserRepositoryDB:
             raise IntegrityError("Invalid user data or course reference") from error
 
     async def update_handicap(self, user_id: str, handicap: float) -> None:
-        """Update handicap and set last_handicap_update to NOW()."""
         async with self._pool.acquire() as conn:
             result = await conn.execute(
                 """UPDATE users.users
@@ -200,7 +174,6 @@ class UserRepositoryDB:
                 raise NotFoundError(f"User {user_id} not found")
 
     async def set_password_hash(self, user_id: str, password_hash: str) -> None:
-        """Set a new password hash for the user."""
         async with self._pool.acquire() as conn:
             result = await conn.execute(
                 "UPDATE users.users SET password_hash = $2 WHERE id = $1",
@@ -211,7 +184,6 @@ class UserRepositoryDB:
                 raise NotFoundError(f"User {user_id} not found")
 
     async def mark_email_verified(self, user_id: str) -> None:
-        """Mark email as verified."""
         async with self._pool.acquire() as conn:
             result = await conn.execute(
                 """UPDATE users.users
@@ -229,12 +201,10 @@ class UserRepositoryDB:
         token_hash: str,
         expires_at: datetime,
     ) -> None:
-        """Insert one-time auth token hash and invalidate older active tokens of the same type."""
         if expires_at.tzinfo is not None:
             expires_at = expires_at.astimezone(timezone.utc).replace(tzinfo=None)
         async with self._pool.acquire() as conn:
             async with conn.transaction():
-                # Serialize issuance on the existing parent row, even when no token exists yet.
                 await conn.fetchrow("SELECT id FROM users.users WHERE id = $1 FOR UPDATE", UUID(user_id))
                 await conn.execute(
                     """UPDATE users.auth_tokens
@@ -255,7 +225,6 @@ class UserRepositoryDB:
                 )
 
     async def consume_auth_token(self, token_type: str, token_hash: str) -> Optional[str]:
-        """Consume token if valid (not expired, not previously used) and return user_id."""
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(
                 """UPDATE users.auth_tokens t
@@ -281,7 +250,6 @@ class UserRepositoryDB:
         token_type: str,
         min_created_at: datetime,
     ) -> bool:
-        """Check for recent token issuance to reduce spammy resends."""
         if min_created_at.tzinfo is not None:
             min_created_at = min_created_at.astimezone(timezone.utc).replace(tzinfo=None)
         async with self._pool.acquire() as conn:
@@ -299,12 +267,7 @@ class UserRepositoryDB:
             )
             return bool(row)
 
-    # ================================================================
-    # Delete
-    # ================================================================
-
     async def delete_user(self, user_id: str) -> bool:
-        """Delete user and all their rounds (CASCADE). Returns True if deleted."""
         async with self._pool.acquire() as conn:
             result = await conn.execute("DELETE FROM users.users WHERE id = $1", UUID(user_id))
             return result == "DELETE 1"

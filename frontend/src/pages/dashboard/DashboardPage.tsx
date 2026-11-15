@@ -1,0 +1,57 @@
+import { useDashboardPageViewModel } from "./useDashboardPageViewModel";
+import { DashboardMobileLayout } from "./components/DashboardMobileLayout";
+import { DashboardDesktopLayout } from "./components/DashboardDesktopLayout";
+import { HandicapBreakdownSheet } from "./components/HandicapBreakdownSheet";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  Button,
+  LoadingState,
+} from "@/brand";
+
+interface DashboardPageProps {
+  userId: string;
+}
+
+export function DashboardPage({ userId }: DashboardPageProps) {
+  const vm = useDashboardPageViewModel(userId);
+
+  if (vm.loading) {
+    return <LoadingState>Loading dashboard...</LoadingState>;
+  }
+
+  if (!vm.loaded) {
+    return (
+      <Alert tone="danger">
+        <AlertDescription>
+          {vm.error?.message ?? "Dashboard data failed to load."}
+        </AlertDescription>
+        <AlertAction>
+          <Button variant="outline" size="xs" onClick={() => void vm.refetch()}>
+            Retry
+          </Button>
+        </AlertAction>
+      </Alert>
+    );
+  }
+
+  return (
+    <>
+      <div className="md:hidden">
+        <DashboardMobileLayout vm={vm} />
+      </div>
+      <div className="hidden md:block">
+        <DashboardDesktopLayout vm={vm} />
+      </div>
+      <HandicapBreakdownSheet
+        open={vm.handicapSheetOpen}
+        onClose={vm.closeHandicapSheet}
+        handicapIndex={vm.handicap.index}
+        handicapChange={vm.handicap.change}
+        handicapVerdict={vm.handicap.verdict}
+        whs={vm.whs}
+      />
+    </>
+  );
+}

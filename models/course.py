@@ -2,17 +2,12 @@ from pydantic import Field, PrivateAttr, model_serializer, model_validator
 from typing import Annotated, Any, List, Literal, Optional
 
 from .base import BaseGolfModel, checked_list
-from .hole import Hole
+from .hole import HOLES_PER_NINE, HOLES_PER_ROUND, Hole
 from .hole_layout import FRONT_NINE, BACK_NINE, FULL_ROUND
 from .tee import Tee
 
 
 class Course(BaseGolfModel):
-    """Represents a golf course with its holes and tee options.
-
-    user_id IS None  => master/global course (read-only for regular users)
-    user_id IS set   => custom course owned by that user
-    """
     id: Optional[str] = None
     name: Optional[str] = None
     external_course_id: Optional[str] = None
@@ -21,7 +16,7 @@ class Course(BaseGolfModel):
     par: Optional[int] = Field(None, strict=True, ge=27, le=108)
     holes: Annotated[List[Hole], checked_list(Hole)] = Field(default_factory=list, validate_default=True)
     tees: Annotated[List[Tee], checked_list(Tee)] = Field(default_factory=list, validate_default=True)
-    user_id: Optional[str] = None  # None = master course; set = user-owned custom course
+    user_id: Optional[str] = None
     _par_source: Optional[tuple] = PrivateAttr(default=None)
 
     @model_validator(mode='after')
@@ -32,9 +27,9 @@ class Course(BaseGolfModel):
         return self
 
     def _par_fingerprint(self) -> tuple:
-        return self.total_holes, tuple((h.number, h.par, h._revision) for h in self.holes)
+        return self.total_holes, tuple((h.number, h.par, h.revision) for h in self.holes)
 
-    def model_post_init(self, context: Any) -> None:
+    def model_post_init(self, _context: Any) -> None:
         self._par_source = self._par_fingerprint()
 
     @model_serializer(mode='wrap')
@@ -51,36 +46,31 @@ class Course(BaseGolfModel):
             self._par_source = None
 
     def get_expected_holes(self) -> Optional[tuple[int, ...]]:
-        if self.total_holes == 9:
+        if self.total_holes == HOLES_PER_NINE:
             return FRONT_NINE
-        if self.total_holes == 18:
+        if self.total_holes == HOLES_PER_ROUND:
             return FULL_ROUND
         numbers = [h.number for h in self.holes]
-        if len(numbers) == 18 and set(numbers) == set(FULL_ROUND):
+        if len(numbers) == HOLES_PER_ROUND and set(numbers) == set(FULL_ROUND):
             return FULL_ROUND
         return None
 
     def get_tee_matches(self, color: Optional[str]) -> list[Tee]:
-        """All tees whose color matches case-insensitively; more than one is ambiguous."""
         if not color:
             return []
         return [tee for tee in self.tees if tee.color and tee.color.casefold() == color.casefold()]
 
     def get_tee(self, color: Optional[str]) -> Optional[Tee]:
-        """Get a tee by its color."""
         matches = self.get_tee_matches(color)
         return matches[0] if len(matches) == 1 else None
 
     def get_hole(self, number: int) -> Optional[Hole]:
-        """Get a hole by its number (1-18)."""
         matches = [hole for hole in self.holes if hole.number == number]
         return matches[0] if len(matches) == 1 else None
 
     def get_par(self) -> Optional[int]:
-        """Child observations are authoritative; partial par is not a full total."""
         if any(h.par is not None for h in self.holes):
             return self.calculated_par
-        # A supplied whole-course summary does not itself establish a 9/18 layout.
         if self._par_source == self._par_fingerprint():
             return self.par
         return None
@@ -93,7 +83,6 @@ class Course(BaseGolfModel):
 
     @property
     def calculated_par(self) -> Optional[int]:
-        """Calculate total par from holes."""
         expected = self.get_expected_holes()
         if expected is None or len(self.holes) != len(expected):
             return None
@@ -101,16 +90,13 @@ class Course(BaseGolfModel):
 
     @property
     def front_nine_par(self) -> Optional[int]:
-        """Calculate par for holes 1-9."""
         return self._par_for(FRONT_NINE)
 
     @property
     def back_nine_par(self) -> Optional[int]:
-        """Calculate par for holes 10-18."""
         return self._par_for(BACK_NINE)
 
     def has_required_course_data(self, selected_tee: Optional[str] = None) -> bool:
-        """Structural save prerequisite only; does NOT verify identity/source trust."""
         expected = self.get_expected_holes()
         if not self.name or not self.name.strip() or expected is None or self.calculated_par is None:
             return False
@@ -125,3 +111,17 @@ class Course(BaseGolfModel):
             tee = self.get_tee(selected_tee)
             return tee is not None and complete(tee)
         return True
+
+    def tees_by_length(self) -> List[Tee]:
+        return sorted(self.tees, key=lambda t: (-(t.get_total_yardage() or 0), (t.color or "").lower()))
+
+
+class CourseSummary(BaseGolfModel):
+    id: str
+    name: Optional[str] = None
+    external_course_id: Optional[str] = None
+    location: Optional[str] = None
+    par: Optional[int] = None
+    hole_count: int = 0
+    tee_count: int = 0
+    tee_colors: List[str] = Field(default_factory=list)

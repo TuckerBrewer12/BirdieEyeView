@@ -1,10 +1,8 @@
-"""Email notifications for auth flows (verification and password reset)."""
-
 import hashlib
 import logging
 import os
 
-import requests
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +12,7 @@ def _email_fingerprint(email: str) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:12]
 
 
-def _send_email(to_email: str, subject: str, text_body: str) -> None:
+async def _send_email(to_email: str, subject: str, text_body: str) -> None:
     resend_api_key = os.environ.get("RESEND_API_KEY")
     from_email = os.environ.get("AUTH_FROM_EMAIL", "no-reply@scanscorecards.local")
     resend_api_url = os.environ.get("RESEND_API_URL", "https://api.resend.com/emails")
@@ -28,24 +26,24 @@ def _send_email(to_email: str, subject: str, text_body: str) -> None:
         )
         return
 
-    response = requests.post(
-        resend_api_url,
-        headers={
-            "Authorization": f"Bearer {resend_api_key}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "from": from_email,
-            "to": [to_email],
-            "subject": subject,
-            "text": text_body,
-        },
-        timeout=request_timeout_seconds,
-    )
+    async with httpx.AsyncClient(timeout=request_timeout_seconds) as client:
+        response = await client.post(
+            resend_api_url,
+            headers={
+                "Authorization": f"Bearer {resend_api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": from_email,
+                "to": [to_email],
+                "subject": subject,
+                "text": text_body,
+            },
+        )
     response.raise_for_status()
 
 
-def send_verification_email(email: str, verify_url: str) -> None:
+async def send_verification_email(email: str, verify_url: str) -> None:
     subject = "Verify your ScanScorecards account"
     body = (
         "Welcome to ScanScorecards.\n\n"
@@ -53,10 +51,10 @@ def send_verification_email(email: str, verify_url: str) -> None:
         f"{verify_url}\n\n"
         "If you did not create this account, you can ignore this email."
     )
-    _send_email(email, subject, body)
+    await _send_email(email, subject, body)
 
 
-def send_password_reset_email(email: str, reset_url: str) -> None:
+async def send_password_reset_email(email: str, reset_url: str) -> None:
     subject = "Reset your ScanScorecards password"
     body = (
         "We received a request to reset your ScanScorecards password.\n\n"
@@ -64,4 +62,4 @@ def send_password_reset_email(email: str, reset_url: str) -> None:
         f"{reset_url}\n\n"
         "If you did not request this, you can safely ignore this email."
     )
-    _send_email(email, subject, body)
+    await _send_email(email, subject, body)

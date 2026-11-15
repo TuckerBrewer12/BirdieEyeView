@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
 import analytics.handicap as handicap
-from models import Round
+from models import Round, User
 from tests.helpers import make_scoring_round
 
 
@@ -37,7 +37,6 @@ def test_unrated_round_uses_par_fallback():
 
 
 def test_nine_hole_rounds_are_not_used_yet():
-    # The WHS nine-hole method needs an expected score; until then nine-hole rounds don't count.
     assert handicap._get_differential_for_round(make_scoring_round(45, holes=9)) is None
 
 
@@ -80,9 +79,9 @@ def test_handicap_index_uses_seed_without_rounds():
 @pytest.fixture
 def dated_rounds(monkeypatch):
     rounds = [
-        Round(id="old-high", date=datetime(2025, 1, 1)),
-        Round(id="old-low", date=datetime(2025, 1, 2)),
-        Round(id="new-high", date=datetime(2025, 2, 1)),
+        Round(id="old-high", date=datetime(2025, 1, 1, tzinfo=timezone.utc)),
+        Round(id="old-low", date=datetime(2025, 1, 2, tzinfo=timezone.utc)),
+        Round(id="new-high", date=datetime(2025, 2, 1, tzinfo=timezone.utc)),
     ]
     differentials = {"old-high": 20.0, "old-low": 10.0, "new-high": 22.0}
     monkeypatch.setattr(
@@ -103,7 +102,7 @@ def test_seed_handicap_filters_transition_rounds(dated_rounds):
 
 
 def test_seed_handicap_honors_seed_date(dated_rounds):
-    assert eligible_values(dated_rounds, seed_handicap=15.0, seed_set_at=datetime(2025, 1, 15)) == [10.0, 22.0]
+    assert eligible_values(dated_rounds, seed_handicap=15.0, seed_set_at=datetime(2025, 1, 15, tzinfo=timezone.utc)) == [10.0, 22.0]
 
 
 @pytest.mark.parametrize(("round_slice", "expected"), [(slice(None, 1), 15.0), (slice(1, 2), 10.0)])
@@ -134,6 +133,7 @@ def test_trend_marks_the_rounds_the_current_index_uses_preferring_recent_ties(mo
 
     assert [entry["used_in_hi"] for entry in trend] == [False, False, True, False]
     assert all(entry["hi_threshold"] == 10.0 for entry in trend)
+    assert [entry["differential_status"] for entry in trend] == ["close", "close", "counting", "out"]
 
 
 def test_trend_with_short_history_marks_nothing(monkeypatch):

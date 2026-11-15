@@ -1,11 +1,5 @@
--- Sample data: Eagle Vines Vineyards & Golf Club
--- Run after schema.sql:  psql -d golf_scorecard -f database/sample_data.sql
-
 BEGIN;
 
--- =============
--- Course
--- =============
 INSERT INTO courses.courses (id, name, location, par, total_holes)
 VALUES (
     '00000000-0000-0000-0000-000000000001',
@@ -15,9 +9,6 @@ VALUES (
     18
 );
 
--- =============
--- Holes (par + handicap are course-level, same for all tees)
--- =============
 INSERT INTO courses.holes (course_id, hole_number, par, handicap) VALUES
     ('00000000-0000-0000-0000-000000000001', 1,  5, 10),
     ('00000000-0000-0000-0000-000000000001', 2,  3, 8),
@@ -38,9 +29,6 @@ INSERT INTO courses.holes (course_id, hole_number, par, handicap) VALUES
     ('00000000-0000-0000-0000-000000000001', 17, 4, 3),
     ('00000000-0000-0000-0000-000000000001', 18, 4, 7);
 
--- =============
--- Tees (6 tee boxes)
--- =============
 INSERT INTO courses.tees (id, course_id, color, slope_rating, course_rating) VALUES
     ('00000000-0000-0000-0000-100000000001', '00000000-0000-0000-0000-000000000001', 'Black',  138, 75.4),
     ('00000000-0000-0000-0000-100000000002', '00000000-0000-0000-0000-000000000001', 'Blue',   135, 73.7),
@@ -49,11 +37,6 @@ INSERT INTO courses.tees (id, course_id, color, slope_rating, course_rating) VAL
     ('00000000-0000-0000-0000-100000000005', '00000000-0000-0000-0000-000000000001', 'Gold',   122, 69.1),
     ('00000000-0000-0000-0000-100000000006', '00000000-0000-0000-0000-000000000001', 'Red',    118, 67.8);
 
--- =============
--- Tee Yardages
--- =============
-
--- Black tees
 INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000001', 1,  573),
     ('00000000-0000-0000-0000-100000000001', 2,  200),
@@ -74,7 +57,6 @@ INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000001', 17, 454),
     ('00000000-0000-0000-0000-100000000001', 18, 445);
 
--- Blue tees
 INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000002', 1,  535),
     ('00000000-0000-0000-0000-100000000002', 2,  178),
@@ -95,7 +77,6 @@ INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000002', 17, 432),
     ('00000000-0000-0000-0000-100000000002', 18, 420);
 
--- Member tees
 INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000003', 1,  535),
     ('00000000-0000-0000-0000-100000000003', 2,  178),
@@ -116,7 +97,6 @@ INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000003', 17, 371),
     ('00000000-0000-0000-0000-100000000003', 18, 388);
 
--- White tees
 INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000004', 1,  511),
     ('00000000-0000-0000-0000-100000000004', 2,  161),
@@ -137,7 +117,6 @@ INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000004', 17, 371),
     ('00000000-0000-0000-0000-100000000004', 18, 388);
 
--- Gold tees
 INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000005', 1,  499),
     ('00000000-0000-0000-0000-100000000005', 2,  135),
@@ -158,7 +137,6 @@ INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000005', 17, 342),
     ('00000000-0000-0000-0000-100000000005', 18, 381);
 
--- Red tees
 INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000006', 1,  480),
     ('00000000-0000-0000-0000-100000000006', 2,  128),
@@ -179,9 +157,6 @@ INSERT INTO courses.tee_yardages (tee_id, hole_number, yardage) VALUES
     ('00000000-0000-0000-0000-100000000006', 17, 339),
     ('00000000-0000-0000-0000-100000000006', 18, 354);
 
--- =============
--- User
--- =============
 INSERT INTO users.users (id, friend_code, name, email, handicap_index)
 VALUES (
     '00000000-0000-0000-0000-200000000001',
@@ -191,24 +166,18 @@ VALUES (
     NULL
 );
 
--- =============
--- Round (Tucker playing whites at Eagle Vines, Feb 10 2026)
--- =============
 INSERT INTO users.rounds (id, user_id, course_id, tee_id, round_date, total_score, is_complete, holes_played)
 VALUES (
     '00000000-0000-0000-0000-300000000001',
     '00000000-0000-0000-0000-200000000001',
     '00000000-0000-0000-0000-000000000001',
-    '00000000-0000-0000-0000-100000000004',  -- White tees
+    '00000000-0000-0000-0000-100000000004',
     '2026-02-10',
     90,
     TRUE,
     18
 );
 
--- =============
--- Hole Scores (scoring to par converted to total strokes)
--- =============
 INSERT INTO users.hole_scores (round_id, hole_id, hole_number, strokes) VALUES
     ('00000000-0000-0000-0000-300000000001', (SELECT id FROM courses.holes WHERE course_id = '00000000-0000-0000-0000-000000000001' AND hole_number = 1),  1,  6),
     ('00000000-0000-0000-0000-300000000001', (SELECT id FROM courses.holes WHERE course_id = '00000000-0000-0000-0000-000000000001' AND hole_number = 2),  2,  4),
@@ -231,43 +200,3 @@ INSERT INTO users.hole_scores (round_id, hole_id, hole_number, strokes) VALUES
 
 COMMIT;
 
--- =============
--- Useful queries to explore the data:
--- =============
-
--- See the course
--- SELECT * FROM courses.courses;
-
--- See all holes with par and handicap
--- SELECT hole_number, par, handicap FROM courses.holes
---   WHERE course_id = '00000000-0000-0000-0000-000000000001'
---   ORDER BY hole_number;
-
--- See all tees with ratings
--- SELECT color, slope_rating, course_rating FROM courses.tees
---   WHERE course_id = '00000000-0000-0000-0000-000000000001';
-
--- See yardages for a specific tee (e.g. White)
--- SELECT ty.hole_number, ty.yardage
---   FROM courses.tee_yardages ty
---   JOIN courses.tees t ON t.id = ty.tee_id
---   WHERE t.color = 'White'
---   ORDER BY ty.hole_number;
-
--- See Tucker's round with scores
--- SELECT hs.hole_number, h.par, hs.strokes, hs.strokes - h.par AS to_par
---   FROM users.hole_scores hs
---   JOIN courses.holes h ON h.id = hs.hole_id
---   WHERE hs.round_id = '00000000-0000-0000-0000-300000000001'
---   ORDER BY hs.hole_number;
-
--- Full scorecard view: hole, par, yardage from played tee, strokes
--- SELECT h.hole_number, h.par, h.handicap, ty.yardage, hs.strokes,
---        hs.strokes - h.par AS to_par
---   FROM users.hole_scores hs
---   JOIN courses.holes h ON h.id = hs.hole_id
---   JOIN users.rounds r ON r.id = hs.round_id
---   JOIN courses.tee_yardages ty ON ty.tee_id = r.tee_id
---        AND ty.hole_number = h.hole_number
---   WHERE hs.round_id = '00000000-0000-0000-0000-300000000001'
---   ORDER BY h.hole_number;

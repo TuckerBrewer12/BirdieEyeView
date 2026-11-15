@@ -1,0 +1,214 @@
+name: Live Scan Evaluation
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions: {}
+
+jobs:
+  evaluate:
+    name: Evaluate scorecards
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.label.name == 'run-scan-evals' || github.event.label.name == 'run-quick-scan-eval')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    concurrency:
+      group: live-scan-eval-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    outputs:
+      summary: ${{ steps.evaluate.outputs.summary }}
+      artifact-url: ${{ steps.report.outputs.artifact-url }}
+      results-artifact-id: ${{ steps.results.outputs.artifact-id }}
+      eval-run-id: ${{ steps.evaluate.outputs.run-id }}
+    env:
+      SCAN_EVAL_SUITE: ${{ github.event.label.name == 'run-scan-evals' && 'large' || 'quick' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Run live scan evaluation
+        id: evaluate
+        env:
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          SCAN_EVAL_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          SCAN_EVAL_BRANCH: ${{ github.event.pull_request.head.ref }}
+          SCAN_EVAL_COMMIT: ${{ github.sha }}
+          SCAN_EVAL_HEAD_COMMIT: ${{ github.event.pull_request.head.sha }}
+          SCAN_EVAL_PR: ${{ github.event.pull_request.number }}
+          SCAN_EVAL_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          result = subprocess.run(
+              [sys.executable, '-m', 'scripts.quick_scan_eval', '--suite', os.environ['SCAN_EVAL_SUITE'],
+               '--results-json', str(Path(os.environ['RUNNER_TEMP']) / 'results.json'),
+               '--summary-markdown', str(Path(os.environ['RUNNER_TEMP']) / 'summary.md')],
+              capture_output=True, text=True, errors='replace', check=False,
+          )
+          stdout, stderr = result.stdout, result.stderr
+          # Artifact contents are not covered by GitHub's log masking.
+          for name in ('MISTRAL_API_KEY', 'GOOGLE_API_KEY'):
+              if secret := os.environ.get(name):
+                  stdout = stdout.replace(secret, '[REDACTED]')
+                  stderr = stderr.replace(secret, '[REDACTED]')
+          path = Path(os.environ['RUNNER_TEMP']) / 'scan-eval-report.txt'
+          path.write_text(stdout + ('\n' + stderr if stderr else ''), encoding='utf-8')
+
+          from scripts.quick_scan_eval import redact_payload, render_markdown
+          from scripts.eval_results import encode, load, validate
+          results_path = path.parent / 'results.json'
+          if results_path.exists():
+              try:
+                  secrets = [os.environ.get(key) for key in ('MISTRAL_API_KEY', 'GOOGLE_API_KEY')]
+                  payload = validate(redact_payload(load(results_path), secrets))
+                  results_path.write_bytes(encode(payload))
+                  summary_path = path.parent / 'summary.md'
+                  summary_path.write_text(render_markdown(payload), encoding='utf-8')
+                  with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
+                      summary.write(summary_path.read_text())
+              except Exception:
+                  results_path.unlink(missing_ok=True)
+                  (path.parent / 'summary.md').unlink(missing_ok=True)
+                  print('Warning: structured report rejected; see the redacted text report.', file=sys.stderr)
+
+          metric = re.compile(
+              r'\d+ images \| \d+ cases \| \d+/\d+ numeric cells correct|'
+              r'\d+/\d+ (?:were (?:100% correct|(?:90|80)% or better)|'
+              r'failed below 80% or had an operational error|had an operational error|'
+              r'are known scanner gaps|had the table merge rejected)|'
+              r'Total suite wall time: \d+\.\d+s'
+          )
+          header, separator, details = stdout.partition('\nCases\n')
+          lines = [*header.splitlines(), details.rstrip().rsplit('\n', 1)[-1]] if separator else []
+          summary = [line for line in map(str.strip, lines) if metric.fullmatch(line)][:9]
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              print('run-id=' + os.environ['SCAN_EVAL_RUN_ID'], file=output)
+              print('summary<<SCAN_EVAL_SUMMARY', *summary, 'SCAN_EVAL_SUMMARY', sep='\n', file=output)
+          raise SystemExit(result.returncode)
+          PY
+
+      - name: Upload detailed evaluation report
+        id: report
+        if: ${{ !cancelled() && steps.evaluate.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: scan-eval-${{ env.SCAN_EVAL_SUITE }}-report-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/scan-eval-report.txt
+          if-no-files-found: error
+
+
+      - name: Upload structured results
+        id: results
+        if: ${{ !cancelled() && steps.evaluate.outcome != 'skipped' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: scan-eval-${{ env.SCAN_EVAL_SUITE }}-results-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/results.json
+          if-no-files-found: ignore
+
+  publish:
+    name: Save evaluation history
+    needs: evaluate
+    if: ${{ !cancelled() && needs.evaluate.outputs.results-artifact-id != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: scan-eval-results
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.evaluate.outputs.results-artifact-id }}
+          path: ${{ runner.temp }}/eval-artifact
+          merge-multiple: true
+      - name: Validate and append the run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SCAN_EVAL_RUN_ID: ${{ needs.evaluate.outputs.eval-run-id }}
+          SCAN_EVAL_BRANCH: ${{ github.event.pull_request.head.ref }}
+          SCAN_EVAL_COMMIT: ${{ github.sha }}
+          SCAN_EVAL_HEAD_COMMIT: ${{ github.event.pull_request.head.sha }}
+          SCAN_EVAL_PR: ${{ github.event.pull_request.number }}
+          SCAN_EVAL_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SCAN_EVAL_SUITE: ${{ github.event.label.name == 'run-scan-evals' && 'large' || 'quick' }}
+          EVAL_REMOTE: https://github.com/${{ github.repository }}.git
+        run: |
+          if [ ! -f "$RUNNER_TEMP/eval-artifact/results.json" ]; then
+            echo 'No results file; nothing to publish.'
+            exit 0
+          fi
+          python scripts/eval_results.py publish \
+            --results "$RUNNER_TEMP/eval-artifact/results.json" \
+            --repo-dir "$RUNNER_TEMP/eval-results" --remote "$EVAL_REMOTE"
+
+  comment:
+    name: Post evaluation summary
+    needs: evaluate
+    if: ${{ !cancelled() && (needs.evaluate.result == 'success' || needs.evaluate.result == 'failure') }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Publish results on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SUITE: ${{ github.event.label.name == 'run-scan-evals' && 'Large' || 'Quick' }}
+          EVAL_RESULT: ${{ needs.evaluate.result }}
+          SUMMARY: ${{ needs.evaluate.outputs.summary }}
+          ARTIFACT_URL: ${{ needs.evaluate.outputs.artifact-url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVAL_RUN_ID: ${{ needs.evaluate.outputs.eval-run-id }}
+        run: |
+          body="$RUNNER_TEMP/scan-eval-comment.md"
+          {
+            printf '### %s scan evaluation\n\n' "$SUITE"
+            if [ "$EVAL_RESULT" = failure ]; then
+              printf 'The evaluation job failed. See the Actions run or detailed report for the error.\n\n'
+            fi
+            if [ -n "$SUMMARY" ]; then
+              while IFS= read -r metric; do
+                printf -- '- %s\n' "$metric"
+              done <<< "$SUMMARY"
+              printf '\n'
+            fi
+            printf '[Readable report](%s)' "$RUN_URL"
+            if [ -n "$ARTIFACT_URL" ]; then
+              printf ' · [Raw report](%s)' "$ARTIFACT_URL"
+            fi
+            printf '\n\nRun id: `%s` (appears on the dashboard once the "Save evaluation history" job succeeds)\n' "$EVAL_RUN_ID"
+          } > "$body"
+          cat "$body" >> "$GITHUB_STEP_SUMMARY"
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file "$body"

@@ -1,17 +1,3 @@
-"""Rule-based insight engine for golf performance suggestions (no LLM or provider calls).
-
-Metrics come from ``analytics.stats`` so insights follow the same eligibility, par and
-missing-data rules as the analytics screens. Per-round figures (scoring to par, putts per round,
-three-putts per round) use complete 18-hole rounds, matching the per-round benchmarks.
-
-Policy values, kept as they were and not re-tuned here:
-- ``_BENCHMARKS``: per-handicap-band targets. Their source dataset and cohort are not recorded,
-  so treat them as product assumptions, not measured population averages.
-- Priority multipliers in each insight (4, 0.25, 0.15, 2.5, 12, capped at 10) only order insights
-  across different units; they are not stroke estimates.
-- ``_trend_direction`` uses a 0.1 change threshold and needs 4 observations; fewer is "stable".
-"""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -23,7 +9,6 @@ from analytics import stats as analytics
 from api.schemas import AIComparisonItem, AIInsightItem, AIStrengthItem, AISuggestionsResponse
 from database.db_manager import DatabaseManager
 
-# ─── Benchmark table ──────────────────────────────────────────────────────────
 
 _TARGET_LABELS: Dict[float, str] = {
     0.0:  "Scratch",
@@ -78,7 +63,6 @@ _BENCHMARKS: Dict[tuple, Dict[str, float]] = {
 
 
 def _get_benchmark(hi: Optional[float]) -> tuple[Dict[str, float], str]:
-    """Benchmark band for a Handicap Index; plus handicaps (below 0) use the lowest band."""
     if hi is None:
         return _BENCHMARKS[(20, 28)], "Unrated"
     if hi < 0:
@@ -108,8 +92,6 @@ def _trend_direction(
     return "improving" if delta > 0 else "declining"
 
 
-# ─── Service ──────────────────────────────────────────────────────────────────
-
 class AIService:
     def __init__(self, db: DatabaseManager) -> None:
         self._db = db
@@ -121,9 +103,8 @@ class AIService:
         rounds_desc = await self._db.rounds.get_rounds_for_user(
             user_id, limit=limit, offset=0
         )
-        rounds = list(reversed(rounds_desc))  # chronological order
+        rounds = list(reversed(rounds_desc))
 
-        # Same index as every other screen: full history plus the user's seed and reset date.
         history = await self._db.rounds.get_rounds_for_user(user_id, limit=None, offset=0)
         hi = hcap.user_handicap_index(history, user)
         if target_handicap is not None:
@@ -160,7 +141,6 @@ class AIService:
             if item is not None:
                 insights.append(item)
 
-        # Sort: highest priority first; tie-break declining before stable/improving
         insights.sort(
             key=lambda x: (-x.priority_score, 0 if x.trend_direction == "declining" else 1)
         )
@@ -180,8 +160,6 @@ class AIService:
             generated_at=datetime.now(timezone.utc).isoformat(),
         )
 
-    # ── Raw data pipeline ─────────────────────────────────────────────────────
-
     def _compute_raw(self, rounds: list) -> Dict[str, Any]:
         eighteen = el.complete_rounds(rounds, el.EIGHTEEN)
 
@@ -189,8 +167,6 @@ class AIService:
         putts_per_gir = analytics.overall_putts_per_gir(rounds)["putts_per_gir"]
         scrambling = analytics.overall_scrambling(rounds)
 
-        # Per-round putting benchmarks assume every hole's putts are known: use only those rounds,
-        # and keep rounds without putt data out of both the average and the trend.
         putting_rounds = [r for r in eighteen if r.get_total_putts() is not None]
         three_putt_counts = [row["three_putt_count"] for row in analytics.three_putts_per_round(putting_rounds)]
         putts_vals = [r.get_total_putts() for r in putting_rounds]
@@ -229,8 +205,6 @@ class AIService:
                 for par in (3, 4, 5)
             },
         }
-
-    # ── Insight generators ────────────────────────────────────────────────────
 
     def _insight_par_performance(
         self, raw: Dict[str, Any], benchmark: Dict[str, float]
@@ -460,8 +434,6 @@ class AIService:
             ),
         )
 
-    # ── Comparisons ───────────────────────────────────────────────────────────
-
     def _build_comparisons(
         self, raw: Dict[str, Any], benchmark: Dict[str, float]
     ) -> List[AIComparisonItem]:
@@ -500,8 +472,6 @@ class AIService:
             _item("Putts per GIR", "Putting", raw.get("putts_per_gir"), "putts_per_gir", " putts", True),
             _item("3-Putts per Round", "Putting", raw.get("avg_three_putts"), "three_putts_per_round", " putts", True),
         ]
-
-    # ── Strengths ─────────────────────────────────────────────────────────────
 
     def _compute_strengths(
         self, raw: Dict[str, Any], benchmark: Dict[str, float]
@@ -570,3 +540,60 @@ class AIService:
                     ))
 
         return strengths[:3]
+
+    @staticmethod
+    def _putts_per_gir_per_round(rounds: list) -> List[Optional[float]]:
+        results: List[Optional[float]] = []
+        for r in rounds:
+            gir_scores = [
+                hs for hs in r.hole_scores
+                if hs.green_in_regulation is True and hs.putts is not None
+            ]
+            results.append(
+                sum(hs.putts for hs in gir_scores) / len(gir_scores) if gir_scores else None
+            )
+        return results
+
+    @staticmethod
+    def _par_stats(rounds: list) -> tuple[Dict[int, float], Dict[int, int]]:
+        by_par: Dict[int, List[float]] = {}
+        for r in rounds:
+            for hs in r.hole_scores:
+                if hs.strokes is None:
+                    continue
+                par: Optional[int] = None
+                if r.course and hs.hole_number:
+                    hole = r.course.get_hole(hs.hole_number)
+                    if hole and hole.par:
+                        par = hole.par
+                if par is None:
+                    par = hs.par_played
+                if par not in (3, 4, 5):
+                    continue
+                by_par.setdefault(par, []).append(float(hs.strokes - par))
+        avgs = {p: sum(vals) / len(vals) for p, vals in by_par.items() if vals}
+        counts = {p: len(vals) for p, vals in by_par.items() if vals}
+        return avgs, counts
+
+    @staticmethod
+    def _par_stats_per_round(rounds: list) -> Dict[int, List[Optional[float]]]:
+        result: Dict[int, List[Optional[float]]] = {3: [], 4: [], 5: []}
+        for r in rounds:
+            by_par: Dict[int, List[float]] = {}
+            for hs in r.hole_scores:
+                if hs.strokes is None:
+                    continue
+                par: Optional[int] = None
+                if r.course and hs.hole_number:
+                    hole = r.course.get_hole(hs.hole_number)
+                    if hole and hole.par:
+                        par = hole.par
+                if par is None:
+                    par = hs.par_played
+                if par not in (3, 4, 5):
+                    continue
+                by_par.setdefault(par, []).append(float(hs.strokes - par))
+            for p in (3, 4, 5):
+                vals = by_par.get(p, [])
+                result[p].append(sum(vals) / len(vals) if vals else None)
+        return result

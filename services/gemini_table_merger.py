@@ -15,7 +15,7 @@ import asyncio
 import logging
 import os
 import re
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,6 @@ def _split_pipe_row(line: str) -> List[str]:
 
 
 def _source_has_separator_after_out(markdown: str) -> bool:
-    """Return whether the source header proves a non-hole column after OUT."""
     for line in markdown.splitlines():
         cells = _split_pipe_row(line)
         upper = [cell.upper() for cell in cells]
@@ -92,17 +91,16 @@ def _small_value_count(cells: List[str]) -> int:
     return sum(bool(_SMALL_VALUE_RE.fullmatch(cell.strip())) for cell in cells)
 
 
-def _normalize_and_validate_merge(source: str, merged: str) -> Optional[str]:
-    """Normalize a provable separator shift and reject malformed merge output."""
+def _normalize_and_validate_merge(source: str, merged: str) -> Tuple[Optional[str], Optional[str]]:
     source_has_separator = _source_has_separator_after_out(source)
     normalized_rows: List[List[str]] = []
     header_found = False
 
-    for line in merged.splitlines():
+    for line_no, line in enumerate(merged.splitlines(), start=1):
         cells = _split_pipe_row(line)
         if not cells:
             if line.strip():
-                return None
+                return None, f"line {line_no} is text outside the table"
             continue
         if not any(cells):
             continue
@@ -118,7 +116,7 @@ def _normalize_and_validate_merge(source: str, merged: str) -> Optional[str]:
             cells = cells[:11] + cells[12:]
 
         if len(cells) != len(_CANONICAL_HEADER):
-            return None
+            return None, f"line {line_no} has {len(cells)} columns, expected {len(_CANONICAL_HEADER)}"
 
         if [cell.upper() for cell in cells] == _CANONICAL_HEADER:
             header_found = True
@@ -127,31 +125,33 @@ def _normalize_and_validate_merge(source: str, merged: str) -> Optional[str]:
         else:
             front_count = _small_value_count(cells[1:10])
             back_count = _small_value_count(cells[11:20])
-            # A populated half paired with an entirely empty half is not a
-            # valid 18-hole merge. Fall back to the untouched source tables.
             if (front_count >= 4 and back_count == 0) or (back_count >= 4 and front_count == 0):
-                return None
+                return None, f"line {line_no} fills one nine and leaves the other empty"
 
         normalized_rows.append(cells)
 
     if not header_found:
-        return None
+        return None, "no canonical HOLE/1-9/OUT/10-18/IN/TOT header row"
 
     return "\n".join(
         "| " + " | ".join(cells) + " |"
         for cells in normalized_rows
-    )
+    ), None
 
 
-async def merge_split_tables(markdown: str) -> str:
-    """Send *markdown* to Gemini Flash; return merged table (or original on failure)."""
+async def merge_split_tables(markdown: str, diagnostics: Optional[List[str]] = None) -> str:
+    def note(message: str) -> None:
+        if diagnostics is not None:
+            diagnostics.append(message)
+
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         logger.debug("GOOGLE_API_KEY not set; skipping Gemini merge step")
+        note("table merge skipped: GOOGLE_API_KEY not set")
         return markdown
 
     try:
-        from google import genai  # imported lazily so missing package doesn't break startup
+        from google import genai
 
         client = genai.Client(api_key=api_key)
         prompt = _MERGE_PROMPT.format(markdown=markdown)
@@ -178,20 +178,24 @@ async def merge_split_tables(markdown: str) -> str:
             ).strip()
 
         if merged:
-            normalized = _normalize_and_validate_merge(markdown, merged)
+            normalized, reason = _normalize_and_validate_merge(markdown, merged)
             if normalized is None:
-                logger.warning("Gemini table merge failed structural validation; using original markdown")
+                logger.warning("Gemini table merge rejected: %s; using original markdown", reason)
+                note(f"table merge rejected: {reason}")
                 return markdown
             logger.info(
                 "Gemini table merge complete: input_chars=%d output_chars=%d",
                 len(markdown),
                 len(normalized),
             )
+            note("table merge accepted")
             return normalized
 
         logger.warning("Gemini table merge returned empty response; using original")
+        note("table merge rejected: empty response")
         return markdown
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.warning("Gemini table merge failed; using original markdown. err=%s", exc)
+        note(f"table merge failed: {type(exc).__name__}")
         return markdown

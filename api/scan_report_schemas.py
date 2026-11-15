@@ -1,5 +1,3 @@
-"""Allowlisted report metadata; never accept arbitrary diagnostic text."""
-
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, UUID4
@@ -17,3 +15,15 @@ class ScanReportMetadata(BaseModel):
     category: FailureCategory
     stage: FailureStage = "unknown"
     http_status: int | None = Field(default=None, ge=100, le=599, strict=True)
+
+
+class ScanReportResponse(BaseModel):
+    status: Literal["saved"]
+
+
+ReportErrorCode = Literal["report_storage_unavailable", "report_not_saved"]
+
+
+class ScanReportErrorResponse(BaseModel):
+    code: ReportErrorCode
+    detail: str | None = None

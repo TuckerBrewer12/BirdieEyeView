@@ -5,8 +5,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "frontend/src/pages/**"
-      - "frontend/src/components/**"
-      - "frontend/src/hooks/**"
+      - "frontend/src/domain/**"
+      - "frontend/src/data/**"
       - "frontend/src/brand/**"
 
 concurrency:
@@ -14,40 +14,60 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
   mvvm:
     name: MVVM Bot
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      has_fixes: ${{ steps.review.outputs.has_fixes }}
+      findings: ${{ steps.review.outputs.findings }}
 
-    # Skip drafts, skip on the `skip-bots` label, and skip fork PRs, which
-    # cannot read OPENCODE_API_KEY.
     if: >-
       github.event.pull_request.draft == false &&
       !contains(github.event.pull_request.labels.*.name, 'skip-bots') &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !startsWith(github.head_ref, 'bot-fix/')
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # The installer adds ~/.opencode/bin to $GITHUB_PATH itself.
-      - name: Install opencode
-        run: curl -fsSL https://opencode.ai/install | bash
+      - name: Install Cursor CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
 
       - name: Review
+        id: review
         env:
           BOT_NAME: "🧩 MVVM Bot"
           BOT_PROMPT: .github/review-bots/mvvm.md
-          BOT_PATHSPEC: "frontend/src/pages frontend/src/components frontend/src/hooks frontend/src/brand"
+          BOT_PATHSPEC: "frontend/src/pages frontend/src/domain frontend/src/data frontend/src/brand"
           BOT_CLEAN: "No view-model or brand kit issues in this PR."
           BOT_LEAD: "— logic or UI that belongs elsewhere"
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         run: bash .github/review-bots/run-bot.sh
+
+  fix:
+    name: Open fix PRs
+    needs: mvvm
+    if: needs.mvvm.outputs.has_fixes == 'true'
+    uses: ./.github/workflows/review-fix.yml
+    with:
+      pr_number: ${{ github.event.pull_request.number }}
+      head_ref: ${{ github.event.pull_request.head.ref }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      findings_json: ${{ needs.mvvm.outputs.findings }}
+      bot_name: "🧩 MVVM Bot"
+    secrets: inherit

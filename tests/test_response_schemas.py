@@ -1,6 +1,4 @@
-"""Resource response schemas freeze the JSON the endpoints returned as raw domain models."""
-
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -45,7 +43,7 @@ def full_user_tee() -> UserTee:
         course_rating=35.5,
         slope_rating=120,
         hole_yardages=YARDS,
-        created_at=datetime(2026, 11, 1, 9, 30),
+        created_at=datetime(2026, 11, 1, 9, 30, tzinfo=timezone.utc),
     )
 
 
@@ -54,7 +52,7 @@ def full_round() -> Round:
         id="round-1",
         course=full_course(),
         tee_box="Blue",
-        date=datetime(2026, 11, 2, 8, 0),
+        date=datetime(2026, 11, 2, 8, 0, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(
                 hole_number=n, strokes=5, putts=2, shots_to_green=3, net_score=4, played=True,
@@ -77,32 +75,46 @@ def full_user() -> User:
         name="Tucker",
         email="tucker@example.com",
         email_verified=True,
-        email_verified_at=datetime(2026, 1, 1),
+        email_verified_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         home_course_id="course-1",
         handicap=12.4,
         rounds=[full_round()],
-        created_at=datetime(2025, 6, 1),
-        last_handicap_update=datetime(2026, 10, 1),
+        created_at=datetime(2025, 6, 1, tzinfo=timezone.utc),
+        last_handicap_update=datetime(2026, 10, 1, tzinfo=timezone.utc),
         scoring_goal=89,
         scoring_goal_nine=44,
     )
 
 
 @pytest.mark.parametrize(
-    ("domain", "schema"),
+    ("domain", "schema", "left_out"),
     [
-        (full_course(), CourseResponse),
-        (full_round(), RoundResponse),
-        (full_user(), UserResponse),
-        (full_user_tee(), UserTeeResponse),
+        (full_course(), CourseResponse, set()),
+        (full_round(), RoundResponse, set()),
+        (full_user(), UserResponse, {"rounds"}),
+        (full_user_tee(), UserTeeResponse, set()),
     ],
     ids=["course", "round", "user", "user-tee"],
 )
-def test_response_schema_returns_the_domain_json_unchanged(domain, schema):
+def test_response_schema_returns_the_domain_json_unchanged(domain, schema, left_out):
     # FastAPI validates the returned domain object itself into the response model.
     frozen = schema.model_validate(domain).model_dump(mode="json")
+    assert not left_out & set(frozen)
 
-    assert frozen == domain.model_dump(mode="json")
+    expected = domain.model_dump(mode="json", exclude=left_out)
+    def assert_domain_fields(actual, expected):
+        if isinstance(expected, dict):
+            for key, value in expected.items():
+                assert key in actual
+                assert_domain_fields(actual[key], value)
+        elif isinstance(expected, list):
+            assert len(actual) == len(expected)
+            for sent, original in zip(actual, expected):
+                assert_domain_fields(sent, original)
+        else:
+            assert actual == expected
+    assert_domain_fields(frozen, expected)
+    assert not ({"_par_source", "_summary_sources", "_revision"} & frozen.keys())
 
 
 def test_course_detail_http_response_is_unchanged():
@@ -115,7 +127,7 @@ def test_course_detail_http_response_is_unchanged():
 
     from api.dependencies import get_db, get_optional_current_user
 
-    course = full_course().model_copy(update={"user_id": None})  # a master course, readable by anyone
+    course = full_course().model_copy(update={"user_id": None})
     app = FastAPI()
     app.include_router(courses.router, prefix="/api/courses")
     app.dependency_overrides[get_db] = lambda: SimpleNamespace(
@@ -126,4 +138,5 @@ def test_course_detail_http_response_is_unchanged():
     response = TestClient(app).get(f"/api/courses/{uuid4()}")
 
     assert response.status_code == 200
-    assert response.json() == course.model_dump(mode="json")
+    from api.course_responses import course_detail
+    assert response.json() == course_detail(course).model_dump(mode="json")

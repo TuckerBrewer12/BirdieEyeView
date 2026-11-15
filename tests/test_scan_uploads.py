@@ -1,9 +1,3 @@
-"""Upload validation, temporary-file ownership and OCR image preparation for the scan routes.
-
-The real app can't make a disk read, an image encode or a file deletion fail, so those failure
-paths are tested here; everything reachable over HTTP is covered in tests/integration/test_api_e2e.py.
-"""
-
 import asyncio
 import builtins
 import contextlib
@@ -29,11 +23,6 @@ def png_bytes(size=(20, 10)) -> bytes:
     output = BytesIO()
     Image.new("RGB", size, "white").save(output, format="PNG")
     return output.getvalue()
-
-
-# ================================================================
-# Name, content and size checks
-# ================================================================
 
 
 def test_upload_suffix_normalizes_extension():
@@ -119,17 +108,12 @@ def test_save_upload_removes_its_file_when_reading_fails(monkeypatch, tmp_path):
     assert list(tmp_path.iterdir()) == []
 
 
-# ================================================================
-# OCR image preparation
-# ================================================================
-
-
 def test_image_preparation_resizes_and_converts_at_ui_quality(tmp_path):
     source = tmp_path / "large.png"
     Image.new("RGBA", (2400, 1200), (255, 255, 255, 128)).save(source)
 
     output = tmp_path / "ocr.jpg"
-    output.touch()  # the caller creates the output file; prepare_for_ocr only writes into it
+    output.touch()
     assert scan_image.prepare_for_ocr(source, output) == output
     with Image.open(output) as result:
         assert (result.mode, max(result.size), result.format) == ("RGB", scan_image.OCR_LONG_EDGE_TARGET, "JPEG")
@@ -152,7 +136,7 @@ def test_image_preparation_reencodes_metadata_bearing_jpeg(tmp_path):
     Image.new("RGB", (1200, 800), "white").save(source, format="JPEG", quality=80, exif=exif)
 
     output = tmp_path / "ocr.jpg"
-    output.touch()  # the caller creates the output file; prepare_for_ocr only writes into it
+    output.touch()
     assert scan_image.prepare_for_ocr(source, output) == output
     with Image.open(output) as result:
         assert not result.getexif()
@@ -164,7 +148,7 @@ def test_image_preparation_falls_back_for_unreadable_image_and_pdf(tmp_path):
     pdf.write_bytes(pdf_card(pages=1))
 
     assert scan_image.prepare_for_ocr(bad, tmp_path / "ocr.jpg") == bad
-    assert scan_image.prepare_for_ocr(pdf, tmp_path / "ocr.jpg") == pdf  # PDFs go to OCR as uploaded
+    assert scan_image.prepare_for_ocr(pdf, tmp_path / "ocr.jpg") == pdf
 
 
 def test_failed_reencode_falls_back_to_the_original(monkeypatch, tmp_path):
@@ -177,13 +161,7 @@ def test_failed_reencode_falls_back_to_the_original(monkeypatch, tmp_path):
 
     monkeypatch.setattr(scan_image, "_save_jpeg", failing_save)
 
-    # The caller owns the output path and removes it; OCR gets the original upload.
     assert scan_image.prepare_for_ocr(source, tmp_path / "ocr.jpg") == source
-
-
-# ================================================================
-# prepared_upload: cleanup never changes the outcome
-# ================================================================
 
 
 @pytest.mark.asyncio
@@ -201,14 +179,13 @@ async def test_cleanup_failure_never_replaces_the_requests_own_error(monkeypatch
     upload = make_upload("card.png", "image/png", png_bytes((2400, 1200)))
     with pytest.raises(RuntimeError, match="the request's own failure"):
         async with scan_uploads.prepared_upload(upload, for_ocr=True) as prepared:
-            assert prepared.ocr_path != prepared.original_path  # two files to clean up
+            assert prepared.ocr_path != prepared.original_path
             monkeypatch.setattr(Path, "unlink", unlink)
             raise RuntimeError("the request's own failure")
 
-    assert len(attempted) == 2  # the second file is still removed after the first fails
+    assert len(attempted) == 2
     assert [p.name for p in tmp_path.iterdir()] == [attempted[0].name]
     assert "Could not remove temporary scan file" in caplog.text
-
 
 
 @pytest.mark.asyncio
@@ -218,13 +195,11 @@ async def test_a_failed_reencode_leaves_no_temp_files(monkeypatch, tmp_path):
 
     upload = make_upload("card.png", "image/png", png_bytes((2400, 1200)))
     async with scan_uploads.prepared_upload(upload, for_ocr=True) as prepared:
-        assert prepared.ocr_path == prepared.original_path  # fell back to the original upload
+        assert prepared.ocr_path == prepared.original_path
 
     assert list(tmp_path.iterdir()) == []
 
 
-# Pause the worker just before it writes: while writing the upload, and after decoding the image
-# but before saving the OCR JPEG.
 @pytest.mark.parametrize("module,stage", [(scan_uploads, "write_upload"), (scan_image, "_save_jpeg")])
 @pytest.mark.asyncio
 async def test_cancelling_a_request_mid_work_leaves_no_file_after_the_worker_finishes(monkeypatch, tmp_path, module, stage):
@@ -243,7 +218,7 @@ async def test_cancelling_a_request_mid_work_leaves_no_file_after_the_worker_fin
     monkeypatch.setattr(module, stage, slow)
 
     async def scan():
-        upload = make_upload("card.png", "image/png", png_bytes((2400, 1200)))  # re-encoded, so both stages run
+        upload = make_upload("card.png", "image/png", png_bytes((2400, 1200)))
         async with scan_uploads.prepared_upload(upload, for_ocr=True):
             pass
 
@@ -251,11 +226,11 @@ async def test_cancelling_a_request_mid_work_leaves_no_file_after_the_worker_fin
     await asyncio.to_thread(started.wait, 5)
     task.cancel()
     with contextlib.suppress(asyncio.CancelledError):
-        await asyncio.wait_for(asyncio.shield(task), 0.2)  # cancellation reaches cleanup while the worker waits
-    release.set()  # only now does the worker do its file work
+        await asyncio.wait_for(asyncio.shield(task), 0.2)
+    release.set()
     with pytest.raises(asyncio.CancelledError):
         await task
-    await asyncio.to_thread(finished.wait, 5)  # check after the worker is completely done
+    await asyncio.to_thread(finished.wait, 5)
     assert list(tmp_path.iterdir()) == []
 
 
@@ -284,8 +259,6 @@ def test_a_failing_close_removes_the_upload(monkeypatch, tmp_path):
     real_open = builtins.open
 
     class FailsOnClose:
-        """A real file whose buffered data fails to flush when it is closed."""
-
         def __init__(self, handle):
             self.handle = handle
 
@@ -324,5 +297,5 @@ def test_a_failing_cleanup_keeps_the_413(monkeypatch, tmp_path, caplog):
     with pytest.raises(HTTPException) as raised:
         scan_uploads.save_upload_to_temp(make_upload("large.png", "image/png", b"abcd"), ".png")
 
-    assert raised.value.status_code == 413  # not the PermissionError from cleanup
+    assert raised.value.status_code == 413
     assert "Could not remove temporary scan file" in caplog.text

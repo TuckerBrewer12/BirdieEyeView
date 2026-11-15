@@ -1,5 +1,3 @@
-"""Scorecard scan/upload API endpoints."""
-
 import logging
 import os
 import time
@@ -13,16 +11,20 @@ logger = logging.getLogger(__name__)
 from database.db_manager import DatabaseManager
 from database.exceptions import IntegrityError
 from api.messages import (
-    COURSE_ID_NOT_FOUND, FORBIDDEN, UNCLEAR_PLAYER_NAME, UNREADABLE_SCORE_ROWS, UPLOAD_NOT_PROCESSED,
+    COURSE_ID_MUST_BE_A_VALID_UUID, COURSE_ID_NOT_FOUND, FORBIDDEN, OCR_TEXT_INVALID, PLAYER_NAME_NOT_READ,
+    UNCLEAR_PLAYER_NAME, UNREADABLE_SCORE_ROWS, UPLOAD_NOT_PROCESSED, USER_CONTEXT_INVALID,
 )
 from api.dependencies import get_current_user, get_optional_current_user, get_db
 from api.error_responses import EXTRACTION_FAILED, OCR_FAILED, ROUND_SAVE_FAILED, SCAN_FAILED, SCAN_SAVE_FAILED
 from api.input_validation import ensure_uuid_str, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
-from api.schemas import ScanResponse
+from api.player_handicap import player_handicap_index
+from analytics.handicap import tee_course_handicap
 from api.scan_errors import ScanExtractionError
 from api.scan_uploads import check_upload_name, prepared_upload
+from api.schemas import ConfidenceLevel, OcrTextResponse, SaveScanResponse, ScanResponse
 from models import User
+from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
 from services.gemini_table_merger import merge_split_tables
 from services.mistral_ocr_service import MistralOCRService
 from services.mistral_scorecard_parser import ParsedScorecardRows, parse_mistral_scorecard_rows
@@ -43,11 +45,10 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-# Disabled by default to avoid leaking OCR/user content into aggregated logs.
 LOG_SENSITIVE_OCR_DEBUG = _env_bool("LOG_SENSITIVE_OCR_DEBUG", False)
 
 
-def _confidence_level(score: float) -> str:
+def _confidence_level(score: float) -> ConfidenceLevel:
     if score >= 0.85:
         return "high"
     if score >= 0.65:
@@ -100,7 +101,6 @@ def _build_confidence_payload(
         )
 
     overall = present / len(hole_scores) if hole_scores else 0.0
-    # Penalize by unresolved warnings.
     overall = max(0.0, overall - min(0.5, len(fields_needing_review) * 0.02))
     return {
         "overall": overall,
@@ -110,7 +110,6 @@ def _build_confidence_payload(
 
 
 def _score_breakdown_rows_are_trusted(hole_scores: List[Dict]) -> bool:
-    """Return whether enough complete holes prove the auxiliary-row alignment."""
     complete = [
         score
         for score in hole_scores
@@ -140,9 +139,8 @@ def _build_round_from_parsed_rows(
     fields_needing_review: List[str] = list(parsed.warnings)
 
     known_course = course_model is not None
-    hole_count = 18
+    hole_count = HOLES_PER_ROUND
 
-    # Known-course metadata from DB (local course object).
     course_name = None
     course_location = None
     course_par = None
@@ -153,10 +151,10 @@ def _build_round_from_parsed_rows(
     if known_course:
         course_name = getattr(course_model, "name", None)
         course_location = getattr(course_model, "location", None)
-        course_par = getattr(course_model, "par", None)
+        course_par = course_model.get_par()
         model_holes = getattr(course_model, "holes", []) or []
         if model_holes:
-            hole_count = min(18, len(model_holes))
+            hole_count = min(HOLES_PER_ROUND, len(model_holes))
         for i in range(1, hole_count + 1):
             hole_obj = next((h for h in model_holes if getattr(h, "number", None) == i), None)
             p = getattr(hole_obj, "par", None) if hole_obj is not None else None
@@ -176,8 +174,6 @@ def _build_round_from_parsed_rows(
                 }
             )
     else:
-        # Unknown-course path uses parsed OCR rows. The course name is never read from the
-        # scan: the user picks or enters it during review.
         parsed_pars = list(_safe_list_attr("par_row")[:hole_count])
         while len(parsed_pars) < hole_count:
             parsed_pars.append(None)
@@ -190,7 +186,7 @@ def _build_round_from_parsed_rows(
             course_holes.append({"number": i, "par": par_i, "handicap": handicap})
             hole_par_lookup[i] = par_i
         par_vals = [p for p in hole_par_lookup.values() if p is not None]
-        if len(par_vals) >= 9:
+        if len(par_vals) >= HOLES_PER_NINE:
             course_par = sum(par_vals)
         for tr in _safe_list_attr("tee_rows"):
             yardage_map = {
@@ -337,10 +333,11 @@ def _build_round_from_parsed_rows(
         unresolved_fields = invalid_auxiliary_fields.get(hole_number, {})
         fields_needing_review.extend(unresolved_fields.values())
 
+        if shots_val is None and strokes is not None and putts is not None:
+            shots_val = strokes - putts
         if score["green_in_regulation"] is None and shots_val is not None:
             par_i = hole_par_lookup.get(hole_number)
             if par_i is not None:
-                # GIR if the green was reached in no more than par minus two strokes.
                 score["green_in_regulation"] = shots_val <= max(1, par_i - 2)
 
     round_payload = {
@@ -359,8 +356,25 @@ def _build_round_from_parsed_rows(
     return round_payload, fields_needing_review
 
 
-async def _run_ocr_pipeline(ocr_path: Path) -> str:
-    """Mistral OCR → Gemini merge → raw markdown string."""
+def _rated_tees(round_payload: Dict) -> List[Dict]:
+    course = round_payload.get("course") or {}
+    if course.get("par") is None:
+        return []
+    return [
+        tee for tee in course.get("tees", [])
+        if tee.get("slope_rating") is not None and tee.get("course_rating") is not None
+    ]
+
+
+def _add_course_handicaps(round_payload: Dict, handicap_index: Optional[float]) -> None:
+    par = (round_payload.get("course") or {}).get("par")
+    for tee in _rated_tees(round_payload):
+        tee["course_handicap"] = tee_course_handicap(
+            handicap_index, tee["slope_rating"], tee["course_rating"], par
+        )
+
+
+async def _run_ocr_pipeline(ocr_path: Path, diagnostics: Optional[List[str]] = None) -> str:
     svc = MistralOCRService()
     ocr_resp = await svc.ocr_file(ocr_path)
 
@@ -384,35 +398,35 @@ async def _run_ocr_pipeline(ocr_path: Path) -> str:
                         html_table,
                     )
 
-    raw_markdown = MistralOCRService.extract_markdown_text(ocr_resp)
+    raw_markdown = MistralOCRService.extract_markdown_text(ocr_resp, diagnostics)
     if LOG_SENSITIVE_OCR_DEBUG:
         logger.debug("Mistral raw markdown:\n%s", raw_markdown)
     else:
         logger.info("Mistral OCR produced markdown chars=%d", len(raw_markdown))
-    return await merge_split_tables(raw_markdown)
+    return await merge_split_tables(raw_markdown, diagnostics=diagnostics)
 
 
-@router.post("/ocr")
-# No user or database dependency: OCR needs neither, so it keeps working when the database is down.
+def _log_diagnostics(stage: str, diagnostics: List[str]) -> None:
+    logger.info("Scan diagnostics (%s): %s", stage, " | ".join(diagnostics) or "none")
+
+
+@router.post("/ocr", response_model=OcrTextResponse)
 async def prefetch_ocr(file: UploadFile = File(...)):
-    """Run OCR on an uploaded image and return the raw markdown text.
-
-    Called immediately on file selection so the slow OCR step is already
-    complete by the time the user clicks Extract.
-    """
     try:
         async with prepared_upload(file, for_ocr=True) as upload:
-            markdown_text = await _run_ocr_pipeline(upload.ocr_path)
+            diagnostics: List[str] = []
+            markdown_text = await _run_ocr_pipeline(upload.ocr_path, diagnostics)
+            _log_diagnostics("ocr", diagnostics)
     except HTTPException:
         raise
     except Exception:
         logger.exception("Prefetch OCR failed")
-        raise HTTPException(500, OCR_FAILED)
+        raise HTTPException(500, OCR_FAILED) from None
     logger.info("Prefetch OCR complete: chars=%d", len(markdown_text))
-    return {"ocr_text": markdown_text}
+    return OcrTextResponse(ocr_text=markdown_text)
 
 
-@router.post("/extract")
+@router.post("/extract", response_model=ScanResponse)
 async def extract_scan(
     file: UploadFile = File(...),
     user_context: Optional[str] = Form(None),
@@ -421,7 +435,6 @@ async def extract_scan(
     db: DatabaseManager = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
-    """Upload a scorecard image, run OCR extraction, return results for review."""
     request_t0 = time.perf_counter()
     logger.info(
         "Scan extract request received: filename=%s course_id=%s user_id=%s",
@@ -429,11 +442,10 @@ async def extract_scan(
         course_id,
         getattr(current_user, "id", "anonymous"),
     )
-    # Validate file type + metadata.
     try:
-        check_upload_name(file)  # checked first, so a bad file type wins over a bad text field
+        check_upload_name(file)
     except HTTPException as exc:
-        raise ScanExtractionError(exc.status_code, exc.detail, category="invalid_upload", stage="upload")
+        raise ScanExtractionError(exc.status_code, exc.detail, category="invalid_upload", stage="upload") from None
     if user_context is not None:
         try:
             user_context = sanitize_user_text(
@@ -443,29 +455,32 @@ async def extract_scan(
                 allow_newlines=True,
                 allow_empty=True,
             )
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        except ValueError:
+            raise HTTPException(
+                422, USER_CONTEXT_INVALID.format(limit=MAX_USER_CONTEXT_CHARS)
+            ) from None
     if course_id is not None and course_id.strip():
         try:
             course_id = ensure_uuid_str(course_id, "course_id")
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        except ValueError:
+            raise HTTPException(422, COURSE_ID_MUST_BE_A_VALID_UUID) from None
     elif course_id is not None:
         course_id = None
     if ocr_text is not None:
         try:
             ocr_text = sanitize_ocr_text(ocr_text, max_length=MAX_OCR_TEXT_CHARS)
-        except ValueError as exc:
-            raise HTTPException(422, str(exc))
+        except ValueError:
+            raise HTTPException(
+                422, OCR_TEXT_INVALID.format(limit=MAX_OCR_TEXT_CHARS)
+            ) from None
 
     failure_stage = "upload"
+    diagnostics: List[str] = []
+
     try:
-        # With prefetched OCR text the upload is still fully validated, but never re-encoded.
         async with prepared_upload(file, for_ocr=not ocr_text) as upload:
-            # Scoring format is inferred from row parser + user_context hints.
             to_par_scoring: Optional[bool] = None
 
-            # Optional known course preload; extraction is always full Mistral parse.
             failure_stage = "unknown"
             course_model = None
             t_course_lookup_start = time.perf_counter()
@@ -485,11 +500,10 @@ async def extract_scan(
             failure_stage = "ocr"
             t_extract_start = time.perf_counter()
             if ocr_text:
-                # Prefetch already ran OCR + Gemini merge — use it directly.
                 markdown_text = ocr_text
                 logger.info("Scan using prefetched OCR text: chars=%d", len(markdown_text))
             else:
-                markdown_text = await _run_ocr_pipeline(upload.ocr_path)
+                markdown_text = await _run_ocr_pipeline(upload.ocr_path, diagnostics)
                 logger.info(
                     "Scan OCR+merge complete: extract_ms=%.1f chars=%d",
                     (time.perf_counter() - t_extract_start) * 1000.0,
@@ -504,29 +518,34 @@ async def extract_scan(
             failure_stage = "parse"
             t_parse_start = time.perf_counter()
             parsed_rows = parse_mistral_scorecard_rows(markdown_text, user_context=user_context)
+            diagnostics.extend(parsed_rows.diagnostics)
             failure_stage = "assembly"
             round_data, fields_needing_review = _build_round_from_parsed_rows(
                 parsed_rows,
                 course_model=course_model,
                 to_par_scoring=to_par_scoring,
             )
+            name_missing = bool(parsed_rows.player_name) and not parsed_rows.player_row_found
 
             present_strokes = len(
                 [h for h in round_data.get("hole_scores", []) if h.get("strokes") is not None]
             )
             if present_strokes == 0:
-                if parsed_rows.player_name:
-                    raise ScanExtractionError(
-                        422,
-                        UNCLEAR_PLAYER_NAME,
-                        category="unreadable_scores", stage="parse",
-                    )
-                raise ScanExtractionError(
+                diagnostics.append("assembly: no strokes could be assembled")
+                _log_diagnostics("extract", diagnostics)
+                error = ScanExtractionError(
                     422,
-                    UNREADABLE_SCORE_ROWS,
+                    UNCLEAR_PLAYER_NAME if name_missing else UNREADABLE_SCORE_ROWS,
                     category="unreadable_scores", stage="parse",
                 )
+                error.diagnostics = diagnostics
+                raise error
+            if name_missing:
+                fields_needing_review.append(PLAYER_NAME_NOT_READ)
+            _log_diagnostics("extract", diagnostics)
 
+            if _rated_tees(round_data):
+                _add_course_handicaps(round_data, await player_handicap_index(db, current_user))
             confidence_data = _build_confidence_payload(round_data.get("hole_scores", []), fields_needing_review)
             t_parse_end = time.perf_counter()
             logger.info(
@@ -541,24 +560,26 @@ async def extract_scan(
                 len(fields_needing_review),
             )
 
-            return ScanResponse(
-                round=round_data,
-                confidence=confidence_data,
-                fields_needing_review=fields_needing_review,
+            return ScanResponse.model_validate(
+                {
+                    "round": round_data,
+                    "confidence": confidence_data,
+                    "fields_needing_review": fields_needing_review,
+                }
             )
     except FileNotFoundError:
-        raise ScanExtractionError(400, UPLOAD_NOT_PROCESSED, category="invalid_upload", stage=failure_stage)
+        raise ScanExtractionError(400, UPLOAD_NOT_PROCESSED, category="invalid_upload", stage=failure_stage) from None
     except EnvironmentError:
         logger.exception("Scan extraction service unavailable")
-        raise ScanExtractionError(500, SCAN_FAILED, category="service_unavailable", stage=failure_stage)
+        raise ScanExtractionError(500, SCAN_FAILED, category="service_unavailable", stage=failure_stage) from None
     except ScanExtractionError:
         raise
     except HTTPException as exc:
         category = "invalid_upload" if failure_stage == "upload" and exc.status_code in {400, 413} else "http_error"
-        raise ScanExtractionError(exc.status_code, exc.detail, category=category, stage=failure_stage)
+        raise ScanExtractionError(exc.status_code, exc.detail, category=category, stage=failure_stage) from None
     except Exception:
         logger.exception("Scan extraction error")
-        raise ScanExtractionError(500, EXTRACTION_FAILED, category="extraction_failed", stage=failure_stage)
+        raise ScanExtractionError(500, EXTRACTION_FAILED, category="extraction_failed", stage=failure_stage) from None
     finally:
         logger.info(
             "Scan extract request complete: total_ms=%.1f",
@@ -566,13 +587,12 @@ async def extract_scan(
         )
 
 
-@router.post("/save")
+@router.post("/save", response_model=SaveScanResponse)
 async def save_round(
     req: SaveRoundRequest,
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Save a reviewed/edited round to the database."""
     try:
         req.user_id = str(current_user.id)
         logger.info(
@@ -586,11 +606,10 @@ async def save_round(
         saved = await service.save_reviewed_scan(req)
         return {"id": saved.id, "total_score": saved.calculate_total_score()}
     except ScanSaveRejected as exc:
-        # Nothing was written; tell the user what to fix in review.
-        raise HTTPException(422, " ".join(exc.reasons))
+        raise HTTPException(422, " ".join(exc.reasons)) from None
     except (ValueError, IntegrityError):
         logger.exception("Save round validation failed")
-        raise HTTPException(400, ROUND_SAVE_FAILED)
+        raise HTTPException(400, ROUND_SAVE_FAILED) from None
     except Exception:
         logger.exception("Save round error")
-        raise HTTPException(500, SCAN_SAVE_FAILED)
+        raise HTTPException(500, SCAN_SAVE_FAILED) from None

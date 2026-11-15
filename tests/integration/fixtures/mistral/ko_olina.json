@@ -1,0 +1,123 @@
+{
+ "document_annotation": null,
+ "model": "mistral-ocr-latest",
+ "pages": [
+  {
+   "blocks": [
+    {
+     "bottom_right_x": 595,
+     "bottom_right_y": 555,
+     "confidence_scores": null,
+     "content": "# Oahu's Premier Golf Experience",
+     "top_left_x": 98,
+     "top_left_y": 501,
+     "type": "title"
+    },
+    {
+     "bottom_right_x": 628,
+     "bottom_right_y": 761,
+     "confidence_scores": null,
+     "content": "Golf Digest Top 75 Resort Course\nTop 100 Golf Shops in the U.S.\nVoted Best Golf Course on Oahu\nTrip Advisor Certificate of Excellence\nHome of the LOTTE Championship 2012-2019",
+     "top_left_x": 77,
+     "top_left_y": 563,
+     "type": "list"
+    },
+    {
+     "bottom_right_x": 730,
+     "bottom_right_y": 1556,
+     "confidence_scores": null,
+     "content": "<table><tr><td colspan=\"2\">SAMPLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td>RED</td><td>73.6/138</td><td>518</td><td>412</td><td>362</td><td>203</td><td>528</td><td>373</td><td>444</td><td>195</td><td>438</td><td>3473</td></tr><tr><td>WHITE</td><td>71.9/133</td><td>487</td><td>387</td><td>345</td><td>184</td><td>506</td><td>357</td><td>412</td><td>165</td><td>409</td><td>3252</td></tr><tr><td>GOLD</td><td>69.7/128</td><td>432</td><td>371</td><td>328</td><td>154</td><td>484</td><td>342</td><td>384</td><td>141</td><td>368</td><td>3004</td></tr><tr><td colspan=\"2\">LANDICAP</td><td>11</td><td>1</td><td>17</td><td>13</td><td>5</td><td>15</td><td>3</td><td>9</td><td>7</td><td></td></tr><tr><td colspan=\"2\" rowspan=\"3\">G</td><td>3</td><td>3</td><td>2</td><td>2</td><td>3</td><td>2</td><td>3</td><td>3</td><td>3</td><td></td></tr><tr><td>1</td><td>2</td><td>2</td><td>3</td><td>2</td><td>3</td><td>1</td><td>2</td><td>1</td><td></td></tr><tr><td>1</td><td>1</td><td>0</td><td>2</td><td>0</td><td>1</td><td>0</td><td>2</td><td>0</td><td>5</td></tr><tr><td colspan=\"2\">R</td><td>5</td><td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>4</td><td>3</td><td>4</td><td>36</td></tr><tr><td colspan=\"2\" rowspan=\"3\">D</td><td>4</td><td>3</td><td>3</td><td>3</td><td>4</td><td>2</td><td>3</td><td>3</td><td>4</td><td></td></tr><tr><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>3</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td>1</td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>1</td><td>2</td><td>2</td><td>13</td></tr><tr><td>JUE</td><td>70.4/122</td><td>427</td><td>321</td><td>277</td><td>125</td><td>438</td><td>212</td><td>244</td><td>100</td><td>332</td><td>2476</td></tr><tr><td colspan=\"2\">LANDICAP</td><td>3</td><td>7</td><td>13</td><td>17</td><td>1</td><td>11</td><td>5</td><td>15</td><td>9</td><td></td></tr><tr><td colspan=\"4\">DATE: 4/8/24</td><td colspan=\"8\">SCORER:</td></tr></table>",
+     "table_id": "tbl-0.html",
+     "top_left_x": 0,
+     "top_left_y": 783,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1254,
+     "bottom_right_y": 557,
+     "confidence_scores": null,
+     "content": "# Golf Course Architect",
+     "top_left_x": 935,
+     "top_left_y": 525,
+     "type": "title"
+    },
+    {
+     "bottom_right_x": 1206,
+     "bottom_right_y": 593,
+     "confidence_scores": null,
+     "content": "Ted Robinson - 1990",
+     "top_left_x": 986,
+     "top_left_y": 569,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1153,
+     "bottom_right_y": 633,
+     "confidence_scores": null,
+     "content": "LOCAL RULES",
+     "top_left_x": 1042,
+     "top_left_y": 613,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1422,
+     "bottom_right_y": 761,
+     "confidence_scores": null,
+     "content": "- Water hazards are defined by yellow stakes or lines - Lateral water hazards are defined by red stakes or lines.\n- Out of bounds is defined by white stakes, boundary fences and roadway curbing.\n- Proper golf attire and etiquette is required at all times please.\n- Please avoid slow play by keeping pace with the group in front of you.\n- Please repair ball marks - sand bottles are provided for filling divots on the tee and through the green.\n- Outside coolers not allowed. Food and beverage must be purchased at Ko Olina.",
+     "top_left_x": 803,
+     "top_left_y": 643,
+     "type": "list"
+    },
+    {
+     "bottom_right_x": 1488,
+     "bottom_right_y": 1536,
+     "confidence_scores": null,
+     "content": "<table><tr><td rowspan=\"5\">INITIALS</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>413</td><td>355</td><td>183</td><td>514</td><td>516</td><td>353</td><td>227</td><td>353</td><td>428</td><td>3342</td><td>6815</td><td></td><td></td></tr><tr><td>393</td><td>337</td><td>166</td><td>500</td><td>498</td><td>340</td><td>205</td><td>338</td><td>403</td><td>3180</td><td>6432</td><td></td><td></td></tr><tr><td>361</td><td>323</td><td>148</td><td>483</td><td>464</td><td>329</td><td>187</td><td>328</td><td>377</td><td>3000</td><td>6004</td><td></td><td></td></tr><tr><td>6</td><td>16</td><td>10</td><td>2</td><td>8</td><td>18</td><td>12</td><td>14</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>3</td><td>3</td><td>1</td><td>3</td><td>3</td><td>2</td><td>2</td><td>3</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>1</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td><td>2</td><td>4</td><td>9</td><td>81</td><td></td></tr><tr><td></td><td>4</td><td>4</td><td>3</td><td>5</td><td>5</td><td>4</td><td>3</td><td>4</td><td>4</td><td>36</td><td>72</td><td></td><td></td></tr><tr><td></td><td>3</td><td>4</td><td>2</td><td>4</td><td>4</td><td>3</td><td>2</td><td>2</td><td>3</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>2</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>7</td><td>19</td><td>91</td><td></td></tr><tr><td></td><td>307</td><td>321</td><td>119</td><td>431</td><td>413</td><td>295</td><td>169</td><td>303</td><td>313</td><td>2671</td><td>5147</td><td></td><td></td></tr><tr><td></td><td>12</td><td>10</td><td>14</td><td>2</td><td>6</td><td>16</td><td>18</td><td>8</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td colspan=\"13\">ATTEST:</td></tr></table>",
+     "table_id": "tbl-1.html",
+     "top_left_x": 740,
+     "top_left_y": 783,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1498,
+     "bottom_right_y": 1546,
+     "confidence_scores": null,
+     "content": "\u00a9 Golf ScoreCards, Inc. 12/2023 1-800-23",
+     "top_left_x": 1299,
+     "top_left_y": 1530,
+     "type": "footer"
+    }
+   ],
+   "confidence_scores": null,
+   "dimensions": {
+    "dpi": 200,
+    "height": 2000,
+    "width": 1500
+   },
+   "footer": null,
+   "header": null,
+   "hyperlinks": [],
+   "images": [],
+   "index": 0,
+   "markdown": "# Oahu's Premier Golf Experience\n\nGolf Digest Top 75 Resort Course\nTop 100 Golf Shops in the U.S.\nVoted Best Golf Course on Oahu\nTrip Advisor Certificate of Excellence\nHome of the LOTTE Championship 2012-2019\n\n[tbl-0.html](tbl-0.html)\n\n# Golf Course Architect\n\nTed Robinson - 1990\n\nLOCAL RULES\n\n- Water hazards are defined by yellow stakes or lines - Lateral water hazards are defined by red stakes or lines.\n- Out of bounds is defined by white stakes, boundary fences and roadway curbing.\n- Proper golf attire and etiquette is required at all times please.\n- Please avoid slow play by keeping pace with the group in front of you.\n- Please repair ball marks - sand bottles are provided for filling divots on the tee and through the green.\n- Outside coolers not allowed. Food and beverage must be purchased at Ko Olina.\n\n[tbl-1.html](tbl-1.html)\n\n\u00a9 Golf ScoreCards, Inc. 12/2023 1-800-23",
+   "tables": [
+    {
+     "content": "<table><tr><td colspan=\"2\">SAMPLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td>RED</td><td>73.6/138</td><td>518</td><td>412</td><td>362</td><td>203</td><td>528</td><td>373</td><td>444</td><td>195</td><td>438</td><td>3473</td></tr><tr><td>WHITE</td><td>71.9/133</td><td>487</td><td>387</td><td>345</td><td>184</td><td>506</td><td>357</td><td>412</td><td>165</td><td>409</td><td>3252</td></tr><tr><td>GOLD</td><td>69.7/128</td><td>432</td><td>371</td><td>328</td><td>154</td><td>484</td><td>342</td><td>384</td><td>141</td><td>368</td><td>3004</td></tr><tr><td colspan=\"2\">LANDICAP</td><td>11</td><td>1</td><td>17</td><td>13</td><td>5</td><td>15</td><td>3</td><td>9</td><td>7</td><td></td></tr><tr><td colspan=\"2\" rowspan=\"3\">G</td><td>3</td><td>3</td><td>2</td><td>2</td><td>3</td><td>2</td><td>3</td><td>3</td><td>3</td><td></td></tr><tr><td>1</td><td>2</td><td>2</td><td>3</td><td>2</td><td>3</td><td>1</td><td>2</td><td>1</td><td></td></tr><tr><td>1</td><td>1</td><td>0</td><td>2</td><td>0</td><td>1</td><td>0</td><td>2</td><td>0</td><td>5</td></tr><tr><td colspan=\"2\">R</td><td>5</td><td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>4</td><td>3</td><td>4</td><td>36</td></tr><tr><td colspan=\"2\" rowspan=\"3\">D</td><td>4</td><td>3</td><td>3</td><td>3</td><td>4</td><td>2</td><td>3</td><td>3</td><td>4</td><td></td></tr><tr><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>3</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td>1</td><td>2</td><td>1</td><td>2</td><td>1</td><td>1</td><td>1</td><td>2</td><td>2</td><td>13</td></tr><tr><td>JUE</td><td>70.4/122</td><td>427</td><td>321</td><td>277</td><td>125</td><td>438</td><td>212</td><td>244</td><td>100</td><td>332</td><td>2476</td></tr><tr><td colspan=\"2\">LANDICAP</td><td>3</td><td>7</td><td>13</td><td>17</td><td>1</td><td>11</td><td>5</td><td>15</td><td>9</td><td></td></tr><tr><td colspan=\"4\">DATE: 4/8/24</td><td colspan=\"8\">SCORER:</td></tr></table>",
+     "format": "html",
+     "id": "tbl-0.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td rowspan=\"5\">INITIALS</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>413</td><td>355</td><td>183</td><td>514</td><td>516</td><td>353</td><td>227</td><td>353</td><td>428</td><td>3342</td><td>6815</td><td></td><td></td></tr><tr><td>393</td><td>337</td><td>166</td><td>500</td><td>498</td><td>340</td><td>205</td><td>338</td><td>403</td><td>3180</td><td>6432</td><td></td><td></td></tr><tr><td>361</td><td>323</td><td>148</td><td>483</td><td>464</td><td>329</td><td>187</td><td>328</td><td>377</td><td>3000</td><td>6004</td><td></td><td></td></tr><tr><td>6</td><td>16</td><td>10</td><td>2</td><td>8</td><td>18</td><td>12</td><td>14</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>3</td><td>3</td><td>1</td><td>3</td><td>3</td><td>2</td><td>2</td><td>3</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>1</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td><td>2</td><td>4</td><td>9</td><td>81</td><td></td></tr><tr><td></td><td>4</td><td>4</td><td>3</td><td>5</td><td>5</td><td>4</td><td>3</td><td>4</td><td>4</td><td>36</td><td>72</td><td></td><td></td></tr><tr><td></td><td>3</td><td>4</td><td>2</td><td>4</td><td>4</td><td>3</td><td>2</td><td>2</td><td>3</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>2</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>7</td><td>19</td><td>91</td><td></td></tr><tr><td></td><td>307</td><td>321</td><td>119</td><td>431</td><td>413</td><td>295</td><td>169</td><td>303</td><td>313</td><td>2671</td><td>5147</td><td></td><td></td></tr><tr><td></td><td>12</td><td>10</td><td>14</td><td>2</td><td>6</td><td>16</td><td>18</td><td>8</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td colspan=\"13\">ATTEST:</td></tr></table>",
+     "format": "html",
+     "id": "tbl-1.html",
+     "word_confidence_scores": null
+    }
+   ]
+  }
+ ],
+ "usage_info": {
+  "doc_size_bytes": 404719,
+  "pages_processed": 1
+ }
+}

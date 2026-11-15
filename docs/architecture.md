@@ -14,7 +14,7 @@ BirdieEyeView turns a physical golf scorecard into an editable round, stores acc
 
 | Source area | Owns |
 |---|---|
-| `frontend/src/pages`, hooks, context | Page composition, interactive state, query orchestration, and presentation. |
+| `frontend/src/pages`, `data`, `domain`, `brand` | Page composition, interactive state, query orchestration, and presentation. |
 | `api/` | HTTP contracts, authentication/authorization, request dependencies, and error translation. |
 | `services/` | Scan workflows, external provider adapters, report storage, and rule-based suggestions. |
 | `models/` | Golf entities, validation, relationships, and domain calculations. |
@@ -26,7 +26,7 @@ This is a responsibility map, not a claim of perfectly one-way imports: some ser
 
 ## Frontend entry points
 
-`frontend/src/main.tsx` provides the React Query client. `App.tsx` installs authentication and scan contexts, selects public/authenticated routes, and wraps signed-in pages in `AppLayout`. The same `/` URL shows the landing page when signed out and Dashboard when signed in. The native shell uses the React app through Capacitor.
+`frontend/src/main.tsx` provides the React Query client. `App.tsx` installs authentication, theme and the scan session, selects public/authenticated routes, and wraps signed-in pages in `AppLayout`. The same `/` URL shows the landing page when signed out and Dashboard when signed in. The native shell uses the React app through Capacitor.
 
 ## Extraction entry points
 

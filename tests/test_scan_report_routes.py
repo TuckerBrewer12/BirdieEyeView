@@ -46,7 +46,6 @@ def client_for(store=None):
     app = create_app()
     if store is not None:
         app.dependency_overrides[scan_reports.get_scan_report_store] = lambda: store
-    # No lifespan/database initialization or provider credentials needed.
     return TestClient(app, base_url="http://localhost", raise_server_exceptions=False)
 
 
@@ -79,22 +78,20 @@ def test_app_configuration_wires_real_encryption_and_sanitation_without_database
     restored = store.retrieve(UUID(values["retry_key"]))
     assert restored.metadata.category == values["category"]
     assert set(restored.metadata.model_dump()) == {"schema_version", "retry_key", "category", "stage", "http_status", "media_type"}
-    assert len(store.client.objects) == 2  # One private reservation and one encrypted report.
+    assert len(store.client.objects) == 2
     assert sum(key.endswith(".bev") for key in store.client.objects) == 1
 
 
 def test_configured_storage_sanitation_failure_is_safe_and_never_stored(caplog):
     store = make_store()
     client = client_for(store)
-    send = lambda contents: client.post(  # noqa: E731
+    send = lambda contents: client.post(
         "/api/scan/reports", data={"metadata": json.dumps(metadata())},
         files={"file": ("card.pdf", contents, "application/pdf")},
     )
 
-    # An unparseable PDF fails early, at upload validation, with an input error.
     malformed = send(b"%PDF-malformed-private-user")
     assert malformed.status_code == 400
-    # A real PDF the sanitizer refuses (over its 10-page limit) fails late, as not saved.
     too_long = send(pdf_card(pages=11))
     assert too_long.status_code == 503 and too_long.json()["code"] == "report_not_saved"
 
@@ -186,7 +183,6 @@ def test_report_limit_is_independent_of_extraction_and_cannot_be_bypassed_with_a
     monkeypatch.setenv("API_SCAN_REPORT_LIMIT_MAX_REQUESTS", "1")
     monkeypatch.setenv("API_SCAN_LIMIT_MAX_UNAUTH_REQUESTS", "1")
     client = client_for()
-    # Even an invalid extraction consumes the scan budget, but not the report budget.
     client.post("/api/scan/extract")
     assert send_report(client).status_code == 503
     limited = send_report(client, headers={"authorization": "Bearer secret", "user-agent": "private-device"})
@@ -226,7 +222,7 @@ def test_extraction_returns_safe_failure_category_without_changing_public_detail
     client.app.dependency_overrides[get_db] = lambda: SimpleNamespace()
     client.app.dependency_overrides[get_optional_current_user] = lambda: None
 
-    async def unavailable_provider(path):
+    async def unavailable_provider(path, diagnostics=None):
         raise EnvironmentError("MISTRAL_API_KEY=secret")
 
     monkeypatch.setattr(scan, "_run_ocr_pipeline", unavailable_provider)

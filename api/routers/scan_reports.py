@@ -1,5 +1,3 @@
-"""Reporting is anonymous even when called from the signed-in scan screen."""
-
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -13,7 +11,7 @@ from api.error_responses import REPORT_NOT_SAVED, REPORT_STORAGE_UNAVAILABLE
 from api.scan_uploads import (
     MAX_UPLOAD_BYTES, check_upload_name, remove_quietly, save_upload_to_temp, validate_upload_payload,
 )
-from api.scan_report_schemas import ScanReportMetadata
+from api.scan_report_schemas import ReportErrorCode, ScanReportErrorResponse, ScanReportMetadata, ScanReportResponse
 from services.scan_report_service import (
     AnonymousScanReport,
     ReportNotSaved,
@@ -26,8 +24,12 @@ router = APIRouter()
 
 
 def get_scan_report_store() -> ScanReportStore | None:
-    """Application setup overrides this when private durable storage is configured."""
     return None
+
+
+def _unavailable(code: ReportErrorCode, detail: str | None = None) -> JSONResponse:
+    body = ScanReportErrorResponse(code=code, detail=detail)
+    return JSONResponse(status_code=503, content=body.model_dump(exclude_none=True))
 
 
 def _validated_image(file: UploadFile) -> tuple[bytes, str]:
@@ -44,7 +46,11 @@ def _validated_image(file: UploadFile) -> tuple[bytes, str]:
         remove_quietly(path)
 
 
-@router.post("/reports")
+@router.post(
+    "/reports",
+    response_model=ScanReportResponse,
+    responses={503: {"model": ScanReportErrorResponse}},
+)
 async def report_failed_scan(
     request: Request,
     file: UploadFile = File(...),
@@ -86,7 +92,7 @@ async def report_failed_scan(
     try:
         await submit_scan_report(report, store)
     except ReportStorageUnavailable:
-        return JSONResponse(status_code=503, content={"code": "report_storage_unavailable"})
+        return _unavailable("report_storage_unavailable")
     except ReportNotSaved:
         return JSONResponse(
             status_code=503,

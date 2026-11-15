@@ -1,0 +1,76 @@
+import {
+  BarChart2,
+  ChartNoAxesColumn,
+  House,
+  LayoutDashboard,
+  List,
+  ListOrdered,
+  MapPin,
+  ScanLine,
+  Settings,
+  Trophy,
+  Users,
+} from "lucide-react";
+import type { NavItem } from "@/brand";
+
+type Destination = Omit<NavItem, "active">;
+
+const SIDE: Destination[] = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/scan", label: "Scan Scorecard", icon: ScanLine },
+  { href: "/rounds", label: "Rounds", icon: ListOrdered },
+  { href: "/courses", label: "Courses", icon: MapPin },
+  { href: "/analytics", label: "Analytics", icon: BarChart2 },
+  { href: "/career", label: "Career", icon: Trophy },
+  { href: "/social", label: "Social", icon: Users },
+];
+
+const SIDE_FOOTER: Destination[] = [{ href: "/settings", label: "Settings", icon: Settings }];
+
+const TABS: Destination[] = [
+  { href: "/", label: "Home", icon: House },
+  { href: "/rounds", label: "Rounds", icon: List },
+  { href: "/scan", label: "Scan", icon: ScanLine },
+  { href: "/analytics", label: "Analytics", icon: ChartNoAxesColumn },
+];
+
+const MORE: Destination[] = [
+  { href: "/courses", label: "Courses", icon: MapPin },
+  { href: "/career", label: "Career", icon: Trophy },
+  { href: "/social", label: "Social", icon: Users },
+  { href: "/settings", label: "Settings", icon: Settings },
+];
+
+export function isCurrent(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export interface AppNavigation {
+  side: NavItem[];
+  sideFooter: NavItem[];
+  tabs: NavItem[];
+  more: NavItem[];
+}
+
+function isCurrentSection(pathname: string, href: string): boolean {
+  return isCurrent(pathname, href) || (href === "/social" && isCurrent(pathname, "/inbox"));
+}
+
+export function navigationFor(pathname: string, openRequests = 0): AppNavigation {
+  const mark = (items: Destination[]) =>
+    items.map((item) => ({ ...item, active: isCurrentSection(pathname, item.href) }));
+  const more = mark(MORE).map((item) => (item.href === "/social" ? { ...item, badge: openRequests } : item));
+  return { side: mark(SIDE), sideFooter: mark(SIDE_FOOTER), tabs: mark(TABS), more };
+}
+
+export function initialsOf(name: string | null): string {
+  if (!name?.trim()) return "?";
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word.charAt(0))
+    .join("")
+    .toUpperCase();
+}

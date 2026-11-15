@@ -1,9 +1,3 @@
-"""Every reply the API sends takes its text from a message catalog.
-
-Client errors, rate limits and success replies come from ``api/messages.py``. Every 5xx reply uses a
-generic message from ``api/error_responses.py``, so exception text can never reach the client.
-"""
-
 import ast
 from pathlib import Path
 
@@ -15,7 +9,6 @@ GENERIC = {name for name in vars(error_responses) if name.isupper()}
 
 
 def _status(call: ast.Call):
-    """The literal HTTP status of an HTTPException/ScanExtractionError/JSONResponse call, if any."""
     candidates = list(call.args[:1]) + [k.value for k in call.keywords if k.arg == "status_code"]
     for node in candidates:
         if isinstance(node, ast.Constant) and isinstance(node.value, int):
@@ -24,7 +17,6 @@ def _status(call: ast.Call):
 
 
 def _replies():
-    """Yield (location, status, text node) for every reply text in the API layer."""
     for path in sorted(API_DIR.rglob("*.py")):
         if path.name in CATALOGS:
             continue
@@ -53,7 +45,7 @@ def test_no_reply_text_is_written_inline():
 
 def test_every_5xx_reply_uses_a_generic_message():
     server_errors = [(where, text) for where, status, text in _replies() if status is not None and status >= 500]
-    assert server_errors  # the walk finds the 5xx replies at all
+    assert server_errors
     leaking = [where for where, text in server_errors if not (isinstance(text, ast.Name) and text.id in GENERIC)]
     assert leaking == [], "5xx replies must use a constant from api/error_responses.py"
 

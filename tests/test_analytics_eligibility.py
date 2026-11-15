@@ -21,7 +21,7 @@ def test_rounds_are_grouped_by_format_without_doubling():
 
     assert [r.id for r in grouped[18]] == ["eighteen"]
     assert [r.id for r in grouped[9]] == ["nine", "back"]
-    assert nine.calculate_total_score() == 36  # never scaled
+    assert nine.calculate_total_score() == 36
 
 
 def test_scored_holes_skip_unread_and_unplayed_holes():
@@ -34,7 +34,7 @@ def test_hole_par_prefers_the_par_played():
     r = round_({1: {"strokes": 4, "par_played": 5}}, course_obj=course(18))
 
     assert el.hole_par(r, 1) == 5
-    assert el.hole_par(round_({1: {"strokes": 4}}), 1) is None  # unlinked, no par recorded
+    assert el.hole_par(round_({1: {"strokes": 4}}), 1) is None
 
 
 def test_hole_handicap_prefers_the_handicap_played_then_the_course():
@@ -51,7 +51,7 @@ def test_a_rate_without_opportunities_is_unknown():
 
 def test_chronological_handles_aware_naive_and_undated_rounds():
     aware = par_round(date=datetime(2026, 1, 2, tzinfo=timezone(timedelta(hours=-8))), round_id="aware")
-    naive = par_round(date=datetime(2026, 1, 2, 12), round_id="naive")
+    naive = par_round(date=datetime(2026, 1, 2, 12, tzinfo=timezone.utc).replace(tzinfo=None), round_id="naive")
     undated = par_round(date=None, round_id="undated")
 
     ordered = el.chronological([undated, aware, naive])

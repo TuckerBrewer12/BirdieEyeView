@@ -22,7 +22,6 @@ from models import Course, Hole, HoleScore, Round, Tee, User, UserTee
 
 
 def _round_row(round_id, *, course_id=None, course_name_played=None, tee_box_played=None, total_score=80):
-    """Helper: minimal users.rounds row dict."""
     return {
         "id": round_id,
         "user_id": uuid4(),
@@ -43,7 +42,6 @@ def _round_row(round_id, *, course_id=None, course_name_played=None, tee_box_pla
 
 
 def _hole_score_row(*, hole_number=1, strokes=5, par_played=4, handicap_played=7):
-    """Helper: minimal users.hole_scores row dict."""
     return {
         "hole_number": hole_number,
         "strokes": strokes,
@@ -57,23 +55,17 @@ def _hole_score_row(*, hole_number=1, strokes=5, par_played=4, handicap_played=7
     }
 
 
-# ================================================================
-# converters.py — pure function tests (no mocks needed)
-# ================================================================
-
 def test_hole_score_converter_maps_par_played():
-    """hole_score_from_row correctly maps par_played and handicap_played."""
     row = _hole_score_row(strokes=5, par_played=4, handicap_played=7)
     hs = hole_score_from_row(row)
 
     assert hs.par_played == 4
     assert hs.handicap_played == 7
-    assert hs.to_par() == 1          # 5 - 4, using par_played fallback
+    assert hs.to_par() == 1
     assert hs.get_score_type() == "bogey"
 
 
 def test_hole_score_converter_null_par_played():
-    """hole_score_from_row handles NULL par_played gracefully."""
     row = _hole_score_row(par_played=None, handicap_played=None)
     hs = hole_score_from_row(row)
     assert hs.par_played is None
@@ -81,23 +73,21 @@ def test_hole_score_converter_null_par_played():
 
 
 def test_hole_score_to_row_includes_par_played():
-    """Snapshot positions remain stable; the new played state is appended."""
     hs = HoleScore(hole_number=1, strokes=5, par_played=4, handicap_played=7)
     rid = uuid4()
     row = hole_score_to_row(hs, rid, None)
 
     assert len(row) == 12
     assert row[11] is None
-    assert row[0] == rid           # round_id
-    assert row[1] is None          # hole_id (nullable)
-    assert row[2] == 1             # hole_number
-    assert row[3] == 5             # strokes
-    assert row[9] == 4             # par_played
-    assert row[10] == 7            # handicap_played
+    assert row[0] == rid
+    assert row[1] is None
+    assert row[2] == 1
+    assert row[3] == 5
+    assert row[9] == 4
+    assert row[10] == 7
 
 
 def test_round_converter_maps_course_name_played():
-    """round_from_rows correctly maps course_name_played."""
     rid = uuid4()
     row = _round_row(rid, course_name_played="Eagle Vines Golf Club")
     r = round_from_rows(row, [], None)
@@ -108,7 +98,6 @@ def test_round_converter_maps_course_name_played():
 
 
 def test_round_converter_hole_scores_sorted():
-    """round_from_rows sorts hole scores by hole_number."""
     rid = uuid4()
     row = _round_row(rid)
     score_rows = [
@@ -122,7 +111,6 @@ def test_round_converter_hole_scores_sorted():
 
 
 def _course_row(*, total_holes, par):
-    """Helper: minimal courses.courses row dict."""
     return {
         "id": uuid4(), "name": "Nine Hole Course", "external_course_id": None,
         "location": None, "par": par, "total_holes": total_holes, "user_id": None,
@@ -134,7 +122,6 @@ def _hole_rows(numbers, par=4):
 
 
 def test_course_converter_loads_nine_hole_layout():
-    """A stored nine-hole layout keeps its par and lets a full nine score as complete."""
     course = course_from_rows(_course_row(total_holes=9, par=36), _hole_rows(range(1, 10)), [], {})
 
     assert course.total_holes == 9
@@ -148,7 +135,6 @@ def test_course_converter_loads_nine_hole_layout():
 
 
 def test_course_converter_null_total_holes_keeps_legacy_inference():
-    """NULL total_holes does not make nine hole rows a nine-hole layout."""
     nine = course_from_rows(_course_row(total_holes=None, par=36), _hole_rows(range(1, 10)), [], {})
     eighteen = course_from_rows(_course_row(total_holes=None, par=72), _hole_rows(range(1, 19)), [], {})
 
@@ -158,7 +144,6 @@ def test_course_converter_null_total_holes_keeps_legacy_inference():
 
 
 def test_course_to_row_prefers_declared_total_holes():
-    """An explicit layout is persisted even when hole rows are incomplete."""
     declared = Course(name="Nine", total_holes=9, holes=[Hole(number=1, par=4)])
     legacy = Course(name="Legacy", holes=[Hole(number=n, par=4) for n in range(1, 19)])
 
@@ -172,13 +157,11 @@ def test_course_to_row_prefers_declared_total_holes():
     [(range(1, 10), 9), (range(1, 6), None), (range(10, 19), None), ([*range(1, 9), 10], None)],
 )
 def test_course_to_row_keeps_exact_front_nine_layout(numbers, expected):
-    """An exact 1-9 scan keeps its nine-hole layout; partial or back-nine lists stay unknown."""
     course = Course(name="Scanned", holes=[Hole(number=n, par=4) for n in numbers])
     assert course_to_row(course)["total_holes"] == expected
 
 
 def test_user_tee_converter_roundtrip():
-    """user_tee_from_row correctly maps all fields including JSONB hole_yardages."""
     tid = uuid4()
     row = {
         "id": tid,
@@ -187,7 +170,7 @@ def test_user_tee_converter_roundtrip():
         "name": "My Tee",
         "slope_rating": 120,
         "course_rating": 72.0,
-        "hole_yardages": {"1": 400, "9": 350},  # JSONB keys are strings
+        "hole_yardages": {"1": 400, "9": 350},
         "created_at": None,
     }
     ut = user_tee_from_row(row)
@@ -195,11 +178,10 @@ def test_user_tee_converter_roundtrip():
     assert ut.id == str(tid)
     assert ut.name == "My Tee"
     assert ut.slope_rating == 120.0
-    assert ut.hole_yardages == {1: 400, 9: 350}   # keys converted to int
+    assert ut.hole_yardages == {1: 400, 9: 350}
 
 
 def test_user_converter_maps_friend_code():
-    """user_from_row should map friend_code from users.users."""
     uid = uuid4()
     row = {
         "id": uid,
@@ -225,21 +207,7 @@ def test_user_tee_converter_rejects_invalid_stored_yardages(yardages):
         user_tee_from_row(row)
 
 
-# ================================================================
-# CourseRepositoryDB
-# ================================================================
-
-# ================================================================
-# RoundRepositoryDB
-# ================================================================
-
-
-# ================================================================
-# UserTeeRepositoryDB
-# ================================================================
-
-
-from database.repositories.course_repo import _tee_yardage_similarity  # noqa: E402
+from database.repositories.course_repo import _tee_yardage_similarity
 
 
 @pytest.mark.parametrize(

@@ -1,5 +1,3 @@
-"""CRUD operations for user-owned tee configurations."""
-
 import json
 import asyncpg
 from typing import List, Optional
@@ -11,8 +9,6 @@ from database.exceptions import ConflictError, DuplicateError, IntegrityError, N
 
 
 class UserTeeRepositoryDB:
-    """Async CRUD for users.user_tees."""
-
     def __init__(self, pool: asyncpg.Pool):
         self._pool = pool
 
@@ -40,7 +36,6 @@ class UserTeeRepositoryDB:
             )
 
     async def get_user_tees(self, user_id: str, *, course_id: Optional[str] = None) -> List[UserTee]:
-        """List a user's custom tees, optionally filtered by course."""
         async with self._pool.acquire() as conn:
             if course_id:
                 rows = await conn.fetch(
@@ -59,7 +54,6 @@ class UserTeeRepositoryDB:
             return await self._assemble_many(conn, rows)
 
     async def get_user_tee(self, tee_id: str, *, user_id: Optional[str] = None) -> Optional[UserTee]:
-        """Get a single user tee by ID."""
         async with self._pool.acquire() as conn:
             if user_id:
                 row = await conn.fetchrow(
@@ -75,7 +69,6 @@ class UserTeeRepositoryDB:
             return (await self._assemble_many(conn, [row]))[0] if row else None
 
     async def create_user_tee(self, user_tee: UserTee) -> UserTee:
-        """Create a user tee configuration."""
         row_data = user_tee_to_row(user_tee)
         try:
             async with self._pool.acquire() as conn, conn.transaction():
@@ -112,7 +105,6 @@ class UserTeeRepositoryDB:
             raise IntegrityError("Invalid user tee reference or value") from error
 
     async def update_user_tee(self, tee_id: str, *, user_id: Optional[str] = None, **fields) -> Optional[UserTee]:
-        """Update a user tee configuration."""
         allowed = {
             "name",
             "slope_rating",
@@ -163,7 +155,6 @@ class UserTeeRepositoryDB:
             raise IntegrityError("Invalid user tee value") from error
 
     async def delete_user_tee(self, tee_id: str, *, user_id: Optional[str] = None) -> bool:
-        """Delete a user tee. Returns True if deleted."""
         try:
             async with self._pool.acquire() as conn:
                 if user_id:

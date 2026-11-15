@@ -1,5 +1,3 @@
-"""Synthetic scorecards only; deliberately embedded identifiers test sanitation."""
-
 from io import BytesIO
 from uuid import uuid4
 
@@ -30,7 +28,6 @@ def report(image=None, media_type="image/png", **overrides):
 
 
 def pdf_card(pages=2):
-    # Build a real PDF with visible names, invisible text, properties, XMP and an attachment.
     stream = b"BT /F1 12 Tf 10 60 Td (Visible Player 5 4 3) Tj 3 Tr 0 -20 Td (" + IDENTIFIER.encode() + b") Tj ET"
     objects = [
         b"<< /Type /Catalog /Pages 2 0 R /Metadata 7 0 R /Names << /EmbeddedFiles << /Names [(private-name.txt) 8 0 R] >> >> >>",

@@ -1,11 +1,3 @@
-"""Scorecard upload validation and temporary-file ownership for the scan and report routes.
-
-Every check raises ``HTTPException`` with a catalogued message. ``prepared_upload`` is the one way
-the scan routes take an upload: its temporary files are created before any worker thread starts,
-file and image work runs in a worker thread, and every file is removed on the way out (even if the
-request is cancelled) without a cleanup failure ever replacing the request's own outcome.
-"""
-
 import contextlib
 import logging
 from dataclasses import dataclass
@@ -26,7 +18,7 @@ from services.scan_image import new_temp_path, open_existing, prepare_for_ocr, r
 
 logger = logging.getLogger(__name__)
 
-MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 MAX_IMAGE_PIXELS = 40_000_000
 MAX_IMAGE_SIDE = 12_000
 _CHUNK_BYTES = 1024 * 1024
@@ -67,7 +59,6 @@ if HEIC_DECODE_AVAILABLE:
 
 
 def check_upload_name(file: UploadFile) -> str:
-    """Return the upload's lower-case suffix after checking its name and declared content type."""
     filename = (file.filename or "").strip()
     if not filename:
         raise HTTPException(400, FILENAME_REQUIRED)
@@ -85,11 +76,6 @@ def check_upload_name(file: UploadFile) -> str:
 
 
 def write_upload(file: UploadFile, path: Path) -> None:
-    """Stream the upload into the caller's existing file at ``path``, enforcing the size limit.
-
-    Closing is part of the write. The file is never created here, so a write still running after
-    its request was cancelled and cleaned up fails instead of recreating the file.
-    """
     total_bytes = 0
     with open_existing(path) as out:
         while chunk := file.file.read(_CHUNK_BYTES):
@@ -101,11 +87,6 @@ def write_upload(file: UploadFile, path: Path) -> None:
 
 
 def save_upload_to_temp(file: UploadFile, suffix: str) -> Path:
-    """Write the upload to a new temporary file the caller owns.
-
-    On any failure (too large, read, write, flush or close) the file is removed quietly before the
-    original error propagates.
-    """
     path = new_temp_path(suffix)
     try:
         write_upload(file, path)
@@ -116,7 +97,6 @@ def save_upload_to_temp(file: UploadFile, suffix: str) -> Path:
 
 
 def validate_upload_payload(path: Path, suffix: str) -> None:
-    """Reject files whose content isn't a readable scorecard image or PDF within the limits."""
     if suffix == ".pdf":
         try:
             with open(path, "rb") as fh:
@@ -124,7 +104,7 @@ def validate_upload_payload(path: Path, suffix: str) -> None:
                     raise ValueError("missing PDF header")
             if len(PdfReader(path).pages) < 1:
                 raise ValueError("no pages")
-        except Exception as exc:  # noqa: BLE001 - any parse failure is an invalid upload
+        except Exception as exc:
             raise HTTPException(400, INVALID_PDF) from exc
         return
 
@@ -144,7 +124,7 @@ def validate_upload_payload(path: Path, suffix: str) -> None:
                 raise HTTPException(400, IMAGE_PIXELS_TOO_MANY)
     except HTTPException:
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         if suffix == ".heic" and not HEIC_DECODE_AVAILABLE:
             raise HTTPException(400, HEIC_UNAVAILABLE) from exc
         raise HTTPException(400, UNREADABLE_IMAGE) from exc
@@ -158,11 +138,6 @@ class PreparedUpload:
 
 @contextlib.asynccontextmanager
 async def prepared_upload(file: UploadFile, *, for_ocr: bool) -> AsyncIterator[PreparedUpload]:
-    """Validate an upload and, when ``for_ocr``, prepare the image OCR will receive.
-
-    Name and content-type checks run first; writing, decoding and re-encoding run in a worker
-    thread. Every temporary file is removed on exit, whatever the outcome.
-    """
     suffix = check_upload_name(file)
     # Files are created only here, on the request's side, and every one is removed in `finally`.
     # Workers only write into them, so a worker outliving a cancelled request can't recreate one.
