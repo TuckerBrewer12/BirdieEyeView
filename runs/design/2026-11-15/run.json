@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "task": "design",
+  "date": "2026-11-15",
+  "branch": "nightly/design-2026-11-15",
+  "pr": null,
+  "title": "[nightly/design] Scan: cancel a read, and say when it's taking longer than usual",
+  "summary": "While a scorecard is being read, golfers can now press Cancel to go back to their photo (to retake it or type the scores in) instead of waiting out a read that can take most of a minute, and after 20 seconds the screen says the read is taking longer than usual.",
+  "reviewFirst": [
+    "frontend/src/pages/scan/useScanPageViewModel.ts: the read's AbortController, cancelRead, ignoring an aborted result, the slow timer",
+    "frontend/src/pages/scan/ScanSessionProvider.tsx / scanSession.ts: readingRef kept beside the session so Cancel works after leaving Scan",
+    "frontend/src/pages/scan/components/ScanProcessingStep.tsx and present.ts: Cancel and the slow note's wording",
+    "frontend/src/brand/components/ScanProgress.tsx: the new optional note inside the live region",
+    "frontend/src/lib/api.ts, data/scanRepository.ts: the signal threaded to fetch"
+  ],
+  "stillOpen": [
+    "PR not opened: git push and the GitHub API return 403 (repo not in this session's authorized set). Patch and notes are in the Project as claude/nightly-design-2026-11-15.patch / .md.",
+    "8 macOS screenshot baselines need CI's renders: scan-processing (desktop, mobile, dark x2), ScanProcessingStep preview (light, dark), ScanProgress preview (light, dark).",
+    "Reviewer screenshots (10 PNGs) couldn't be stored: no push to factory-artifacts."
+  ],
+  "next": [
+    "Cancel and the slow note on the landing page's try-it scan (same ScanProgress, same dead end)",
+    "A quiet 'Stopped' line by the photo after a cancel, if golfers miss that they're back where they were",
+    "Stop the server's read when the client disconnects, so a cancelled read stops spending"
+  ],
+  "session": "https://claude.ai/code/session_01EXYctD7sMvwUMXsSVmdmGn",
+  "startedAt": "2026-11-15T10:48:00Z",
+  "finishedAt": "2026-11-15T11:14:00Z",
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Follow up on earlier PRs",
+      "status": "warn",
+      "detail": "No API access to read checks, comments or labels"
+    },
+    {
+      "id": "context",
+      "label": "Read and pick",
+      "status": "ok",
+      "detail": "Scan · processing frames: the proposed screen is in the code but has no way out or slow state"
+    },
+    {
+      "id": "build",
+      "label": "Implement",
+      "status": "ok",
+      "detail": "20 files, +266/-24: abortable extract, Cancel, slow note, 4 unit + 3 espresso tests"
+    },
+    {
+      "id": "pr",
+      "label": "Open draft PR",
+      "status": "fail",
+      "detail": "git push and GitHub API 403: repository not in this session's authorized set"
+    },
+    {
+      "id": "fix",
+      "label": "CI and review rounds",
+      "status": "skipped",
+      "detail": "No PR, so no CI or bot reviews",
+      "rounds": 0
+    }
+  ],
+  "checks": [
+    {
+      "name": "npm test",
+      "status": "pass",
+      "detail": "810 tests"
+    },
+    {
+      "name": "Lint",
+      "status": "pass"
+    },
+    {
+      "name": "Typecheck",
+      "status": "pass"
+    },
+    {
+      "name": "check:tokens / check:api",
+      "status": "pass"
+    },
+    {
+      "name": "Build",
+      "status": "pass"
+    },
+    {
+      "name": "knip",
+      "status": "pass"
+    },
+    {
+      "name": "Espresso",
+      "status": "pass",
+      "detail": "201 passed (3 new)"
+    },
+    {
+      "name": "Screenshots (Linux vs base)",
+      "status": "fail",
+      "detail": "8 intended diffs, 52 unchanged; macOS baselines not regenerated"
+    }
+  ],
+  "id": "2026-11-15",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-design-2026-11-15.patch",
+  "reportSource": "claude/nightly-design-2026-11-15.md",
+  "origin": {
+    "kind": "schedule"
+  },
+  "previewUrl": null,
+  "screenshots": []
+}

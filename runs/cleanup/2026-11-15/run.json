@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "task": "cleanup",
+  "date": "2026-11-15",
+  "branch": "nightly/cleanup-2026-11-15",
+  "pr": null,
+  "title": "[nightly/cleanup] API client: one request helper, typed request bodies",
+  "summary": "Every request the web app makes goes through lib/api.ts, which had five hand-written copies of the same fetch/check/error code and no tests. It now has one request helper, request bodies typed from the server's schema instead of drifted copies, and 230 tests pinning every call's URL, headers, body and error wording.",
+  "reviewFirst": [
+    "frontend/src/lib/api.ts send(): what a request carries with and without a body",
+    "updateRound now takes the generated RoundChangesDto (UpdateRoundRequest), wider than the old inline type",
+    "frontend/src/lib/api.test.ts CALLS table: the URLs each call sends"
+  ],
+  "stillOpen": [
+    "Couldn't push or open the PR: the session has no GitHub access to BirdieEyeView. CI and review bots haven't run; Step 0 skipped.",
+    "Backend cleanups on factory/cleanup will conflict with backend-refactor (#541) until it lands.",
+    "Small textual conflicts with the saved library-feature patches of 11-10 and 11-13 in lib/api.ts."
+  ],
+  "session": "https://claude.ai/code/session_01EXYctCzRsXcGeB3PRZDmAF",
+  "startedAt": "2026-11-15T09:47:53Z",
+  "finishedAt": "2026-11-15T10:42:28Z",
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Earlier PRs",
+      "status": "warn",
+      "detail": "Couldn't read checks, comments or labels (no GitHub API access)"
+    },
+    {
+      "id": "context",
+      "label": "Context",
+      "status": "ok",
+      "detail": "lib/api.ts: 12 commits, every request, no tests"
+    },
+    {
+      "id": "build",
+      "label": "Builder",
+      "status": "ok",
+      "detail": "2 commits: 230 tests, then api.ts 280 -> 255 lines"
+    },
+    {
+      "id": "pr",
+      "label": "Pull request",
+      "status": "fail",
+      "detail": "Push refused: repo not in the session's authorized set"
+    },
+    {
+      "id": "fix",
+      "label": "CI and reviews",
+      "status": "skipped",
+      "detail": "No PR",
+      "rounds": 0
+    }
+  ],
+  "checks": [
+    {
+      "name": "Unit tests",
+      "status": "pass",
+      "detail": "1036 passed; 230 new"
+    },
+    {
+      "name": "Espresso",
+      "status": "pass",
+      "detail": "198 passed"
+    },
+    {
+      "name": "Screenshots (Linux vs base)",
+      "status": "pass",
+      "detail": "303/304; landing passed 3/3 alone"
+    },
+    {
+      "name": "Typecheck",
+      "status": "pass"
+    },
+    {
+      "name": "ESLint",
+      "status": "pass"
+    },
+    {
+      "name": "Build",
+      "status": "pass"
+    }
+  ],
+  "id": "2026-11-15",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-cleanup-2026-11-15.patch",
+  "reportSource": "claude/nightly-cleanup-2026-11-15.md",
+  "origin": {
+    "kind": "schedule"
+  },
+  "previewUrl": null,
+  "screenshots": [],
+  "next": []
+}

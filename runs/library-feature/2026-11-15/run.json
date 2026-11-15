@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "task": "library-feature",
+  "date": "2026-11-15",
+  "branch": "nightly/library-feature-2026-11-15",
+  "pr": null,
+  "title": "[nightly/feature] Notes on a round: write, edit and clear them on the round page",
+  "summary": "Golfers can now keep a note on any round (the wind, a club that worked, a hole to play differently) from a Notes card on the round page, and clear it again; the API has stored notes all along but the app never showed or wrote them.",
+  "reviewFirst": [
+    "useRoundNotesViewModel.ts: draft, save, cancel, the < > check",
+    "api/routers/rounds.py: an empty notes now clears the note instead of a 422; missing/null still leaves it alone",
+    "RoundNotesSection.tsx and its place in RoundDetailPage.tsx",
+    "brand/components/Input.tsx: the new kit Textarea"
+  ],
+  "stillOpen": [
+    "PR not opened: git push and the GitHub API return 403. Patch and notes are in the Project as claude/nightly-library-feature-2026-11-15.patch / .md.",
+    "18 macOS screenshot baselines need regenerating (12 round-detail, 2 Input preview, 4 new note shots)."
+  ],
+  "next": [
+    "A note icon on a round's row in Rounds and the course page, and the first line in the share card",
+    "Weather as a few fixed choices (wind, rain, temperature) in weather_conditions",
+    "Per-golfer notes on a course's hole (new users.hole_notes table, migration 014)",
+    "An optional note on the scan's saved screen"
+  ],
+  "session": "https://claude.ai/code/session_01EXYctCnwpV9JAcE2tECJow",
+  "startedAt": "2026-11-15T10:18:00Z",
+  "finishedAt": "2026-11-15T10:46:00Z",
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Follow up on earlier PRs",
+      "status": "warn",
+      "detail": "No API access to read checks, comments or labels"
+    },
+    {
+      "id": "context",
+      "label": "Read and pick",
+      "status": "ok",
+      "detail": "Last night was A (PyJWT), so B; notes are stored but no screen reads or writes them"
+    },
+    {
+      "id": "build",
+      "label": "Implement",
+      "status": "ok",
+      "detail": "25 files, +574/-16"
+    },
+    {
+      "id": "pr",
+      "label": "Open draft PR",
+      "status": "fail",
+      "detail": "git push and GitHub API 403"
+    },
+    {
+      "id": "fix",
+      "label": "CI and review rounds",
+      "status": "skipped",
+      "detail": "No PR",
+      "rounds": 0
+    }
+  ],
+  "checks": [
+    {
+      "name": "Backend pytest",
+      "status": "pass",
+      "detail": "807 passed, 88.8%"
+    },
+    {
+      "name": "ruff / bandit",
+      "status": "pass"
+    },
+    {
+      "name": "npm test",
+      "status": "pass",
+      "detail": "818 tests"
+    },
+    {
+      "name": "Lint",
+      "status": "pass"
+    },
+    {
+      "name": "Typecheck",
+      "status": "pass"
+    },
+    {
+      "name": "Build",
+      "status": "pass"
+    },
+    {
+      "name": "Espresso",
+      "status": "pass",
+      "detail": "203 passed (5 new)"
+    },
+    {
+      "name": "Screenshots (Linux vs base)",
+      "status": "fail",
+      "detail": "14 intended diffs + 4 new; macOS baselines not regenerated"
+    }
+  ],
+  "id": "2026-11-15",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-library-feature-2026-11-15.patch",
+  "reportSource": "claude/nightly-library-feature-2026-11-15.md",
+  "origin": {
+    "kind": "schedule"
+  },
+  "previewUrl": null,
+  "screenshots": []
+}

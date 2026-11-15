@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "task": "speed",
+  "date": "2026-11-15",
+  "branch": "nightly/speed-2026-11-15",
+  "pr": null,
+  "title": "[nightly/speed] Load framer-motion's drag and layout code only where it's used",
+  "summary": "Every page's main script gets 12.7 kB (gzip) smaller, 1,187 → 1,144 kB minified, by keeping framer-motion's drag and layout code out of it; on a throttled phone the landing page paints about 60–80 ms sooner.",
+  "reviewFirst": [
+    "ScannerDemo.tsx: the pill's own LazyMotion that loads layout on demand",
+    "main.tsx: root LazyMotion with domAnimation and strict",
+    "landing-page/components/layoutMotionFeatures.ts"
+  ],
+  "stillOpen": [
+    "PR not opened: git push and the GitHub API return 403. Patch and notes are in the Project as claude/nightly-speed-2026-11-15.patch / .md."
+  ],
+  "session": "https://claude.ai/code/session_01EXYctC4XAKY6b4Xa97Cefw",
+  "startedAt": "2026-11-15T09:18:01Z",
+  "finishedAt": "2026-11-15T10:12:00Z",
+  "stages": [
+    {
+      "id": "followup",
+      "label": "Follow up on earlier PRs",
+      "status": "warn",
+      "detail": "No API access; #571/#575/#579 unchanged"
+    },
+    {
+      "id": "context",
+      "label": "Measure and pick",
+      "status": "ok",
+      "detail": "Source-mapped the 1,187 kB entry chunk; framer-motion's unused drag/layout features were the largest new piece"
+    },
+    {
+      "id": "build",
+      "label": "Implement",
+      "status": "ok",
+      "detail": "14 files; entry −43.2 kB min / −12.7 kB gzip"
+    },
+    {
+      "id": "pr",
+      "label": "Open draft PR",
+      "status": "fail",
+      "detail": "git push and GitHub API 403"
+    },
+    {
+      "id": "fix",
+      "label": "CI and review rounds",
+      "status": "skipped",
+      "detail": "No PR",
+      "rounds": 0
+    }
+  ],
+  "checks": [
+    {
+      "name": "Entry chunk (gzip)",
+      "status": "pass",
+      "detail": "358.57 → 345.88 kB"
+    },
+    {
+      "name": "Layout chunk (landing only)",
+      "status": "pass",
+      "detail": "new: 13.18 kB gzip"
+    },
+    {
+      "name": "Landing FCP, throttled phone",
+      "status": "pass",
+      "detail": "2572/2528 → 2492/2468 ms"
+    },
+    {
+      "name": "Lint / typecheck / knip",
+      "status": "pass"
+    },
+    {
+      "name": "npm test",
+      "status": "pass",
+      "detail": "806 tests"
+    },
+    {
+      "name": "Build / build:native",
+      "status": "pass"
+    },
+    {
+      "name": "Screenshots",
+      "status": "pass",
+      "detail": "479 passed, no diffs"
+    }
+  ],
+  "id": "2026-11-15",
+  "status": "done",
+  "kind": "change",
+  "patchSource": "claude/nightly-speed-2026-11-15.patch",
+  "reportSource": "claude/nightly-speed-2026-11-15.md",
+  "origin": {
+    "kind": "schedule"
+  },
+  "previewUrl": null,
+  "screenshots": [],
+  "next": []
+}
