@@ -180,14 +180,14 @@ async def _responses() -> tuple[dict, dict]:
     last_day = max(r.date for r in rounds).date()
     dashboard_module.today = lambda: last_day + timedelta(days=1)
 
-    dashboard = await stats.get_dashboard(user_id, db, USER)
+    dashboard = await stats.get_dashboard(user=USER, db=db)
     analytics = await stats.get_analytics(user_id, 50, None, None, db, USER)
-    goal_report = await stats.get_goal_report(user_id, 20, db, USER)
-    played_courses = await stats.get_played_courses(user_id, db, USER)
+    goal_report = await stats.get_goal_report(limit=20, user=USER, db=db)
+    played_courses = await stats.get_played_courses(user=USER, db=db)
     links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
 
     benchmarks = {
-        f"handicap:{handicap}": await stats.get_benchmark_comparison(user_id, "handicap", handicap, None, 50, db, USER)
+        f"handicap:{handicap}": await stats.get_benchmark_comparison(against="handicap", handicap=handicap, friend_id=None, limit=50, user=USER, db=db)
         for handicap in (0, 5, 10, 15, 20, 25)
     }
 

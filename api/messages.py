@@ -111,3 +111,17 @@ Q_MUST_BE_PLAIN_TEXT_OF_AT_MOST_120_CHARACTERS = 'q must be plain text of at mos
 USER_CONTEXT_INVALID = "user_context must be plain text of at most {limit} characters."
 
 OCR_TEXT_INVALID = "ocr_text must be plain text of at most {limit} characters."
+
+OCR_TEXT_TOO_LONG = "This file has more text than a scorecard. Try a photo of just the card."
+
+SCAN_REVIEW_NOTES = {
+    "strokes_misread": "Hole {hole} score couldn't be read; check it",
+    "strokes_missing": "Hole {hole} strokes missing",
+    "to_par_without_par": "Hole {hole} cannot convert to-par score without known par",
+    "sign_corrected": "Hole {hole} score sign corrected (birdie vs bogey disambiguated)",
+    "putts_out_of_range": "Hole {hole} putts out of range",
+    "putts_exceed_strokes": "Hole {hole} putts exceed strokes",
+    "shots_out_of_range": "Hole {hole} shots to green out of range",
+    "shots_exceed_strokes": "Hole {hole} shots to green exceed strokes",
+    "breakdown_conflict": "Hole {hole} score breakdown conflicts with total strokes",
+}

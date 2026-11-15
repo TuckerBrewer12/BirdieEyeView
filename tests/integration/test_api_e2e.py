@@ -1,12 +1,3 @@
-from unittest.mock import AsyncMock
-"""End-to-end API tests: the real FastAPI app (middleware, auth, routing, serialization) on a real
-PostgreSQL database. Only outgoing email and the paid OCR/LLM providers are replaced, so tests can
-read the emailed tokens and scan a committed scorecard without network calls.
-
-These replace the handler-level route tests that called endpoint functions with mocked
-repositories: they prove auth and ownership through the same HTTP path the app uses.
-"""
-
 import asyncio
 import copy
 import dataclasses
@@ -15,6 +6,7 @@ import json
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import AsyncMock
 from urllib.parse import parse_qs, urlparse
 
 import asyncpg
@@ -25,12 +17,15 @@ from PIL import Image
 
 import api.main as api_main
 from api import auth_utils
+from api import scan_uploads
 from api.routers import auth, scan, scan_reports
+from services import scan_ocr
 from database import DatabaseManager
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
 from api.messages import PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME, UNREADABLE_SCORE_ROWS
 from scripts.quick_scan_eval import SUITE_MANIFEST_PATHS, grade_case, load_cases
+from tests.scan_report_fixtures import pdf_card
 from tests.test_mistral_scorecard_parser import EAGLE_VINES_WITH_INITIALS, INCOMPLETE_FULL_ROW
 
 pytestmark = pytest.mark.integration
@@ -230,7 +225,7 @@ def test_profiles_tees_and_stats_belong_to_their_owner(api):
     assert api.client.get(f"/api/users/{alice['id']}/tees", headers=bob["headers"]).status_code == 403
     assert api.client.delete(f"/api/users/{alice['id']}/tees/{tee['id']}", headers=bob["headers"]).status_code == 403
     assert api.client.delete(f"/api/users/{bob['id']}/tees/{tee['id']}", headers=bob["headers"]).status_code == 404
-    for path in (f"/api/stats/dashboard/{alice['id']}", f"/api/stats/milestones/{alice['id']}",
+    for path in (f"/api/stats/dashboard/{alice['id']}",
                  f"/api/users/{alice['id']}/handicap", f"/api/stats/analytics/{alice['id']}"):
         assert api.client.get(path, headers=bob["headers"]).status_code == 403, path
 
@@ -256,6 +251,36 @@ def test_friends_can_view_analytics_only_after_accepting(api):
     assert api.client.get(comparison, headers=carol["headers"]).status_code == 403
     unaccepted = f"/api/stats/{bob['id']}/benchmark?against=friend&friend_id={carol['id']}"
     assert api.client.get(unaccepted, headers=bob["headers"]).status_code == 403
+
+
+def test_self_only_stats_refuse_everyone_else_even_an_accepted_friend(api):
+    alice, bob, carol = api.user("alice@example.com"), api.user("bob@example.com"), api.user("carol@example.com")
+    course = custom_course(api, alice)
+    round_id = save_round(api, alice, course)
+    assert api.client.patch(f"/api/users/{alice['id']}", headers=alice["headers"],
+                            json={"scoring_goal": 80}).status_code == 200
+    code = api.client.get(f"/api/users/{bob['id']}", headers=bob["headers"]).json()["friend_code"]
+    friendship = api.client.post("/api/users/me/friends", headers=alice["headers"],
+                                 json={"addressee_friend_code": code}).json()["id"]
+    assert api.client.patch(f"/api/users/me/friends/{friendship}", headers=bob["headers"],
+                            json={"status": "accepted"}).status_code == 200
+
+    self_only = [
+        f"/api/stats/dashboard/{alice['id']}",
+        f"/api/stats/{alice['id']}/played-courses",
+        f"/api/stats/{alice['id']}/goal-report",
+        f"/api/stats/{alice['id']}/benchmark?against=handicap&handicap=15",
+        f"/api/stats/compare/{alice['id']}/{round_id}",
+        f"/api/stats/course-analytics/{alice['id']}/{course}",
+    ]
+    for path in self_only:
+        assert api.client.get(path, headers=alice["headers"]).status_code == 200, path
+        for viewer in (bob, carol):
+            assert api.client.get(path, headers=viewer["headers"]).status_code == 403, path
+        assert api.client.get(path).status_code == 401, path
+    assert api.client.get(f"/api/stats/analytics/{alice['id']}", headers=bob["headers"]).status_code == 200
+    assert api.client.get(f"/api/stats/analytics/{alice['id']}", headers=carol["headers"]).status_code == 403
+    assert api.client.get(f"/api/stats/milestones/{alice['id']}", headers=alice["headers"]).status_code == 404
 
 
 def test_saved_round_is_listed_edited_and_deleted(api):
@@ -288,19 +313,24 @@ EAGLE_VINES_STROKES = {int(hole): strokes for hole, strokes in EAGLE_VINES["expe
 
 @pytest.fixture
 def scan_providers(monkeypatch):
-    calls = {"ocr": [], "merge": []}
+    calls = {"ocr": [], "merge": [], "ocr_bytes": []}
 
     async def fake_ocr(self, file_path, **kwargs):
-        with Image.open(file_path) as image:
-            calls["ocr"].append(image.format)
+        data = await asyncio.to_thread(Path(file_path).read_bytes)
+        calls["ocr_bytes"].append(data)
+        if data.startswith(b"%PDF-"):
+            calls["ocr"].append("PDF")
+        else:
+            with Image.open(file_path) as image:
+                calls["ocr"].append(image.format)
         return {"pages": [{"markdown": EAGLE_VINES_WITH_INITIALS}]}
 
     async def fake_merge(markdown, diagnostics=None):
         calls["merge"].append(markdown)
         return markdown
 
-    monkeypatch.setattr(scan.MistralOCRService, "ocr_file", fake_ocr)
-    monkeypatch.setattr(scan, "merge_split_tables", fake_merge)
+    monkeypatch.setattr(scan_ocr.MistralOCRService, "ocr_file", fake_ocr)
+    monkeypatch.setattr(scan_ocr, "merge_split_tables", fake_merge)
     return calls
 
 
@@ -409,8 +439,8 @@ def mistral_capture(monkeypatch):
             state["merge_diagnostics"].append(diagnostics)
         return markdown
 
-    monkeypatch.setattr(scan.MistralOCRService, "ocr_file", fake_ocr)
-    monkeypatch.setattr(scan, "merge_split_tables", fake_merge)
+    monkeypatch.setattr(scan_ocr.MistralOCRService, "ocr_file", fake_ocr)
+    monkeypatch.setattr(scan_ocr, "merge_split_tables", fake_merge)
     return state
 
 
@@ -470,6 +500,131 @@ def test_scan_error_message_matches_what_was_detected(api, scan_providers):
     assert unreadable.json() == {
         "detail": UNREADABLE_SCORE_ROWS, "failure": {"category": "unreadable_scores", "stage": "parse"},
     }
+
+
+@pytest.fixture
+def scan_markdown(scan_providers, monkeypatch):
+    state = {"text": EAGLE_VINES_WITH_INITIALS, "merge_result": None}
+
+    async def fake_ocr(self, file_path, **kwargs):
+        return {"pages": [{"markdown": state["text"]}]}
+
+    async def fake_merge(markdown, diagnostics=None):
+        scan_providers["merge"].append(markdown)
+        return state["merge_result"] if state["merge_result"] is not None else markdown
+
+    monkeypatch.setattr(scan_ocr.MistralOCRService, "ocr_file", fake_ocr)
+    monkeypatch.setattr(scan_ocr, "merge_split_tables", fake_merge)
+    return state, scan_providers
+
+
+def scan_table(scores, pars):
+    def row(label, values):
+        return "| " + " | ".join([label, *[str(v) if v is not None else "" for v in values]]) + " |"
+
+    return "\n".join([row("HOLE", range(1, 19)), row("Golfer", scores), row("PAR", pars)])
+
+
+def test_scan_keeps_hole_identity_and_only_reports_complete_par(api, scan_markdown):
+    state, _ = scan_markdown
+    alice = api.user("scan-layout@example.com")
+    course_id = custom_course(api, alice)
+
+    async def remove_hole_rows():
+        conn = await asyncpg.connect(api.url)
+        try:
+            await conn.execute("DELETE FROM courses.holes WHERE course_id=$1 AND hole_number < 10", uuid.UUID(course_id))
+        finally:
+            await conn.close()
+
+    asyncio.run(remove_hole_rows())
+    state["text"] = scan_table([4] * 18, [4] * 18)
+    context = "my name is Golfer. scores written as raw strokes. no putts recorded."
+    response = api.client.post("/api/scan/extract", headers=alice["headers"], files=upload(),
+                               data={"course_id": course_id, "user_context": context})
+    assert response.status_code == 200, response.text
+    round_data = response.json()["round"]
+    assert [(h["hole_number"], h["strokes"]) for h in round_data["hole_scores"]] == [(n, 4) for n in range(1, 19)]
+    assert [h["number"] for h in round_data["course"]["holes"]] == list(range(1, 19))
+    assert round_data["course"]["holes"][9]["handicap"] == 10
+    assert round_data["course"]["holes"][0]["par"] == 4
+
+    state["text"] = scan_table([4] * 18, [4] * 9 + [None] * 9)
+    response = api.client.post("/api/scan/extract", headers=alice["headers"], files=upload(), data={"user_context": context})
+    assert response.status_code == 200, response.text
+    assert response.json()["round"]["course"]["par"] is None
+    assert len(response.json()["round"]["hole_scores"]) == 18
+
+
+def test_scan_misread_and_conflicting_scores_are_flagged_for_review(api, scan_markdown):
+    state, _ = scan_markdown
+    state["text"] = scan_table([-4] + [1] * 17, [4] * 18)
+    response = api.client.post("/api/scan/extract", files=upload(),
+                               data={"user_context": "my name is Golfer. scores written to par. no putts recorded."})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["round"]["hole_scores"][0]["strokes"] is None
+    assert "Hole 1 score couldn't be read; check it" in body["fields_needing_review"]
+    assert body["confidence"]["hole_scores"][0]["fields"]["strokes"]["level"] == "very_low"
+
+    state["text"] = "\n".join([
+        "| HOLE | " + " | ".join(map(str, range(1, 10))) + " |",
+        "| G | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |",
+        "| | 1 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |",
+        "| | 2 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 |",
+        "| Par | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |",
+    ])
+    response = api.client.post("/api/scan/extract", files=upload(), data={"user_context": (
+        "my name is G. scores written to par. name on score row. row order: score, putts, shots to green"
+    )})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["round"]["hole_scores"][0]["strokes"] == 3
+    assert "Hole 1 score sign corrected (birdie vs bogey disambiguated)" in body["fields_needing_review"]
+    assert body["confidence"]["hole_scores"][0]["fields"]["strokes"]["level"] == "high"
+    assert body["confidence"]["hole_scores"][1]["fields"]["strokes"]["level"] == "high"
+
+    state["text"] = state["text"].replace("| G | 1 |", "| G | 2 |", 1)
+    response = api.client.post("/api/scan/extract", files=upload(), data={"user_context": (
+        "my name is G. scores written to par. name on score row. row order: score, putts, shots to green"
+    )})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["round"]["hole_scores"][0]["strokes"] == 6
+    assert "Hole 1 score breakdown conflicts with total strokes" in body["fields_needing_review"]
+    assert body["confidence"]["hole_scores"][0]["fields"]["strokes"]["level"] == "medium"
+
+
+@pytest.mark.parametrize("route", ["ocr", "extract"])
+@pytest.mark.parametrize("source", ["provider", "merge"])
+def test_scan_rejects_oversized_ocr_at_both_boundaries(api, scan_markdown, route, source):
+    state, calls = scan_markdown
+    limit = scan.MAX_OCR_TEXT_CHARS
+    if source == "provider":
+        state["text"] = "x" * (limit + 1)
+    else:
+        state["merge_result"] = "x" * (limit + 1)
+    response = api.client.post(f"/api/scan/{route}", files=upload())
+    assert response.status_code == 422, response.text[:300]
+    expected = {"detail": "This file has more text than a scorecard. Try a photo of just the card."}
+    if route == "extract":
+        expected["failure"] = {"category": "unreadable_scores", "stage": "ocr"}
+    assert response.json() == expected
+    assert len(calls["merge"]) == (0 if source == "provider" else 1)
+
+
+@pytest.mark.parametrize("route", ["ocr", "extract"])
+def test_scan_accepts_ocr_exactly_at_the_limit(api, scan_markdown, route):
+    state, calls = scan_markdown
+    markdown = EAGLE_VINES_WITH_INITIALS + "\n"
+    state["text"] = markdown + "x" * (scan.MAX_OCR_TEXT_CHARS - len(markdown))
+    response = api.client.post(f"/api/scan/{route}", files=upload(), data={"user_context": EAGLE_VINES["user_context"]})
+    assert response.status_code == 200, response.text[:300]
+    assert len(calls["merge"][0]) == scan.MAX_OCR_TEXT_CHARS
+    if route == "ocr":
+        assert len(response.json()["ocr_text"]) == scan.MAX_OCR_TEXT_CHARS
+    else:
+        assert {h["hole_number"]: h["strokes"] for h in response.json()["round"]["hole_scores"]} == EAGLE_VINES_STROKES
 
 
 def mint_token(user_id: str, *, expires_in: timedelta, secret: str | None = None) -> str:
@@ -598,7 +753,6 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
         "dashboard": f"/api/stats/dashboard/{alice['id']}",
         "analytics": f"/api/stats/analytics/{alice['id']}",
         "played": f"/api/stats/{alice['id']}/played-courses",
-        "milestones": f"/api/stats/milestones/{alice['id']}",
         "goal": f"/api/stats/{alice['id']}/goal-report",
         "compare": f"/api/stats/compare/{alice['id']}/{rounds[1]}",
         "course": f"/api/stats/course-analytics/{alice['id']}/{course}",
@@ -617,7 +771,6 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
     selected = next(row for row in window["metrics"] if row["metric"] == "score")
     assert (selected["value"], selected["average"], window["rounds"]) == (78, 82, 1)
     assert body["course"]["rounds_played"] == 3
-    assert isinstance(body["milestones"]["milestones"], list)
 
     benchmark_path = f"/api/stats/{alice['id']}/benchmark?against=handicap&handicap=15"
     benchmark = get(benchmark_path)
@@ -833,7 +986,7 @@ def test_scan_uploads_are_rejected_before_ocr(api, scan_providers):
     assert extract("card.jpg", card, content_type="text/html").status_code == 400
     fake = extract("card.jpg", b"<html>not a scorecard</html>")
     assert (fake.status_code, fake.json()["failure"]) == (400, {"category": "invalid_upload", "stage": "upload"})
-    too_big = extract("card.jpg", b"\0" * (scan.MAX_UPLOAD_BYTES + 1))
+    too_big = extract("card.jpg", b"\0" * (scan_uploads.MAX_UPLOAD_BYTES + 1))
     assert (too_big.status_code, too_big.json()["failure"]["category"]) == (413, "invalid_upload")
     ocr = api.client.post("/api/scan/ocr", headers=alice["headers"],
                           files={"file": ("card.jpg", b"<html>not a scorecard</html>", "image/jpeg")})
@@ -907,3 +1060,46 @@ def test_api_schema_has_unique_operation_ids_and_status_routes_still_answer(api)
         assert api.client.get(path).status_code == 200, path
         head = api.client.head(path)
         assert (head.status_code, head.content) == (200, b""), path
+
+
+def test_scan_rejects_a_fake_pdf_and_sends_a_real_one_to_ocr_unchanged(api, scan_providers):
+    alice = api.user("alice@example.com")
+    fake = api.client.post("/api/scan/extract", headers=alice["headers"],
+                           files={"file": ("card.pdf", b"%PDF-but the rest is not a PDF", "application/pdf")})
+    assert (fake.status_code, fake.json()["failure"]) == (400, {"category": "invalid_upload", "stage": "upload"})
+    assert scan_providers["ocr"] == []
+
+    real = pdf_card(pages=1)
+    ocr = api.client.post("/api/scan/ocr", headers=alice["headers"], files={"file": ("card.pdf", real, "application/pdf")})
+    assert ocr.status_code == 200, ocr.text
+    assert scan_providers["ocr_bytes"] == [real]
+
+
+def test_anonymous_ocr_works_without_a_database(api, scan_providers):
+    alice = api.user("alice@example.com")
+    database = api.client.app.state.db_manager
+    api.client.app.state.db_manager = None
+    try:
+        ocr = api.client.post("/api/scan/ocr", files=upload())
+        assert ocr.status_code == 200, ocr.text
+        assert scan_providers["ocr"] == ["JPEG"]
+        assert api.client.get(f"/api/rounds/user/{alice['id']}", headers=alice["headers"]).status_code == 503
+    finally:
+        api.client.app.state.db_manager = database
+
+
+def test_scans_leave_no_temporary_files_behind(api, scan_providers, monkeypatch, tmp_path):
+    alice = api.user("alice@example.com")
+    monkeypatch.setattr("tempfile.tempdir", str(tmp_path))
+    raw_photo = io.BytesIO()
+    Image.new("RGB", (2400, 1800), "white").save(raw_photo, "PNG")
+    post = lambda path, files, **data: api.client.post(
+        path, headers=alice["headers"], files={"file": files}, data=data or None)
+
+    assert post("/api/scan/ocr", ("card.png", raw_photo.getvalue(), "image/png")).status_code == 200
+    assert post("/api/scan/extract", ("card.png", raw_photo.getvalue(), "image/png"),
+                user_context=EAGLE_VINES["user_context"]).status_code == 200
+    assert post("/api/scan/extract", ("card.jpg", b"not an image", "image/jpeg")).status_code == 400
+    assert post("/api/scan/extract", ("card.jpg", b"\0" * (scan_uploads.MAX_UPLOAD_BYTES + 1), "image/jpeg")).status_code == 413
+    assert scan_providers["ocr"] == ["JPEG", "JPEG"]
+    assert list(tmp_path.iterdir()) == []

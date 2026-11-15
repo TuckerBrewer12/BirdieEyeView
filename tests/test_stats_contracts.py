@@ -33,7 +33,7 @@ async def test_dashboard_totals_complete_rounds_by_format(monkeypatch):
     ])
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
 
-    dashboard = await stats.get_dashboard(user_id, db, make_user(user_id))
+    dashboard = await stats.get_dashboard(user=make_user(user_id), db=db)
 
     assert (dashboard.scoring_average, dashboard.best_round) == (85.0, 80)
     assert (dashboard.scoring_average_nine, dashboard.best_round_nine, dashboard.average_putts_nine) == (40.0, 40, 15.0)
@@ -114,18 +114,11 @@ async def test_achievements_use_the_full_history():
 
 
 @pytest.mark.asyncio
-async def test_goal_report_distinguishes_missing_user_from_missing_goal():
-    user_id = uuid4()
-    db = make_mock_database()
-    db.users.get_user = AsyncMock(return_value=None)
-
-    with pytest.raises(HTTPException) as missing_user:
-        await stats.get_goal_report(user_id, 50, db, make_user(user_id))
-    db.users.get_user = AsyncMock(return_value=make_user(user_id))
+async def test_goal_report_without_any_goal_is_a_400():
     with pytest.raises(HTTPException) as missing_goal:
-        await stats.get_goal_report(user_id, 50, db, make_user(user_id))
+        await stats.get_goal_report(limit=50, user=make_user(uuid4()), db=make_mock_database())
 
-    assert (missing_user.value.status_code, missing_goal.value.status_code) == (404, 400)
+    assert missing_goal.value.status_code == 400
 
 
 @pytest.mark.asyncio
@@ -137,29 +130,13 @@ async def test_round_comparison_finds_an_old_round_and_compares_it_with_earlier_
     target = history[1]
     db.rounds.get_rounds_for_user = AsyncMock(return_value=list(reversed(history)))
 
-    result = (await stats.get_round_comparison(user_id, target.id, db, make_user(user_id))).model_dump()
+    result = (await stats.get_round_comparison(round_id=target.id, user=make_user(user_id), db=db)).model_dump()
 
     assert db.rounds.get_rounds_for_user.await_args.kwargs["limit"] is None
     assert set(result) == {"windows"}
     window = result["windows"][0]
     selected = next(m for m in window["metrics"] if m["metric"] == "score")
     assert (selected["value"], selected["average"], window["rounds"]) == (83, 82, 1)
-
-
-@pytest.mark.asyncio
-async def test_milestones_sort_by_round_date():
-    user_id = uuid4()
-    user = make_user(user_id)
-    db = make_mock_database()
-    db.users.get_user = AsyncMock(return_value=user)
-    first = par_round(over=10, round_id="first", date=datetime(2025, 12, 31, tzinfo=timezone.utc))
-    later = par_round(over=-1, round_id="later", date=datetime(2026, 1, 9, tzinfo=timezone.utc))
-    db.rounds.get_rounds_for_user = AsyncMock(return_value=[later, first])
-
-    result = await stats.get_milestones(user_id, 50, db, user)
-
-    dates = [m["date"] for m in result["milestones"]]
-    assert dates[0] == "2026/1/9" and dates[-1] == "2025/12/31"
 
 
 @pytest.mark.asyncio
@@ -172,6 +149,6 @@ async def test_goal_report_works_with_only_a_nine_hole_goal():
         return_value=[par_round(holes=FRONT_NINE, course_obj=course(9), over=6, round_id="nine")]
     )
 
-    report = (await stats.get_goal_report(user_id, 50, db, user)).model_dump()
+    report = (await stats.get_goal_report(limit=50, user=user, db=db)).model_dump()
 
     assert report["nine_hole"]["on_track"] is True and report["gap"] is None

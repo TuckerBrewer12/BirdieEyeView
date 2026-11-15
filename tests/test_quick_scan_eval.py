@@ -15,6 +15,7 @@ from scripts.quick_scan_eval import (
     SuiteRun,
     exit_code_for_run,
     grade_case,
+    SUITE_MANIFEST_PATHS,
     load_cases,
     prepare_image_for_upload,
     render_report,
@@ -260,10 +261,9 @@ async def test_runner_prepares_shared_image_once_and_reuses_bytes(monkeypatch, t
 
     monkeypatch.setattr(quick_eval, "prepare_image_for_upload", counted_prepare)
 
-    async def fake_prefetch(upload, *, current_user):
+    async def fake_prefetch(upload):
         calls["prefetch"] += 1
         assert upload.filename == "card.jpg"
-        assert current_user is None
         uploaded_payloads.append(upload.file.read())
         return {"ocr_text": "merged markdown"}
 
@@ -293,6 +293,28 @@ async def test_runner_prepares_shared_image_once_and_reuses_bytes(monkeypatch, t
     with Image.open(BytesIO(uploaded_payloads[0])) as prepared:
         assert (prepared.format, max(prepared.size)) == ("JPEG", 1200)
     assert [result.matched_cells for result in run.case_results] == [18, 18]
+
+
+@pytest.mark.asyncio
+async def test_runner_drives_the_real_scan_routes_with_a_captured_ocr_response(monkeypatch):
+    from services import scan_ocr
+
+    cases = [case for case in load_cases(SUITE_MANIFEST_PATHS["quick"]) if case.case_id == "eagle_vines_tucker"]
+    capture = Path(__file__).parent / "integration" / "fixtures" / "mistral" / "eaglevins_90.json"
+
+    async def captured_ocr(self, file_path, **kwargs):
+        return json.loads(capture.read_text())
+
+    async def unmerged(markdown, diagnostics=None):
+        return markdown
+
+    monkeypatch.setattr(scan_ocr.MistralOCRService, "ocr_file", captured_ocr)
+    monkeypatch.setattr(scan_ocr, "merge_split_tables", unmerged)
+
+    run = await run_suite(cases)
+
+    assert [result.operational_error for result in run.case_results] == [None]
+    assert run.case_results[0].matched_cells == run.case_results[0].total_cells == 18
 
 
 @pytest.mark.asyncio
