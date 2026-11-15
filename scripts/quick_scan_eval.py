@@ -355,6 +355,10 @@ class _DiagnosticsCapture(logging.Handler):
         return lines
 
 
+def _as_json(response: Any) -> Any:
+    return response.model_dump(mode="json") if hasattr(response, "model_dump") else response
+
+
 def _error_text(exc: Exception) -> str:
     detail = getattr(exc, "detail", None)
     if isinstance(detail, str) and detail:
@@ -427,7 +431,7 @@ async def _run_grouped(
         ocr_start = clock()
         capture.take()
         try:
-            response = await prefetch(ocr_upload)
+            response = _as_json(await prefetch(ocr_upload))
             ocr_seconds = clock() - ocr_start
             ocr_seconds_by_image[image_name] = ocr_seconds
             ocr_diagnostics_by_image[image_name] = capture.take()
@@ -459,16 +463,16 @@ async def _run_grouped(
             extract_start = clock()
             capture.take()
             try:
-                response = await extract(
+                response = _as_json(await extract(
                     extract_upload,
                     user_context=case.user_context,
                     course_id=None,
                     ocr_text=ocr_text,
                     db=SimpleNamespace(),
                     current_user=None,
-                )
+                ))
                 extraction_seconds = clock() - extract_start
-                round_payload = getattr(response, "round", None)
+                round_payload = response.get("round") if isinstance(response, Mapping) else getattr(response, "round", None)
                 if not isinstance(round_payload, Mapping):
                     raise RuntimeError("Extraction returned an invalid round payload")
                 hole_scores = round_payload.get("hole_scores")
