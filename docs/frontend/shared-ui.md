@@ -1,21 +1,15 @@
-# Shared UI, themes, and chart presentation
-
-The app currently has a newer brand kit alongside established Tailwind/component layouts. The checked-in [brand-kit review rules](../../.github/review-bots/brand-kit.md) govern added/changed UI; untouched legacy styling remains migration work.
+# Shared UI, the brand kit, and charts
 
 ## Brand kit
 
-[brand/index.ts](../../frontend/src/brand/index.ts) exposes components including Button, Panel, PageTitle, SearchField, filter/sort controls, RoundPreview, and CourseLinkSearch. [brand/theme](../../frontend/src/brand/theme) supplies semantic colors and `useTheme()`. Rounds is a current consuming example.
+[brand/index.ts](../../frontend/src/brand/index.ts) exports the kit: surfaces (`Card`, `Sheet`, `ActionBar`, `Alert`), figures (`Stat`, `StatTile`, `ToParFigure`, `ToParPill`), controls (`Button`, `ToggleGroup`, `PickerMenu`, `TabBar`, `SearchField`, `Input`), golf pieces (`RoundPreview`, `CoursePreview`, `ScorecardCard`, `ScorecardGrid`, `RoundShareCard`, `ScanReport`) and the charts in `brand/charts/`. A generic piece another page will want belongs in the kit.
 
-Brand previews run through [BrandHarness](../../frontend/src/brand/BrandHarness.tsx) at `/__brand__/:story` in development. Component screenshot tests and robots live under `brand/tests/`. Preview stories exercise visual states independently of production requests.
+Every kit component has a preview, shown by [BrandHarness](../../frontend/src/brand/BrandHarness.tsx) at `/__brand__/:story` in development, and a screenshot spec under `brand/tests/screenshots/`.
 
-## Existing layouts and themes
+## Tokens and themes
 
-`components/layout/` owns app navigation, PageHeader, and ResponsivePage. Domain folders such as `components/dashboard/`, `components/analytics/`, and `components/scan/` hold feature presentation. Existing chart/card styles use Tailwind and `index.css`; the root AGENTS.md records the established design system. New or changed color values should come from the token sources accepted by the brand-kit rules; existing raw colors do not justify adding more.
-
-[lib/theme.ts](../../frontend/src/lib/theme.ts) persists public and signed-in theme preferences and toggles the root `dark` class. Brand `useTheme()` observes that class. Use semantic tokens where available rather than duplicating literal light/dark values in new reusable controls.
+[tokens.ts](../../frontend/src/brand/theme/tokens.ts) holds every design value: the palette, the light and dark mappings, type roles, measures and motion. `tokens.gen.css` is generated from it (`npm run gen:tokens`). Views use the tokens' Tailwind utilities; SVG paint takes `tokens.color.*`. Dark mode is the light mapping with overrides, switched by the root `dark` class.
 
 ## Golf charts
 
-Score colors carry meaning across pages. [chartPalettes.ts](../../frontend/src/lib/chartPalettes.ts), [accessibility.ts](../../frontend/src/lib/accessibility.ts), existing score-color utilities, and brand theme score tokens support presentation. Keep color-blind overrides and labels consistent; color alone should not carry the result.
-
-The frontend uses Recharts and custom SVG/D3 calculations. These are independent of backend Matplotlib exports. Preserve unknown values as absent/N/A rather than plotting fabricated zeros. Test changed shared controls in light/dark and relevant desktop/mobile states; see [testing practices](../practices/testing.md).
+Charts are hand-drawn SVG with D3 scales, at their box's width (`useChartWidth`). Score colours carry meaning across pages; colour alone never carries the result. Hover cards are `ChartTooltip`; columns find the hovered one with `useColumnHover`, points with `usePointPick`. Unknown values stay absent rather than plotted as zeros.

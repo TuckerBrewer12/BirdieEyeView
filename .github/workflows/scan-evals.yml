@@ -76,7 +76,6 @@ jobs:
           path = Path(os.environ['RUNNER_TEMP']) / 'scan-eval-report.txt'
           path.write_text(stdout + ('\n' + stderr if stderr else ''), encoding='utf-8')
 
-          # Re-render the readable report from redacted JSON, never interpolate diagnostic HTML.
           from scripts.quick_scan_eval import redact_payload, render_markdown
           from scripts.eval_results import encode, load, validate
           results_path = path.parent / 'results.json'
@@ -90,13 +89,10 @@ jobs:
                   with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
                       summary.write(summary_path.read_text())
               except Exception:
-                  # An invalid/unredacted structured file must never reach the artifact uploader.
                   results_path.unlink(missing_ok=True)
                   (path.parent / 'summary.md').unlink(missing_ok=True)
-                  # The eval itself still counts; the run just isn't saved to the dashboard.
                   print('Warning: structured report rejected; see the redacted text report.', file=sys.stderr)
 
-          # Pass only bounded numeric metrics to the PR-comment job.
           metric = re.compile(
               r'\d+ images \| \d+ cases \| \d+/\d+ numeric cells correct|'
               r'\d+/\d+ (?:were (?:100% correct|(?:90|80)% or better)|'

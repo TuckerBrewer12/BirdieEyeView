@@ -1,5 +1,6 @@
-from unittest.mock import AsyncMock
-from uuid import uuid4
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi import HTTPException
@@ -22,24 +23,13 @@ def test_hole_score_update_rejects_putts_above_strokes():
         HoleScoreUpdate(hole_number=1, strokes=2, putts=3)
 
 
-def test_summarize_round_calculates_scoring_totals():
-    summary = rounds.summarize_round(make_round(uuid4()))
-
-    assert (summary.total_score, summary.to_par) == (9, 1)
-
-
-def test_summarize_round_uses_played_course_and_fairways():
-    summary = rounds.summarize_round(make_round(uuid4()))
-
-    assert (summary.course_name, summary.fairways_hit) == ("Played Course", 1)
-
-
 @pytest.fixture
 def owned_round_setup():
     user_id = uuid4()
     round_id = uuid4()
     stored_round = make_round(round_id)
     db = make_mock_database()
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
     db.rounds.get_round_owner_id = AsyncMock(return_value=str(user_id))
     db.rounds.get_round = AsyncMock(return_value=stored_round)
     return user_id, round_id, stored_round, db
@@ -60,7 +50,7 @@ async def test_update_round_updates_scores_and_metadata(owned_round_setup):
 
     result = await rounds.update_round(round_id, request, db, make_user(user_id))
 
-    assert result == stored_round
+    assert result == rounds.round_detail(stored_round)
     db.rounds.update_hole_scores.assert_awaited_once()
     assert db.rounds.update_round.await_args.kwargs["tee_box_played"] == "White"
 
@@ -92,6 +82,7 @@ async def test_link_course_backfills_scan_data():
         hole_yardages={1: 400},
     )
     db = make_mock_database()
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
     db.rounds.get_round_owner_id = AsyncMock(return_value=str(user_id))
     db.rounds.get_round = AsyncMock(return_value=stored_round)
     db.rounds.link_course_to_round = AsyncMock(return_value=stored_round)
@@ -116,6 +107,7 @@ async def test_link_course_rejects_mismatched_layout_without_server_error():
     round_id = uuid4()
     course_id = uuid4()
     db = make_mock_database()
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=[])
     db.rounds.get_round_owner_id = AsyncMock(return_value=str(user_id))
     db.rounds.get_round = AsyncMock(return_value=make_round(round_id))
     db.courses.get_course = AsyncMock(return_value=make_course(course_id, owner=user_id))

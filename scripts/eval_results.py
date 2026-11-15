@@ -1,9 +1,3 @@
-"""Validate and archive public scan-evaluation data. Standard library only; no app imports.
-
-The data branch contains JSON, never executable input. Version 1 is intentionally strict so
-malformed artifacts cannot become misleading dashboard history.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -20,7 +14,6 @@ from datetime import datetime
 from pathlib import Path
 
 MAX_BYTES = 2 * 1024 * 1024
-# Only for the data branch README link; GITHUB_REPOSITORY wins in Actions, so a rename needs no change here.
 REPOSITORY = os.environ.get("GITHUB_REPOSITORY") or "TuckerBrewer12/BirdieEyeView"
 RUN_URL = re.compile(r"https://github\.com/[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}/actions/runs/[0-9]+")
 SUMMARY_KEYS = {
@@ -35,7 +28,7 @@ CASE_KEYS = {
 
 
 class ResultsError(ValueError):
-    """An invalid or conflicting result, with no artifact content in the error message."""
+    ...
 
 
 def require(condition, path):
@@ -80,7 +73,6 @@ def status(case):
 
 
 def aggregate(cases, images, suite_seconds):
-    """Reconcile exported totals and derive the known-gap-filtered index summary."""
     used = {case["image"] for case in cases}
     images = [image for image in images if image["image"] in used]
     meets = lambda case, percent: case["status"] != "ERROR" and case["total_cells"] > 0 and (
@@ -255,7 +247,7 @@ def _atomic_write(path, data):
 def add(payload, repo_dir):
     validate(payload)
     root = Path(repo_dir)
-    index = build_index(root / "runs")  # validate every old file before mutating anything
+    index = build_index(root / "runs")
     name = run_filename(payload)
     for entry in index["runs"]:
         if entry["run"]["id"] == payload["run"]["id"]:
@@ -284,7 +276,6 @@ def check_workflow_metadata(payload, environment):
 
 
 def publish(payload, repo_dir, remote, *, environment=None, attempts=3):
-    """Append via ordinary Git pushes; each retry restores the current data branch before adding."""
     validate(payload)
     environment = dict(os.environ if environment is None else environment)
     check_workflow_metadata(payload, environment)

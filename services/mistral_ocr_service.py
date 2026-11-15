@@ -1,7 +1,6 @@
-"""Client for calling Mistral OCR API with local files."""
-
 from __future__ import annotations
 
+import asyncio
 import base64
 import logging
 import mimetypes
@@ -21,15 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 class MistralOCRService:
-    """Thin wrapper around Mistral OCR API.
-
-    Env vars:
-    - MISTRAL_API_KEY (required)
-    - MISTRAL_BASE_URL (optional, default: https://api.mistral.ai)
-    - MISTRAL_OCR_PATH (optional, default: /v1/ocr)
-    - MISTRAL_OCR_MODEL (optional, default: mistral-ocr-latest)
-    """
-
     def __init__(
         self,
         *,
@@ -54,12 +44,11 @@ class MistralOCRService:
         include_headers: bool = False,
         include_footers: bool = False,
     ) -> Dict[str, Any]:
-        """OCR a local file and return raw Mistral JSON response."""
         if not self._api_key:
             raise EnvironmentError("MISTRAL_API_KEY environment variable is not set")
 
         path = Path(file_path)
-        if not path.exists():
+        if not await asyncio.to_thread(path.exists):
             raise FileNotFoundError(f"File not found: {path}")
 
         data_url = self._build_data_url(path)
@@ -86,7 +75,7 @@ class MistralOCRService:
                 resp = await client.post(path_part, headers=headers, json=payload)
                 resp.raise_for_status()
                 return resp.json()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise RuntimeError(f"Mistral OCR failed: {exc}") from exc
 
     def _build_data_url(self, path: Path) -> str:
@@ -100,13 +89,6 @@ class MistralOCRService:
         ocr_response: Dict[str, Any],
         diagnostics: Optional[List[str]] = None,
     ) -> str:
-        """Convert Mistral OCR HTML tables to markdown for downstream Gemini merge.
-
-        Each HTML table is converted individually to a markdown pipe table, after a
-        deterministic clean-up (merged cells expanded, over-wide rows aligned to their
-        header) so Gemini stitches a sane input. Gemini handles merging split
-        front/back nine tables. ``diagnostics`` collects what the clean-up did.
-        """
         pages = ocr_response.get("pages")
         if not isinstance(pages, list):
             output_text = ocr_response.get("markdown") or ocr_response.get("text")
@@ -124,14 +106,13 @@ class MistralOCRService:
                 for table_idx, html in enumerate(html_tables):
                     rows = MistralOCRService._html_to_rows(html, diagnostics, table_idx)
                     rows = MistralOCRService._align_rows_to_header(rows, diagnostics, table_idx)
-                    md = MistralOCRService._rows_to_markdown(rows)
+                    md = MistralOCRService.rows_to_markdown(rows)
                     if md:
                         chunks.append(md)
 
             text = page.get("markdown") or page.get("text")
             if isinstance(text, str) and text.strip():
                 if html_tables:
-                    # Keep non-table page text (notes/labels) even when table blocks exist.
                     non_table = MistralOCRService._extract_non_table_text(text)
                     if non_table:
                         chunks.append(non_table)
@@ -146,11 +127,6 @@ class MistralOCRService:
         diagnostics: Optional[List[str]] = None,
         table_idx: int = 0,
     ) -> List[List[str]]:
-        """Parse an HTML table into a list of row cell-lists.
-
-        ``colspan``/``rowspan`` are expanded into empty cells so every row keeps one
-        cell per column; dropping them shifts every later value one column left.
-        """
         if BeautifulSoup is not None:
             soup = BeautifulSoup(html, "html.parser")
             raw_rows = [
@@ -170,15 +146,13 @@ class MistralOCRService:
         diagnostics: Optional[List[str]] = None,
         table_idx: int = 0,
     ) -> List[List[str]]:
-        """Align the data rows of one table to the hole header found in that table."""
         header_idx = next((i for i, row in enumerate(rows) if _hole_header_width(row)), None)
         if header_idx is None:
             return rows
         return align_rows_to_header(rows, rows[header_idx], diagnostics, where=f"ocr table {table_idx}")
 
     @staticmethod
-    def _rows_to_markdown(rows: List[List[str]]) -> str:
-        """Convert a list of rows to a markdown pipe table string."""
+    def rows_to_markdown(rows: List[List[str]]) -> str:
         if not rows:
             return ""
         return "\n".join(
@@ -188,7 +162,6 @@ class MistralOCRService:
 
     @staticmethod
     def _extract_non_table_text(text: str) -> str:
-        """Remove markdown table lines and keep surrounding non-table text."""
         kept_lines: List[str] = []
         for raw_line in text.splitlines():
             line = raw_line.strip()
@@ -218,9 +191,8 @@ def _expand_spans(
     diagnostics: Optional[List[str]],
     table_idx: int,
 ) -> List[List[str]]:
-    """Lay cells onto a grid, carrying rowspan/colspan into empty cells."""
     grid: List[List[str]] = []
-    pending: Dict[tuple[int, int], str] = {}  # (row, col) -> filler for a rowspan
+    pending: Dict[tuple[int, int], str] = {}
     expanded = 0
     for r, cells in enumerate(raw_rows):
         row: List[str] = []
@@ -249,19 +221,9 @@ def align_rows_to_header(
     *,
     where: str = "table",
 ) -> List[List[str]]:
-    """Make each data row the header's width so hole values sit under the header's columns.
-
-    Mistral often gives a row a different number of cells than the header:
-    - wider by ``k``: an extra leading label cell (the player's name in its own cell, or a
-      tee rating such as ``72.2/135``); dropped when the first ``k + 1`` cells are label-like;
-      or extra blank cells in the separator gap between OUT and hole 10, dropped when that gap
-      holds only blanks. Mistral sometimes marks the ``INITIALS`` cell with a ``rowspan`` one
-      row too long and also emits that row's own blank cell, so the expanded grid has two;
-    - narrower by ``k``: a missing leading label cell (the row has fewer label cells than the
-      header has before hole 1), padded with empty cells; or a missing separator column
-      between OUT and hole 10 (``INITIALS``), padded at the header's separator columns.
-    Anything else is left as it is and reported, so values are never guessed into place.
-    """
+    # Mistral often gives a row more or fewer cells than the header: the player's name or a
+    # tee rating in an extra leading cell, a missing leading label cell, a missing INITIALS
+    # separator column, or an INITIALS rowspan one row too long plus that row's own blank.
     width = len(header)
     label_count = _leading_label_count(header)
     separator_cols = _separator_columns(header)
@@ -274,16 +236,14 @@ def align_rows_to_header(
         elif extra > 0:
             leading = row[: extra + 1]
             if all(_is_label_like(cell) for cell in leading):
-                # Keep the name-like cell ("Blue" over "72.2/135"; "D" over an empty cell).
                 label = next(
                     (cell for cell in leading if any(ch.isalpha() for ch in cell) and not _RATING_RE.match(cell.strip())),
                     next((cell for cell in reversed(leading) if cell), ""),
                 )
-                row = [label] + row[extra + 1 :]
+                row = [label, *row[extra + 1:]]
                 note = f"dropped {extra} extra leading cell(s)"
             elif (
                 separator_cols
-                # The front nine already lines up (same label cells as the header), so only the gap is wider.
                 and _leading_label_count(row) == label_count
                 and _blank(row[separator_cols[0] : separator_cols[-1] + 1 + extra])
             ):
@@ -303,11 +263,11 @@ def align_rows_to_header(
                 notes.append(f"padded {pad} missing leading label cell(s)")
             if missing and missing == len(separator_cols):
                 for col in separator_cols:
-                    row = row[:col] + [""] + row[col:]
+                    row = [*row[:col], "", *row[col:]]
                 notes.append(f"padded the missing separator column(s) at {separator_cols}")
                 missing = 0
             if missing and row and not _is_label_like(row[-1]):
-                row = row + [""] * missing  # the row stops at its last value: trailing columns are missing
+                row = row + [""] * missing
                 notes.append(f"padded {missing} missing trailing cell(s)")
                 missing = 0
             if missing:
@@ -320,7 +280,7 @@ def align_rows_to_header(
             shifted = [col for col in separator_cols if not _is_label_like(row[col])]
             if shifted:
                 for col in shifted:
-                    row = row[:col] + [""] + row[col:-1]
+                    row = [*row[:col], "", *row[col:-1]]
                 note = f"back nine shifted right past the separator column(s) at {shifted}"
         aligned.append(row)
         if diagnostics is not None and note:
@@ -329,7 +289,6 @@ def align_rows_to_header(
 
 
 def _leading_label_count(row: List[str]) -> int:
-    """Cells before the first cell holding a number (the row's label cells)."""
     count = 0
     for cell in row:
         if _is_label_like(cell) and not cell.strip().isdigit():
@@ -344,16 +303,14 @@ def _blank(cells: List[str]) -> bool:
 
 
 def _separator_columns(header: List[str]) -> List[int]:
-    """Header columns between the OUT column and hole 10 (e.g. an INITIALS column)."""
     positions = {cell.strip(): i for i, cell in enumerate(header)}
     nine, ten = positions.get("9"), positions.get("10")
     if nine is None or ten is None or ten <= nine + 1:
         return []
-    return list(range(nine + 2, ten))  # nine + 1 is the OUT column
+    return list(range(nine + 2, ten))
 
 
 def _fill_pending(row: List[str], pending: Dict[tuple[int, int], str], r: int, col: int) -> int:
-    """Append the filler cells a rowspan from an earlier row left at (r, col...)."""
     while (r, col) in pending:
         row.append(pending.pop((r, col)))
         col += 1
@@ -361,7 +318,6 @@ def _fill_pending(row: List[str], pending: Dict[tuple[int, int], str], r: int, c
 
 
 def _hole_header_width(row: List[str]) -> bool:
-    """A header row holds a run of consecutive hole numbers (1..9 or 10..18)."""
     run = 0
     previous: Optional[int] = None
     for cell in row:
@@ -380,7 +336,6 @@ def _hole_header_width(row: List[str]) -> bool:
 
 
 def _is_label_like(cell: str) -> bool:
-    """Empty, non-numeric text, or a tee rating: never a hole value."""
     text = cell.strip()
     if not text:
         return True
@@ -390,8 +345,6 @@ def _is_label_like(cell: str) -> bool:
 
 
 class _StdlibTableParser(HTMLParser):
-    """Fallback when BeautifulSoup is unavailable; yields (text, rowspan, colspan) cells."""
-
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.rows: List[List[tuple[str, int, int]]] = []

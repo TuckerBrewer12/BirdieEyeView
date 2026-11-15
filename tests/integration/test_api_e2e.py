@@ -1,3 +1,4 @@
+from unittest.mock import AsyncMock
 """End-to-end API tests: the real FastAPI app (middleware, auth, routing, serialization) on a real
 PostgreSQL database. Only outgoing email and the paid OCR/LLM providers are replaced, so tests can
 read the emailed tokens and scan a committed scorecard without network calls.
@@ -62,8 +63,6 @@ async def _create_master_course(url: str) -> str:
 
 
 class Api:
-    """A test client plus the emails the app tried to send."""
-
     def __init__(self, client: TestClient, url: str):
         self.client = client
         self.url = url
@@ -85,11 +84,10 @@ class Api:
         return self.client.post("/api/auth/login", json={"email": email, "password": password})
 
     def user(self, email: str) -> dict:
-        """Register, verify and log in; returns the user id and bearer headers."""
         self.register(email)
         self.verify(email)
         body = self.login(email).json()
-        self.client.cookies.clear()  # each user acts only through its own bearer token
+        self.client.cookies.clear()
         return {"id": body["user_id"], "headers": {"Authorization": f"Bearer {body['access_token']}"}}
 
 
@@ -103,16 +101,14 @@ def api(monkeypatch):
     for limit in ("REGISTER_RATE_LIMIT_MAX_ATTEMPTS", "REGISTER_RATE_LIMIT_PER_EMAIL_ATTEMPTS",
                   "LOGIN_REQUEST_RATE_LIMIT_MAX_ATTEMPTS", "FORGOT_PASSWORD_RATE_LIMIT_MAX_ATTEMPTS"):
         monkeypatch.setenv(limit, "1000")
-    # Auth limiters live at module level; give each test empty buckets so no test inherits
-    # another's attempts (the middleware limiter is already fresh per create_app()).
     for limiter in (auth.login_rate_limiter, auth.register_rate_limiter, auth.auth_request_rate_limiter):
         empty = copy.copy(limiter._buckets)
         empty.clear()
         monkeypatch.setattr(limiter, "_buckets", empty)
     with TestClient(api_main.create_app(), base_url="http://localhost") as client:
         harness = Api(client, url)
-        monkeypatch.setattr(auth, "send_verification_email", lambda to, link: harness.emails.append(("verify", to, link)))
-        monkeypatch.setattr(auth, "send_password_reset_email", lambda to, link: harness.emails.append(("reset", to, link)))
+        monkeypatch.setattr(auth, "send_verification_email", AsyncMock(side_effect=lambda to, link: harness.emails.append(("verify", to, link))))
+        monkeypatch.setattr(auth, "send_password_reset_email", AsyncMock(side_effect=lambda to, link: harness.emails.append(("reset", to, link))))
         yield harness
 
 
@@ -142,22 +138,17 @@ def save_round(api: Api, owner: dict, course_id: str, over: int = 10, date: str 
     return response.json()["id"]
 
 
-# ================================================================
-# Auth lifecycle
-# ================================================================
-
-
 def test_register_verify_login_me_logout(api):
     api.register("ada@example.com", name="Ada")
 
-    assert api.login("ada@example.com").status_code == 403  # unverified accounts can't log in
+    assert api.login("ada@example.com").status_code == 403
     api.verify("ada@example.com")
     login = api.login("ada@example.com")
     assert login.status_code == 200
     cookie = login.headers["set-cookie"].lower()
     assert "httponly" in cookie
 
-    me = api.client.get("/api/auth/me")  # authenticated by the cookie alone
+    me = api.client.get("/api/auth/me")
     assert (me.status_code, me.json()["email"], me.json()["name"]) == (200, "ada@example.com", "Ada")
 
     assert api.client.post("/api/auth/logout").status_code == 200
@@ -185,7 +176,6 @@ def test_password_reset_replaces_the_password_and_its_token_works_once(api):
     api.user("dee@example.com")
 
     assert api.client.post("/api/auth/forgot-password", json={"email": "dee@example.com"}).status_code == 200
-    # A second request inside the 60-second cooldown answers the same but sends no new email.
     assert api.client.post("/api/auth/forgot-password", json={"email": "dee@example.com"}).status_code == 200
     assert [kind for kind, _, _ in api.emails].count("reset") == 1
     token = api.token_from("reset", "dee@example.com")
@@ -205,11 +195,6 @@ def test_forgot_password_for_an_unknown_email_looks_the_same(api):
     assert api.emails == []
 
 
-# ================================================================
-# Ownership: one user can never read or change another user's data
-# ================================================================
-
-
 def test_rounds_belong_to_their_owner(api):
     alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
     round_id = save_round(api, alice, custom_course(api, alice))
@@ -220,7 +205,7 @@ def test_rounds_belong_to_their_owner(api):
     assert api.client.put(f"/api/rounds/{round_id}", headers=bob["headers"], json=edit).status_code == 403
     assert api.client.delete(f"/api/rounds/{round_id}", headers=bob["headers"]).status_code == 403
     assert api.client.get(f"/api/rounds/user/{alice['id']}", headers=bob["headers"]).status_code == 403
-    assert api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).status_code == 200  # untouched
+    assert api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).status_code == 200
 
 
 def test_custom_courses_belong_to_their_owner_and_master_courses_are_read_only(api):
@@ -244,7 +229,6 @@ def test_profiles_tees_and_stats_belong_to_their_owner(api):
     assert api.client.patch(f"/api/users/{alice['id']}", headers=bob["headers"], json={"scoring_goal": 80}).status_code == 403
     assert api.client.get(f"/api/users/{alice['id']}/tees", headers=bob["headers"]).status_code == 403
     assert api.client.delete(f"/api/users/{alice['id']}/tees/{tee['id']}", headers=bob["headers"]).status_code == 403
-    # Bob's own URL can't reach Alice's tee either: the lookup is owner-scoped.
     assert api.client.delete(f"/api/users/{bob['id']}/tees/{tee['id']}", headers=bob["headers"]).status_code == 404
     for path in (f"/api/stats/dashboard/{alice['id']}", f"/api/stats/milestones/{alice['id']}",
                  f"/api/users/{alice['id']}/handicap", f"/api/stats/analytics/{alice['id']}"):
@@ -259,7 +243,6 @@ def test_friends_can_view_analytics_only_after_accepting(api):
     friendship = request.json()["id"]
 
     assert api.client.get(f"/api/stats/analytics/{alice['id']}", headers=bob["headers"]).status_code == 403
-    # Only the addressee can accept.
     assert api.client.patch(f"/api/users/me/friends/{friendship}", headers=carol["headers"],
                             json={"status": "accepted"}).status_code in (403, 404)
     assert api.client.patch(f"/api/users/me/friends/{friendship}", headers=bob["headers"],
@@ -268,20 +251,21 @@ def test_friends_can_view_analytics_only_after_accepting(api):
     assert analytics.status_code == 200 and analytics.json()["kpis"]["total_rounds"] == 1
     assert api.client.get(f"/api/stats/dashboard/{alice['id']}", headers=bob["headers"]).status_code == 403
 
-
-# ================================================================
-# Round lifecycle through the API
-# ================================================================
+    comparison = f"/api/stats/{bob['id']}/benchmark?against=friend&friend_id={alice['id']}"
+    assert api.client.get(comparison, headers=bob["headers"]).status_code == 200
+    assert api.client.get(comparison, headers=carol["headers"]).status_code == 403
+    unaccepted = f"/api/stats/{bob['id']}/benchmark?against=friend&friend_id={carol['id']}"
+    assert api.client.get(unaccepted, headers=bob["headers"]).status_code == 403
 
 
 def test_saved_round_is_listed_edited_and_deleted(api):
     alice = api.user("alice@example.com")
-    round_id = save_round(api, alice, custom_course(api, alice), over=10)  # 72 + 10
+    round_id = save_round(api, alice, custom_course(api, alice), over=10)
 
     listed = api.client.get(f"/api/rounds/user/{alice['id']}", headers=alice["headers"]).json()
     assert [(r["id"], r["total_score"], r["to_par"]) for r in listed] == [(round_id, 82, 10)]
 
-    edit = {"hole_scores": [{"hole_number": 1, "strokes": 3, "putts": 1}]}  # was 5 on a par 4
+    edit = {"hole_scores": [{"hole_number": 1, "strokes": 3, "putts": 1}]}
     edited = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"], json=edit)
     assert edited.status_code == 200
     detail = api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json()
@@ -294,10 +278,6 @@ def test_saved_round_is_listed_edited_and_deleted(api):
     assert api.client.get(f"/api/rounds/user/{alice['id']}", headers=alice["headers"]).json() == []
 
 
-# ================================================================
-# Scan pipeline: upload → OCR → extract → review → save
-# ================================================================
-
 SCORECARD_DIR = Path(__file__).resolve().parents[1] / "test_scorecards"
 EAGLE_VINES = next(
     case for case in json.loads((SCORECARD_DIR / "quick_eval_cases.json").read_text())["cases"]
@@ -308,15 +288,10 @@ EAGLE_VINES_STROKES = {int(hole): strokes for hole, strokes in EAGLE_VINES["expe
 
 @pytest.fixture
 def scan_providers(monkeypatch):
-    """Replace the only paid calls in the scan path: Mistral OCR and the Gemini table merge.
-
-    OCR answers with the committed markdown for ``eaglevins_90.jpg``. Upload validation, image
-    normalization, markdown extraction, parsing, assembly and saving all run for real.
-    """
     calls = {"ocr": [], "merge": []}
 
     async def fake_ocr(self, file_path, **kwargs):
-        with Image.open(file_path) as image:  # the file the real provider would have received
+        with Image.open(file_path) as image:
             calls["ocr"].append(image.format)
         return {"pages": [{"markdown": EAGLE_VINES_WITH_INITIALS}]}
 
@@ -346,17 +321,15 @@ def test_scan_pipeline_turns_an_uploaded_scorecard_into_a_saved_round(api, scan_
         data={"ocr_text": ocr.json()["ocr_text"], "user_context": EAGLE_VINES["user_context"]},
     )
     assert extract.status_code == 200, extract.text
-    assert len(scan_providers["ocr"]) == 1  # the prefetched text was reused, not re-OCR'd
+    assert len(scan_providers["ocr"]) == 1
     extracted = extract.json()["round"]
     assert {h["hole_number"]: h["strokes"] for h in extracted["hole_scores"]} == EAGLE_VINES_STROKES
 
-    # Review: nothing is written until the round has a course.
     unreviewed = {"tee_box": "White", "date": "2026-10-02", "hole_scores": extracted["hole_scores"]}
     no_course = api.client.post("/api/scan/save", headers=alice["headers"], json=unreviewed)
     assert no_course.status_code == 422, no_course.text
     assert api.client.get(f"/api/rounds/user/{alice['id']}", headers=alice["headers"]).json() == []
 
-    # The reviewer names the course and fills the tee's yardages; the scan supplies the pars.
     reviewed = unreviewed | {
         "course_name": "Eagle Vines",
         "course_holes": [{"hole_number": h["number"], "par": h["par"]} for h in extracted["course"]["holes"]],
@@ -372,9 +345,8 @@ def test_scan_pipeline_turns_an_uploaded_scorecard_into_a_saved_round(api, scan_
     course_id = detail["course"]["id"]
     assert detail["course"]["name"] == "Eagle Vines"
     bob = api.user("bob@example.com")
-    assert api.client.get(f"/api/courses/{course_id}", headers=bob["headers"]).status_code == 403  # Alice's own
+    assert api.client.get(f"/api/courses/{course_id}", headers=bob["headers"]).status_code == 403
 
-    # A second scan under the same name reuses Alice's course instead of creating another.
     again = api.client.post("/api/scan/save", headers=alice["headers"], json=reviewed | {"date": "2026-10-09"})
     assert again.status_code == 200, again.text
     second = api.client.get(f"/api/rounds/{again.json()['id']}", headers=alice["headers"]).json()
@@ -397,35 +369,28 @@ def test_scan_extract_and_save_refuse_another_users_course(api, scan_providers):
                            json={"course_id": private, "tee_box": "Blue", "hole_scores": scores})
     assert save.status_code == 400, save.text
     assert api.client.get(f"/api/rounds/user/{bob['id']}", headers=bob["headers"]).json() == []
-    # The same requests from the owner go through (control), and OCR never ran for either user.
     assert api.client.post("/api/scan/save", headers=alice["headers"],
                            json={"course_id": private, "tee_box": "Blue", "hole_scores": scores}).status_code == 200
     assert scan_providers["ocr"] == []
 
 
-# ---- Real Mistral captures through the deterministic chain (clean-up → parse → assembly)
-
 MISTRAL_FIXTURES = Path(__file__).resolve().parent / "fixtures" / "mistral"
 EVAL_CASES = {
     case.case_id: case for suite in ("quick", "large") for case in load_cases(SUITE_MANIFEST_PATHS[suite])
 }
-# Cells each case must reach on the committed capture (merge skipped, so this is the parser's
-# own floor). Raise a number when the parser improves; a drop is a regression.
 FIXTURE_MINIMUMS = {
     "360_ewa_beach_d": 17, "360_ewa_beach_g": 18, "bay_view_d": 52, "bay_view_g": 53,
     "blackhawk_falls_derek": 51, "blue_rock_springs_west_g": 53, "boundary_oaks_d": 53,
     "boundary_oaks_g": 53, "corica_park_south_d": 53, "diablo_creek_d": 54, "diablo_creek_g": 54,
     "franklin_canyon_d": 54, "franklin_canyon_g": 54, "ko_olina_d": 53, "ko_olina_g": 54,
-    "lake_chabot_d": 31, "lake_chabot_g": 33,  # known gap: no score row on the card
+    "lake_chabot_d": 31, "lake_chabot_g": 33,
     "metropolitan_d": 54, "rancho_solano_d": 43, "rancho_solano_g": 54, "shadow_lakes_d": 54,
     "yocha_dehe_g": 49,
-    # quick suite
     "blue_rock_tucker": 18, "eagle_vines_tucker": 18, "half_moon_bay_g": 54, "half_moon_bay_t": 54,
 }
 
 
 def test_every_eval_case_is_covered_by_a_capture_and_a_minimum():
-    # A card added to either manifest without a capture would never be checked offline.
     assert set(FIXTURE_MINIMUMS) == set(EVAL_CASES)
     for case in EVAL_CASES.values():
         assert (MISTRAL_FIXTURES / f"{case.image.rsplit('.', 1)[0]}.json").is_file(), case.image
@@ -433,7 +398,6 @@ def test_every_eval_case_is_covered_by_a_capture_and_a_minimum():
 
 @pytest.fixture
 def mistral_capture(monkeypatch):
-    """OCR answers with a committed Mistral capture; the table merge is skipped (pass-through)."""
     state = {"image": None, "merge_diagnostics": []}
 
     async def fake_ocr(self, file_path, **kwargs):
@@ -470,11 +434,11 @@ def test_mistral_captures_extract_the_expected_scores(api, mistral_capture, case
     case, extract = extract_case(api, mistral_capture, case_id)
     assert extract.status_code == 200, extract.text
     body = extract.json()
-    assert set(body) == {"round", "confidence", "fields_needing_review"}  # diagnostics stay internal
+    assert set(body) == {"round", "confidence", "fields_needing_review"}
 
     graded = grade_case(case, body["round"]["hole_scores"])
     assert graded.matched_cells >= FIXTURE_MINIMUMS[case_id], graded.mismatches
-    assert mistral_capture["merge_diagnostics"]  # the merge step was reached with the diagnostics list
+    assert mistral_capture["merge_diagnostics"]
 
 
 def test_missing_name_fallback_flags_the_round_for_review(api, mistral_capture):
@@ -484,7 +448,6 @@ def test_missing_name_fallback_flags_the_round_for_review(api, mistral_capture):
     body = extract.json()
     assert sum(h["strokes"] is not None for h in body["round"]["hole_scores"]) >= 17
     assert PLAYER_NAME_NOT_READ in body["fields_needing_review"]
-    # The same card with a name that is on it does not carry the warning.
     _case, found = extract_case(api, mistral_capture, "rancho_solano_g")
     assert PLAYER_NAME_NOT_READ not in found.json()["fields_needing_review"]
 
@@ -498,24 +461,18 @@ def test_scan_error_message_matches_what_was_detected(api, scan_providers):
             data={"ocr_text": ocr_text, "user_context": f"my name is {name}. no putts recorded"},
         )
 
-    nobody = extract(EAGLE_VINES_WITH_INITIALS, "Zed")  # no row carries the name
+    nobody = extract(EAGLE_VINES_WITH_INITIALS, "Zed")
     assert nobody.status_code == 422, nobody.text
     assert nobody.json() == {"detail": UNCLEAR_PLAYER_NAME, "failure": {"category": "unreadable_scores", "stage": "parse"}}
 
-    unreadable = extract(INCOMPLETE_FULL_ROW, "Tucker")  # the name is there, the row is not readable
+    unreadable = extract(INCOMPLETE_FULL_ROW, "Tucker")
     assert unreadable.status_code == 422, unreadable.text
     assert unreadable.json() == {
         "detail": UNREADABLE_SCORE_ROWS, "failure": {"category": "unreadable_scores", "stage": "parse"},
     }
 
 
-# ================================================================
-# Expired and forged access tokens
-# ================================================================
-
-
 def mint_token(user_id: str, *, expires_in: timedelta, secret: str | None = None) -> str:
-    """An access token with the app's own claims; only the expiry and the key vary."""
     now = datetime.now(timezone.utc)
     claims = {
         "sub": user_id,
@@ -530,10 +487,10 @@ def mint_token(user_id: str, *, expires_in: timedelta, secret: str | None = None
 
 def test_expired_and_forged_tokens_are_rejected(api):
     alice = api.user("alice@example.com")
-    bearer = lambda token: {"Authorization": f"Bearer {token}"}  # noqa: E731
+    bearer = lambda token: {"Authorization": f"Bearer {token}"}
 
     valid = mint_token(alice["id"], expires_in=timedelta(hours=1))
-    assert api.client.get("/api/auth/me", headers=bearer(valid)).status_code == 200  # the mint is right
+    assert api.client.get("/api/auth/me", headers=bearer(valid)).status_code == 200
 
     expired = mint_token(alice["id"], expires_in=timedelta(hours=-1))
     assert api.client.get("/api/auth/me", headers=bearer(expired)).status_code == 401
@@ -544,11 +501,6 @@ def test_expired_and_forged_tokens_are_rejected(api):
 
     forged = mint_token(alice["id"], expires_in=timedelta(hours=1), secret="some-other-secret-key-0123456789abcdef")
     assert api.client.get("/api/auth/me", headers=bearer(forged)).status_code == 401
-
-
-# ================================================================
-# Ownership on round comparison, goal report and course analytics
-# ================================================================
 
 
 def test_compare_goal_report_and_course_analytics_are_owner_only(api):
@@ -568,24 +520,18 @@ def test_compare_goal_report_and_course_analytics_are_owner_only(api):
         assert api.client.get(path, headers=alice["headers"]).status_code == 200, path
         assert api.client.get(path, headers=bob["headers"]).status_code == 403, path
 
-    # Bob's own URLs with Alice's ids only ever search Bob's history.
     assert api.client.get(f"/api/stats/compare/{bob['id']}/{round_id}", headers=bob["headers"]).status_code == 404
     seen = api.client.get(f"/api/stats/course-analytics/{bob['id']}/{course}", headers=bob["headers"])
     assert seen.status_code == 200
-    assert (seen.json()["rounds_played"], seen.json()["score_trend_on_course"]) == (0, [])
+    assert (seen.json()["rounds_played"], seen.json()["score_trend"]) == (0, [])
     assert api.client.get(f"/api/stats/{bob['id']}/goal-report", headers=bob["headers"]).json()["gap"] is None
-
-
-# ================================================================
-# Linking rounds to courses and cloning master courses
-# ================================================================
 
 
 def test_round_relinks_to_master_and_cloned_courses_with_ownership(api):
     alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
     master = asyncio.run(_create_master_course(api.url))
     round_id = save_round(api, alice, custom_course(api, alice))
-    link = lambda user, course: api.client.post(  # noqa: E731
+    link = lambda user, course: api.client.post(
         f"/api/rounds/{round_id}/link-course", headers=user["headers"], json={"course_id": course})
 
     assert link(bob, master).status_code == 403
@@ -597,7 +543,7 @@ def test_round_relinks_to_master_and_cloned_courses_with_ownership(api):
     assert relinked.json()["course_id"] == master
     detail = api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json()
     assert detail["course"]["name"] == "Master Links"
-    assert sum(h["strokes"] for h in detail["hole_scores"]) == 82  # scores survive the relink
+    assert sum(h["strokes"] for h in detail["hole_scores"]) == 82
 
     clone = api.client.post(f"/api/courses/{master}/clone", headers=alice["headers"])
     assert clone.status_code == 201, clone.text
@@ -606,24 +552,19 @@ def test_round_relinks_to_master_and_cloned_courses_with_ownership(api):
     assert api.client.get(f"/api/courses/{clone_id}", headers=alice["headers"]).status_code == 200
     assert api.client.get(f"/api/courses/{clone_id}", headers=bob["headers"]).status_code == 403
     again = api.client.post(f"/api/courses/{master}/clone", headers=alice["headers"])
-    assert (again.status_code, again.json()["id"]) == (201, clone_id)  # cloning again returns the same copy
+    assert (again.status_code, again.json()["id"]) == (201, clone_id)
     assert api.client.post(f"/api/courses/{clone_id}/clone", headers=bob["headers"]).status_code == 403
 
     assert link(alice, clone_id).status_code == 200
-    rounds_on = lambda course: api.client.get(  # noqa: E731
+    rounds_on = lambda course: api.client.get(
         f"/api/stats/course-analytics/{alice['id']}/{course}", headers=alice["headers"]).json()["rounds_played"]
     assert (rounds_on(clone_id), rounds_on(master)) == (1, 0)
-
-
-# ================================================================
-# User tee update and delete
-# ================================================================
 
 
 def test_user_tee_update_and_delete(api):
     alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
     tees = f"/api/users/{alice['id']}/tees"
-    yardages = lambda y: {str(n): y for n in range(1, 19)}  # noqa: E731
+    yardages = lambda y: {str(n): y for n in range(1, 19)}
     gold = api.client.post(tees, headers=alice["headers"], json={"name": "Gold", "hole_yardages": yardages(300)})
     assert gold.status_code == 201, gold.text
     tee = f"{tees}/{gold.json()['id']}"
@@ -645,19 +586,14 @@ def test_user_tee_update_and_delete(api):
     assert api.client.delete(tee, headers=alice["headers"]).status_code == 404
 
 
-# ================================================================
-# Stats endpoints on seeded rounds
-# ================================================================
-
-
 def test_stats_endpoints_answer_from_seeded_rounds(api):
     alice = api.user("alice@example.com")
     course = custom_course(api, alice)
-    rounds = [save_round(api, alice, course, over=over, date=day)  # 82, 78, 86 on a par 72
+    rounds = [save_round(api, alice, course, over=over, date=day)
               for over, day in ((10, "2026-09-01"), (6, "2026-09-08"), (14, "2026-09-15"))]
     assert api.client.patch(f"/api/users/{alice['id']}", headers=alice["headers"],
                             json={"scoring_goal": 80}).status_code == 200
-    get = lambda path: api.client.get(path, headers=alice["headers"])  # noqa: E731
+    get = lambda path: api.client.get(path, headers=alice["headers"])
     paths = {
         "dashboard": f"/api/stats/dashboard/{alice['id']}",
         "analytics": f"/api/stats/analytics/{alice['id']}",
@@ -675,27 +611,79 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
     assert (body["dashboard"]["scoring_average"], body["dashboard"]["best_round"]) == (82.0, 78)
     assert body["analytics"]["kpis"]["total_rounds"] == 3
     assert [c["id"] for c in body["played"]] == [course]
-    assert (body["goal"]["scoring_average"], body["goal"]["best_score"], body["goal"]["gap"],
+    assert (body["goal"]["scoring_average"], body["goal"]["lowest_score"], body["goal"]["gap"],
             body["goal"]["on_track"]) == (82.0, 78, 2.0, False)
-    selected = next(row for row in body["compare"]["score"] if row["label"] == "Selected Round")
-    assert (selected["round_id"], selected["primary_value"], selected["secondary_value"]) == (rounds[1], 78, 6)
+    window = body["compare"]["windows"][0]
+    selected = next(row for row in window["metrics"] if row["metric"] == "score")
+    assert (selected["value"], selected["average"], window["rounds"]) == (78, 82, 1)
     assert body["course"]["rounds_played"] == 3
     assert isinstance(body["milestones"]["milestones"], list)
 
+    benchmark_path = f"/api/stats/{alice['id']}/benchmark?against=handicap&handicap=15"
+    benchmark = get(benchmark_path)
+    assert benchmark.status_code == 200, benchmark.text
+    assert benchmark.json()["benchmark"]["par4_to_par"] == 1.025
+    assert get(f"/api/stats/{alice['id']}/benchmark?against=handicap&handicap=13").status_code == 422
+    assert get(f"/api/stats/{alice['id']}/benchmark?against=friend").status_code == 422
 
-# ================================================================
-# Lookups that must reveal only the caller's own data
-# ================================================================
+    nine_course = api.client.post("/api/courses", headers=alice["headers"], json={
+        "name": "Nine Links", "holes": [{"number": n, "par": 4} for n in range(1, 10)],
+        "tees": [{"color": "Blue", "course_rating": 35.5, "slope_rating": 113,
+                  "hole_yardages": {str(n): 300 for n in range(1, 10)}}],
+    })
+    assert nine_course.status_code == 201, nine_course.text
+    nine_id = nine_course.json()["id"]
+    saved_nine = api.client.post("/api/scan/save", headers=alice["headers"], json={
+        "course_id": nine_id, "tee_box": "Blue", "date": "2026-09-02",
+        "hole_scores": [{"hole_number": n, "strokes": 5 if n <= 6 else 4, "putts": 2} for n in range(1, 10)],
+    })
+    assert saved_nine.status_code == 200, saved_nine.text
+    partial = api.client.post("/api/scan/save", headers=alice["headers"], json={
+        "course_id": course, "date": "2026-09-03", "hole_scores": [{"hole_number": 1, "strokes": 3}],
+    })
+    assert partial.status_code == 200, partial.text
+    assert api.client.patch(f"/api/users/{alice['id']}", headers=alice["headers"], json={"scoring_goal_nine": 44}).status_code == 200
+    dashboard = get(paths["dashboard"]).json()
+    assert (dashboard["scoring_average"], dashboard["scoring_average_nine"], dashboard["best_round_nine"]) == (82.0, 42.0, 42)
+    analytics = get(paths["analytics"]).json()
+    assert (analytics["kpis"]["scoring_average"], analytics["kpis"]["scoring_average_nine"]) == (82.0, 42.0)
+    assert (analytics["kpis"]["average_putts"], analytics["kpis"]["average_putts_nine"]) == (36.0, 18.0)
+    goal = get(paths["goal"]).json()
+    assert goal["nine_hole"]["on_track"] is True
+    assert {a["round_id"] for a in goal["attempts"]} == set(rounds)
+    detail = get(f"/api/rounds/{saved_nine.json()['id']}").json()
+    assert detail["nines"]["front"]["putts"] == 18 and detail["nines"]["back"]["putts"] is None
+    rated_course = get(f"/api/courses/{nine_id}").json()
+    assert rated_course["tees"][0]["course_handicap"] == detail["course_handicap"]
+
+    compared = get(paths["compare"]).json()["windows"][0]
+    assert compared["rounds"] == 1
+    assert next(m for m in compared["metrics"] if m["metric"] == "score")["average"] == 82
+    for day in range(1, 22):
+        response = api.client.post("/api/scan/save", headers=alice["headers"], json={
+            "course_id": nine_id, "date": f"2026-10-{day:02d}",
+            "hole_scores": [{"hole_number": n, "strokes": 4} for n in range(1, 10)],
+        })
+        assert response.status_code == 200, response.text
+    dashboard = get(paths["dashboard"]).json()
+    assert dashboard["handicap_index"] == body["dashboard"]["handicap_index"]
+    assert dashboard["scoring_average_l5"] == 82.0
+    assert sum(row["used"] for row in dashboard["whs"]["rows"]) == dashboard["whs"]["count_used"] == 1
+
+    edited = api.client.put(f"/api/rounds/{rounds[0]}", headers=alice["headers"],
+                            json={"hole_scores": [{"hole_number": 1, "strokes": 5, "putts": 3}]})
+    assert edited.status_code == 200, edited.text
+    saver = next(row for row in get(paths["goal"]).json()["savers"] if row["type"] == "three_putt_bleed")
+    assert (saver["headline"], saver["detail"], saver["strokes_saved"]) == ("Cut out 3-putts", "0.3 a round", 0.33)
 
 
 def test_user_lookup_by_email_reveals_only_your_own_account(api):
     alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
-    lookup = lambda email: api.client.get(f"/api/users/by-email/{email}", headers=bob["headers"])  # noqa: E731
+    lookup = lambda email: api.client.get(f"/api/users/by-email/{email}", headers=bob["headers"])
 
     own = lookup("bob@example.com")
     assert (own.status_code, own.json()["id"]) == (200, bob["id"])
     assert lookup("BOB@Example.COM").status_code == 200
-    # Another user's account and a missing account answer the same, so emails can't be probed.
     assert lookup("alice@example.com").status_code == 403
     assert lookup("ghost@example.com").status_code == 403
     assert lookup("not-an-email").status_code == 422
@@ -707,15 +695,15 @@ def test_course_list_and_search_show_masters_and_only_your_own_courses(api):
     asyncio.run(_create_master_course(api.url))
     custom_course(api, alice, name="Alice Links")
     custom_course(api, bob, name="Bob Links")
-    names = lambda response: [c["name"] for c in response.json()]  # noqa: E731
-    get = lambda path, user=None: api.client.get(path, headers=user["headers"] if user else {})  # noqa: E731
+    names = lambda response: [c["name"] for c in response.json()]
+    get = lambda path, user=None: api.client.get(path, headers=user["headers"] if user else {})
 
     assert names(get("/api/courses", bob)) == ["Master Links"]
     assert names(get(f"/api/courses?user_id={bob['id']}", bob)) == ["Bob Links", "Master Links"]
     assert get(f"/api/courses?user_id={alice['id']}", bob).status_code == 403
     assert get(f"/api/courses?user_id={bob['id']}").status_code == 403
 
-    assert names(get("/api/courses/search?q=links", bob)) == ["Bob Links", "Master Links"]  # own first
+    assert names(get("/api/courses/search?q=links", bob)) == ["Bob Links", "Master Links"]
     assert names(get("/api/courses/search?q=links")) == ["Master Links"]
     assert get(f"/api/courses/search?q=links&user_id={alice['id']}", bob).status_code == 403
     assert get("/api/courses/search?q=nowhere&include_external=true").status_code == 401
@@ -726,8 +714,8 @@ def test_friends_list_shows_only_your_own_friendships(api):
     code = api.client.get(f"/api/users/{bob['id']}", headers=bob["headers"]).json()["friend_code"]
     friendship = api.client.post("/api/users/me/friends", headers=alice["headers"],
                                  json={"addressee_friend_code": code}).json()["id"]
-    friends = lambda user, query="": api.client.get(f"/api/users/me/friends{query}", headers=user["headers"])  # noqa: E731
-    rows = lambda user, query="": [(f["id"], f["requester_id"], f["addressee_id"], f["status"])  # noqa: E731
+    friends = lambda user, query="": api.client.get(f"/api/users/me/friends{query}", headers=user["headers"])
+    rows = lambda user, query="": [(f["id"], f["requester_id"], f["addressee_id"], f["status"])
                                    for f in friends(user, query).json()]
 
     pending = [(friendship, alice["id"], bob["id"], "pending")]
@@ -741,11 +729,6 @@ def test_friends_list_shows_only_your_own_friendships(api):
     assert friends(bob, "?status=bogus").status_code == 422
 
 
-# ================================================================
-# Email verification: resend and the emailed link
-# ================================================================
-
-
 async def _sql(url: str, query: str, *args) -> None:
     conn = await asyncpg.connect(url)
     try:
@@ -755,45 +738,39 @@ async def _sql(url: str, query: str, *args) -> None:
 
 
 def backdate_tokens(api: Api, email: str, column: str) -> None:
-    """Set ``created_at`` or ``expires_at`` of a user's tokens to two minutes ago (stored as naive UTC)."""
     asyncio.run(_sql(api.url, f"""UPDATE users.auth_tokens
                                     SET {column} = (now() AT TIME ZONE 'UTC') - interval '2 minutes'
                                     WHERE user_id = (SELECT id FROM users.users WHERE email = $1)""", email))
 
 
 def test_resend_verification_and_the_emailed_link(api):
-    sent = lambda: [kind for kind, _, _ in api.emails].count("verify")  # noqa: E731
-    resend = lambda email: api.client.post("/api/auth/resend-verification", json={"email": email})  # noqa: E731
+    sent = lambda: [kind for kind, _, _ in api.emails].count("verify")
+    resend = lambda email: api.client.post("/api/auth/resend-verification", json={"email": email})
     api.register("cy@example.com")
     first = api.token_from("verify", "cy@example.com")
 
-    assert (resend("cy@example.com").status_code, sent()) == (200, 1)  # inside the 60-second cooldown
+    assert (resend("cy@example.com").status_code, sent()) == (200, 1)
     backdate_tokens(api, "cy@example.com", "created_at")
     assert (resend("cy@example.com").status_code, sent()) == (200, 2)
     second = api.token_from("verify", "cy@example.com")
     assert second != first
-    assert api.client.post("/api/auth/verify-email", json={"token": first}).status_code == 400  # replaced
+    assert api.client.post("/api/auth/verify-email", json={"token": first}).status_code == 400
 
     opened = api.client.get("/api/auth/verify-email", params={"token": second})
     assert opened.status_code == 200, opened.text
-    me = api.client.get("/api/auth/me")  # the link signs the user in by cookie
+    me = api.client.get("/api/auth/me")
     assert (me.status_code, me.json()["email"]) == (200, "cy@example.com")
     api.client.cookies.clear()
 
     backdate_tokens(api, "cy@example.com", "created_at")
-    assert (resend("cy@example.com").status_code, sent()) == (200, 2)  # already verified
-    assert (resend("ghost@example.com").status_code, sent()) == (200, 2)  # unknown looks the same
+    assert (resend("cy@example.com").status_code, sent()) == (200, 2)
+    assert (resend("ghost@example.com").status_code, sent()) == (200, 2)
 
     api.register("dee@example.com")
     backdate_tokens(api, "dee@example.com", "expires_at")
     expired = api.client.get("/api/auth/verify-email", params={"token": api.token_from("verify", "dee@example.com")})
     assert expired.status_code == 400
-    assert api.login("dee@example.com").status_code == 403  # still unverified
-
-
-# ================================================================
-# Failed-scan reports
-# ================================================================
+    assert api.login("dee@example.com").status_code == 403
 
 
 def png_bytes() -> bytes:
@@ -819,7 +796,7 @@ def report_metadata(**overrides) -> str:
 def test_failed_scan_reports_are_anonymous_and_validated(api):
     alice = api.user("alice@example.com")
     image = png_bytes()
-    post = lambda name, data, metadata=None, extra=None: api.client.post(  # noqa: E731
+    post = lambda name, data, metadata=None, extra=None: api.client.post(
         "/api/scan/reports", headers=alice["headers"], files={"file": (name, data, "image/png")},
         data={"metadata": metadata or report_metadata()} | (extra or {}))
 
@@ -839,21 +816,15 @@ def test_failed_scan_reports_are_anonymous_and_validated(api):
     saved = post("card.png", image, metadata=report_metadata(retry_key=key))
     assert (saved.status_code, saved.json()) == (200, {"status": "saved"})
     [report] = store.reports
-    # Signed in or not, the stored report carries no user, filename or other identity.
     assert {f.name for f in dataclasses.fields(report)} == {
         "image", "media_type", "retry_key", "category", "stage", "http_status", "schema_version"}
     assert (report.image, report.media_type, str(report.retry_key), report.category) == (
         image, "image/png", key, "unreadable_scores")
 
 
-# ================================================================
-# Scan uploads rejected before OCR
-# ================================================================
-
-
 def test_scan_uploads_are_rejected_before_ocr(api, scan_providers):
     alice = api.user("alice@example.com")
-    extract = lambda name, data, content_type="image/jpeg": api.client.post(  # noqa: E731
+    extract = lambda name, data, content_type="image/jpeg": api.client.post(
         "/api/scan/extract", headers=alice["headers"], files={"file": (name, data, content_type)})
     card = (SCORECARD_DIR / "eaglevins_90.jpg").read_bytes()
 
@@ -868,59 +839,49 @@ def test_scan_uploads_are_rejected_before_ocr(api, scan_providers):
                           files={"file": ("card.jpg", b"<html>not a scorecard</html>", "image/jpeg")})
     assert ocr.status_code == 400
     assert scan_providers["ocr"] == []
-    assert extract("card.jpg", card).status_code != 400  # the real card passes validation (control)
-
-
-# ================================================================
-# Rate limits
-# ================================================================
+    assert extract("card.jpg", card).status_code != 400
 
 
 def test_login_locks_after_five_failed_attempts(api):
     api.user("alice@example.com")
 
     assert [api.login("alice@example.com", password="wrong password!").status_code for _ in range(5)] == [401] * 5
-    locked = api.login("alice@example.com")  # the right password no longer helps
+    locked = api.login("alice@example.com")
     assert locked.status_code == 429
     assert int(locked.headers["Retry-After"]) > 0
 
 
 def test_signup_is_rate_limited_per_email(api, monkeypatch):
     monkeypatch.setenv("REGISTER_RATE_LIMIT_PER_EMAIL_ATTEMPTS", "2")
-    attempt = lambda email: api.client.post(  # noqa: E731
+    attempt = lambda email: api.client.post(
         "/api/auth/register", json={"name": "Eve", "email": email, "password": PASSWORD}).status_code
 
     assert [attempt("eve@example.com") for _ in range(3)] == [201, 409, 429]
-    assert attempt("other@example.com") == 201  # the limit is per email
+    assert attempt("other@example.com") == 201
 
 
 def test_anonymous_scans_and_reports_are_rate_limited(api, scan_providers):
     alice = api.user("alice@example.com")
     api.client.app.dependency_overrides[scan_reports.get_scan_report_store] = lambda: None
-    ocr = lambda headers=None: api.client.post(  # noqa: E731
+    ocr = lambda headers=None: api.client.post(
         "/api/scan/ocr", headers=headers or {}, files=upload()).status_code
 
     assert [ocr() for _ in range(6)] == [200] * 6
     assert ocr() == 429
-    assert ocr(alice["headers"]) == 200  # signed-in scans have their own allowance
+    assert ocr(alice["headers"]) == 200
 
-    report = lambda: api.client.post(  # noqa: E731
+    report = lambda: api.client.post(
         "/api/scan/reports", files={"file": ("card.png", png_bytes(), "image/png")},
         data={"metadata": report_metadata()}).status_code
     assert [report() for _ in range(10)] == [503] * 10
     assert report() == 429
 
 
-# ================================================================
-# Request contract
-# ================================================================
-
-
 def test_hole_scores_cannot_set_net_score(api):
     alice = api.user("alice@example.com")
     course = custom_course(api, alice)
     scores = [{"hole_number": n, "strokes": p} for n, p in PARS.items()]
-    with_net = [scores[0] | {"net_score": 3}] + scores[1:]
+    with_net = [scores[0] | {"net_score": 3}, *scores[1:]]
 
     save = api.client.post("/api/scan/save", headers=alice["headers"],
                            json={"course_id": course, "tee_box": "Blue", "hole_scores": with_net})
@@ -939,12 +900,10 @@ def test_api_schema_has_unique_operation_ids_and_status_routes_still_answer(api)
     schema = api.client.get("/openapi.json")
     assert schema.status_code == 200
     ids = [op["operationId"] for item in schema.json()["paths"].values() for op in item.values()]
-    # A route serving GET and HEAD gets one ID for both, chosen differently per process; the
-    # frontend compares its committed schema copy byte for byte, so IDs must be unique and stable.
     assert len(ids) == len(set(ids))
     assert {"/", "/health", "/api/health"}.isdisjoint(schema.json()["paths"])
 
-    for path in ("/", "/health", "/api/health"):  # Railway health checks use these
+    for path in ("/", "/health", "/api/health"):
         assert api.client.get(path).status_code == 200, path
         head = api.client.head(path)
         assert (head.status_code, head.content) == (200, b""), path

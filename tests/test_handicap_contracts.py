@@ -1,6 +1,4 @@
-"""WHS-based estimate: eligibility, precision, selection context and one index for every caller."""
-
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -14,11 +12,10 @@ from models.hole_layout import FRONT_NINE, FULL_ROUND
 from tests.analytics_builders import course, par_round, round_
 from tests.helpers import make_mock_database, make_round_summary, make_user
 
-START = datetime(2026, 1, 1)
+START = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
 def rated_rounds(overs, *, rating=72.0, slope=113):
-    """Complete rated 18-hole rounds, one day apart; differential = over when rating=par=72, slope=113."""
     c = course(18, rating=rating, slope=slope)
     return [
         par_round(over=over, course_obj=c, tee_box="Blue", round_id=f"r{i}", date=START + timedelta(days=i))
@@ -34,7 +31,7 @@ def test_partial_rounds_never_produce_a_differential():
 
 def test_differentials_round_half_up_and_the_index_uses_the_shown_values():
     c = course(18, rating=72.0, slope=100)
-    r = par_round(over=15, course_obj=c, tee_box="Blue")  # 87: (87 - 72) * 113 / 100 = 16.95
+    r = par_round(over=15, course_obj=c, tee_box="Blue")
 
     assert handicap.score_differentials_per_round([r])[0]["differential"] == 17.0
 
@@ -51,10 +48,11 @@ def test_index_and_used_flags_come_from_the_same_selection():
 def test_display_window_shows_flags_from_the_full_history():
     rounds = rated_rounds([0] * 8 + [10] * 12)
 
-    shown = stats._build_handicap_trend(rounds, rounds[-5:], make_user(uuid4()))
+    from api.analytics_responses import _handicap_trend
+    shown = _handicap_trend(make_user(uuid4()), rounds, rounds[-5:])
 
     assert len(shown) == 5 and not any(e["used_in_hi"] for e in shown)
-    assert [e["round_index"] for e in shown] == [1, 2, 3, 4, 5]
+    assert [e["round_index"] for e in shown] == [16, 17, 18, 19, 20]
 
 
 def test_rounds_before_a_reset_are_not_marked_used():
@@ -100,11 +98,11 @@ async def test_every_screen_reports_the_same_seeded_index():
     db = make_mock_database()
     db.users.get_user = AsyncMock(return_value=user)
     db.rounds.get_rounds_for_user = AsyncMock(return_value=list(reversed(history)))
-    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=[make_round_summary(uuid4())])
+    db.rounds.get_round_summaries_for_user = AsyncMock(return_value=history)
 
     from_users = (await users.get_user_handicap(user_id, db, user))["handicap_index"]
     from_dashboard = (await stats.get_dashboard(user_id, db, user)).handicap_index
-    from_analytics = (await stats.get_analytics(user_id, 50, None, None, db, user))["kpis"]["handicap_index"]
+    from_analytics = (await stats.get_analytics(user_id, 50, None, None, db, user)).kpis.handicap_index
 
     assert from_users == from_dashboard == from_analytics == 10.0
     assert all(call.kwargs.get("limit") in (None, 50) for call in db.rounds.get_rounds_for_user.await_args_list)
@@ -116,12 +114,6 @@ def test_user_handicap_index_uses_the_seed_and_reset():
     assert handicap.user_handicap_index([], user) == 18.2
 
 
-# ================================================================
-# Eligibility and the WHS table, with hand-written expectations
-# ================================================================
-
-# Rounds available -> (lowest differentials used, adjustment), written out here rather than read
-# from production so a wrong table entry fails.
 EXPECTED_TABLE = {
     3: (1, -2.0), 4: (1, -1.0), 5: (1, 0.0), 6: (2, -1.0), 7: (2, 0.0), 8: (2, 0.0),
     9: (3, 0.0), 10: (3, 0.0), 11: (3, 0.0), 12: (4, 0.0), 13: (4, 0.0), 14: (4, 0.0),
@@ -130,7 +122,6 @@ EXPECTED_TABLE = {
 
 
 def distinct_overs(count):
-    """Distinct differentials in a scrambled order, so the lowest aren't simply the first."""
     return [(i * 7) % 23 + 1 for i in range(count)]
 
 
@@ -147,8 +138,8 @@ def test_partial_eighteen_hole_round_is_not_a_differential_and_does_not_change_t
     history = rated_rounds([10, 12, 14, 16, 18])
 
     assert handicap.score_differentials_per_round([partial])[0]["differential"] is None
-    assert handicap.handicap_index(history + [partial]) == handicap.handicap_index(history) == 10.0
-    trend = handicap.handicap_trend(history + [partial])
+    assert handicap.handicap_index([*history, partial]) == handicap.handicap_index(history) == 10.0
+    trend = handicap.handicap_trend([*history, partial])
     assert trend[-1]["used_in_hi"] is None
 
 
@@ -165,11 +156,10 @@ def test_fewer_than_three_rounds_have_no_index(count):
 
 
 def test_only_the_latest_twenty_differentials_count():
-    oldest_is_best = [0] + distinct_overs(20)  # the 0 is round 1 of 21, outside the window
+    oldest_is_best = [0, *distinct_overs(20)]
 
     assert handicap.handicap_index(rated_rounds(oldest_is_best)) == expected_index(distinct_overs(20))
 
 
 def test_six_rounds_average_the_two_lowest_minus_one():
-    # The audit's worked example: (3 + 8) / 2 - 1 = 4.5.
     assert handicap.handicap_index(rated_rounds([12, 3, 14, 8, 13, 15])) == 4.5

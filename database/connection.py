@@ -6,11 +6,6 @@ from typing import AsyncIterator, Optional
 
 @asynccontextmanager
 async def write_transaction(pool: asyncpg.Pool, connection=None) -> AsyncIterator:
-    """Join the caller's transaction (as a savepoint) or open a new one on a pooled connection.
-
-    Repository write methods accept an optional ``connection`` so a service can make several
-    writes one atomic unit; without it each method keeps its own transaction as before.
-    """
     if connection is not None:
         async with connection.transaction():
             yield connection
@@ -20,26 +15,23 @@ async def write_transaction(pool: asyncpg.Pool, connection=None) -> AsyncIterato
 
 
 class DatabasePool:
-    """Manages the asyncpg connection pool lifecycle."""
-
     def __init__(self):
         self._pool: Optional[asyncpg.Pool] = None
         self._lifecycle_lock = asyncio.Lock()
 
     async def initialize(
         self,
-        dsn: str = None,
+        dsn: str | None = None,
         *,
         host: str = "localhost",
         port: int = 5432,
         database: str = "golf_scorecard",
-        user: str = None,
+        user: str | None = None,
         password: str = "",
         min_size: int = 2,
         max_size: int = 10,
         connect_timeout: Optional[float] = None,
     ) -> None:
-        """Create the connection pool. Call once at app startup."""
         async with self._lifecycle_lock:
             if self._pool is not None:
                 return
@@ -59,7 +51,6 @@ class DatabasePool:
             )
 
     async def close(self) -> None:
-        """Close all connections. Call at app shutdown."""
         async with self._lifecycle_lock:
             if self._pool is not None:
                 await self._pool.close()
@@ -67,25 +58,21 @@ class DatabasePool:
 
     @property
     def pool(self) -> asyncpg.Pool:
-        """Get the pool, raising if not initialized."""
         if self._pool is None:
             raise RuntimeError("Database pool not initialized. Call await db.initialize() first.")
         return self._pool
 
     @property
     def is_initialized(self) -> bool:
-        """Whether the pool has been initialized."""
         return self._pool is not None
 
     async def health_check(self) -> bool:
-        """Test connectivity with SELECT 1."""
         try:
             async with self.pool.acquire() as conn:
                 await conn.fetchval("SELECT 1")
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001
             return False
 
 
-# Module-level singleton for convenience
 db = DatabasePool()

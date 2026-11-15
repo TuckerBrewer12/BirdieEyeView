@@ -1,10 +1,7 @@
-const rawApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() ?? "";
-
 function normalizeApiBaseUrl(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return "";
 
-  // Railway env vars are often entered as a host only; default protocol safely.
   if (!/^https?:\/\//i.test(trimmed)) {
     const hostOnly = /^[a-z0-9.-]+(?::\d+)?$/i.test(trimmed);
     if (hostOnly) {
@@ -16,11 +13,13 @@ function normalizeApiBaseUrl(raw: string): string {
   return trimmed.replace(/\/+$/, "");
 }
 
-const normalizedApiBaseUrl = normalizeApiBaseUrl(rawApiBaseUrl);
+let apiBaseUrl = "";
 
-export const API_BASE_URL = normalizedApiBaseUrl;
+export function configureApiBaseUrl(raw: string | undefined): void {
+  apiBaseUrl = normalizeApiBaseUrl(raw?.trim() ?? "");
+}
 
 export function apiUrl(path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return API_BASE_URL ? `${API_BASE_URL}${normalizedPath}` : normalizedPath;
+  return apiBaseUrl ? `${apiBaseUrl}${normalizedPath}` : normalizedPath;
 }

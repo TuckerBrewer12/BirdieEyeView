@@ -1,5 +1,3 @@
-"""CLI/archive contracts, including untrusted artifacts and real local Git publication (3a/3b)."""
-
 import copy
 import json
 import subprocess
@@ -50,7 +48,7 @@ def test_rejects_invalid_artifacts(path, value):
 
 @pytest.mark.parametrize('url,valid', [
     ('https://github.com/TuckerBrewer12/BirdieEyeView/actions/runs/123', True),
-    ('https://github.com/new-owner/Renamed.Repo/actions/runs/9', True),  # a rename must not break publishing
+    ('https://github.com/new-owner/Renamed.Repo/actions/runs/9', True),
     ('https://github.com/a/b/actions/runs/1?x=1', False),
     ('https://evil.example/TuckerBrewer12/BirdieEyeView/actions/runs/1', False),
     ('https://github.com/a/b/c/actions/runs/1', False),
@@ -181,7 +179,7 @@ def test_workflow_summary_redacts_reports_and_never_uploads_invalid_json(monkeyp
         monkeypatch.setenv(key,value)
     with pytest.raises(SystemExit) as error:
         exec(compile(code,'workflow evaluation step','exec'),{})
-    assert error.value.code == 0  # a rejected structured report never changes the eval's own result
+    assert error.value.code == 0
     assert secret not in (tmp_path/'scan-eval-report.txt').read_text()
     assert 'run-id=123-1' in (tmp_path/'output').read_text()
     if invalid:

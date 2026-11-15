@@ -1,5 +1,3 @@
-"""Suppress Uvicorn request records for anonymous reports, including queries."""
-
 import logging
 from urllib.parse import unquote, urlsplit
 

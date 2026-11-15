@@ -1,4 +1,5 @@
-from unittest.mock import AsyncMock
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
 import pytest
@@ -117,11 +118,6 @@ def friendship_database():
     return user_id, other_id, user, record, db
 
 
-# ================================================================
-# API domain: goals, course access and error translation
-# ================================================================
-
-
 @pytest.mark.parametrize(("field", "value"), [("scoring_goal", 18), ("scoring_goal", 270), ("scoring_goal_nine", 9), ("scoring_goal_nine", 135)])
 def test_update_user_request_accepts_domain_goal_bounds(field, value):
     assert getattr(users.UpdateUserRequest(**{field: value}), field) == value
@@ -146,7 +142,6 @@ def test_user_tee_request_rejects_malformed_yardages(yardages):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("owner", ["master", "self"], ids=["master-course", "own-private-course"])
 async def test_create_user_tee_links_accessible_courses(tee_database, owner):
-    # Another user's private course is rejected over HTTP in test_api_http_contracts.py.
     user_id, _, user, user_tee, db = tee_database
     course_id = uuid4()
     db.courses.get_course = AsyncMock(return_value=make_course(course_id, owner=user_id if owner == "self" else None))

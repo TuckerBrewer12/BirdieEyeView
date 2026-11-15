@@ -2,21 +2,20 @@
 
 Route: `/career`. Access: Signed in.
 
-Shows achievements, milestones, personal bests, and longer-term player history.
+Lifetime and last-365-day records: score totals by kind, round records and the handicap trend.
 
 ## Entry points
 
-- [CareerPage.tsx](../../../frontend/src/pages/CareerPage.tsx)
-- [useCareerViewModel.ts](../../../frontend/src/hooks/useCareerViewModel.ts)
-- [MobileCareerPage.tsx](../../../frontend/src/components/analytics/MobileCareerPage.tsx)
-- [CareerDesktopLayout.tsx](../../../frontend/src/components/analytics/CareerDesktopLayout.tsx)
+- [CareerPage.tsx](../../../frontend/src/pages/career/CareerPage.tsx)
+- [useCareerPageViewModel.ts](../../../frontend/src/pages/career/useCareerPageViewModel.ts)
+- [present.ts](../../../frontend/src/pages/career/present.ts)
 
 ## How it works
 
-The hook loads analytics and derives milestone/event presentation, score mixes, and chart colors. CareerPage handles loading/missing data and passes the result to mobile and desktop layouts. Its current analytics query requests up to 200 rounds.
+Records come from the stats endpoints; the handicap trend follows the Lifetime / Last 365 Days switch through each row's `in_window`. Score totals are named in their score colour (`ScoreKindLabel`), round records carry an `IconBadge`.
 
 ## Boundaries and checks when changing it
 
-A larger fixed window is still not all-history coverage. Do not label a window-derived first/best event as lifetime truth without the backend contract. Preserve event identity/dates, unknown values, and consistent milestone thresholds.
+Records set by a round's total count full rounds only. Check a golfer with no rounds in the last year.
 
 These checks describe useful validation scenarios, not a claim that dedicated tests already cover every case. Shared conventions are in [frontend practices](../../practices/frontend.md). Return to the [page index](../README.md).

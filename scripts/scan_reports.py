@@ -11,7 +11,6 @@ from io import BytesIO
 from pathlib import Path
 from uuid import UUID, uuid4
 
-# Direct script execution needs the repository root on the import path.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import httpx
@@ -45,11 +44,10 @@ def generate_key(path: Path):
 
 
 def download_report(store, report_id: UUID, destination: Path) -> Path:
-    # Authenticate/validate before creating output. File names never come from an upload.
     report = store.retrieve(report_id)
     directory = destination / str(report_id)
     destination.mkdir(parents=True, exist_ok=True, mode=0o700)
-    directory.mkdir(mode=0o700)  # Refuse an existing directory, including symlinks.
+    directory.mkdir(mode=0o700)
     suffix = {"image/jpeg": "jpg", "image/png": "png", "application/pdf": "pdf"}[report.metadata.media_type]
     image_path, metadata_path = directory / f"scorecard.{suffix}", directory / "metadata.json"
     try:
@@ -64,7 +62,6 @@ def download_report(store, report_id: UUID, destination: Path) -> Path:
 
 
 def smoke_check(config: ScanReportStorageConfig, store):
-    """Generated card only. Test real provider semantics and remove the test report."""
     output = BytesIO()
     with Image.new("RGB", (300, 100), "white") as image:
         ImageDraw.Draw(image).text((10, 20), "Synthetic scorecard: 4 5 3", fill="black")
@@ -76,13 +73,13 @@ def smoke_check(config: ScanReportStorageConfig, store):
     try:
         if store.save_sync(item) is not True:
             raise ValueError("Synthetic report was not saved.")
-        encrypted = store._get_envelope(item.retry_key)
+        encrypted = store.get_envelope(item.retry_key)
         if item.image in encrypted or b"synthetic-author-for-removal" in encrypted:
             raise ValueError("Report was not encrypted.")
         with ThreadPoolExecutor(max_workers=2) as pool:
             if list(pool.map(store.save_sync, [item, item])) != [True, True]:
                 raise ValueError("Report retries failed.")
-        if store._get_envelope(item.retry_key) != encrypted:
+        if store.get_envelope(item.retry_key) != encrypted:
             raise ValueError("A retry overwrote the report.")
         restored = store.retrieve(item.retry_key)
         if b"synthetic-author-for-removal" in restored.image:
@@ -100,7 +97,6 @@ def smoke_check(config: ScanReportStorageConfig, store):
         if response.status_code not in {403, 404}:
             raise ValueError("Bucket privacy check failed.")
     finally:
-        # Fresh UUID, and deletion is confined to the generated test report.
         store.delete(item.retry_key)
     if item.retry_key in store.list_report_ids():
         raise ValueError("Synthetic report deletion failed.")
@@ -148,8 +144,7 @@ def main(argv=None) -> int:
         finally:
             store.client.close()
         return 0
-    except Exception:
-        # SDK/decoder exceptions can contain credentials or private object contents.
+    except Exception:  # noqa: BLE001
         print("Report operation failed. Check configuration, key, permissions and output location.", file=sys.stderr)
         return 1
 

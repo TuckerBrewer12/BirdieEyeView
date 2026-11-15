@@ -1,5 +1,3 @@
-"""In-memory login rate limiter to slow brute-force attempts."""
-
 import time
 from collections import deque
 from dataclasses import dataclass, field

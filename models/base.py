@@ -5,8 +5,6 @@ from typing import Any, Optional
 
 
 class CheckedList(list):
-    """Review container whose in-place edits still reject the wrong element type."""
-
     def __init__(self, item_type: type, items=()):
         self.item_type = item_type
         super().__init__(self._check(item) for item in items)
@@ -38,15 +36,20 @@ class CheckedList(list):
 
 
 def checked_list(item_type: type) -> AfterValidator:
-    """Annotate a list field so later in-place edits stay type-checked."""
     return AfterValidator(partial(CheckedList, item_type))
 
 
 class BaseGolfModel(BaseModel):
-    """Shared configuration and methods."""
-    model_config = ConfigDict(validate_assignment=True)
+    model_config = ConfigDict(validate_assignment=True, json_schema_serialization_defaults_required=True)
     _revision: int = PrivateAttr(default=0)
     _field_revisions: dict[str, int] = PrivateAttr(default_factory=dict)
+
+    @property
+    def revision(self) -> int:
+        return self._revision
+
+    def field_revision(self, name: str) -> int:
+        return self._field_revisions.get(name, 0)
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name in type(self).model_fields and hasattr(self, '__pydantic_fields_set__'):
@@ -55,14 +58,12 @@ class BaseGolfModel(BaseModel):
             super().__setattr__(name, value)
 
     def _apply_updates(self, values: dict[str, Any]) -> None:
-        """Validate an isolated candidate before changing this instance at all."""
         unknown = values.keys() - type(self).model_fields.keys()
         if unknown:
             raise ValueError(f"Unknown field: {sorted(unknown)[0]}")
         payload = {name: getattr(self, name) for name in type(self).model_fields}
         payload.update(values)
         candidate = type(self).model_validate(deepcopy(payload))
-        # Preserve unchanged child identities and private freshness tracking.
         for name in type(self).model_fields:
             if name not in values and getattr(candidate, name) == getattr(self, name):
                 candidate.__dict__[name] = getattr(self, name)
@@ -74,10 +75,9 @@ class BaseGolfModel(BaseModel):
         self._fields_updated(set(values))
 
     def _fields_updated(self, fields: set[str]) -> None:
-        """Hook for recording the provenance of successfully supplied summaries."""
+        ...
 
     def update_fields(self, **values: Any) -> Optional[str]:
-        """Apply coordinated corrections atomically; return an error on rejection."""
         try:
             self._apply_updates(values)
             return None
@@ -87,5 +87,4 @@ class BaseGolfModel(BaseModel):
             return str(error)
 
     def update_field(self, field_name: str, value: Any) -> Optional[str]:
-        """Update a field with user correction. Returns error message if validation fails."""
         return self.update_fields(**{field_name: value})

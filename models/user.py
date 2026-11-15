@@ -8,7 +8,6 @@ if TYPE_CHECKING:
     from .round import Round
 
 class User(BaseGolfModel):
-    """Golfer with their rounds and handicap."""
     id: Optional[str] = None
     friend_code: Optional[str] = None
     name: Optional[str] = None
@@ -26,5 +25,5 @@ class User(BaseGolfModel):
     @field_validator('rounds')
     @classmethod
     def check_rounds(cls, rounds):
-        from .round import Round  # Imported lazily: round.py does not import user.py.
+        from .round import Round
         return CheckedList(Round, rounds)

@@ -1,14 +1,9 @@
--- Migration 010: enforce positive-only handicap index values
--- Rule: handicap_index must be NULL or in (0, 54]
-
 BEGIN;
 
--- Preserve existing intent for plus-handicap style inputs by flipping negatives.
 UPDATE users.users
 SET handicap_index = ABS(handicap_index)
 WHERE handicap_index < 0;
 
--- Zero is not allowed under the new rule; clear it.
 UPDATE users.users
 SET handicap_index = NULL
 WHERE handicap_index = 0;

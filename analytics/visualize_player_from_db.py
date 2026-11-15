@@ -1,18 +1,10 @@
-"""Export a player's analytics charts from PostgreSQL to PNG files.
-
-Each run writes to its own ``<outdir>/<player>/<timestamp>/`` folder, so files from earlier runs or
-other players never mix into a report. A chart is exported only when its own metric has data, and
-every figure is closed after saving, including when saving fails. "Overall" charts cover the loaded
-rounds (``--limit`` most recent).
-"""
-
 from __future__ import annotations
 
 import argparse
 import asyncio
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, List, Optional
 
@@ -51,8 +43,6 @@ from analytics.visualizations import (
 from models.round import Round
 
 
-# ---- availability: ask the metric itself whether it has anything to show
-
 def _any_complete(rounds: List[Round]) -> bool:
     return bool(el.complete_rounds(rounds))
 
@@ -83,7 +73,7 @@ class Chart:
     name: str
     plot: Callable
     available: Callable[[List[Round]], bool]
-    course: bool = False  # plotted for the most-played course with its label
+    course: bool = False
 
 
 CHARTS = [
@@ -128,7 +118,6 @@ CHARTS = [
 
 
 def _primary_course_rounds(rounds: List[Round]) -> Optional[tuple[str, List[Round]]]:
-    """Rounds on the most-played linked course in the loaded rounds (ties: first seen)."""
     grouped: dict[str, tuple[str, List[Round]]] = {}
     for round_obj in rounds:
         if not round_obj.course:
@@ -150,7 +139,6 @@ def _slug(text: str) -> str:
 
 
 def _save(fig, path: Path) -> None:
-    """Save then always close the figure, so a failed save doesn't leave it open."""
     from analytics.visualizations import _load_plt
 
     try:
@@ -162,8 +150,7 @@ def _save(fig, path: Path) -> None:
 
 
 def export_charts(player_label: str, rounds: List[Round], outdir: Path, *, now: Optional[datetime] = None) -> List[Path]:
-    """Write every chart that has data into a new run folder and return the written paths."""
-    run_dir = Path(outdir) / _slug(player_label) / (now or datetime.now()).strftime("%Y%m%d-%H%M%S")
+    run_dir = Path(outdir) / _slug(player_label) / (now or datetime.now(timezone.utc)).strftime("%Y%m%d-%H%M%S")
     run_dir.mkdir(parents=True, exist_ok=False)
     rounds = el.chronological(rounds)
     course = _primary_course_rounds(rounds)
@@ -234,3 +221,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

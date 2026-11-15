@@ -1,4 +1,3 @@
-/* Pure report calculations. No network or DOM access. */
 (function (root) {
   "use strict";
   function requireValue(condition, message) {

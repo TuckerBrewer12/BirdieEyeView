@@ -1,8 +1,3 @@
--- Migration 008: tighten uniqueness semantics for course identity and tee color
--- 1) Treat NULL location as empty for uniqueness, so duplicate unnamed-location
---    entries can't be created.
--- 2) Enforce case-insensitive uniqueness for tee colors within a course.
-
 BEGIN;
 
 DROP INDEX IF EXISTS idx_courses_unique_master;

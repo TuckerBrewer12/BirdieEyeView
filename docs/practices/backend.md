@@ -18,11 +18,11 @@ A dependency map is a target, not a claim that current imports strictly enforce 
 
 Use a short orchestration function whose named stages reveal the flow. Keep existing focused functions when their responsibility is already clear. Extract repeated observation filtering, historical-par lookup, or classification only after the shared policy is settled; avoid independently reimplementing the same rule in each caller.
 
-Use type annotations for public boundaries and typed internal results where a large dictionary hides required fields/units. Add docstrings for non-obvious contracts, normalization, units, or side effects. Do not repeat what a straightforward function name already says.
+Use type annotations for public boundaries and typed internal results where a large dictionary hides required fields/units. Don't write comments or docstrings. Keep only lint and type directives (`noqa`, `type: ignore`), a script's usage and env lines, and gotchas forced by tools or platforms we can't change (an OCR quirk, a driver limitation), stated in one line.
 
 ## Validation and updates
 
-Pydantic validates transport/domain inputs, and PostgreSQL enforces persistent invariants under concurrency. Align their agreed bounds. The approved Models refactor uses validated replacement/correction methods, explicit coverage, historical accepted par, and unknown-preserving summaries. Later layers must adopt those contracts; do not treat their presence in Models as completed integration.
+Pydantic validates transport/domain inputs, and PostgreSQL enforces persistent invariants under concurrency. Align their agreed bounds. Models use validated replacement/correction methods, explicit coverage, historical accepted par, and unknown-preserving summaries. Persistence, requests, scan assembly, and analytics share those contracts; coordinate changes across their consumers.
 
 Keep omitted and explicit-null updates distinct. Validate coordinated edits before committing mutations. Make one logical multi-record operation atomic through an explicit transaction. Catch expected boundary failures specifically; preserve intended 4xx outcomes and avoid leaking provider details or credentials.
 

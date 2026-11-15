@@ -1,12 +1,6 @@
-"""Run a live scorecard accuracy evaluation suite.
-
-Usage:
+"""Usage:
     python -m scripts.quick_scan_eval
     python -m scripts.quick_scan_eval --suite large
-
-The runner mirrors the production frontend flow: OCR each unique image once,
-then pass the prefetched OCR text through the production extract path for each
-target player. Accuracy failures are reported but do not fail the process.
 """
 
 from __future__ import annotations
@@ -53,7 +47,7 @@ ExtractCallable = Callable[..., Awaitable[Any]]
 
 
 class EvalConfigurationError(ValueError):
-    """Raised when the evaluator cannot start with a trustworthy configuration."""
+    ...
 
 
 @dataclass(frozen=True)
@@ -64,7 +58,6 @@ class EvalCase:
     source_score_format: str
     user_context: str
     expected: Mapping[str, Mapping[int, int]]
-    # A layout the scanner doesn't support yet: still graded, but reported as a known gap.
     known_gap: Optional[str] = None
 
     @property
@@ -89,7 +82,6 @@ class CaseResult:
     effective_seconds: float = 0.0
     mismatches: list[CellMismatch] = field(default_factory=list)
     operational_error: Optional[str] = None
-    # Internal scan diagnostics captured from the production logs while this case ran.
     diagnostics: list[str] = field(default_factory=list)
 
     @property
@@ -120,7 +112,6 @@ class SuiteRun:
     case_results: list[CaseResult]
     ocr_seconds_by_image: dict[str, float]
     suite_seconds: float
-    # OCR clean-up and table-merge diagnostics captured from the production logs, per image.
     ocr_diagnostics_by_image: dict[str, list[str]] = field(default_factory=dict)
 
     @property
@@ -147,7 +138,6 @@ def load_cases(
     *,
     scorecard_dir: Path = SCORECARD_DIR,
 ) -> list[EvalCase]:
-    """Load and validate the quick-suite answer key."""
     try:
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
@@ -188,8 +178,6 @@ def load_cases(
                 f"{label}: source_score_format must be one of {sorted(SUPPORTED_SCORE_FORMATS)}"
             )
         user_context = _require_string(raw, "user_context", label)
-        # `user_context` is exactly what the app would send. People-only remarks go in `notes`,
-        # which the scanner never sees; `known_gap` names an unsupported layout.
         for optional in ("notes", "known_gap"):
             if optional in raw and (not isinstance(raw[optional], str) or not raw[optional].strip()):
                 raise EvalConfigurationError(f"{label}: {optional} must be a non-empty string when present")
@@ -253,7 +241,6 @@ def grade_case(
     extraction_seconds: float = 0.0,
     effective_seconds: float = 0.0,
 ) -> CaseResult:
-    """Compare final production hole scores to one numeric answer key."""
     actual_by_hole: dict[int, Mapping[str, Any]] = {}
     for row in hole_scores:
         hole_number = row.get("hole_number")
@@ -309,7 +296,6 @@ def _make_upload(image_name: str, image_bytes: bytes) -> UploadFile:
 
 
 def prepare_image_for_upload(image_name: str, image_bytes: bytes) -> tuple[str, bytes]:
-    """Apply the Scan UI's 2000px/Q80 image policy to one eval fixture."""
     content_type = mimetypes.guess_type(image_name)[0] or ""
     if not content_type.startswith("image/") or content_type == "image/gif":
         return image_name, image_bytes
@@ -348,8 +334,6 @@ def prepare_image_for_upload(image_name: str, image_bytes: bytes) -> tuple[str, 
 
 
 class _DiagnosticsCapture(logging.Handler):
-    """Collect the scan pipeline's internal diagnostics lines while a case runs."""
-
     LOGGERS = ("api.routers.scan", "services.gemini_table_merger")
 
     def __init__(self) -> None:
@@ -386,7 +370,6 @@ async def run_suite(
     extract: Optional[ExtractCallable] = None,
     clock: Callable[[], float] = time.perf_counter,
 ) -> SuiteRun:
-    """Run each unique image through production OCR once, then grade every case."""
     if prefetch is None or extract is None:
         from api.routers.scan import extract_scan, prefetch_ocr
 
@@ -596,7 +579,6 @@ def render_report(run: SuiteRun, *, suite: str = "quick") -> str:
 
 
 def exit_code_for_run(run: SuiteRun) -> int:
-    """Accuracy failures are informational; only a wholly unusable run fails."""
     return 0 if run.completed_cases > 0 else 2
 
 
@@ -607,7 +589,6 @@ def _validate_provider_keys() -> None:
 
 
 def results_metadata(environment=None):
-    """Metadata for the tested checkout, independent of the mutable PR head ref."""
     environment = os.environ if environment is None else environment
     now = datetime.now(timezone.utc)
 
@@ -637,7 +618,6 @@ def results_metadata(environment=None):
 
 
 def results_payload(run, *, suite, metadata, scorecard_dir=SCORECARD_DIR):
-    """Export existing grading outcomes; the archive validator reconciles all aggregates."""
     import hashlib
     from scripts.eval_results import validate
 
@@ -689,7 +669,6 @@ def results_payload(run, *, suite, metadata, scorecard_dir=SCORECARD_DIR):
 
 
 def redact_payload(value, secrets):
-    """Redact decoded string values, so secret characters cannot corrupt JSON syntax."""
     if isinstance(value, str):
         for secret in secrets:
             if secret:
@@ -703,7 +682,6 @@ def redact_payload(value, secrets):
 
 
 def render_markdown(run=None, payload=None):
-    """Readable Actions summary. Only fixed markup is HTML; all report text is escaped."""
     import html
 
     if payload is None:
@@ -785,7 +763,6 @@ def main(argv: Optional[list[str]] = None) -> int:
                 args.summary_markdown.parent.mkdir(parents=True, exist_ok=True)
                 args.summary_markdown.write_text(render_markdown(payload), encoding="utf-8")
         except (ResultsError, OSError, ValueError) as error:
-            # The scan results above are still valid; only the structured copy is skipped.
             print(f"Warning: structured results not exported: {error}", file=sys.stderr)
             for path in (args.results_json, args.summary_markdown):
                 if path:

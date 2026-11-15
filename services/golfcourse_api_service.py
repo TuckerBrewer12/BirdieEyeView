@@ -1,5 +1,3 @@
-"""Client for querying external GolfCourseAPI course search."""
-
 import os
 import re
 from dataclasses import dataclass
@@ -12,26 +10,22 @@ _GOLF_STOP_WORDS = re.compile(r"\b(golf|course|club|country|links|gc|cc)\b")
 
 
 def _normalize_course_name(value: str) -> str:
-    """Lowercase, strip punctuation and common golf-specific words for comparison."""
     base = re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).strip()
     base = _GOLF_STOP_WORDS.sub(" ", base)
     return " ".join(base.split())
 
 
 class CourseProviderUnavailable(RuntimeError):
-    """The provider could not answer (no key, network failure, error status, or malformed data)."""
+    ...
 
 
 class CourseProviderNotFound(LookupError):
-    """The provider has no course with the requested ID."""
+    ...
 
 
 @dataclass(frozen=True)
 class ProviderTee:
-    """Provider observations for one tee, used only for in-memory comparison.
-
-    Provider data must never be stored. Handicaps and location are not carried.
-    """
+    """Provider data must never be stored."""
 
     group: str
     name: Optional[str]
@@ -50,7 +44,6 @@ def _provider_number(value: Any) -> Optional[float]:
 
 
 def _display_name(club_name: Optional[str], course_name: Optional[str]) -> Optional[str]:
-    """Keep facility identity: "Alpha Golf Club" + "North" -> "Alpha Golf Club North"."""
     club = (club_name or "").strip()
     course = (course_name or "").strip()
     if not club or not course:
@@ -63,14 +56,6 @@ def _display_name(club_name: Optional[str], course_name: Optional[str]) -> Optio
 
 
 class GolfCourseAPIService:
-    """Thin wrapper around GolfCourseAPI search and course detail lookup.
-
-    Env vars:
-    - GOLFCOURSE_API_KEY (preferred) or golfcourse_api_key
-    - GOLFCOURSE_API_BASE_URL (optional, default: https://api.golfcourseapi.com)
-    - GOLFCOURSE_API_SEARCH_PATH (optional, default: /v1/search)
-    """
-
     def __init__(
         self,
         *,
@@ -92,18 +77,6 @@ class GolfCourseAPIService:
         self._timeout = timeout_seconds
 
     async def search_external_courses(self, query: str, *, limit: int = 10) -> List[Dict[str, Any]]:
-        """Search courses from GolfCourseAPI and return normalized rows.
-
-        Normalized shape:
-        {
-          "external_course_id": str|None,
-          "name": str|None,
-          "city": str|None,
-          "state": str|None,
-          "source": "golfcourseapi",
-          "raw": <original item>
-        }
-        """
         q = self._normalize_search_query(query)
         if len(q) < 2:
             return []
@@ -123,15 +96,10 @@ class GolfCourseAPIService:
                 data = resp.json()
                 items = self._extract_items(data)
                 return self._normalize_items(items, limit=limit)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise CourseProviderUnavailable(f"GolfCourseAPI search failed: {exc}") from exc
 
     async def get_course_details(self, external_course_id: str) -> List[ProviderTee]:
-        """Fetch one course's tees with per-hole par and yardage (``GET /v1/courses/{id}``).
-
-        Raises ``CourseProviderNotFound`` for an unknown ID and ``CourseProviderUnavailable`` for
-        anything else that prevents a comparison.
-        """
         if not self._api_key:
             raise CourseProviderUnavailable("GOLFCOURSE_API_KEY environment variable is not set")
         headers = {"Authorization": f"Key {self._api_key}"}
@@ -145,7 +113,7 @@ class GolfCourseAPIService:
                 if exc.response is not None and exc.response.status_code == 404:
                     raise CourseProviderNotFound(external_course_id) from exc
                 raise CourseProviderUnavailable(f"GolfCourseAPI course lookup failed: {exc}") from exc
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise CourseProviderUnavailable(f"GolfCourseAPI course lookup failed: {exc}") from exc
         tees = self._parse_course_tees(payload)
         if not tees:
@@ -187,12 +155,10 @@ class GolfCourseAPIService:
         return out
 
     def _normalize_search_query(self, query: str) -> str:
-        """Normalize user query to provider-friendly form while keeping one request."""
         cleaned = _normalize_course_name(query)
         return cleaned or " ".join((query or "").strip().split())
 
     def _extract_items(self, payload: Any) -> List[Dict[str, Any]]:
-        """Extract a list of course objects from varying JSON response shapes."""
         if isinstance(payload, list):
             return [x for x in payload if isinstance(x, dict)]
         if not isinstance(payload, dict):
@@ -229,7 +195,6 @@ class GolfCourseAPIService:
         return out
 
     def _extract_external_id(self, row: Dict[str, Any]) -> Optional[Any]:
-        """Best-effort external ID extraction across common API response shapes."""
         direct_keys = (
             "id",
             "course_id",

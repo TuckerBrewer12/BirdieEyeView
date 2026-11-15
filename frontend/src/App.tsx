@@ -1,28 +1,26 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
 import { useEffect } from "react";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import { ScanProvider } from "./context/ScanContext";
-import { AppLayout } from "./components/layout/AppLayout";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { VerifyPendingPage } from "./pages/VerifyPendingPage";
-import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "./pages/ResetPasswordPage";
-import { VerifyEmailPage } from "./pages/VerifyEmailPage";
-import { LandingPage } from "./pages/public/LandingPage";
-import { applyTheme, getStoredPublicTheme, getStoredTheme } from "./lib/theme";
+import { AuthProvider } from "./context/AuthContext";
+import { useAuth } from "./context/auth";
+import { ScanPage, ScanSessionProvider } from "./pages/scan";
+import { AppLayout } from "./app/AppLayout";
+import {
+  ForgotPasswordPage,
+  LoginPage,
+  RegisterPage,
+  ResetPasswordPage,
+  VerifyEmailPage,
+  VerifyPendingPage,
+} from "./pages/auth";
+import { LandingPage } from "./pages/landing-page";
 
-import { DashboardPage } from "./pages/DashboardPage";
-import { RoundsPage } from "./pages/RoundsPage";
-import { RoundDetailPage } from "./pages/RoundDetailPage";
-import { CoursesPage } from "./pages/CoursesPage";
-import { ScanPage } from "./pages/ScanPage";
-import { AnalyticsPage } from "./pages/AnalyticsPage";
-import { CareerPage } from "./pages/CareerPage";
-import { TheLabPage } from "./pages/TheLabPage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { FriendsInboxPage } from "./pages/FriendsInboxPage";
-import { SocialPage } from "./pages/SocialPage";
+import { DashboardPage } from "./pages/dashboard";
+import { RoundsPage, RoundDetailPage } from "./pages/rounds";
+import { CoursesPage, CourseDetailPage } from "./pages/courses";
+import { AnalyticsPage } from "./pages/analytics";
+import { CareerPage } from "./pages/career";
+import { SettingsPage } from "./pages/settings";
+import { SocialPage, FriendsInboxPage } from "./pages/social";
 import { BrandHarness } from "./brand/BrandHarness";
 
 function ScrollToTop() {
@@ -49,35 +47,23 @@ function RootRoutes() {
     return <BrandRoutes />;
   }
 
-  return <AppRoutes />;
+  return (
+    <AuthProvider>
+      <ScanSessionProvider>
+        <AppRoutes />
+      </ScanSessionProvider>
+    </AuthProvider>
+  );
 }
 
 function AppRoutes() {
   const { userId, loading } = useAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    const isPublicRoute =
-      location.pathname === "/" ||
-      location.pathname === "/login" ||
-      location.pathname === "/register" ||
-      location.pathname === "/forgot-password" ||
-      location.pathname === "/reset-password" ||
-      location.pathname === "/verify-email" ||
-      location.pathname === "/verify-pending";
-    if (!userId && isPublicRoute) {
-      applyTheme(getStoredPublicTheme());
-      return;
-    }
-    if (userId) {
-      applyTheme(getStoredTheme());
-    }
-  }, [userId, location.pathname]);
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-400">Loading…</div>
+        <div className="text-muted-foreground">Loading…</div>
       </div>
     );
   }
@@ -113,10 +99,11 @@ function AppRoutes() {
           <Route path="/rounds" element={<RoundsPage userId={userId} />} />
           <Route path="/rounds/:roundId" element={<RoundDetailPage userId={userId} />} />
           <Route path="/courses" element={<CoursesPage userId={userId} />} />
+          <Route path="/courses/:courseId" element={<CourseDetailPage userId={userId} />} />
           <Route path="/scan" element={<ScanPage userId={userId} />} />
           <Route path="/analytics" element={<AnalyticsPage userId={userId} />} />
-          <Route path="/the-lab" element={<TheLabPage userId={userId} />} />
-          <Route path="/social" element={<SocialPage />} />
+          <Route path="/the-lab" element={<Navigate to="/analytics?tab=profile" replace />} />
+          <Route path="/social" element={<SocialPage userId={userId} />} />
           <Route path="/career" element={<CareerPage userId={userId} />} />
           <Route path="/inbox" element={<FriendsInboxPage userId={userId} />} />
           <Route path="/settings" element={<SettingsPage userId={userId} />} />
@@ -129,12 +116,8 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <ScanProvider>
-          <ScrollToTop />
-          <RootRoutes />
-        </ScanProvider>
-      </AuthProvider>
+      <ScrollToTop />
+      <RootRoutes />
     </BrowserRouter>
   );
 }

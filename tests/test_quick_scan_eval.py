@@ -48,7 +48,6 @@ def make_result(case_id, matched, total=10, *, error=None):
     "manifest_path", quick_eval.SUITE_MANIFEST_PATHS.values(), ids=tuple(quick_eval.SUITE_MANIFEST_PATHS),
 )
 def test_every_committed_case_loads_with_its_image_and_full_hole_coverage(manifest_path):
-    # Growth-proof: adding scorecards to the manifest needs no change here.
     cases = load_cases(manifest_path)
 
     assert cases and len({case.case_id for case in cases}) == len(cases)
@@ -178,7 +177,7 @@ def test_notes_stay_out_of_the_scan_and_known_gaps_load(tmp_path):
     [case] = load_cases(manifest_path, scorecard_dir=scorecard_dir)
 
     assert case.known_gap == "No score row."
-    assert "Initial" not in case.user_context  # notes are for people, never sent to the scanner
+    assert "Initial" not in case.user_context
 
 
 @pytest.mark.parametrize("field", ["notes", "known_gap"])
@@ -334,7 +333,6 @@ def test_accuracy_failure_does_not_fail_process_but_unusable_run_does():
     assert exit_code_for_run(unusable) == 2
 
 
-# Structured export is CLI-only behavior (3b), separate from live provider calls.
 def test_results_export_and_markdown_use_existing_grading(tmp_path):
     from scripts.eval_results import validate
     fixture = tmp_path/'card.png'
@@ -420,8 +418,8 @@ def test_failed_structured_export_warns_but_keeps_the_eval_exit_code(monkeypatch
     monkeypatch.setenv('MISTRAL_API_KEY', 'fake-key-mistral')
     monkeypatch.setenv('GOOGLE_API_KEY', 'fake-key-google')
 
-    assert quick_eval.main(['--results-json', str(stale)]) == 0  # the scan results still count
+    assert quick_eval.main(['--results-json', str(stale)]) == 0
     captured = capsys.readouterr()
     assert 'Quick scan evaluation' in captured.out
     assert 'Warning: structured results not exported: Invalid run.run_url' in captured.err
-    assert not stale.exists()  # a stale file from an earlier run is never uploaded as this run
+    assert not stale.exists()
