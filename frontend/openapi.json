@@ -9374,21 +9374,21 @@
         "parameters": [
           {
             "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
             "name": "round_id",
             "required": true,
             "schema": {
               "format": "uuid",
               "title": "Round Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
               "type": "string"
             }
           }
@@ -9432,21 +9432,21 @@
         "parameters": [
           {
             "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
             "name": "course_id",
             "required": true,
             "schema": {
               "format": "uuid",
               "title": "Course Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
               "type": "string"
             }
           }
@@ -9527,64 +9527,6 @@
           }
         ],
         "summary": "Get Dashboard",
-        "tags": [
-          "stats"
-        ]
-      }
-    },
-    "/api/stats/milestones/{user_id}": {
-      "get": {
-        "operationId": "get_milestones_api_stats_milestones__user_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 12,
-              "maximum": 50,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Get Milestones",
         "tags": [
           "stats"
         ]

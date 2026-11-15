@@ -100,3 +100,21 @@ def whs_breakdown(
         "diff_avg": sum(used) / len(used) if used else None,
         "has_rated_rounds": any(d.get("course_rating") is not None for d in differentials),
     }
+
+
+def format_totals(summaries: List[Round], holes: int) -> Dict[str, Any]:
+    rows = [r for r in summaries if r.is_complete() and len(r.get_intended_holes()) == holes]
+
+    def average(getter):
+        values = [v for r in rows if (v := getter(r)) is not None]
+        return round(sum(values) / len(values), 1) if values else None
+
+    best = min(rows, key=lambda r: r.calculate_total_score()) if rows else None
+    return {
+        "average": average(lambda r: r.calculate_total_score()),
+        "best": best.calculate_total_score() if best else None,
+        "best_id": str(best.id) if best else None,
+        "best_course": (best.course_name_played or (best.course.name if best.course else None)) if best else None,
+        "average_putts": average(lambda r: r.get_total_putts()),
+        "average_gir": average(lambda r: r.get_total_gir()),
+    }
