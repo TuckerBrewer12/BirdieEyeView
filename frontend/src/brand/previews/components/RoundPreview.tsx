@@ -9,10 +9,6 @@ const [overPar, evenPar, best, unlinked] = populatedRounds.map(Round.fromSummary
 export default function RoundPreviewPreview() {
   return (
     <>
-      <RoundPreview round={best} variant="highlight" onClick={() => {}} />
-      <RoundPreview round={evenPar} variant="highlight" onClick={() => {}} />
-      <RoundPreview round={overPar} variant="highlight" onClick={() => {}} />
-      <RoundPreview round={null} variant="highlight" />
       <Card className="gap-0 py-0">
         <Collection
           layout="divided"

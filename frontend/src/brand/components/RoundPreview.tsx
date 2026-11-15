@@ -1,12 +1,9 @@
-import { ChevronRight, Trophy } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/brand/cn";
-import { EmptyNote } from "./EmptyNote";
 import { HoleScoreBars } from "@/brand/charts/HoleScoreBars";
-import { HoleScoreShapes } from "@/brand/charts/HoleScoreShapes";
 import { Button, RowButton } from "@/brand/components/Button";
 import { StatValue } from "@/brand/components/Stat";
 import { ToParPill } from "@/brand/components/ToParPill";
-import { toParLabel, toParTextClass } from "@/brand/theme";
 import { roundDayAndTee, type RoundSummary } from "@/domain";
 import { courseLabel } from "@/domain/course";
 import { formatDay, formatDayShort, dayParts } from "@/domain/date";
@@ -16,12 +13,6 @@ interface RoundListProps {
   variant?: "history";
   onClick?: () => void;
   onLinkClick?: () => void;
-}
-
-interface RoundHighlightProps {
-  round: RoundSummary | null;
-  variant: "highlight";
-  onClick?: () => void;
 }
 
 interface RoundCompactProps {
@@ -38,12 +29,9 @@ interface RoundSummaryProps {
   frame?: "outline" | "none";
 }
 
-type RoundPreviewProps = RoundListProps | RoundHighlightProps | RoundCompactProps | RoundSummaryProps;
+type RoundPreviewProps = RoundListProps | RoundCompactProps | RoundSummaryProps;
 
 export function RoundPreview(props: RoundPreviewProps) {
-  if (props.variant === "highlight") {
-    return <RoundHighlight round={props.round} onClick={props.onClick} />;
-  }
   if (props.variant === "compact") {
     return <RoundCompact {...props} />;
   }
@@ -152,68 +140,6 @@ export function RoundPreview(props: RoundPreviewProps) {
       </div>
       <ChevronRight aria-hidden className="hidden size-3.5 shrink-0 text-muted-foreground md:block" />
     </div>
-  );
-}
-
-function RoundHighlight({
-  round,
-  onClick,
-}: {
-  round: RoundSummary | null;
-  onClick?: () => void;
-}) {
-  if (!round) {
-    return (
-      <EmptyNote data-slot="round-preview" className="p-4">
-        Play a round to unlock highlights!
-      </EmptyNote>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      data-slot="round-preview"
-      onClick={onClick}
-      disabled={!onClick}
-      className={cn(
-        "group flex w-full flex-wrap items-center gap-4 text-left",
-        onClick ? "cursor-pointer" : "cursor-default",
-      )}
-    >
-      <div className="flex shrink-0 items-center gap-3">
-        <div className="flex size-12 items-center justify-center rounded-full border border-score-eagle/recessed bg-score-eagle/tint text-score-eagle">
-          <Trophy className="size-5" />
-        </div>
-        <div>
-          <div className="mb-1 text-xs font-bold uppercase tracking-eyebrow text-muted-foreground">
-            Best Recent Round
-          </div>
-          <div className="font-bold leading-tight text-card-foreground transition-colors group-hover:text-primary">
-            {courseLabel(round.course?.name)}
-          </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {formatDayShort(round.date) ?? "—"}
-            {round.toPar != null && (
-              <>
-                {" · "}
-                <span className={cn("font-semibold", toParTextClass(round.toPar))}>{toParLabel(round.toPar)}</span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="shrink-0 overflow-x-auto">
-        <HoleScoreShapes round={round} />
-      </div>
-
-      <div className="shrink-0 text-right">
-        <div className="text-figure-lg font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
-          {round.score ?? "—"}
-        </div>
-      </div>
-    </button>
   );
 }
 
