@@ -80,7 +80,6 @@ def test_save_round_request_omits_unknown_tee_yardages():
         all_tees=[TeeInput(color="Blue", hole_yardages={"1": 410, "2": None})],
     )
 
-    # Unknown yardages are omitted, the domain's representation of an unknown hole.
     assert request.all_tees[0].hole_yardages == {"1": 410}
 
 
@@ -112,6 +111,3 @@ def test_save_round_request_omits_unknown_tee_yardages():
 def test_save_round_request_rejects_invalid_payload(payload):
     with pytest.raises(ValidationError):
         SaveRoundRequest.model_validate(payload)
-
-
-# =========================================================

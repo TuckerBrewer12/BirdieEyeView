@@ -26,7 +26,7 @@ def test_tee_validation_and_calculations():
         course_rating=70.0,
         hole_yardages={1: 400, 2: 350}
     )
-    assert tee.get_total_yardage() is None  # A partial map is not a course total.
+    assert tee.get_total_yardage() is None
     assert tee.get_hole_yardage(1) == 400
     assert tee.get_hole_yardage(3) is None
 
@@ -59,7 +59,6 @@ def test_course_par_calculations():
     assert course.calculated_par is None
     assert course.front_nine_par is None
 
-    # Supplied totals do not conceal incomplete child observations.
     course.par = 71
     assert course.get_par() is None
     holes[0].par = 4
@@ -122,7 +121,6 @@ def test_hole_score_to_par_no_par_data():
 
 
 def test_score_type_extremes():
-    # Albatross is exactly -3; rarer results retain their own labels.
     assert HoleScore(strokes=2, par_played=5).get_score_type() == "albatross"
     assert HoleScore(strokes=3, par_played=6).get_score_type() == "albatross"
 
@@ -149,7 +147,7 @@ def test_atomic_score_updates():
     assert score.update_field('nonexistent', 1) is not None
 
 
-@pytest.mark.parametrize('par', [2, 7, True])  # below range, above range, bool
+@pytest.mark.parametrize('par', [2, 7, True])
 def test_explicit_par_validation(par):
     with pytest.raises(ValidationError):
         HoleScore().to_par(par)
@@ -236,7 +234,6 @@ def test_round_gets_correct_tee():
     assert r.get_tee().color == "White"
 
 
-# =========================================================
 def test_user_tee_validation():
     ut = UserTee(user_id="user1", name="Custom Tee", slope_rating=120, course_rating=72.0)
     assert ut.slope_rating == 120
@@ -251,8 +248,6 @@ def test_user_tee_validation():
         UserTee(user_id="user1", name="t", course_rating=0)
 
 
-# Tee and UserTee share TeeData's validation, so tee rules run once on Tee;
-# test_user_tee_shares_tee_validation proves UserTee uses the same rules.
 @pytest.fixture(params=[Tee])
 def tee_factory(request):
     def create(**values):
@@ -299,7 +294,7 @@ def test_yardage_coverage_and_summary_freshness(tee_factory):
     assert tee.update_yardages({1: 400}) is None
     assert tee.get_total_yardage() is None
     assert tee.update_yardages({}) is None
-    assert tee.get_total_yardage() is None  # Old summary cannot reappear.
+    assert tee.get_total_yardage() is None
     tee.total_yardage = 3100
     assert tee.get_total_yardage() == 3100
     tee.update_yardages({n: 300 for n in FRONT_NINE})
@@ -383,7 +378,7 @@ def test_duplicate_and_unnumbered_scores_are_not_double_counted():
     assert round_.calculate_total_score() == 36
     assert round_.total_to_par() == 0
     assert not round_.is_complete()
-    assert len(round_.hole_scores) == 10  # Unidentified data stays available for review.
+    assert len(round_.hole_scores) == 10
     round_.hole_scores = [*scores, HoleScore(hole_number=10, strokes=4)]
     assert round_.calculate_total_score() is None
     assert not round_.is_complete()
@@ -443,12 +438,11 @@ def test_summary_sources_and_nested_edits():
     assert round_.get_total_putts() == 30
     assert round_.update_hole_score(1, putts=2) is None
     assert round_.get_total_putts() == 2
-    assert round_.get_total_gir() == 10  # Unrelated summary is preserved.
+    assert round_.get_total_gir() == 10
     round_.hole_scores[0].putts = None
     assert round_.get_total_putts() is None
     round_.total_putts = 31
     assert round_.get_total_putts() == 31
-    # Even without an intervening read, adding and clearing a value invalidates its old source.
     round_.hole_scores[0].putts = 1
     round_.hole_scores[0].putts = None
     assert round_.get_total_putts() is None
@@ -476,7 +470,7 @@ def test_course_duplicates_summary_and_save_readiness():
     assert course.has_required_course_data('white')
     assert not course.has_required_course_data('Red')
     assert not course.has_required_course_data('Blue')
-    assert course.tees[0].course_rating is None  # Ratings are optional for basic saving.
+    assert course.tees[0].course_rating is None
     course.holes = [*holes[:-1], holes[0]]
     assert course.get_hole(1) is None
     assert course.front_nine_par is None
@@ -648,11 +642,10 @@ def test_ambiguous_course_tee_does_not_fall_back_to_user_tee():
 
 
 @pytest.mark.parametrize("model, field, value", [
-    # One per coercion path (bool, numeric text, integral float) and one per model.
     (HoleScore, "strokes", True),
     (HoleScore, "strokes", "5"),
     (HoleScore, "strokes", 5.0),
-    (HoleScore, "putts", False),  # putts is declared separately; False must not become 0 putts
+    (HoleScore, "putts", False),
     (Hole, "par", "4"),
     (User, "handicap", True),
     (Tee, "slope_rating", "113"),

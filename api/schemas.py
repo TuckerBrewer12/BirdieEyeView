@@ -943,13 +943,6 @@ class SaveScanResponse(ResponseModel):
 
 
 class DomainResponse(BaseModel):
-    """Builds from a domain model's serialized form, not its attributes.
-
-    Domain serializers compute values such as course par, round totals and tee total yardage;
-    reading attributes instead (FastAPI's default for a returned model) would send their stored,
-    often empty, values.
-    """
-
     @model_validator(mode="before")
     @classmethod
     def _serialize_domain_model(cls, value: Any) -> Any:

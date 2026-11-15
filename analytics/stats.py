@@ -39,7 +39,6 @@ def _normalize_tee_label(value: Optional[str]) -> str:
 
 
 def _resolve_tee_for_yardage(round_obj: Round) -> Optional[Any]:
-    """Return a tee-like object that has hole_yardages for yardage analytics."""
     tee = round_obj.get_tee()
     if tee and tee.hole_yardages:
         return tee
@@ -55,13 +54,9 @@ def _resolve_tee_for_yardage(round_obj: Round) -> Optional[Any]:
             if len(exact) == 1:
                 return exact[0]
 
-            # No prefix guessing: "Blue/White" is not "Blue". An unmatched selection stays unknown.
-
     if round_obj.user_tee and round_obj.user_tee.hole_yardages:
         return round_obj.user_tee
 
-    # Without a tee selection, a course with exactly one tee is unambiguous. A selected tee that
-    # isn't on the course never borrows another tee's yardages: the yardage is unknown.
     if round_obj.course and not round_obj.tee_box:
         populated = [candidate for candidate in round_obj.course.tees if candidate.hole_yardages]
         if len(populated) == 1:
@@ -116,7 +111,6 @@ def _course_label(round_obj: Round) -> Optional[str]:
 
 
 def _milestone_event(round_obj: Optional[Round]) -> Optional[Dict[str, Optional[str]]]:
-    """Display event for a round: date, course and round_id (None for a missing or undated round)."""
     if round_obj is None or round_obj.date is None:
         return None
     return {
@@ -126,22 +120,12 @@ def _milestone_event(round_obj: Optional[Round]) -> Optional[Dict[str, Optional[
     }
 
 
-# ================================================================
-# Achievements
-#
-# Round records, breaks and milestones use complete rounds only, by format: eighteen-hole totals
-# from complete 18-hole rounds, nine-hole totals alongside (never doubled). Hole totals and streaks
-# use every scored hole. Score names are exact (an albatross is not an eagle). Rounds are taken
-# in date order, and the one-year window keeps the time of day and excludes future-dated rounds.
-# ================================================================
-
 SCORE_BREAK_THRESHOLDS = [120, 110, 100, 95, 90, 85, 80, 75, 70, 65, 60]
 PUTT_BREAK_THRESHOLDS = list(range(45, 20, -3))
 GIR_BREAK_THRESHOLDS = list(range(3, 19, 3))
 
 
 def _hole_rows(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """One row per scored hole, rounds in date order; ``to_par`` is None when par is unknown."""
     rows: List[Dict[str, Any]] = []
     for round_obj in rounds:
         for score in el.scored_holes(round_obj):
@@ -165,12 +149,10 @@ def _to_par_is(value: int):
 
 
 def _first_round(rounds: List[Round], predicate) -> Optional[Round]:
-    """Earliest round (input is chronological) satisfying ``predicate``."""
     return next((r for r in rounds if predicate(r)), None)
 
 
 def _best_round(rounds: List[Round], metric, *, lower: bool) -> tuple[Optional[float], Optional[Round]]:
-    """Best metric value and the earliest round reaching it."""
     best_value: Optional[float] = None
     best: Optional[Round] = None
     for round_obj in rounds:
@@ -198,7 +180,6 @@ def _streak(rows: List[Dict[str, Any]], predicate) -> tuple[int, Optional[Dict[s
 
 
 def _lowest_nine_holes(rounds: List[Round]) -> tuple[Optional[int], Optional[Round]]:
-    """Lowest fully scored nine (holes 1-9 or 10-18) inside any round."""
     def best_nine(round_obj: Round) -> Optional[int]:
         by_hole = {score.hole_number: score.strokes for score in el.scored_holes(round_obj)}
         nines = [
@@ -221,7 +202,6 @@ _ROW_CACHE = threading.local()
 
 
 def _round_rows(round_obj: Round) -> List[Dict[str, Any]]:
-    """Hole rows for one round, built once per ``notable_achievements`` call (per thread)."""
     cache = getattr(_ROW_CACHE, "rows", None)
     if cache is None:
         return _hole_rows([round_obj])
@@ -236,12 +216,10 @@ def _round_count(round_obj: Round, predicate) -> int:
 
 
 def _with_pars(rounds: List[Round]) -> List[Round]:
-    """Rounds whose scored holes all have a known par (needed to count birdies/eagles)."""
     return [r for r in rounds if r.total_to_par() is not None]
 
 
 def _with_putts(rounds: List[Round]) -> List[Round]:
-    """Rounds with putts known on every scored hole (needed for putting records)."""
     return [r for r in rounds if r.get_total_putts() is not None]
 
 
@@ -353,12 +331,6 @@ def notable_achievements(
     days: int = 365,
     home_course_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """
-    Aggregate player achievement stats for lifetime and a one-year window.
-
-    The one-year window is rolling (default last 365 days) relative to ``reference_date`` or the
-    current time, compared with the time of day kept; future-dated rounds are outside it.
-    """
     moment = reference_date or datetime.now(timezone.utc)
     if not isinstance(moment, datetime):
         moment = datetime.combine(moment, datetime.min.time())
@@ -387,7 +359,6 @@ def notable_achievements(
 
 
 def _notable_achievements(rounds_list, now, cutoff, days, home_course_id) -> Dict[str, Any]:
-
     def in_window(round_obj: Optional[Round]) -> bool:
         return (
             round_obj is not None
@@ -541,7 +512,6 @@ def _notable_achievements(rounds_list, now, cutoff, days, home_course_id) -> Dic
 
 
 def round_summary(round_obj: Round) -> Dict[str, Optional[float]]:
-    """Compute summary metrics for a single round."""
     holes_played = len(el.scored_holes(round_obj))
     total_putts = round_obj.get_total_putts()
     total_gir = round_obj.get_total_gir()
@@ -572,12 +542,6 @@ def metric_comparison_snapshot(
     windows: tuple[int, ...] = (5, 10, 20),
     selected_label: str = "Selected Round",
 ) -> List[Dict[str, Any]]:
-    """
-    Compare one round against trailing average windows ending at that round.
-
-    The selected round defaults to the most recent row. If a round_index is
-    supplied, the trailing averages are computed using rows up to that round.
-    """
     target_index = _resolve_round_index(rows, round_index)
     history = rows[: target_index + 1]
     target_row = history[-1]
@@ -616,7 +580,6 @@ def metric_comparison_snapshot(
 
 
 def putts_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """Return putt totals by round for plotting/reporting."""
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
         results.append(
@@ -632,11 +595,6 @@ def putts_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 def _comparable_rows(rounds: List[Round], rows: List[Dict[str, Any]], round_index: Optional[int],
                      keys: tuple[str, ...]) -> List[Dict[str, Any]]:
-    """Blank ``keys`` on rows that can't be compared with the selected round.
-
-    Round totals only compare between complete rounds of the same format (a nine-hole 45 is not
-    averaged with an 18-hole 90). Row positions are kept so ``round_index`` still lines up.
-    """
     if not rows:
         return rows
     target = rounds[_resolve_round_index(rows, round_index)]
@@ -664,22 +622,14 @@ def _compare(rounds: Iterable[Round], rows_fn, round_index: Optional[int], prima
 
 
 def score_comparison(rounds: Iterable[Round], round_index: Optional[int] = None) -> List[Dict[str, Any]]:
-    """Selected round score vs trailing averages of complete rounds of the same format."""
     return _compare(rounds, score_trend, round_index, "total_score", "to_par")
 
 
 def putts_comparison(rounds: Iterable[Round], round_index: Optional[int] = None) -> List[Dict[str, Any]]:
-    """Selected round putts vs trailing averages of complete rounds of the same format."""
     return _compare(rounds, putts_per_round, round_index, "total_putts")
 
 
 def three_putts_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Return 3-putt count and percentage for each round.
-
-    Counts holes with 3 or more putts among scored holes with known putts. With no putt
-    observations the count and percentage are unknown (None), not zero.
-    """
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
         scores_with_putts = [score for score in el.scored_holes(round_obj) if score.putts is not None]
@@ -702,12 +652,10 @@ def three_putts_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 
 def three_putts_comparison(rounds: Iterable[Round], round_index: Optional[int] = None) -> List[Dict[str, Any]]:
-    """Selected round 3+ putts vs trailing averages of complete rounds of the same format."""
     return _compare(rounds, three_putts_per_round, round_index, "three_putt_count", "three_putt_percentage")
 
 
 def _missed_green_holes(round_obj: Round):
-    """Scored holes with GIR known to be missed and a known par: (score, par) pairs."""
     for score in el.scored_holes(round_obj):
         if score.green_in_regulation is False:
             par = el.hole_par(round_obj, score.hole_number)
@@ -716,23 +664,16 @@ def _missed_green_holes(round_obj: Round):
 
 
 def _scramble_rate(round_obj: Round) -> el.Rate:
-    """Scrambling: after missing the green, par or better."""
     holes = list(_missed_green_holes(round_obj))
     return el.Rate(sum(1 for score, par in holes if score.strokes <= par), len(holes))
 
 
 def _up_and_down_rate(round_obj: Round) -> el.Rate:
-    """Up-and-down: after missing the green, at most one putt and par or better."""
     holes = [(score, par) for score, par in _missed_green_holes(round_obj) if score.putts is not None]
     return el.Rate(sum(1 for score, par in holes if score.putts <= 1 and score.strokes <= par), len(holes))
 
 
 def scrambling_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Scrambling by round:
-    - Opportunity: scored hole with GIR missed and a known par (played par or course par)
-    - Success: opportunity hole scored at par or better
-    """
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
         rate = _scramble_rate(round_obj)
@@ -750,11 +691,6 @@ def scrambling_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 
 def up_and_down_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Up & Down by round:
-    - Opportunity: scored hole with GIR missed, known putts and a known par
-    - Success: at most one putt and par or better (holed out from off the green counts)
-    """
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
         rate = _up_and_down_rate(round_obj)
@@ -776,26 +712,18 @@ def _overall_rate(rates: Iterable[el.Rate]) -> Dict[str, Optional[float]]:
 
 
 def overall_scrambling(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
-    """Scrambling over all opportunities (total successes / total opportunities)."""
     return _overall_rate(_scramble_rate(r) for r in rounds)
 
 
 def overall_up_and_down(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
-    """Up-and-down over all opportunities (total successes / total opportunities)."""
     return _overall_rate(_up_and_down_rate(r) for r in rounds)
 
 
 def scrambling_comparison(rounds: Iterable[Round], round_index: Optional[int] = None) -> List[Dict[str, Any]]:
-    """Selected round scrambling vs trailing averages of complete rounds of the same format."""
     return _compare(rounds, scrambling_per_round, round_index, "scramble_successes", "scrambling_percentage")
 
 
 def score_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """Return total score trend data by round.
-
-    Every round keeps its row (so round_index lines up with the other trends), but only a
-    complete round has a total; ``holes`` is its format (9 or 18), never doubled.
-    """
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
         complete = round_obj.is_complete()
@@ -821,12 +749,6 @@ def net_score_trend(
     rounds: Iterable[Round],
     current_handicap_index: Optional[float],
 ) -> List[Dict[str, Any]]:
-    """Return net score trend data by round.
-
-    Net score = gross - Course Handicap, only for a complete round (``Round.calculate_net_score``)
-    with a rating covering the holes played. ``to_par`` matches ``score_trend``.
-    """
-
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
         complete = round_obj.is_complete()
@@ -849,12 +771,6 @@ def net_score_trend(
 
 
 def score_trend_on_this_course(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Score trend for rounds on a single course.
-
-    Rows are ordered by round date (oldest to newest) when date values are available.
-    """
-    # Shared date ordering: undated last, aware and naive dates compared safely, ties in input order.
     ordered_rounds = list(enumerate(el.chronological(rounds)))
 
     results: List[Dict[str, Any]] = []
@@ -873,7 +789,6 @@ def score_trend_on_this_course(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 
 def gir_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """Return GIR totals and percentage by round."""
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
         holes_played = len(el.scored_holes(round_obj))
@@ -895,18 +810,10 @@ def gir_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 
 def gir_comparison(rounds: Iterable[Round], round_index: Optional[int] = None) -> List[Dict[str, Any]]:
-    """Selected round GIR vs trailing averages of complete rounds of the same format."""
     return _compare(rounds, gir_per_round, round_index, "total_gir", "gir_percentage")
 
 
 def putts_per_gir(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Return putts-per-GIR by round.
-
-    Formula:
-    - putts_on_gir: sum(putts on holes where GIR is True)
-    - putts_per_gir: putts_on_gir / GIR count
-    """
     results: List[Dict[str, Any]] = []
     for index, round_obj in enumerate(rounds, start=1):
         gir_scores = [score for score in el.scored_holes(round_obj) if score.green_in_regulation is True]
@@ -930,12 +837,10 @@ def putts_per_gir(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 
 def putts_per_gir_comparison(rounds: Iterable[Round], round_index: Optional[int] = None) -> List[Dict[str, Any]]:
-    """Selected round putts-per-GIR vs trailing averages of complete rounds of the same format."""
     return _compare(rounds, putts_per_gir, round_index, "putts_per_gir", "putts_on_gir")
 
 
 def overall_putts_per_gir(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
-    """Aggregate putts per GIR over GIR holes with known putts (same denominator as per round)."""
     total_putts_on_gir = 0
     total_gir = 0
     rounds_with_data = 0
@@ -959,10 +864,6 @@ def overall_putts_per_gir(rounds: Iterable[Round]) -> Dict[str, Optional[float]]
 
 
 def overall_gir_percentage(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
-    """Aggregate GIR percentage over scored holes whose GIR was observed.
-
-    Nine- and eighteen-hole rounds combine; holes with unknown GIR are neither hits nor misses.
-    """
     total_holes = 0
     total_gir = 0
     rounds_with_data = 0
@@ -984,13 +885,6 @@ def overall_gir_percentage(rounds: Iterable[Round]) -> Dict[str, Optional[float]
 
 
 def gir_vs_non_gir_score_distribution(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Aggregate score-type percentages for GIR holes vs non-GIR holes.
-
-    Returns two rows:
-    - GIR
-    - No GIR
-    """
     buckets = {
         "GIR": {name: 0 for name in SCORE_TYPE_ORDER},
         "No GIR": {name: 0 for name in SCORE_TYPE_ORDER},
@@ -1025,13 +919,6 @@ def gir_vs_non_gir_score_distribution(rounds: Iterable[Round]) -> List[Dict[str,
 
 
 def average_score_when_gir_vs_missed(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Aggregate average hole score for GIR-hit vs missed-GIR holes.
-
-    Returns two rows:
-    - GIR
-    - No GIR
-    """
     buckets: Dict[str, Dict[str, float]] = {
         "GIR": {"strokes_sum": 0.0, "to_par_sum": 0.0, "holes_counted": 0.0},
         "No GIR": {"strokes_sum": 0.0, "to_par_sum": 0.0, "holes_counted": 0.0},
@@ -1073,7 +960,6 @@ MIN_CONSISTENCY_OBSERVATIONS = 3
 
 
 def _observed_holes(rounds: Iterable[Round]):
-    """Every scored hole with a known par: (round, score, par). Nine- and 18-hole rounds combine."""
     for round_obj in rounds:
         for score in el.scored_holes(round_obj):
             par = el.hole_par(round_obj, score.hole_number)
@@ -1082,20 +968,12 @@ def _observed_holes(rounds: Iterable[Round]):
 
 
 def _scored_holes_any_par(rounds: Iterable[Round]):
-    """Every scored hole with its par if known: (round, score, par or None)."""
     for round_obj in rounds:
         for score in el.scored_holes(round_obj):
             yield round_obj, score, el.hole_par(round_obj, score.hole_number)
 
 
 def score_variance_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Aggregate scoring consistency by hole using score standard deviation.
-
-    Higher standard deviation indicates less consistent scoring on that hole. Only holes with
-    at least ``MIN_CONSISTENCY_OBSERVATIONS`` scores are ranked; others get ``variance_rank``
-    None (one observation has no measurable spread).
-    """
     by_hole: Dict[int, Dict[str, Any]] = {}
 
     for _, hole_score, par in _observed_holes(rounds):
@@ -1134,16 +1012,6 @@ def score_variance_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 
 def scoring_vs_hole_handicap(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Aggregate average score-to-par by hole handicap.
-
-    Handicap rank is the one played, else the linked course hole's rank.
-
-    Output rows:
-    - handicap: 1-18
-    - average_to_par: mean(strokes - par)
-    - sample_size: number of scored holes used
-    """
     by_handicap: Dict[int, List[int]] = {}
 
     for round_obj, hole_score, par in _observed_holes(rounds):
@@ -1170,11 +1038,6 @@ def scoring_vs_hole_handicap(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 
 def average_score_relative_to_par_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Aggregate average score and average score-to-par by hole number.
-
-    Intended for rounds played on the same course.
-    """
     by_hole: Dict[int, Dict[str, Any]] = {}
 
     for _, hole_score, par in _observed_holes(rounds):
@@ -1204,11 +1067,6 @@ def average_score_relative_to_par_by_hole(rounds: Iterable[Round]) -> List[Dict[
 
 
 def course_difficulty_profile_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Return hole difficulty sorted from hardest to easiest for a single course.
-
-    Hardest is defined as the highest average score-to-par.
-    """
     rows = average_score_relative_to_par_by_hole(rounds)
     rows.sort(key=lambda row: (-row["average_to_par"], row["hole_number"]))
     for index, row in enumerate(rows, start=1):
@@ -1217,7 +1075,6 @@ def course_difficulty_profile_by_hole(rounds: Iterable[Round]) -> List[Dict[str,
 
 
 def gir_percentage_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """Aggregate GIR percentage by hole number over holes whose GIR was observed (par not required)."""
     by_hole: Dict[int, Dict[str, Any]] = {}
 
     for _, hole_score, par in _scored_holes_any_par(rounds):
@@ -1249,11 +1106,6 @@ def gir_percentage_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 
 def average_putts_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """Aggregate average putts by hole number over holes with known putts.
-
-    A hole with unknown putts is skipped on its own; other holes in that round still count.
-    Par is reported when known but not required.
-    """
     by_hole: Dict[int, Dict[str, Any]] = {}
 
     for _, hole_score, par in _scored_holes_any_par(rounds):
@@ -1282,15 +1134,6 @@ def average_putts_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 
 def scoring_by_par(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Aggregate scoring performance by hole par (3, 4, 5).
-
-    Output rows:
-    - par: 3, 4, or 5
-    - average_to_par: mean(strokes - par)
-    - average_strokes: mean(strokes)
-    - sample_size: number of holes included
-    """
     by_par: Dict[int, List[int]] = {}
 
     for _, hole_score, par in _observed_holes(rounds):
@@ -1312,7 +1155,6 @@ def scoring_by_par(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     return results
 
 
-# Yardage buckets per par: (low, high, order, label), inclusive bounds.
 YARDAGE_BUCKETS = {
     3: [
         (0,   149,  0, "< 150"),
@@ -1334,18 +1176,6 @@ YARDAGE_BUCKETS = {
 
 
 def scoring_by_yardage_buckets(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Aggregate avg score-to-par and GIR% by yardage bucket within each par.
-
-    Buckets:
-      Par 3: <150, 150-199, 200+
-      Par 4: <350, 350-399, 400-449, 450+
-      Par 5: <500, 500-549, 550+
-
-    Requires a resolvable tee (course tee or the round's custom tee) with hole_yardages.
-    Returns rows sorted by par then bucket_order.
-    """
-    # key: (par, bucket_order) → {"to_par": [...], "gir": [...], "label": str}
     by_bucket: Dict[tuple, Dict[str, Any]] = {}
 
     for round_obj in rounds:
@@ -1397,15 +1227,6 @@ def scoring_by_yardage_buckets(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
 
 
 def score_type_distribution_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """
-    Percentage of holes by score type for each round.
-
-    Categories (chart groups):
-    - eagle (eagle or better)
-    - birdie, par, bogey, double_bogey, triple_bogey, quad_bogey (quad bogey or worse)
-
-    A round with no scored holes of known par has unknown (None) percentages.
-    """
     results: List[Dict[str, Any]] = []
 
     for index, round_obj in enumerate(rounds, start=1):
@@ -1429,7 +1250,6 @@ def score_type_distribution_per_round(rounds: Iterable[Round]) -> List[Dict[str,
 
 
 def score_type_distribution_by_hole(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    """Score-type percentage distribution by hole number for a specific course."""
     by_hole: Dict[int, Dict[str, Any]] = {}
 
     for _, hole_score, par in _observed_holes(rounds):
@@ -1859,8 +1679,6 @@ def rolling_average(values: List[Optional[float]], window: int = 5) -> List[Opti
         recent = [v for v in values[max(0, i - window + 1):i + 1] if v is not None]
         averages.append(round_half_up(sum(recent) / len(recent), 1) if recent else None)
     return averages
-
-
 
 
 def _valid_hole_scores(round_obj: Round):

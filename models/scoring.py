@@ -1,4 +1,3 @@
-"""Exact domain labels, separate from broader analytics chart groups."""
 SCORE_LABELS = {
     -4: 'condor',
     -3: 'albatross',

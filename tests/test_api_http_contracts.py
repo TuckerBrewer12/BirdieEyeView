@@ -1,9 +1,3 @@
-"""API-domain contracts checked through real HTTP requests.
-
-Route-function tests skip FastAPI's request validation and response serialization; these go
-through both. Server errors come back as responses (not raised), so a 500 fails the assertion.
-"""
-
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -38,11 +32,6 @@ def api():
     return TestClient(app, raise_server_exceptions=False), db, user_id
 
 
-# ================================================================
-# Input checks reach the client as 422, never 500
-# ================================================================
-
-
 @pytest.mark.parametrize(
     "body",
     [
@@ -74,7 +63,6 @@ def test_user_tee_update_rejects_boolean_rating(api):
 NINE_HOLES = [{"number": n, "par": 4} for n in range(1, 10)]
 
 
-# Each body is valid except for the one thing its id names, and the message proves which guard fired.
 @pytest.mark.parametrize(
     ("body", "message"),
     [
@@ -105,7 +93,7 @@ def test_valid_nine_hole_course_is_created(api):
 
 def test_profile_update_persists_a_changed_goal(api):
     client, db, user_id = api
-    stored = full_user()  # scoring_goal_nine is 44
+    stored = full_user()
     db.users.update_user = AsyncMock(side_effect=lambda uid, **fields: stored.model_copy(update=fields))
 
     response = client.patch(f"/api/users/{user_id}", json={"scoring_goal_nine": 43})
@@ -121,11 +109,6 @@ def test_profile_update_rejects_invalid_values_without_writing(api, body):
 
     assert client.patch(f"/api/users/{user_id}", json=body).status_code == 422
     db.users.update_user.assert_not_awaited()
-
-
-# ================================================================
-# Errors and access
-# ================================================================
 
 
 def test_user_tee_cannot_link_another_users_private_course(api):
@@ -161,11 +144,6 @@ def test_round_edit_of_missing_round_is_not_found(api):
     response = client.put(f"/api/rounds/{uuid4()}", json={"hole_scores": [{"hole_number": 1, "strokes": 4}]})
 
     assert response.status_code == 404
-
-
-# ================================================================
-# Frozen response JSON
-# ================================================================
 
 
 def test_round_detail_json_is_unchanged(api):

@@ -1,11 +1,3 @@
-"""Scan save service — plans and validates a reviewed scan, then writes course and round atomically.
-
-Course identity always comes from the user's choice: an existing course (``course_id``), a picked
-golf course API result (``external_course_id``), or a typed name. Scanned course data (pars,
-handicaps, tees, yardages, ratings) is what gets stored. The provider is only used to verify a scan;
-its data is compared in memory and never stored, and location is never taken from scan or provider.
-"""
-
 import logging
 from dataclasses import dataclass
 from datetime import datetime
@@ -33,11 +25,6 @@ _TEE_COLOR_TOKENS = (
 
 
 class ScanSaveRejected(ValueError):
-    """The reviewed scan cannot be saved as submitted; nothing was written.
-
-    ``reasons`` are user-facing sentences describing what to fix.
-    """
-
     def __init__(self, reasons: List[str]):
         super().__init__("; ".join(reasons))
         self.reasons = reasons
@@ -45,13 +32,11 @@ class ScanSaveRejected(ValueError):
 
 @dataclass
 class _CoursePlan:
-    """What the write phase will do with the course; decided before any write."""
-
-    course: Course                          # existing course, or the scanned course to create
-    create_owner_id: Optional[str] = None   # set with create=True: None means a master course
+    course: Course
+    create_owner_id: Optional[str] = None
     create: bool = False
-    fill_gaps: bool = False                 # existing user-owned course: fill missing values only
-    verified_update: Optional[Course] = None  # existing master: overwrite with verified scan data
+    fill_gaps: bool = False
+    verified_update: Optional[Course] = None
 
 
 class ScanService:
@@ -60,18 +45,15 @@ class ScanService:
         self._course_api = course_api or GolfCourseAPIService()
 
     async def save_reviewed_scan(self, req: SaveRoundRequest) -> Round:
-        """Plan and validate everything (including provider verification), then write in one transaction."""
         scan_tees = self._build_tees(req)
         scanned = self._build_scanned_course(req, scan_tees)
         plan = await self._plan_course(req, scanned)
 
         tee_box = self._canonicalize_played_tee_box(plan.course, req.tee_box, scan_tees)
-        # A verified update rewrites the course's pars and handicaps, so the round's snapshot
-        # must come from the scan being written, not the course as it was before.
         par_by_hole, handicap_by_hole = self._build_par_lookup(req, plan.verified_update or plan.course)
         hole_scores = self._build_hole_scores(req, par_by_hole, handicap_by_hole)
         played_on = self._parse_date(req.date)
-        self._make_round(req, plan.course, tee_box, hole_scores, played_on)  # validate before writing
+        self._make_round(req, plan.course, tee_box, hole_scores, played_on)
 
         async with self._db.transaction() as conn:
             course = await self._write_course(plan, req, scan_tees, conn)
@@ -79,10 +61,6 @@ class ScanService:
             return await self._db.rounds.create_round(
                 round_, req.user_id, course_id=str(course.id), connection=conn
             )
-
-    # ================================================================
-    # Planning (reads and provider calls only)
-    # ================================================================
 
     async def _plan_course(self, req: SaveRoundRequest, scanned: Course) -> _CoursePlan:
         if req.course_id:
@@ -107,7 +85,6 @@ class ScanService:
             if verified is not None:
                 master = verified.model_copy(update={"external_course_id": req.external_course_id})
                 return _CoursePlan(course=master, create=True, create_owner_id=None)
-            # Not verified: the course still exists for this user, without the provider link.
             return await self._plan_user_course(req, scanned)
 
         if req.course_name:
@@ -116,7 +93,6 @@ class ScanService:
         raise ScanSaveRejected(["Select or enter the course for this round."])
 
     async def _plan_user_course(self, req: SaveRoundRequest, scanned: Course) -> _CoursePlan:
-        """Reuse the user's own course with this exact name, otherwise create it from the scan."""
         if not scanned.name:
             raise ScanSaveRejected(["Enter the course name."])
         own = await self._db.courses.find_owned_course_by_exact_name(scanned.name, req.user_id)
@@ -128,10 +104,6 @@ class ScanService:
     async def _plan_existing(self, course: Course, req: SaveRoundRequest, scanned: Course) -> _CoursePlan:
         if course.user_id is not None:
             return _CoursePlan(course=course, fill_gaps=str(course.user_id) == str(req.user_id))
-        # Master course: update it only from a complete scan that the provider verifies.
-        # Without a provider ID, or when verification fails, the round saves against it unchanged.
-        # A picked course_id usually arrives without course_name; the course's own name stands in
-        # so the completeness check can pass. The name itself is never rewritten.
         if not scanned.name:
             scanned = scanned.model_copy(update={"name": course.name})
         if (
@@ -143,18 +115,11 @@ class ScanService:
             verified = await self._verify_with_provider(course.external_course_id, scanned)
             if verified is not None:
                 update = self._keep_unscanned_ratings(course, verified)
-                # A difference that was only an unconfirmed rating leaves nothing to write.
                 if self._scan_differs_from(course, update):
                     return _CoursePlan(course=course, verified_update=update)
         return _CoursePlan(course=course)
 
     async def _verify_with_provider(self, external_course_id: str, scanned: Course) -> Optional[Course]:
-        """Return the scan to store when the provider verifies it, else None.
-
-        Pars and yardages must match exactly. Ratings are hard to read from a card, so they never
-        block verification: a scanned rating is kept only when the matching provider tee agrees,
-        otherwise it is dropped.
-        """
         try:
             provider_tees = await self._course_api.get_course_details(external_course_id)
         except (CourseProviderUnavailable, CourseProviderNotFound) as exc:
@@ -174,8 +139,6 @@ class ScanService:
 
     @staticmethod
     def _provider_matches(scanned: Course, provider_tees: List[ProviderTee]) -> Optional[List[List[ProviderTee]]]:
-        """For each scanned tee, the provider tees with the same yardage on every expected hole
-        (names ignored) and the scanned pars. None when any scanned tee has no such provider tee."""
         expected = scanned.get_expected_holes()
         if expected is None or not scanned.tees:
             return None
@@ -205,7 +168,6 @@ class ScanService:
 
     @staticmethod
     def _keep_unscanned_ratings(course: Course, scanned: Course) -> Course:
-        """Tees are rewritten in full, so a tee scanned without ratings keeps the master's ratings."""
         tees = []
         for tee in scanned.tees:
             known = course.get_tee(tee.color) if tee.color else None
@@ -221,7 +183,6 @@ class ScanService:
 
     @staticmethod
     def _ratings_match(tee: Tee, provider: ProviderTee) -> bool:
-        """Every rating on the scanned tee equals the provider tee's; a tee without ratings matches."""
         if tee.course_rating is not None and (
             provider.course_rating is None or round(tee.course_rating, 1) != round(provider.course_rating, 1)
         ):
@@ -230,12 +191,6 @@ class ScanService:
 
     @staticmethod
     def _scan_covers_course(course: Course, scanned: Course) -> bool:
-        """True when the scan covers every hole the master has data for.
-
-        Tees are rewritten in full, so a front-nine scan of an 18-hole master would drop its
-        back-nine yardages and ratings. Legacy masters without total_holes are judged by the
-        holes and yardages they actually store.
-        """
         expected = scanned.get_expected_holes()
         if expected is None or course.total_holes not in (None, scanned.total_holes):
             return False
@@ -245,7 +200,6 @@ class ScanService:
 
     @staticmethod
     def _scan_differs_from(course: Course, scanned: Course) -> bool:
-        """True when the scan adds or changes a par, handicap, or tee yardage set on the course."""
         for hole in scanned.holes:
             existing = course.get_hole(hole.number) if hole.number is not None else None
             if existing is None or (hole.par, hole.handicap) != (existing.par, existing.handicap):
@@ -256,7 +210,6 @@ class ScanService:
             same = [known for known in course.tees if dict(known.hole_yardages) == dict(tee.hole_yardages)]
             if not same:
                 return True
-            # A rating missing from the scan was not observed; only a scanned rating can differ.
             if not any(
                 tee.course_rating in (None, known.course_rating) and tee.slope_rating in (None, known.slope_rating)
                 for known in same
@@ -266,7 +219,6 @@ class ScanService:
 
     @staticmethod
     def _require_complete(course: Course, selected_tee: Optional[str]) -> None:
-        """A new course needs par on every expected hole and one tee with every yardage."""
         reasons: List[str] = []
         if not course.name:
             reasons.append("Enter the course name.")
@@ -288,12 +240,7 @@ class ScanService:
         if reasons:
             raise ScanSaveRejected(["Course data is incomplete.", *reasons])
 
-    # ================================================================
-    # Building validated models from the reviewed scan
-    # ================================================================
-
     def _build_scanned_course(self, req: SaveRoundRequest, scan_tees: List[TeeInput]) -> Course:
-        """The course exactly as scanned and reviewed; never carries a location."""
         holes = [h for h in (req.course_holes or []) if h.hole_number is not None]
         numbers = tuple(sorted(h.hole_number for h in holes))
         layout = 18 if numbers == FULL_ROUND else 9 if numbers == FRONT_NINE else None
@@ -320,7 +267,6 @@ class ScanService:
             raise ScanSaveRejected(["Course data on the scorecard is invalid.", *_messages(exc)]) from exc
 
     def _build_tees(self, req: SaveRoundRequest) -> List[TeeInput]:
-        """Normalised tee list: all_tees preferred, single played tee as fallback."""
         if req.all_tees:
             return [t for t in req.all_tees if t.color]
         if req.tee_box:
@@ -335,10 +281,6 @@ class ScanService:
     def _build_par_lookup(
         self, req: SaveRoundRequest, course: Optional[Course]
     ) -> Tuple[dict, dict]:
-        """Build hole→par and hole→handicap dicts.
-
-        Course holes are authoritative; scan holes fill any remaining gaps.
-        """
         par_by_hole: dict = {}
         handicap_by_hole: dict = {}
         if course and course.holes:
@@ -362,11 +304,6 @@ class ScanService:
         par_by_hole: dict,
         handicap_by_hole: dict,
     ) -> List[HoleScore]:
-        """Build HoleScore list with par_played/handicap_played populated from lookup.
-
-        Reviewed values are saved as entered; invalid combinations reject the save rather than
-        being rewritten.
-        """
         hole_scores = []
         reasons: List[str] = []
         for hs in req.hole_scores:
@@ -407,10 +344,6 @@ class ScanService:
         except ValidationError as exc:
             raise ScanSaveRejected(["The round does not fit this course.", *_messages(exc)]) from exc
 
-    # ================================================================
-    # Writing (inside the save transaction)
-    # ================================================================
-
     async def _write_course(
         self, plan: _CoursePlan, req: SaveRoundRequest, scan_tees: List[TeeInput], conn
     ) -> Course:
@@ -421,7 +354,6 @@ class ScanService:
                 )
             except DuplicateError:
                 if plan.create_owner_id is None and plan.course.external_course_id:
-                    # Another save verified this course first; link to that master instead.
                     existing = await self._db.courses.find_course_by_external_id(
                         plan.course.external_course_id, connection=conn
                     )
@@ -448,10 +380,6 @@ class ScanService:
             elif holes:
                 await self._db.courses.fill_course_gaps(course_id, holes, connection=conn)
         return plan.course
-
-    # ================================================================
-    # Played-tee canonicalization (explicit selections only)
-    # ================================================================
 
     @staticmethod
     def _extract_tee_color_token(value: Optional[str]) -> Optional[str]:
@@ -527,16 +455,13 @@ class ScanService:
         tee_box: Optional[str],
         scan_tees: List[TeeInput],
     ) -> Optional[str]:
-        """Map the user's tee selection onto the course's naming; never invent a selection."""
         if not tee_box or not course or not (course.tees or []):
             return tee_box
 
-        # Exact match already uses canonical course naming.
         exact = course.get_tee(tee_box)
         if exact and exact.color:
             return exact.color
 
-        # Try matching the selected scanned tee to an existing course tee by yardage.
         chosen_scan_tee = next(
             (t for t in scan_tees if t.color and t.color.strip().lower() == tee_box.strip().lower()),
             None,
@@ -546,7 +471,6 @@ class ScanService:
             if matched:
                 return matched
 
-        # Fallback: color token extraction (e.g. "WHITE M: 69.1/123" -> "White").
         token = self._extract_tee_color_token(tee_box)
         if token:
             for course_tee in course.tees:
@@ -554,7 +478,6 @@ class ScanService:
                     return course_tee.color
 
         return tee_box
-
 
 
 def _messages(error: ValidationError) -> List[str]:

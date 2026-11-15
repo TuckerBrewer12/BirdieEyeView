@@ -193,7 +193,6 @@ async def register(req: RegisterRequest, request: Request, db: DatabaseManager =
         raise HTTPException(409, EMAIL_ALREADY_REGISTERED)
 
     if req.home_course_id:
-        # A new account owns no courses yet, so only a master course can be its home course.
         await load_linkable_course(db, req.home_course_id, None, missing_detail=HOME_COURSE_NOT_FOUND)
 
     password_hash = hash_password(req.password)
@@ -454,7 +453,6 @@ async def forgot_password(
             request_ip,
         )
 
-    # Always generic to avoid account enumeration.
     return MessageResponse(message=RESET_LINK_SENT_IF_ACCOUNT_EXISTS)
 
 

@@ -37,7 +37,6 @@ def test_unrated_round_uses_par_fallback():
 
 
 def test_nine_hole_rounds_are_not_used_yet():
-    # The WHS nine-hole method needs an expected score; until then nine-hole rounds don't count.
     assert handicap._get_differential_for_round(make_scoring_round(45, holes=9)) is None
 
 

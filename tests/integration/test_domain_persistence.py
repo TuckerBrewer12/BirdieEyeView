@@ -1,5 +1,3 @@
-"""Database contracts exercised against disposable PostgreSQL, not SQL mocks."""
-
 import asyncio
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4

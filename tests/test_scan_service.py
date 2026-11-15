@@ -110,11 +110,6 @@ def assert_nothing_written(db):
     db.rounds.create_round.assert_not_awaited()
 
 
-# ================================================================
-# Explicit database course
-# ================================================================
-
-
 @pytest.mark.asyncio
 async def test_explicit_owned_course_saves_in_one_transaction_without_provider():
     service, db, provider = make_service()
@@ -157,11 +152,6 @@ async def test_explicit_course_rejects_invalid_course(repository_result, reposit
     with pytest.raises(ValueError, match=message):
         await service.save_reviewed_scan(make_save_request(course_id=str(uuid4())))
     assert_nothing_written(db)
-
-
-# ================================================================
-# Existing master courses
-# ================================================================
 
 
 @pytest.mark.asyncio
@@ -233,8 +223,8 @@ async def test_unconfirmed_rating_never_blocks_verification_and_is_not_stored(pr
     await service.save_reviewed_scan(make_save_request(course_id=str(uuid4())))
 
     blue = db.courses.apply_verified_scan.await_args.args[2][0]
-    assert dict(blue.hole_yardages) == dict(enumerate(BLUE, start=1))  # verified yardages still applied
-    assert (blue.course_rating, blue.slope_rating) == (70.0, 120)  # scanned 71.2/125 dropped, master's kept
+    assert dict(blue.hole_yardages) == dict(enumerate(BLUE, start=1))
+    assert (blue.course_rating, blue.slope_rating) == (70.0, 120)
 
 
 @pytest.mark.asyncio
@@ -259,7 +249,7 @@ async def test_new_master_drops_unconfirmed_ratings(provider_rating):
 
     created = db.courses.create_course.await_args
     blue = created.args[0].get_tee("Blue")
-    assert created.kwargs["user_id"] is None  # still verified as a master
+    assert created.kwargs["user_id"] is None
     assert (blue.course_rating, blue.slope_rating) == (None, None)
 
 
@@ -297,7 +287,7 @@ async def test_missing_scanned_ratings_are_not_a_difference():
 async def test_verified_par_change_reaches_the_saved_round():
     service, db, _ = make_service()
     master = make_course(external_id="ext-1")
-    master.holes[0] = Hole(number=1, par=5, handicap=HANDICAPS[0])  # stale; the scan and provider say 4
+    master.holes[0] = Hole(number=1, par=5, handicap=HANDICAPS[0])
     db.courses.get_course.return_value = master
 
     saved = await service.save_reviewed_scan(make_save_request(course_id=str(uuid4())))
@@ -361,11 +351,6 @@ async def test_master_without_provider_id_is_never_verified():
     db.courses.apply_verified_scan.assert_not_awaited()
 
 
-# ================================================================
-# Provider-picked courses
-# ================================================================
-
-
 @pytest.mark.asyncio
 async def test_verified_provider_pick_creates_one_master_from_scanned_data():
     service, db, provider = make_service()
@@ -376,7 +361,7 @@ async def test_verified_provider_pick_creates_one_master_from_scanned_data():
     course = created.args[0]
     assert created.kwargs == {"user_id": None, "connection": db.conn}
     assert (course.name, course.external_course_id, course.location) == ("Pebble Beach", "ext-1", None)
-    assert course.get_tee("Blue").course_rating == 71.2  # scanned rating, not provider data
+    assert course.get_tee("Blue").course_rating == 71.2
     assert saved.course.user_id is None
     provider.search_external_courses.assert_not_awaited()
 
@@ -434,11 +419,6 @@ async def test_concurrent_master_creation_links_the_winner():
 
     assert saved.course == winner
     assert db.courses.find_course_by_external_id.await_args.kwargs == {"connection": db.conn}
-
-
-# ================================================================
-# Typed course names and missing data
-# ================================================================
 
 
 @pytest.mark.asyncio
@@ -501,7 +481,6 @@ async def test_incomplete_new_course_is_rejected_before_any_write(overrides, mes
 async def test_duplicate_tee_names_are_rejected():
     tees = [{"color": "Blue", "hole_yardages": yardage_map(BLUE)}, {"color": "BLUE", "hole_yardages": {}}]
 
-    # The request rejects them before the service runs.
     with pytest.raises(ValidationError, match="different name"):
         make_save_request(all_tees=tees)
 
@@ -525,11 +504,6 @@ def test_unparseable_date_is_rejected():
         ScanService._parse_date("not a date")
 
 
-# ================================================================
-# Played tee and verification rule
-# ================================================================
-
-
 @pytest.mark.asyncio
 async def test_no_tee_selection_stays_unselected():
     service, db, _ = make_service()
@@ -547,7 +521,7 @@ def test_scan_matches_provider_by_yardage_across_groups_and_names():
     blue = provider_tees()[0]
 
     assert ScanService._scan_matches_provider(scanned, [female, male, blue])
-    assert not ScanService._scan_matches_provider(scanned, [female, blue])  # White only matches wrong pars
+    assert not ScanService._scan_matches_provider(scanned, [female, blue])
 
 
 def test_scan_without_complete_tee_never_matches():
@@ -588,5 +562,5 @@ async def test_saved_ratings_record_the_holes_they_cover():
     await service.save_reviewed_scan(make_save_request(external_course_id="ext-1"))
 
     course = db.courses.create_course.await_args.args[0]
-    assert course.get_tee("Blue").rating_holes == tuple(range(1, 10))  # nine-hole card
-    assert course.get_tee("White").rating_holes is None  # no rating, nothing to cover
+    assert course.get_tee("Blue").rating_holes == tuple(range(1, 10))
+    assert course.get_tee("White").rating_holes is None

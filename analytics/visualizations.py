@@ -1,8 +1,3 @@
-"""Python report charts (Matplotlib) for the export script; the web app draws its own charts.
-
-Unknown values are drawn as gaps (NaN), never as zero, and a summary chart with no data says so.
-"""
-
 from __future__ import annotations
 
 import math
@@ -52,7 +47,6 @@ def _load_plt():
 
 
 def _gap(value):
-    """Plot value for a possibly unknown measurement: NaN leaves a gap instead of drawing zero."""
     return math.nan if value is None else value
 
 
@@ -61,7 +55,6 @@ def _no_data(ax, message: str = "No data") -> None:
 
 
 def _round_labels(rounds: Sequence[Round], labels: Optional[Sequence[str]], row_count: int) -> list[str]:
-    """Custom labels must match the plotted rows one to one."""
     x_labels = list(labels) if labels is not None else _default_labels(rounds)
     if len(x_labels) != row_count:
         raise ValueError(f"Got {len(x_labels)} labels for {row_count} rounds")
@@ -81,11 +74,6 @@ def _default_labels(rounds: Sequence[Round]) -> list[str]:
 
 
 def _apply_sparse_xticks(ax, labels: Sequence[str], max_labels: int = 12) -> None:
-    """
-    Keep x-axis readable when there are many rounds.
-
-    Shows at most `max_labels` ticks while preserving order.
-    """
     if max_labels < 1:
         raise ValueError("max_labels must be at least 1")
     count = len(labels)
@@ -94,7 +82,6 @@ def _apply_sparse_xticks(ax, labels: Sequence[str], max_labels: int = 12) -> Non
         ax.set_xticklabels(labels, rotation=45, ha="right")
         return
 
-    # Evenly spaced, always including the first and (when room) the last position.
     if max_labels == 1:
         tick_positions = [0]
     else:
@@ -167,7 +154,6 @@ def _plot_dual_axis_comparison_bars(
 
 
 def plot_putts_per_round(rounds: Sequence[Round], labels: Optional[Sequence[str]] = None):
-    """Bar chart: total putts per round."""
     plt = _load_plt()
     rows = putts_per_round(rounds)
     x_labels = _round_labels(rounds, labels, len(rows))
@@ -186,7 +172,6 @@ def plot_putts_per_round(rounds: Sequence[Round], labels: Optional[Sequence[str]
 
 
 def plot_score_comparison(rounds: Sequence[Round], round_index: Optional[int] = None):
-    """Selected round score vs recent average windows."""
     rows = score_comparison(rounds, round_index=round_index)
     return _plot_dual_axis_comparison_bars(
         "Score vs Recent Averages",
@@ -197,7 +182,6 @@ def plot_score_comparison(rounds: Sequence[Round], round_index: Optional[int] = 
 
 
 def plot_putts_comparison(rounds: Sequence[Round], round_index: Optional[int] = None):
-    """Selected round putts vs recent average windows."""
     rows = putts_comparison(rounds, round_index=round_index)
     return _plot_single_axis_comparison_bars(
         "Putts vs Recent Averages",
@@ -207,7 +191,6 @@ def plot_putts_comparison(rounds: Sequence[Round], round_index: Optional[int] = 
 
 
 def plot_gir_per_round(rounds: Sequence[Round], labels: Optional[Sequence[str]] = None):
-    """Line chart: GIR percentage per round."""
     plt = _load_plt()
     rows = gir_per_round(rounds)
     x_labels = _round_labels(rounds, labels, len(rows))
@@ -228,7 +211,6 @@ def plot_gir_per_round(rounds: Sequence[Round], labels: Optional[Sequence[str]] 
 
 
 def plot_gir_comparison(rounds: Sequence[Round], round_index: Optional[int] = None):
-    """Selected round GIR vs recent average windows."""
     rows = gir_comparison(rounds, round_index=round_index)
     return _plot_dual_axis_comparison_bars(
         "GIR vs Recent Averages",
@@ -240,7 +222,6 @@ def plot_gir_comparison(rounds: Sequence[Round], round_index: Optional[int] = No
 
 
 def plot_putts_per_gir(rounds: Sequence[Round], labels: Optional[Sequence[str]] = None):
-    """Bar chart: total putts taken on GIR holes by round."""
     plt = _load_plt()
     rows = putts_per_gir(rounds)
     x_labels = _round_labels(rounds, labels, len(rows))
@@ -262,7 +243,6 @@ def plot_putts_per_gir(rounds: Sequence[Round], labels: Optional[Sequence[str]] 
 def plot_putts_per_gir_rate_per_round(
     rounds: Sequence[Round], labels: Optional[Sequence[str]] = None
 ):
-    """Line chart: putts per GIR by round."""
     plt = _load_plt()
     rows = putts_per_gir(rounds)
     x_labels = _round_labels(rounds, labels, len(rows))
@@ -283,7 +263,6 @@ def plot_putts_per_gir_rate_per_round(
 
 
 def plot_putts_per_gir_comparison(rounds: Sequence[Round], round_index: Optional[int] = None):
-    """Selected round putts-per-GIR vs recent average windows."""
     rows = putts_per_gir_comparison(rounds, round_index=round_index)
     return _plot_dual_axis_comparison_bars(
         "Putts Per GIR vs Recent Averages",
@@ -294,9 +273,6 @@ def plot_putts_per_gir_comparison(rounds: Sequence[Round], round_index: Optional
 
 
 def plot_gir_vs_non_gir_score_distribution(rounds: Iterable[Round]):
-    """
-    Stacked bar chart of score-type percentages for GIR vs non-GIR holes.
-    """
     plt = _load_plt()
     rows = gir_vs_non_gir_score_distribution(rounds)
     x_labels = [row["bucket"] for row in rows]
@@ -334,7 +310,6 @@ def plot_gir_vs_non_gir_score_distribution(rounds: Iterable[Round]):
 def plot_average_score_when_gir_vs_missed(
     rounds: Iterable[Round], course_label: Optional[str] = None
 ):
-    """Two-bar chart of average score when GIR is hit vs missed."""
     plt = _load_plt()
     rows = average_score_when_gir_vs_missed(rounds)
     labels = [row["bucket"] for row in rows]
@@ -367,7 +342,6 @@ def plot_average_score_when_gir_vs_missed(
 
 
 def plot_score_variance_by_hole(rounds: Iterable[Round], course_label: Optional[str] = None):
-    """Horizontal bar chart of hole score standard deviation."""
     plt = _load_plt()
     rows = score_variance_by_hole(rounds)
     labels = [f"Hole {row['hole_number']}" for row in rows]
@@ -386,7 +360,6 @@ def plot_score_variance_by_hole(rounds: Iterable[Round], course_label: Optional[
 
 
 def plot_score_trend_on_this_course(rounds: Sequence[Round], course_label: Optional[str] = None):
-    """Line chart of total score progression on a single course over time."""
     plt = _load_plt()
     rows = score_trend_on_this_course(rounds)
     x_labels = [
@@ -409,7 +382,6 @@ def plot_score_trend_on_this_course(rounds: Sequence[Round], course_label: Optio
 
 
 def plot_overall_putts_per_gir(rounds: Iterable[Round]):
-    """Single-bar chart for aggregate putts per GIR across all rounds."""
     plt = _load_plt()
     summary = overall_putts_per_gir(rounds)
     value = summary["putts_per_gir"]
@@ -430,7 +402,6 @@ def plot_overall_putts_per_gir(rounds: Iterable[Round]):
 
 
 def plot_overall_gir_percentage(rounds: Iterable[Round]):
-    """Single stacked bar for aggregate GIR makes vs misses across all rounds."""
     plt = _load_plt()
     summary = overall_gir_percentage(rounds)
     percentage = summary["gir_percentage"]
@@ -453,7 +424,6 @@ def plot_overall_gir_percentage(rounds: Iterable[Round]):
 
 
 def plot_score_trend(rounds: Sequence[Round], labels: Optional[Sequence[str]] = None):
-    """Line chart: total score trend by round."""
     plt = _load_plt()
     rows = score_trend(rounds)
     x_labels = _round_labels(rounds, labels, len(rows))
@@ -472,7 +442,6 @@ def plot_score_trend(rounds: Sequence[Round], labels: Optional[Sequence[str]] = 
 
 
 def plot_scoring_vs_handicap(rounds: Iterable[Round]):
-    """Bar chart: average to-par by hole handicap (1 hardest, 18 easiest)."""
     plt = _load_plt()
     rows = scoring_vs_hole_handicap(rounds)
     handicaps = [str(row["handicap"]) for row in rows]
@@ -490,7 +459,6 @@ def plot_scoring_vs_handicap(rounds: Iterable[Round]):
 
 
 def plot_scoring_by_par(rounds: Iterable[Round]):
-    """Bar chart: average to-par grouped by par 3 / par 4 / par 5."""
     plt = _load_plt()
     rows = scoring_by_par(rounds)
     pars = [f"Par {row['par']}" for row in rows]
@@ -510,7 +478,6 @@ def plot_scoring_by_par(rounds: Iterable[Round]):
 def plot_average_score_relative_to_par_by_hole(
     rounds: Iterable[Round], course_label: Optional[str] = None
 ):
-    """Bar chart: average score-to-par by hole for a specific course."""
     plt = _load_plt()
     rows = average_score_relative_to_par_by_hole(rounds)
     hole_numbers = [str(row["hole_number"]) for row in rows]
@@ -530,7 +497,6 @@ def plot_average_score_relative_to_par_by_hole(
 
 
 def plot_course_difficulty_profile_by_hole(rounds: Iterable[Round], course_label: Optional[str] = None):
-    """Horizontal bar chart of hole difficulty ranked hardest to easiest."""
     plt = _load_plt()
     rows = course_difficulty_profile_by_hole(rounds)
     hole_numbers = [f"Hole {row['hole_number']}" for row in rows]
@@ -551,7 +517,6 @@ def plot_course_difficulty_profile_by_hole(rounds: Iterable[Round], course_label
 
 
 def plot_gir_percentage_by_hole(rounds: Iterable[Round], course_label: Optional[str] = None):
-    """Bar chart: GIR percentage by hole for a specific course."""
     plt = _load_plt()
     rows = gir_percentage_by_hole(rounds)
     hole_numbers = [str(row["hole_number"]) for row in rows]
@@ -570,7 +535,6 @@ def plot_gir_percentage_by_hole(rounds: Iterable[Round], course_label: Optional[
 
 
 def plot_average_putts_by_hole(rounds: Iterable[Round], course_label: Optional[str] = None):
-    """Bar chart: average putts by hole for a specific course."""
     plt = _load_plt()
     rows = average_putts_by_hole(rounds)
     hole_numbers = [str(row["hole_number"]) for row in rows]
@@ -591,9 +555,6 @@ def plot_average_putts_by_hole(rounds: Iterable[Round], course_label: Optional[s
 def plot_score_type_distribution_per_round(
     rounds: Sequence[Round], labels: Optional[Sequence[str]] = None
 ):
-    """
-    Stacked bar chart of score-type percentages per round.
-    """
     plt = _load_plt()
     rows = score_type_distribution_per_round(rounds)
     x_labels = _round_labels(rounds, labels, len(rows))
@@ -630,7 +591,6 @@ def plot_score_type_distribution_per_round(
 def plot_score_type_distribution_by_hole(
     rounds: Iterable[Round], course_label: Optional[str] = None
 ):
-    """Stacked bar chart of score-type percentages by hole for a specific course."""
     plt = _load_plt()
     rows = score_type_distribution_by_hole(rounds)
     x_labels = [str(row["hole_number"]) for row in rows]
@@ -669,9 +629,6 @@ def plot_score_type_distribution_by_hole(
 def plot_three_putts_per_round(
     rounds: Sequence[Round], labels: Optional[Sequence[str]] = None
 ):
-    """
-    Bar chart: number of 3-putts per round.
-    """
     plt = _load_plt()
     rows = three_putts_per_round(rounds)
     x_labels = _round_labels(rounds, labels, len(rows))
@@ -693,7 +650,6 @@ def plot_three_putts_per_round(
 def plot_three_putt_percentage_per_round(
     rounds: Sequence[Round], labels: Optional[Sequence[str]] = None
 ):
-    """Line chart: 3-putt percentage per round."""
     plt = _load_plt()
     rows = three_putts_per_round(rounds)
     x_labels = _round_labels(rounds, labels, len(rows))
@@ -714,7 +670,6 @@ def plot_three_putt_percentage_per_round(
 
 
 def plot_three_putts_comparison(rounds: Sequence[Round], round_index: Optional[int] = None):
-    """Selected round 3-putts vs recent average windows."""
     rows = three_putts_comparison(rounds, round_index=round_index)
     return _plot_dual_axis_comparison_bars(
         "3+ Putts vs Recent Averages",
@@ -728,12 +683,6 @@ def plot_three_putts_comparison(rounds: Sequence[Round], round_index: Optional[i
 def plot_scrambling_per_round(
     rounds: Sequence[Round], labels: Optional[Sequence[str]] = None
 ):
-    """
-    Stacked bar chart:
-    - green: scramble successes
-    - red: scramble failures
-    Total bar height equals scramble opportunities.
-    """
     plt = _load_plt()
     rows = scrambling_per_round(rounds)
     x_labels = _round_labels(rounds, labels, len(rows))
@@ -756,7 +705,6 @@ def plot_scrambling_per_round(
 
 
 def plot_scrambling_comparison(rounds: Sequence[Round], round_index: Optional[int] = None):
-    """Selected round scrambling vs recent average windows."""
     rows = scrambling_comparison(rounds, round_index=round_index)
     return _plot_dual_axis_comparison_bars(
         "Scrambling vs Recent Averages",

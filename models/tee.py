@@ -10,15 +10,13 @@ SlopeRating = Annotated[float, Field(strict=True, ge=55, le=155, allow_inf_nan=F
 
 
 class ReadOnlyYardages(dict):
-    """Dictionary-compatible serialization without unchecked in-place edits."""
-
     def _reject(self, *_args, **_kwargs):
         raise TypeError('Replace yardages with update_yardages() or validated assignment')
 
     __setitem__ = __delitem__ = clear = pop = popitem = setdefault = update = __ior__ = _reject
 
     def __deepcopy__(self, memo):
-        return self  # Both keys and values are immutable integers.
+        return self
 
     def __reduce__(self):
         # copy/pickle would otherwise rebuild through the rejected __setitem__.
@@ -47,14 +45,12 @@ def validate_yardages(value) -> dict[int, int]:
 
 
 class TeeRating(BaseGolfModel):
-    """A published rating for exactly the declared holes, never an inferred half."""
     hole_numbers: HoleCoverage
     course_rating: Optional[CourseRating] = None
     slope_rating: Optional[SlopeRating] = None
 
 
 class TeeData(BaseGolfModel):
-    """Shared yardage/rating rules for course tees and user-owned tees."""
     total_yardage: Optional[int] = Field(None, strict=True, ge=0, le=18000)
     hole_yardages: Dict[int, int] = Field(default_factory=ReadOnlyYardages)
     yardage_holes: Optional[HoleCoverage] = None
@@ -101,7 +97,6 @@ class TeeData(BaseGolfModel):
             self._total_source = None
 
     def update_yardages(self, yardages: dict[int, int]) -> Optional[str]:
-        """Validate and replace the entire mapping; unknown holes are omitted."""
         return self.update_field('hole_yardages', yardages)
 
     def get_hole_yardage(self, hole_number: int) -> Optional[int]:
@@ -123,7 +118,6 @@ class TeeData(BaseGolfModel):
         return None
 
     def get_rating(self, hole_numbers) -> Optional[TeeRating]:
-        """Only return explicitly matching coverage, including for legacy scalars."""
         coverage = validate_coverage(hole_numbers)
         matches = [rating for rating in self.ratings if rating.hole_numbers == coverage]
         if matches:
@@ -134,7 +128,6 @@ class TeeData(BaseGolfModel):
 
 
 class Tee(TeeData):
-    """Represents a tee box option with its ratings and hole yardages."""
     color: Optional[str] = None
 
     @property

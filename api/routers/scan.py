@@ -215,7 +215,6 @@ def _build_confidence_payload(
 
 
 def _score_breakdown_rows_are_trusted(hole_scores: List[Dict]) -> bool:
-    """Return whether enough complete holes prove the auxiliary-row alignment."""
     complete = [
         score
         for score in hole_scores
@@ -280,8 +279,6 @@ def _build_round_from_parsed_rows(
                 }
             )
     else:
-        # Unknown-course path uses parsed OCR rows. The course name is never read from the
-        # scan: the user picks or enters it during review.
         parsed_pars = list(_safe_list_attr("par_row")[:hole_count])
         while len(parsed_pars) < hole_count:
             parsed_pars.append(None)
@@ -446,7 +443,6 @@ def _build_round_from_parsed_rows(
         if score["green_in_regulation"] is None and shots_val is not None:
             par_i = hole_par_lookup.get(hole_number)
             if par_i is not None:
-                # GIR if the green was reached in no more than par minus two strokes.
                 score["green_in_regulation"] = shots_val <= max(1, par_i - 2)
 
     round_payload = {
@@ -501,10 +497,6 @@ def _save_upload_to_temp(file: UploadFile, suffix: str) -> tuple[Path, str]:
 
 
 async def _run_ocr_pipeline(ocr_path: Path, diagnostics: Optional[List[str]] = None) -> str:
-    """Mistral OCR → clean-up → Gemini merge → raw markdown string.
-
-    ``diagnostics`` collects what the clean-up and the merge did; it is logged, never returned.
-    """
     svc = MistralOCRService()
     ocr_resp = await svc.ocr_file(ocr_path)
 
@@ -537,7 +529,6 @@ async def _run_ocr_pipeline(ocr_path: Path, diagnostics: Optional[List[str]] = N
 
 
 def _log_diagnostics(stage: str, diagnostics: List[str]) -> None:
-    """One internal line per scan stage; positions and counts only, never cell values or names."""
     logger.info("Scan diagnostics (%s): %s", stage, " | ".join(diagnostics) or "none")
 
 
@@ -820,8 +811,6 @@ async def extract_scan(
         if present_strokes == 0:
             diagnostics.append("assembly: no strokes could be assembled")
             _log_diagnostics("extract", diagnostics)
-            # "Name is unclear" only when no row carried the given name; otherwise the rows
-            # themselves could not be read, and saying "name" would send the user the wrong way.
             error = ScanExtractionError(
                 422,
                 UNCLEAR_PLAYER_NAME if name_missing else UNREADABLE_SCORE_ROWS,
@@ -899,7 +888,6 @@ async def save_round(
         saved = await service.save_reviewed_scan(req)
         return {"id": saved.id, "total_score": saved.calculate_total_score()}
     except ScanSaveRejected as exc:
-        # Nothing was written; tell the user what to fix in review.
         raise HTTPException(422, " ".join(exc.reasons)) from None
     except (ValueError, IntegrityError):
         logger.exception("Save round validation failed")

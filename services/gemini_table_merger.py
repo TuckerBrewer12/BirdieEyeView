@@ -67,7 +67,6 @@ def _split_pipe_row(line: str) -> List[str]:
 
 
 def _source_has_separator_after_out(markdown: str) -> bool:
-    """Return whether the source header proves a non-hole column after OUT."""
     for line in markdown.splitlines():
         cells = _split_pipe_row(line)
         upper = [cell.upper() for cell in cells]
@@ -93,11 +92,6 @@ def _small_value_count(cells: List[str]) -> int:
 
 
 def _normalize_and_validate_merge(source: str, merged: str) -> Tuple[Optional[str], Optional[str]]:
-    """Normalize a provable separator shift and reject malformed merge output.
-
-    Returns ``(normalized_markdown, None)`` or ``(None, reason)`` naming the rule and row
-    that rejected the merge, so the fallback to the unmerged tables is explained.
-    """
     source_has_separator = _source_has_separator_after_out(source)
     normalized_rows: List[List[str]] = []
     header_found = False
@@ -131,8 +125,6 @@ def _normalize_and_validate_merge(source: str, merged: str) -> Tuple[Optional[st
         else:
             front_count = _small_value_count(cells[1:10])
             back_count = _small_value_count(cells[11:20])
-            # A populated half paired with an entirely empty half is not a
-            # valid 18-hole merge. Fall back to the untouched source tables.
             if (front_count >= 4 and back_count == 0) or (back_count >= 4 and front_count == 0):
                 return None, f"line {line_no} fills one nine and leaves the other empty"
 
@@ -148,12 +140,6 @@ def _normalize_and_validate_merge(source: str, merged: str) -> Tuple[Optional[st
 
 
 async def merge_split_tables(markdown: str, diagnostics: Optional[List[str]] = None) -> str:
-    """Send *markdown* to Gemini Flash; return merged table (or original on failure).
-
-    ``diagnostics`` receives one entry saying what happened (merged, rejected and why, or
-    the provider error), for the scan's internal diagnostics.
-    """
-
     def note(message: str) -> None:
         if diagnostics is not None:
             diagnostics.append(message)
@@ -165,7 +151,7 @@ async def merge_split_tables(markdown: str, diagnostics: Optional[List[str]] = N
         return markdown
 
     try:
-        from google import genai  # imported lazily so missing package doesn't break startup
+        from google import genai
 
         client = genai.Client(api_key=api_key)
         prompt = _MERGE_PROMPT.format(markdown=markdown)

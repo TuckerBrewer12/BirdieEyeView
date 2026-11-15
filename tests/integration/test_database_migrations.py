@@ -1,5 +1,3 @@
-"""Forward upgrades from the frozen pre-refactor schema; never replay old data backfills."""
-
 from pathlib import Path
 
 import asyncpg

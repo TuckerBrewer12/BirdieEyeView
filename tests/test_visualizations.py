@@ -1,5 +1,3 @@
-"""Report charts: gaps for unknown data, label checks, tick limits, wording, and export runs."""
-
 import math
 from datetime import datetime, timezone
 
@@ -74,14 +72,14 @@ def test_summary_chart_without_data_says_so():
 
 
 def test_export_writes_a_fresh_folder_per_run_and_closes_figures(tmp_path):
-    rounds = [full_data_round("a", datetime(2026, 1, 1, tzinfo=timezone.utc)), full_data_round("b", None)]  # undated last, no crash
+    rounds = [full_data_round("a", datetime(2026, 1, 1, tzinfo=timezone.utc)), full_data_round("b", None)]
 
     first = export.export_charts("Tucker B", rounds, tmp_path, now=datetime(2026, 11, 4, 9, 0, 0, tzinfo=timezone.utc))
     second = export.export_charts("Tucker B", [par_round()], tmp_path, now=datetime(2026, 11, 4, 9, 5, 0, tzinfo=timezone.utc))
 
     assert first and all(path.is_relative_to(tmp_path / "tucker-b" / "20261104-090000") for path in first)
     assert all(path.is_relative_to(tmp_path / "tucker-b" / "20261104-090500") for path in second)
-    assert len(second) < len(first)  # no putts/GIR: those charts are skipped, not stale copies
+    assert len(second) < len(first)
     assert plt.get_fignums() == []
 
 

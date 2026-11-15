@@ -1,5 +1,3 @@
-"""Stats endpoints: complete rounds by format, one response shape, scopes and errors."""
-
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -23,7 +21,6 @@ def summary(score, *, complete=True, holes=18, putts=30, gir=9):
     if not complete:
         scores = scores[:1]
     return Round(id=str(uuid4()), course=c, intended_holes=tuple(range(1, holes + 1)), hole_scores=scores)
-
 
 
 @pytest.mark.asyncio
@@ -52,7 +49,6 @@ def analytics_db(user, *rounds_per_call):
 
 
 def assert_same_keys(left, right, path="response"):
-    """Same dict keys at every level where both sides are dicts (a null value matches any value)."""
     if isinstance(left, dict) and isinstance(right, dict):
         assert set(left) == set(right), path
         for key in left:
@@ -100,7 +96,6 @@ async def test_home_filter_without_a_home_course_matches_nothing():
     result = (await stats.get_analytics(user_id, 50, "home", None, db, user)).model_dump()
 
     assert result["kpis"]["total_rounds"] == 0
-    # Only the unfiltered handicap history is read; no course-filtered round query runs.
     assert [call.kwargs.get("course_id") for call in db.rounds.get_rounds_for_user.await_args_list] == [None]
 
 
@@ -137,11 +132,10 @@ async def test_goal_report_distinguishes_missing_user_from_missing_goal():
 async def test_round_comparison_finds_an_old_round_and_compares_it_with_earlier_rounds_only():
     user_id = uuid4()
     db = make_mock_database()
-    # 250 rounds, more than the old 200-round cap; the target is the second-oldest.
     history = [par_round(over=10 + (i % 5), round_id=str(uuid4()), date=datetime(2020, 1, 1, tzinfo=timezone.utc) + timedelta(days=i))
                for i in range(250)]
     target = history[1]
-    db.rounds.get_rounds_for_user = AsyncMock(return_value=list(reversed(history)))  # repository: newest first
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=list(reversed(history)))
 
     result = (await stats.get_round_comparison(user_id, target.id, db, make_user(user_id))).model_dump()
 
@@ -152,15 +146,14 @@ async def test_round_comparison_finds_an_old_round_and_compares_it_with_earlier_
     assert (selected["value"], selected["average"], window["rounds"]) == (83, 82, 1)
 
 
-
 @pytest.mark.asyncio
 async def test_milestones_sort_by_round_date():
     user_id = uuid4()
     user = make_user(user_id)
     db = make_mock_database()
     db.users.get_user = AsyncMock(return_value=user)
-    first = par_round(over=10, round_id="first", date=datetime(2025, 12, 31, tzinfo=timezone.utc))   # breaks 85
-    later = par_round(over=-1, round_id="later", date=datetime(2026, 1, 9, tzinfo=timezone.utc))    # breaks 75, under par
+    first = par_round(over=10, round_id="first", date=datetime(2025, 12, 31, tzinfo=timezone.utc))
+    later = par_round(over=-1, round_id="later", date=datetime(2026, 1, 9, tzinfo=timezone.utc))
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[later, first])
 
     result = await stats.get_milestones(user_id, 50, db, user)

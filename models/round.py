@@ -15,7 +15,6 @@ STRETCH_HOLES = 4
 STRETCH_LEAST = 2
 
 class Round(BaseGolfModel):
-    """Represents a round of golf played by a user."""
     id: Optional[str] = None
     course: Optional[Course] = None
     tee_box: Optional[str] = None
@@ -24,10 +23,9 @@ class Round(BaseGolfModel):
     intended_holes: Optional[HoleCoverage] = None
     weather_conditions: Optional[str] = None
     notes: Optional[str] = None
-    course_name_played: Optional[str] = None  # denormalized name when no master course
-    user_tee: Optional[UserTee] = None        # user-owned tee config (yardages etc.)
+    course_name_played: Optional[str] = None
+    user_tee: Optional[UserTee] = None
 
-    # Optional summary totals - can be provided directly or calculated
     total_putts: Optional[int] = Field(None, strict=True, ge=0, le=180)
     total_gir: Optional[int] = Field(None, strict=True, ge=0, le=18)
     _summary_sources: dict[str, Optional[tuple]] = PrivateAttr(default_factory=dict)
@@ -75,7 +73,6 @@ class Round(BaseGolfModel):
 
     @model_serializer(mode='wrap')
     def serialize_current_totals(self, handler):
-        """Never persist a stale summary and accidentally make it fresh on reload."""
         data = handler(self)
         for field, value in (('total_putts', self.get_total_putts()), ('total_gir', self.get_total_gir())):
             if field in data:
@@ -90,7 +87,6 @@ class Round(BaseGolfModel):
                 self._summary_sources[field] = None
 
     def scored_holes(self, numbers=None) -> Optional[list[HoleScore]]:
-        """Unique identified scores; duplicates or out-of-format scores are ambiguous."""
         selected = [s for s in self.hole_scores if s.hole_number is not None
                     and (numbers is None or s.hole_number in numbers)]
         identities = [s.hole_number for s in selected]
@@ -103,7 +99,6 @@ class Round(BaseGolfModel):
         return scored
 
     def update_hole_score(self, hole_number: int, **values: Any) -> Optional[str]:
-        """Correct one uniquely identified child without an invalid intermediate state."""
         score = self.get_hole_score(hole_number)
         if score is None:
             return 'Hole score is missing or ambiguous'
@@ -115,11 +110,10 @@ class Round(BaseGolfModel):
         return self.update_field('hole_scores', scores)
 
     def get_tee(self) -> Optional[Union[Tee, UserTee]]:
-        """Course tee first; user_tee only when the course has no tee with that name."""
         if self.course and self.tee_box:
             matches = self.course.get_tee_matches(self.tee_box)
             if len(matches) > 1:
-                return None  # Ambiguous course tee: never substitute a custom tee.
+                return None
             if matches:
                 return matches[0]
         if self.user_tee is not None:
@@ -148,19 +142,15 @@ class Round(BaseGolfModel):
         return sum(s.strokes for s in scored) if scored else None
 
     def calculate_total_score(self) -> Optional[int]:
-        """Calculate total strokes for the round."""
         return self._stroke_total()
 
     def calculate_front_nine(self) -> Optional[int]:
-        """Calculate total strokes for holes 1-9."""
         return self._nine_total(1, HOLES_PER_NINE)
 
     def calculate_back_nine(self) -> Optional[int]:
-        """Calculate total strokes for holes 10-18."""
         return self._nine_total(HOLES_PER_NINE + 1, HOLES_PER_ROUND)
 
     def is_complete(self) -> bool:
-        """Check if all holes have scores."""
         intended = self.get_intended_holes()
         scored = self.scored_holes()
         if intended is None or scored is None:
@@ -170,12 +160,10 @@ class Round(BaseGolfModel):
         return {s.hole_number for s in scored} == set(intended)
 
     def get_hole_score(self, hole_number: int) -> Optional[HoleScore]:
-        """Get score for a specific hole."""
         matches = [s for s in self.hole_scores if s.hole_number == hole_number]
         return matches[0] if len(matches) == 1 else None
 
     def get_hole_par(self, hole_number: int) -> Optional[int]:
-        """Accepted historical par first, available course par as fallback."""
         matches = [s for s in self.hole_scores if s.hole_number == hole_number]
         if len(matches) > 1:
             return None
@@ -188,7 +176,6 @@ class Round(BaseGolfModel):
         return None
 
     def get_par(self) -> Optional[int]:
-        """Par of the entire intended set, never a partial known-par subtotal."""
         intended = self.get_intended_holes()
         if intended is None:
             return None
@@ -203,7 +190,6 @@ class Round(BaseGolfModel):
         return None
 
     def score_to_par(self, hole_number: int) -> Optional[int]:
-        """Get score relative to par for a specific hole."""
         score = self.get_hole_score(hole_number)
         par = self.get_hole_par(hole_number)
         if score and par:
@@ -211,7 +197,6 @@ class Round(BaseGolfModel):
         return None
 
     def get_score_type(self, hole_number: int) -> Optional[str]:
-        """Get score name (eagle, birdie, par, bogey, etc.) for a hole."""
         score = self.get_hole_score(hole_number)
         par = self.get_hole_par(hole_number)
         if score and par:
@@ -219,7 +204,6 @@ class Round(BaseGolfModel):
         return None
 
     def total_to_par(self) -> Optional[int]:
-        """Compare strokes and par for exactly the same identified scored holes."""
         scored = self.scored_holes()
         if not scored:
             return None
@@ -229,7 +213,6 @@ class Round(BaseGolfModel):
         return sum(s.strokes for s in scored) - sum(pars)
 
     def calculate_net_score(self, course_handicap: Optional[int] = None) -> Optional[int]:
-        """Net round strokes require complete gross and an applicable Course Handicap."""
         if course_handicap is not None and type(course_handicap) is not int:
             raise ValueError('Course Handicap must be an integer')
         if course_handicap is None or not self.is_complete():

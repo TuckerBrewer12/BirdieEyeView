@@ -73,19 +73,18 @@ def test_hole_score_converter_null_par_played():
 
 
 def test_hole_score_to_row_includes_par_played():
-    """Snapshot positions remain stable; the new played state is appended."""
     hs = HoleScore(hole_number=1, strokes=5, par_played=4, handicap_played=7)
     rid = uuid4()
     row = hole_score_to_row(hs, rid, None)
 
     assert len(row) == 12
     assert row[11] is None
-    assert row[0] == rid           # round_id
-    assert row[1] is None          # hole_id (nullable)
-    assert row[2] == 1             # hole_number
-    assert row[3] == 5             # strokes
-    assert row[9] == 4             # par_played
-    assert row[10] == 7            # handicap_played
+    assert row[0] == rid
+    assert row[1] is None
+    assert row[2] == 1
+    assert row[3] == 5
+    assert row[9] == 4
+    assert row[10] == 7
 
 
 def test_round_converter_maps_course_name_played():
@@ -112,7 +111,6 @@ def test_round_converter_hole_scores_sorted():
 
 
 def _course_row(*, total_holes, par):
-    """Helper: minimal courses.courses row dict."""
     return {
         "id": uuid4(), "name": "Nine Hole Course", "external_course_id": None,
         "location": None, "par": par, "total_holes": total_holes, "user_id": None,
@@ -124,7 +122,6 @@ def _hole_rows(numbers, par=4):
 
 
 def test_course_converter_loads_nine_hole_layout():
-    """A stored nine-hole layout keeps its par and lets a full nine score as complete."""
     course = course_from_rows(_course_row(total_holes=9, par=36), _hole_rows(range(1, 10)), [], {})
 
     assert course.total_holes == 9
@@ -138,7 +135,6 @@ def test_course_converter_loads_nine_hole_layout():
 
 
 def test_course_converter_null_total_holes_keeps_legacy_inference():
-    """NULL total_holes does not make nine hole rows a nine-hole layout."""
     nine = course_from_rows(_course_row(total_holes=None, par=36), _hole_rows(range(1, 10)), [], {})
     eighteen = course_from_rows(_course_row(total_holes=None, par=72), _hole_rows(range(1, 19)), [], {})
 
@@ -148,7 +144,6 @@ def test_course_converter_null_total_holes_keeps_legacy_inference():
 
 
 def test_course_to_row_prefers_declared_total_holes():
-    """An explicit layout is persisted even when hole rows are incomplete."""
     declared = Course(name="Nine", total_holes=9, holes=[Hole(number=1, par=4)])
     legacy = Course(name="Legacy", holes=[Hole(number=n, par=4) for n in range(1, 19)])
 
@@ -162,7 +157,6 @@ def test_course_to_row_prefers_declared_total_holes():
     [(range(1, 10), 9), (range(1, 6), None), (range(10, 19), None), ([*range(1, 9), 10], None)],
 )
 def test_course_to_row_keeps_exact_front_nine_layout(numbers, expected):
-    """An exact 1-9 scan keeps its nine-hole layout; partial or back-nine lists stay unknown."""
     course = Course(name="Scanned", holes=[Hole(number=n, par=4) for n in numbers])
     assert course_to_row(course)["total_holes"] == expected
 
@@ -213,7 +207,6 @@ def test_user_tee_converter_rejects_invalid_stored_yardages(yardages):
         user_tee_from_row(row)
 
 
-# =========================================================
 from database.repositories.course_repo import _tee_yardage_similarity
 
 

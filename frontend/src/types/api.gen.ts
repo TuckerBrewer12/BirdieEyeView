@@ -168,10 +168,7 @@ export interface paths {
         /** List Courses */
         get: operations["list_courses_api_courses_get"];
         put?: never;
-        /**
-         * Create Course
-         * @description Create a custom course for a user.
-         */
+        /** Create Course */
         post: operations["create_course_api_courses_post"];
         delete?: never;
         options?: never;
@@ -565,10 +562,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get User Handicap
-         * @description Return the user's current WHS-based Handicap Index estimate.
-         */
+        /** Get User Handicap */
         get: operations["get_user_handicap_api_users__user_id__handicap_get"];
         put?: never;
         post?: never;
@@ -1324,10 +1318,7 @@ export interface components {
             /** Verdict */
             verdict: ("good" | "bad" | "neutral") | null;
         };
-        /**
-         * Hole
-         * @description Represents a single hole on a golf course.
-         */
+        /** Hole */
         Hole: {
             /** Handicap */
             handicap: number | null;
@@ -2089,10 +2080,7 @@ export interface components {
             /** Worst Rank */
             worst_rank: number | null;
         };
-        /**
-         * SaveRoundRequest
-         * @description Request to save a reviewed/edited round.
-         */
+        /** SaveRoundRequest */
         SaveRoundRequest: {
             /** All Tees */
             all_tees?: components["schemas"]["TeeInput"][] | null;
@@ -2412,10 +2400,7 @@ export interface components {
             /** Slope Rating */
             slope_rating?: number | null;
         };
-        /**
-         * TeeRating
-         * @description A published rating for exactly the declared holes, never an inferred half.
-         */
+        /** TeeRating */
         TeeRating: {
             /** Course Rating */
             course_rating: number | null;
@@ -2587,10 +2572,7 @@ export interface components {
             /** Scoring Goal Nine */
             scoring_goal_nine: number | null;
         };
-        /**
-         * UserTee
-         * @description A user-owned tee configuration, optionally linked to a master course.
-         */
+        /** UserTee */
         UserTee: {
             /** Course Id */
             course_id: string | null;

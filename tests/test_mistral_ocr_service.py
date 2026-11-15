@@ -102,9 +102,6 @@ async def test_ocr_file_wraps_provider_failure(monkeypatch, tmp_path):
         await MistralOCRService(api_key="key").ocr_file(image)
 
 
-# Pure table rules with many boundary shapes (Testing Priority 3a); the E2E captures prove the
-# chain on real cards, these pin the individual rules.
-
 SPANNED_TABLE = (
     "<table>"
     "<tr><th colspan='2'>HOLE</th><th>1</th><th>2</th></tr>"
@@ -134,21 +131,14 @@ BACK = ["4", "3", "4", "4", "5", "4", "3", "4", "5"]
 @pytest.mark.parametrize(
     ("row", "expected", "note"),
     [
-        # wider by one: the player's name in its own cell
         (["", "D", *FRONT, "", "", *BACK, "", ""], ["D", *FRONT, "", "", *BACK, "", ""], "dropped 1 extra leading cell(s)"),
-        # wider by one: a tee rating after the label
         (["Blue", "72.2/135", *FRONT, "34", "", *BACK, "36", "70"], ["Blue", *FRONT, "34", "", *BACK, "36", "70"], "dropped 1 extra leading cell(s)"),
-        # wider, but the extra leading cell is a value: left alone
         (["7", "3", *FRONT, "", "", *BACK, "", ""], ["7", "3", *FRONT, "", "", *BACK, "", ""], "left unaligned"),
-        # narrower by one: the separator column is missing from the data row
         (["D", *FRONT, "", *BACK, "", ""], ["D", *FRONT, "", "", *BACK, "", ""], "separator column(s) at [11]"),
         # wider by one: a duplicated blank in the separator gap (Eagle Vines: INITIALS rowspan one row too long)
         (["Tucker", *FRONT, "43", "", "", *BACK, "47", "90"], ["Tucker", *FRONT, "43", "", *BACK, "47", "90"], "extra blank cell(s) in the separator gap"),
-        # wider by one, but the extra cell after OUT holds a value: left alone
         (["Tucker", *FRONT, "43", "7", "", *BACK, "47", "90"], ["Tucker", *FRONT, "43", "7", "", *BACK, "47", "90"], "left unaligned"),
-        # same width, but the back nine sits one column early with a blank at the end
         (["D", *FRONT, "", *BACK, "", "", ""], ["D", *FRONT, "", "", *BACK, "", ""], "shifted right past the separator"),
-        # narrower by three: the row stops at its last value
         (["Red", *FRONT, "34", "", *BACK], ["Red", *FRONT, "34", "", *BACK, "", ""], "padded 2 missing trailing cell(s)"),
     ],
 )

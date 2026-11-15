@@ -1,5 +1,3 @@
-"""Goal engine on real rounds (no patched collaborators), with hand-worked expectations."""
-
 import pytest
 
 import analytics.goals as goals
@@ -9,7 +7,6 @@ from tests.analytics_builders import PARS_18, course, par_round, round_
 
 
 def missed_every_green(round_id="r", *, over=1, putts=2):
-    """Complete 18-hole round: every green missed, every hole ``over`` par with ``putts`` putts."""
     return round_({n: {"strokes": PARS_18[n] + over, "green_in_regulation": False, "putts": putts}
                    for n in FULL_ROUND}, course_obj=course(18), round_id=round_id)
 
@@ -60,19 +57,17 @@ def test_nine_hole_goal_has_its_own_summary():
 def test_a_gap_that_shows_as_zero_is_on_track():
     rounds = [par_round(over=13, round_id=str(i)) for i in range(24)] + [par_round(over=14, round_id="x")]
 
-    report = goals.goal_report(rounds, 85)  # average 85.04
+    report = goals.goal_report(rounds, 85)
 
     assert (report["gap"], report["on_track"]) == (0.0, True)
     assert all(saver["percentage_of_gap"] == 0.0 for saver in report["savers"])
 
 
 def test_measured_zero_gir_is_not_replaced_by_a_default():
-    report = goals.goal_report([missed_every_green()], 70)  # 90 vs 70
+    report = goals.goal_report([missed_every_green()], 70)
 
     savers = by_type(report)
-    # 0% GIR: 45 points below, capped at 30 points -> 3 x 0.6 = 1.8.
     assert savers["gir_opportunity"]["strokes_saved"] == 1.8
-    # 0% scrambling on 18 observed missed greens: +15 points x 18 = 2.7 (not 12.06 inferred misses).
     assert savers["scrambling_opportunity"]["strokes_saved"] == 2.7
 
 
@@ -82,7 +77,7 @@ def test_scrambling_uses_observed_missed_greens_per_round_not_eighteen():
 
     saver = by_type(goals.goal_report([nine_missed], 70))["scrambling_opportunity"]
 
-    assert saver["strokes_saved"] == pytest.approx(1.35)  # 0.15 x 9 missed greens
+    assert saver["strokes_saved"] == pytest.approx(1.35)
 
 
 def test_rounds_without_putts_on_every_hole_do_not_dilute_three_putts():
@@ -98,7 +93,7 @@ def test_rounds_without_putts_on_every_hole_do_not_dilute_three_putts():
 def test_home_hole_needs_five_scores_of_that_hole():
     home = course(18, course_id="home")
     rounds = [par_round(course_obj=home, round_id=str(i)) for i in range(4)]
-    rounds.append(round_({1: {"strokes": 8}}, course_obj=home, round_id="once"))  # hole 1 seen 5 times, others 4
+    rounds.append(round_({1: {"strokes": 8}}, course_obj=home, round_id="once"))
 
     report = goals.goal_report([par_round(over=10)], 70, home_course_rounds=rounds)
     saver = by_type(report).get("home_course_demon")
@@ -137,4 +132,4 @@ def test_rounds_that_hit_every_green_count_in_missed_greens_per_round():
 
     saver = by_type(goals.goal_report([missed_every_green(), hit_every_green], 70))["scrambling_opportunity"]
 
-    assert saver["strokes_saved"] == pytest.approx(1.35)  # 0.15 x (18 + 0) / 2 rounds
+    assert saver["strokes_saved"] == pytest.approx(1.35)

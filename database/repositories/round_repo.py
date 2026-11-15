@@ -1,5 +1,3 @@
-"""CRUD operations for rounds, hole_scores, and scorecard_scans."""
-
 import asyncpg
 import json
 from collections import defaultdict
@@ -17,18 +15,11 @@ from database.repositories.course_repo import CourseRepositoryDB
 
 
 class RoundRepositoryDB:
-    """Async CRUD for rounds and their child tables."""
-
     def __init__(self, pool: asyncpg.Pool, course_repo: CourseRepositoryDB):
         self._pool = pool
         self._course_repo = course_repo
 
-    # ================================================================
-    # Private helpers
-    # ================================================================
-
     async def _validate_references(self, conn, user_id, course_id, tee_id, user_tee_id):
-        """Check related identities together; individual FKs only establish existence."""
         course = None
         if course_id is not None:
             course = await conn.fetchrow(
@@ -51,14 +42,12 @@ class RoundRepositoryDB:
         return course
 
     async def _resolve_tee_color(self, conn, tee_id: UUID) -> Optional[str]:
-        """Look up tee color from tee_id."""
         if not tee_id:
             return None
         row = await conn.fetchrow("SELECT color FROM courses.tees WHERE id = $1", tee_id)
         return row["color"] if row else None
 
     async def _resolve_tee_id(self, conn, course_id: UUID, tee_color: str) -> Optional[UUID]:
-        """Look up tee_id from course + color."""
         row = await conn.fetchrow(
             """SELECT id FROM courses.tees
                WHERE course_id = $1 AND LOWER(color) = LOWER($2)""",
@@ -68,7 +57,6 @@ class RoundRepositoryDB:
         return row["id"] if row else None
 
     async def _load_hole_id_map(self, conn, course_id: UUID) -> dict:
-        """Map hole_number -> hole UUID for a course."""
         rows = await conn.fetch(
             "SELECT id, hole_number FROM courses.holes WHERE course_id = $1",
             course_id,
@@ -76,25 +64,20 @@ class RoundRepositoryDB:
         return {r["hole_number"]: r["id"] for r in rows}
 
     async def _assemble_round(self, conn, round_row) -> Round:
-        """Build a full Round model from a round row."""
-        # Load hole scores
         score_rows = await conn.fetch(
             """SELECT * FROM users.hole_scores
                WHERE round_id = $1 ORDER BY hole_number""",
             round_row["id"],
         )
 
-        # Load course if available
         course = None
         if round_row["course_id"]:
             course = await self._course_repo.get_course(str(round_row["course_id"]), connection=conn)
 
-        # Resolve tee color — prefer the stored text (editable), fall back to FK lookup
         tee_color = round_row["tee_box_played"]
         if not tee_color:
             tee_color = await self._resolve_tee_color(conn, round_row["tee_id"])
 
-        # Load user_tee if present
         user_tee = None
         if round_row["user_tee_id"]:
             ut_row = await conn.fetchrow(
@@ -108,7 +91,6 @@ class RoundRepositoryDB:
         return round_from_rows(round_row, score_rows, course, tee_color, user_tee)
 
     async def _get_rounds_bulk(self, conn, round_rows) -> List[Round]:
-        """Assemble rounds with batched child reads, independent of round count."""
         if not round_rows:
             return []
 
@@ -117,7 +99,6 @@ class RoundRepositoryDB:
         ut_ids = list({r["user_tee_id"] for r in round_rows if r["user_tee_id"]})
         tee_id_lookup = list({r["tee_id"] for r in round_rows if not r["tee_box_played"] and r["tee_id"]})
 
-        # Query 1: all hole scores
         score_rows = await conn.fetch(
             "SELECT * FROM users.hole_scores WHERE round_id = ANY($1::uuid[]) ORDER BY hole_number",
             round_ids,
@@ -126,7 +107,6 @@ class RoundRepositoryDB:
         for s in score_rows:
             scores_by_round[str(s["round_id"])].append(s)
 
-        # Queries 2–5: courses (deduplicated)
         courses_by_id: dict = {}
         if course_ids:
             c_rows = await conn.fetch("SELECT * FROM courses.courses WHERE id = ANY($1::uuid[])", course_ids)
@@ -173,7 +153,6 @@ class RoundRepositoryDB:
                     ratings_by_tee,
                 )
 
-        # Query 6: user_tees
         user_tees_by_id: dict = {}
         if ut_ids:
             ut_rows = await conn.fetch("SELECT * FROM users.user_tees WHERE id = ANY($1::uuid[])", ut_ids)
@@ -184,13 +163,11 @@ class RoundRepositoryDB:
             for r in ut_rows:
                 user_tees_by_id[str(r["id"])] = user_tee_from_row(r, ut_ratings_by_id[r["id"]])
 
-        # Query 7 (conditional): batch-resolve missing tee colors
         tee_colors_by_id: dict = {}
         if tee_id_lookup:
             tc_rows = await conn.fetch("SELECT id, color FROM courses.tees WHERE id = ANY($1::uuid[])", tee_id_lookup)
             tee_colors_by_id = {str(r["id"]): r["color"] for r in tc_rows}
 
-        # Assemble in memory
         rounds = []
         for row in round_rows:
             rid = str(row["id"])
@@ -201,12 +178,7 @@ class RoundRepositoryDB:
 
         return rounds
 
-    # ================================================================
-    # Read
-    # ================================================================
-
     async def get_round_owner_id(self, round_id: str) -> Optional[str]:
-        """Return the user_id that owns a round, or None if not found."""
         try:
             rid = UUID(round_id)
         except (TypeError, ValueError):
@@ -216,7 +188,6 @@ class RoundRepositoryDB:
             return str(row["user_id"]) if row else None
 
     async def get_played_courses_for_user(self, user_id: str) -> list:
-        """Return distinct courses a user has rounds linked to."""
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
                 """SELECT DISTINCT c.id, c.name, c.location
@@ -229,7 +200,6 @@ class RoundRepositoryDB:
         return [{"id": str(r["id"]), "name": r["name"], "location": r["location"]} for r in rows]
 
     async def get_round(self, round_id: str, *, user_id=None, connection=None) -> Optional[Round]:
-        """Get a round with hole_scores and course data."""
         if connection is not None:
             return await self._get_round_on(connection, round_id, user_id)
         async with self._pool.acquire() as conn:
@@ -307,7 +277,6 @@ class RoundRepositoryDB:
         course_id: Optional[str] = None,
         date_from: Optional[date] = None,
     ) -> List[Round]:
-        """Get a user's rounds ordered by date DESC; ``limit=None`` returns the full history."""
         conditions = ["user_id = $1"]
         params: list = [UUID(user_id)]
         n = 2
@@ -331,10 +300,6 @@ class RoundRepositoryDB:
             )
             return await self._get_rounds_bulk(conn, rows)
 
-    # ================================================================
-    # Create
-    # ================================================================
-
     async def create_round(
         self,
         round_: Round,
@@ -345,19 +310,10 @@ class RoundRepositoryDB:
         user_tee_id: Optional[str] = None,
         connection=None,
     ) -> Round:
-        """Create a round with all hole_scores in a transaction.
-
-        With ``connection``, joins the caller's transaction so the round commits or rolls back with it.
-
-        Resolves course_id from round_.course.id if not provided.
-        Resolves tee_id from round_.tee_box + course if not provided.
-        """
         try:
-            # Validate numbered/nonempty shape before any writes (course trust is Services-owned).
             round_to_row(round_, UUID(user_id))
             new_round_id: UUID
             async with write_transaction(self._pool, connection) as conn:
-                # Resolve IDs
                 resolved_course_id = (
                     UUID(course_id)
                     if course_id
@@ -392,13 +348,11 @@ class RoundRepositoryDB:
                     stored_course = await self._course_repo.get_course(str(resolved_course_id), connection=conn)
                     if stored_course is None:
                         raise IntegrityError("Linked course is missing")
-                    # Accepted snapshots stay authoritative; fallback metadata comes from DB, not caller copies.
                     round_ = Round(**{**round_.model_dump(), "course": stored_course})
 
                 if not resolved_tee_id and resolved_course_id and round_.tee_box:
                     resolved_tee_id = await self._resolve_tee_id(conn, resolved_course_id, round_.tee_box)
 
-                # Insert round
                 row_data = round_to_row(round_, UUID(user_id), resolved_course_id, resolved_tee_id)
                 round_row = await conn.fetchrow(
                     """INSERT INTO users.rounds
@@ -426,24 +380,20 @@ class RoundRepositoryDB:
                 )
                 new_round_id = round_row["id"]
 
-                # Map hole_number -> hole_id for FK resolution
                 hole_id_map = {}
                 if resolved_course_id:
                     hole_id_map = await self._load_hole_id_map(conn, resolved_course_id)
 
-                # Build par_by_hole from course holes for populating par_played
                 par_by_hole = {}
                 if round_.course and round_.course.holes:
                     for h in round_.course.holes:
                         if h.number is not None and h.par is not None:
                             par_by_hole[h.number] = h.par
 
-                # Batch insert hole scores
                 if round_.hole_scores:
                     score_tuples = []
                     for hs in round_.hole_scores:
                         hole_id = hole_id_map.get(hs.hole_number)
-                        # Populate par_played from course if available, else keep existing
                         if hs.hole_number in par_by_hole and hs.par_played is None:
                             hs = HoleScore(**{**hs.model_dump(), "par_played": par_by_hole[hs.hole_number]})
                         score_tuples.append(hole_score_to_row(hs, new_round_id, hole_id))
@@ -466,12 +416,7 @@ class RoundRepositoryDB:
         except ValidationError as error:
             raise IntegrityError("Round data conflicts with the linked course layout") from error
 
-    # ================================================================
-    # Update
-    # ================================================================
-
     async def update_round(self, round_id: str, *, user_id=None, **fields) -> Optional[Round]:
-        """Validate metadata and derived-state changes under one parent-row lock."""
         field_map = {
             "round_date": "date",
             "weather_conditions": "weather_conditions",
@@ -533,7 +478,6 @@ class RoundRepositoryDB:
                 assignments = ", ".join(f"{name} = ${index}" for index, name in enumerate(updates, 2))
                 await conn.execute(f"UPDATE users.rounds SET {assignments} WHERE id = $1", *values)
                 await self._persist_derived_state(conn, row["id"], round_, row["user_id"])
-                # References may have changed, so reassemble inside the transaction before returning.
                 fresh = await conn.fetchrow("SELECT * FROM users.rounds WHERE id = $1", row["id"])
                 return await self._assemble_round(conn, fresh)
         except asyncpg.UniqueViolationError as error:
@@ -555,11 +499,9 @@ class RoundRepositoryDB:
         )
 
     async def upsert_hole_score(self, round_id: str, hole_score: HoleScore, *, user_id=None) -> None:
-        """Replace one numbered observation with the same atomic derived-state rules as a batch."""
         await self.update_hole_scores(round_id, [hole_score], user_id=user_id)
 
     async def update_hole_scores(self, round_id: str, hole_scores: list, *, user_id=None) -> Optional[Round]:
-        """Replace supplied hole objects, preserving existing historical snapshots when absent."""
         numbers = [score.hole_number for score in hole_scores]
         if None in numbers or len(numbers) != len(set(numbers)):
             raise IntegrityError("Hole updates require unique numbered observations")
@@ -592,7 +534,6 @@ class RoundRepositoryDB:
                 )
                 if error:
                     raise IntegrityError(error)
-                # Check before the first child write, including the last-score-cleared case.
                 round_to_row(round_, row["user_id"])
                 hole_ids = await self._load_hole_id_map(conn, row["course_id"]) if row["course_id"] else {}
                 updated_scores = [by_number[number] for number in numbers]
@@ -617,7 +558,6 @@ class RoundRepositoryDB:
             raise IntegrityError("Invalid hole score or reference") from error
 
     async def link_course_to_round(self, round_id: str, course_id: str, *, user_id=None) -> Optional[Round]:
-        """Relink references atomically while retaining accepted historical hole snapshots."""
         try:
             async with self._pool.acquire() as conn, conn.transaction():
                 values = [UUID(round_id)]
@@ -677,12 +617,7 @@ class RoundRepositoryDB:
         except asyncpg.IntegrityConstraintViolationError as error:
             raise IntegrityError("Invalid course relink or reference") from error
 
-    # ================================================================
-    # Delete
-    # ================================================================
-
     async def delete_round(self, round_id: str, *, user_id: Optional[str] = None) -> bool:
-        """Delete round and its hole_scores (CASCADE). Returns True if deleted."""
         async with self._pool.acquire() as conn:
             if user_id:
                 result = await conn.execute(
@@ -694,10 +629,6 @@ class RoundRepositoryDB:
                 result = await conn.execute("DELETE FROM users.rounds WHERE id = $1", UUID(round_id))
             return result == "DELETE 1"
 
-    # ================================================================
-    # Scorecard Scans
-    # ================================================================
-
     async def save_scan(
         self,
         *,
@@ -706,7 +637,6 @@ class RoundRepositoryDB:
         llm_model: str,
         llm_raw_json: dict,
     ) -> str:
-        """Save a scorecard scan record. Returns the scan ID."""
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(
                 """INSERT INTO users.scorecard_scans
@@ -720,7 +650,6 @@ class RoundRepositoryDB:
             return str(row["id"])
 
     async def get_scans_for_round(self, round_id: str) -> list:
-        """Get all scans associated with a round."""
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
                 """SELECT * FROM users.scorecard_scans

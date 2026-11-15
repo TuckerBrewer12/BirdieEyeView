@@ -1,5 +1,3 @@
-"""WHS-based estimate: eligibility, precision, selection context and one index for every caller."""
-
 from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from types import SimpleNamespace
@@ -18,7 +16,6 @@ START = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
 def rated_rounds(overs, *, rating=72.0, slope=113):
-    """Complete rated 18-hole rounds, one day apart; differential = over when rating=par=72, slope=113."""
     c = course(18, rating=rating, slope=slope)
     return [
         par_round(over=over, course_obj=c, tee_box="Blue", round_id=f"r{i}", date=START + timedelta(days=i))
@@ -34,7 +31,7 @@ def test_partial_rounds_never_produce_a_differential():
 
 def test_differentials_round_half_up_and_the_index_uses_the_shown_values():
     c = course(18, rating=72.0, slope=100)
-    r = par_round(over=15, course_obj=c, tee_box="Blue")  # 87: (87 - 72) * 113 / 100 = 16.95
+    r = par_round(over=15, course_obj=c, tee_box="Blue")
 
     assert handicap.score_differentials_per_round([r])[0]["differential"] == 17.0
 
@@ -117,12 +114,6 @@ def test_user_handicap_index_uses_the_seed_and_reset():
     assert handicap.user_handicap_index([], user) == 18.2
 
 
-# ================================================================
-# Eligibility and the WHS table, with hand-written expectations
-# ================================================================
-
-# Rounds available -> (lowest differentials used, adjustment), written out here rather than read
-# from production so a wrong table entry fails.
 EXPECTED_TABLE = {
     3: (1, -2.0), 4: (1, -1.0), 5: (1, 0.0), 6: (2, -1.0), 7: (2, 0.0), 8: (2, 0.0),
     9: (3, 0.0), 10: (3, 0.0), 11: (3, 0.0), 12: (4, 0.0), 13: (4, 0.0), 14: (4, 0.0),
@@ -131,7 +122,6 @@ EXPECTED_TABLE = {
 
 
 def distinct_overs(count):
-    """Distinct differentials in a scrambled order, so the lowest aren't simply the first."""
     return [(i * 7) % 23 + 1 for i in range(count)]
 
 
@@ -166,11 +156,10 @@ def test_fewer_than_three_rounds_have_no_index(count):
 
 
 def test_only_the_latest_twenty_differentials_count():
-    oldest_is_best = [0, *distinct_overs(20)]  # the 0 is round 1 of 21, outside the window
+    oldest_is_best = [0, *distinct_overs(20)]
 
     assert handicap.handicap_index(rated_rounds(oldest_is_best)) == expected_index(distinct_overs(20))
 
 
 def test_six_rounds_average_the_two_lowest_minus_one():
-    # The audit's worked example: (3 + 8) / 2 - 1 = 4.5.
     assert handicap.handicap_index(rated_rounds([12, 3, 14, 8, 13, 15])) == 4.5

@@ -270,7 +270,6 @@ def make_unknown_course_rows():
 def test_unknown_course_round_builds_ocr_course_metadata():
     payload, _ = make_unknown_course_rows()
 
-    # The course name is never read from the scan; the user picks or enters it in review.
     assert (payload["course"]["name"], payload["course"]["par"]) == (None, 36)
     assert payload["course"]["holes"][9]["par"] is None
     assert payload["course"]["tees"][0]["hole_yardages"] == {"1": 400, "3": 180}

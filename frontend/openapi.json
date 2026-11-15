@@ -2834,7 +2834,6 @@
         "type": "object"
       },
       "Hole": {
-        "description": "Represents a single hole on a golf course.",
         "properties": {
           "handicap": {
             "anyOf": [
@@ -5706,7 +5705,6 @@
       },
       "SaveRoundRequest": {
         "additionalProperties": false,
-        "description": "Request to save a reviewed/edited round.",
         "properties": {
           "all_tees": {
             "anyOf": [
@@ -6733,7 +6731,6 @@
         "type": "object"
       },
       "TeeRating": {
-        "description": "A published rating for exactly the declared holes, never an inferred half.",
         "properties": {
           "course_rating": {
             "anyOf": [
@@ -7471,7 +7468,6 @@
         "type": "object"
       },
       "UserTee": {
-        "description": "A user-owned tee configuration, optionally linked to a master course.",
         "properties": {
           "course_id": {
             "anyOf": [
@@ -8511,7 +8507,6 @@
         ]
       },
       "post": {
-        "description": "Create a custom course for a user.",
         "operationId": "create_course_api_courses_post",
         "parameters": [
           {
@@ -10132,7 +10127,6 @@
     },
     "/api/users/{user_id}/handicap": {
       "get": {
-        "description": "Return the user's current WHS-based Handicap Index estimate.",
         "operationId": "get_user_handicap_api_users__user_id__handicap_get",
         "parameters": [
           {

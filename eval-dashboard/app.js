@@ -8,7 +8,6 @@
     generation = 0,
     cache = new Map(),
     selected = new Set();
-  // Same pattern the publisher validates; the PR link follows the repository in the run's own URL.
   var RUN_URL =
     /^https:\/\/github\.com\/([A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100})\/actions\/runs\/[0-9]+$/;
   function repositoryFor(info) {
@@ -208,7 +207,6 @@
               JSON.stringify(r.run) !== JSON.stringify(entry.run) ||
               JSON.stringify(r.summary) !== JSON.stringify(entry.summary)
             ) {
-              // Key ordering is not meaningful in JSON; compare canonical key/value pairs.
               var equal = function (a, b) {
                 return (
                   Object.keys(a)
@@ -829,7 +827,6 @@
         compare(pair[0], pair[1]);
       } else if (parts[0] === "case" && parts.length === 2) {
         var runs = [];
-        // Bound concurrent requests rather than fetching the entire history in parallel.
         for (var i = 0; i < entries.length; i += 6) {
           runs.push.apply(
             runs,

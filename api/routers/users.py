@@ -109,7 +109,6 @@ async def get_user_handicap(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Return the user's current WHS-based Handicap Index estimate."""
     if str(current_user.id) != str(user_id):
         raise HTTPException(403, FORBIDDEN)
     user = await db.users.get_user(str(user_id))
@@ -184,7 +183,6 @@ async def update_user_tee(
     except IntegrityError as error:
         logger.info("User tee rejected: %s", error)
         raise HTTPException(422, USER_TEE_INVALID) from error
-    # An empty update is a lookup, which returns None instead of raising for a missing tee.
     if tee is None:
         raise HTTPException(404, USER_TEE_NOT_FOUND)
     return tee

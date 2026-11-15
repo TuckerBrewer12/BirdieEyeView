@@ -12,7 +12,6 @@ from tests.helpers import make_analytics_round
 
 @pytest.mark.parametrize(
     ("handicap", "label"),
-    # Band edges: just below and at each tested boundary, plus unrated and above the scale.
     [(None, "Unrated"), (4.9, "0–5 HCP"), (5, "5–10 HCP"), (27.9, "20–28 HCP"), (28, "28–54 HCP"), (60, "28–54 HCP")],
 )
 def test_benchmark_uses_handicap_range(handicap, label):
@@ -22,14 +21,14 @@ def test_benchmark_uses_handicap_range(handicap, label):
 @pytest.mark.parametrize(
     ("values", "lower_is_better", "threshold", "expected"),
     [
-        ([1, 1, 1], True, 0.1, "stable"),  # fewer than 4 observations
+        ([1, 1, 1], True, 0.1, "stable"),
         ([4, 3, 2, 1], True, 0.1, "improving"),
         ([1, 2, 3, 4], False, 0.1, "improving"),
         ([1, 2, 3, 4], True, 0.1, "declining"),
         ([4, 3, 2, 1], False, 0.1, "declining"),
-        ([None, 4, None, 3, 2, 1], True, 0.1, "improving"),  # unknowns are skipped, not zero
-        ([0, 0, 0.125, 0.125], True, 0.25, "stable"),  # change below the threshold
-        ([0, 0, 0.125, 0.125], True, 0.125, "declining"),  # change equal to the threshold counts
+        ([None, 4, None, 3, 2, 1], True, 0.1, "improving"),
+        ([0, 0, 0.125, 0.125], True, 0.25, "stable"),
+        ([0, 0, 0.125, 0.125], True, 0.125, "declining"),
         ([0, 0, 0.125, 0.125], True, 0.0625, "declining"),
     ],
 )
@@ -182,11 +181,6 @@ def test_insight_omits_non_actionable_metrics(method_name, metrics):
     assert getattr(service, method_name)(metrics, benchmark) is None
 
 
-# ================================================================
-# Confirmed bugs (real rounds)
-# ================================================================
-
-
 @pytest.mark.parametrize("handicap", [-1.0, -10.0])
 def test_plus_handicaps_use_the_lowest_band(handicap):
     benchmark, label = ai_module._get_benchmark(handicap)
@@ -221,12 +215,11 @@ def test_putting_savings_use_the_greens_actually_hit():
 
     insight = AIService(SimpleNamespace())._insight_putting_quality(raw, ai_module._BENCHMARKS[(10, 15)])
 
-    assert "saves ~0.1 strokes/round" in insight.what_if  # 0.12 gap x 1 green, not x 8
+    assert "saves ~0.1 strokes/round" in insight.what_if
 
 
 @pytest.mark.asyncio
 async def test_suggestions_compute_real_metrics_from_rounds():
-    """Public path with real rounds and hand-worked values (no patched _compute_raw)."""
     from datetime import datetime, timezone
 
     def played(round_id, day, gir):
@@ -234,18 +227,17 @@ async def test_suggestions_compute_real_metrics_from_rounds():
                   for n in range(1, 19)}
         return round_(scores, course_obj=course(18), round_id=round_id, date=datetime(2026, 1, day, tzinfo=timezone.utc))
 
-    half_greens = played("a", 1, lambda n: n <= 9)        # 9 hits, 9 misses, +9
-    unknown_greens = played("b", 2, lambda n: None)       # GIR unknown: not a miss, +18
-    no_greens = played("c", 3, lambda n: False)           # measured 0 of 18, +18
+    half_greens = played("a", 1, lambda n: n <= 9)
+    unknown_greens = played("b", 2, lambda n: None)
+    no_greens = played("c", 3, lambda n: False)
     service = AIService(make_ai_database(list(reversed([half_greens, unknown_greens, no_greens]))))
 
     suggestions = await service.generate_suggestions("u1")
 
     values = {item.metric: item.player_value for item in suggestions.comparisons}
-    assert values["GIR %"] == 25.0               # 9 / 36 observed greens; 16.7 if unknown counted as missed
-    assert values["Scoring Avg (to par)"] == 15.0  # (9 + 18 + 18) / 3
+    assert values["GIR %"] == 25.0
+    assert values["Scoring Avg (to par)"] == 15.0
     assert values["Putts per Round"] == 36.0
-    assert values["Scrambling %"] == 0.0         # 27 missed greens, none saved
-    # Seed 12 with no reset date: only the +9 round (below the seed) counts early on, so the index is 9.0.
+    assert values["Scrambling %"] == 0.0
     assert (suggestions.handicap_index, suggestions.handicap_range_label) == (9.0, "5–10 HCP")
     assert suggestions.rounds_analyzed == 3

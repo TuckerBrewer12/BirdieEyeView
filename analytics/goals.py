@@ -1,14 +1,3 @@
-"""Goal Engine — gap to a scoring goal and estimated strokes from each improvement area (savers).
-
-The eighteen-hole goal is judged on complete eighteen-hole rounds and savers are per eighteen-hole
-round; when a nine-hole goal is set, a separate nine-hole summary uses complete nine-hole rounds.
-Nothing is doubled.
-
-Savers are estimates under the stated assumptions below, not measured savings. They overlap (a
-three-putt can also be a blowup hole), so their strokes are not independent shares to add up.
-Ranking is by estimated strokes only; there is no effort or cost model.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -27,28 +16,25 @@ from analytics.stats import (
 from analytics.peak import peak_gap, peak_meets_goal
 from models.round import Round
 
-# ---- Display policy
-MIN_SAVER_STROKES = 0.1          # savers below this are not shown
-MAX_GAP_PERCENT = 999.0          # cap on the percentage of the gap a saver closes
+MIN_SAVER_STROKES = 0.1
+MAX_GAP_PERCENT = 999.0
 
-# ---- Evidence requirements
-MIN_BUCKET_HOLES = 10            # yardage bucket needs this many holes
-MIN_HOME_HOLE_OBSERVATIONS = 5   # home-course hole needs this many scores
-MIN_PAR5_HOLES = 6               # par-5 estimate needs this many par 5s
+MIN_BUCKET_HOLES = 10
+MIN_HOME_HOLE_OBSERVATIONS = 5
+MIN_PAR5_HOLES = 6
 
-# ---- Estimator assumptions (not calibrated against data; values kept from the original engine)
-TARGET_DOUBLES_CONVERTED = 2.0   # per round, at most this many doubles become bogeys (1 stroke each)
-TARGET_TRIPLES_CONVERTED = 1.0   # per round, at most this many triple-or-worse holes become bogeys
-STROKES_PER_TRIPLE_PLUS = 2.0    # conservative: a triple-or-worse to bogey is at least 2 strokes
+TARGET_DOUBLES_CONVERTED = 2.0
+TARGET_TRIPLES_CONVERTED = 1.0
+STROKES_PER_TRIPLE_PLUS = 2.0
 YARDAGE_MIN_STROKES = 0.3
-AVERAGE_GIR_PERCENT = 45.0       # assumed amateur GIR benchmark
-STROKES_PER_10_GIR_POINTS = 0.6  # assumed value of each 10 GIR percentage points closed
-MAX_GIR_STEPS = 3.0              # at most 30 GIR points (3 steps of 10) are valued
+AVERAGE_GIR_PERCENT = 45.0
+STROKES_PER_10_GIR_POINTS = 0.6
+MAX_GIR_STEPS = 3.0
 MIN_GIR_STROKES = 0.15
 SCRAMBLING_TARGET_PERCENT = 50.0
-MAX_SCRAMBLING_GAIN = 0.15       # at most 15 percentage points of scrambling improvement
+MAX_SCRAMBLING_GAIN = 0.15
 MIN_SCRAMBLING_STROKES = 0.15
-PAR5_TARGET_TO_PAR = 0.3         # par 5s improve to +0.3 per hole at best
+PAR5_TARGET_TO_PAR = 0.3
 PAR5_MAX_GAIN_PER_HOLE = 0.8
 PAR5_MIN_AVERAGE_TO_PAR = 0.4
 MIN_PAR5_STROKES = 0.15
@@ -56,8 +42,8 @@ MIN_PAR5_STROKES = 0.15
 
 @dataclass
 class _GoalContext:
-    rounds: List[Round]                     # complete 18-hole rounds
-    gap: Optional[float]                    # rounded gap; positive means strokes still to find
+    rounds: List[Round]
+    gap: Optional[float]
     home_course_rounds: Optional[List[Round]]
 
     def percent_of_gap(self, strokes: float) -> float:
@@ -76,7 +62,6 @@ def _saver(kind: str, strokes: float, ctx: _GoalContext, headline: str, detail: 
 
 
 def _three_putts(ctx: _GoalContext) -> Optional[dict]:
-    # Only rounds with putts on every scored hole: partial putt coverage would undercount.
     covered = [r for r in ctx.rounds if r.get_total_putts() is not None]
     rows = three_putts_per_round(covered)
     if not rows:
@@ -120,7 +105,6 @@ def _achilles_heel(ctx: _GoalContext) -> Optional[dict]:
     if not buckets:
         return None
     worst = max(buckets, key=lambda b: b["average_to_par"])
-    # Per round over rounds that had yardage data, not every round.
     rounds_with_yardage = sum(1 for r in ctx.rounds if scoring_by_yardage_buckets([r]))
     per_round = worst["average_to_par"] * worst["sample_size"] / max(rounds_with_yardage, 1)
     if per_round < YARDAGE_MIN_STROKES:
@@ -158,7 +142,6 @@ def _home_course_demon(ctx: _GoalContext) -> Optional[dict]:
 def _gir_opportunity(ctx: _GoalContext, gir_pct: Optional[float]) -> Optional[dict]:
     if gir_pct is None or gir_pct >= AVERAGE_GIR_PERCENT:
         return None
-    # Assumption: each 10 GIR percentage points closed is worth STROKES_PER_10_GIR_POINTS strokes.
     headroom = AVERAGE_GIR_PERCENT - gir_pct
     gain = min(headroom / 10, MAX_GIR_STEPS) * STROKES_PER_10_GIR_POINTS
     if gain < MIN_GIR_STROKES:
@@ -174,8 +157,6 @@ def _gir_opportunity(ctx: _GoalContext, gir_pct: Optional[float]) -> Optional[di
 
 
 def _scrambling_opportunity(ctx: _GoalContext) -> Optional[dict]:
-    # Rounds with GIR known on every hole, including rounds that missed no greens: their zero
-    # misses belong in the per-round average.
     observed = [r for r in ctx.rounds if r.get_total_gir() is not None]
     rate = overall_scrambling(observed)
     if rate["percentage"] is None or rate["percentage"] >= SCRAMBLING_TARGET_PERCENT:
@@ -201,7 +182,6 @@ def _par5_opportunity(ctx: _GoalContext) -> Optional[dict]:
         return None
     rounds_with_par5 = sum(1 for r in ctx.rounds if any(p["par"] == 5 for p in scoring_by_par([r])))
     per_round = row["sample_size"] / max(rounds_with_par5, 1)
-    # Assumption: par 5s improve to +PAR5_TARGET_TO_PAR per hole, at most PAR5_MAX_GAIN_PER_HOLE.
     save = min(row["average_to_par"] - PAR5_TARGET_TO_PAR, PAR5_MAX_GAIN_PER_HOLE) * per_round
     if save < MIN_PAR5_STROKES:
         return None
@@ -225,7 +205,6 @@ def _summary(rounds: List[Round], goal: Optional[int]) -> Dict[str, Any]:
         "best_score": min(scores),
         "scoring_goal": goal,
         "gap": gap,
-        # Judged on the displayed (rounded) gap, so "0.0 to go" is on track.
         "on_track": gap <= 0,
     }
 
@@ -237,10 +216,6 @@ def goal_report(
     *,
     scoring_goal_nine: Optional[int] = None,
 ) -> Dict[str, Any]:
-    """
-    Goal report: 18-hole gap and ranked savers from complete 18-hole rounds, plus a ``nine_hole``
-    summary from complete nine-hole rounds when a nine-hole goal is set.
-    """
     eighteen = el.complete_rounds(rounds, el.EIGHTEEN)
     report = _summary(eighteen, scoring_goal)
     ctx = _GoalContext(rounds=eighteen, gap=report["gap"], home_course_rounds=home_course_rounds)

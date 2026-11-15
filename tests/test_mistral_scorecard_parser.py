@@ -211,8 +211,6 @@ def test_merge_parsed_halves_preserves_hidden_sign_evidence() -> None:
     assert merged.sign_evidence_trusted is True
 
 
-# ---- Line-up rules (pure parser rules with boundary cases; the E2E Mistral captures cover real cards)
-
 NAME_IN_SECOND_CELL = """
 | HOLE |  | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
 | Par |  | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
@@ -262,7 +260,7 @@ def test_to_par_card_takes_par_rows_from_their_values_when_the_label_is_wrong_or
 def test_strokes_card_never_takes_a_player_row_as_par() -> None:
     parsed = parse_mistral_scorecard_rows(BLUE_ROCK_SPLIT, user_context="my name is Tucker. no putts recorded")
 
-    assert all(par is None for par in parsed.par_row)  # VIC's 5,3,5,5,5,5,4,4,4 | 40 is a score row, not par
+    assert all(par is None for par in parsed.par_row)
 
 
 def test_split_halves_with_different_player_row_counts_refuse_ordinal_pairing() -> None:

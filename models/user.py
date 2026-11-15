@@ -25,5 +25,5 @@ class User(BaseGolfModel):
     @field_validator('rounds')
     @classmethod
     def check_rounds(cls, rounds):
-        from .round import Round  # Imported lazily: round.py does not import user.py.
+        from .round import Round
         return CheckedList(Round, rounds)

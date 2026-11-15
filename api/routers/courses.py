@@ -139,8 +139,6 @@ async def search_courses(
     effective_user_id = str(user_id) if user_id else (str(current_user.id) if current_user else None)
     summaries = await db.courses.search_course_summaries(q, user_id=effective_user_id)
     out = await _summary_responses(db, summaries, current_user if include_record else None)
-    # Local results come first (the user's own courses, then masters). The provider is only
-    # searched when the database has nothing, to avoid spending provider calls on known courses.
     if not include_external or out:
         return out
 
@@ -150,7 +148,6 @@ async def search_courses(
         logger.warning("GolfCourseAPI fallback failed for query='%s': %s", q, exc)
         return out
 
-    # External selections must carry a stable provider ID; nothing is attached to local rows.
     return [summary for summary in map(_summarize_external_course, ext_items) if summary.external_course_id][:20]
 
 
@@ -176,7 +173,6 @@ async def create_course(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Create a custom course for a user."""
     effective_user_id = str(user_id) if user_id else str(current_user.id)
     if user_id and str(user_id) != str(current_user.id):
         raise HTTPException(403, FORBIDDEN)

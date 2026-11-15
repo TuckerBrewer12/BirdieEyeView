@@ -1,5 +1,3 @@
-"""Resource response schemas freeze the JSON the endpoints returned as raw domain models."""
-
 from datetime import datetime, timezone
 
 import pytest
@@ -93,7 +91,7 @@ def full_user() -> User:
     [
         (full_course(), CourseResponse, set()),
         (full_round(), RoundResponse, set()),
-        (full_user(), UserResponse, {"rounds"}),  # a user is sent as the profile; rounds have their own endpoints
+        (full_user(), UserResponse, {"rounds"}),
         (full_user_tee(), UserTeeResponse, set()),
     ],
     ids=["course", "round", "user", "user-tee"],
@@ -119,7 +117,6 @@ def test_response_schema_returns_the_domain_json_unchanged(domain, schema, left_
     assert not ({"_par_source", "_summary_sources", "_revision"} & frozen.keys())
 
 
-
 def test_course_detail_http_response_is_unchanged():
     from types import SimpleNamespace
     from unittest.mock import AsyncMock
@@ -130,7 +127,7 @@ def test_course_detail_http_response_is_unchanged():
 
     from api.dependencies import get_db, get_optional_current_user
 
-    course = full_course().model_copy(update={"user_id": None})  # a master course, readable by anyone
+    course = full_course().model_copy(update={"user_id": None})
     app = FastAPI()
     app.include_router(courses.router, prefix="/api/courses")
     app.dependency_overrides[get_db] = lambda: SimpleNamespace(
