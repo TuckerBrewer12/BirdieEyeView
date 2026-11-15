@@ -74,7 +74,7 @@ async def test_every_screen_shows_the_golfers_own_index(golfer):
     assert index is not None
     assert index != hcap.handicap_index(rounds[-20:])
 
-    dashboard = await stats_router.get_dashboard(user_id, db, user)
+    dashboard = await stats_router.get_dashboard(user=user, db=db)
     assert dashboard.handicap_index == index
     assert dashboard.handicap_trend[-1].handicap_index == index
 
@@ -113,7 +113,7 @@ async def test_a_timeframe_narrows_the_rounds_not_the_index(golfer, monkeypatch)
 @pytest.mark.asyncio
 async def test_the_dashboards_breakdown_and_change_add_up_to_the_index_shown(golfer):
     user, _, db = golfer
-    dashboard = await stats_router.get_dashboard(UUID(user.id), db, user)
+    dashboard = await stats_router.get_dashboard(user=user, db=db)
     whs = dashboard.whs
     used = [row.differential for row in whs.rows if row.used]
     assert len(used) == whs.count_used
@@ -191,7 +191,7 @@ async def test_dashboard_analytics_and_course_page_name_the_same_best_round():
     db = _database(user, season)
     user_id = UUID(user.id)
 
-    dashboard = await stats_router.get_dashboard(user_id, db, user)
+    dashboard = await stats_router.get_dashboard(user=user, db=db)
     assert (dashboard.best_round, dashboard.best_round_id) == (74, "74-at-70")
 
     analytics = await stats_router.get_analytics(user_id, 50, None, None, db, user)

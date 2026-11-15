@@ -225,7 +225,7 @@ def test_profiles_tees_and_stats_belong_to_their_owner(api):
     assert api.client.get(f"/api/users/{alice['id']}/tees", headers=bob["headers"]).status_code == 403
     assert api.client.delete(f"/api/users/{alice['id']}/tees/{tee['id']}", headers=bob["headers"]).status_code == 403
     assert api.client.delete(f"/api/users/{bob['id']}/tees/{tee['id']}", headers=bob["headers"]).status_code == 404
-    for path in (f"/api/stats/dashboard/{alice['id']}", f"/api/stats/milestones/{alice['id']}",
+    for path in (f"/api/stats/dashboard/{alice['id']}",
                  f"/api/users/{alice['id']}/handicap", f"/api/stats/analytics/{alice['id']}"):
         assert api.client.get(path, headers=bob["headers"]).status_code == 403, path
 
@@ -251,6 +251,36 @@ def test_friends_can_view_analytics_only_after_accepting(api):
     assert api.client.get(comparison, headers=carol["headers"]).status_code == 403
     unaccepted = f"/api/stats/{bob['id']}/benchmark?against=friend&friend_id={carol['id']}"
     assert api.client.get(unaccepted, headers=bob["headers"]).status_code == 403
+
+
+def test_self_only_stats_refuse_everyone_else_even_an_accepted_friend(api):
+    alice, bob, carol = api.user("alice@example.com"), api.user("bob@example.com"), api.user("carol@example.com")
+    course = custom_course(api, alice)
+    round_id = save_round(api, alice, course)
+    assert api.client.patch(f"/api/users/{alice['id']}", headers=alice["headers"],
+                            json={"scoring_goal": 80}).status_code == 200
+    code = api.client.get(f"/api/users/{bob['id']}", headers=bob["headers"]).json()["friend_code"]
+    friendship = api.client.post("/api/users/me/friends", headers=alice["headers"],
+                                 json={"addressee_friend_code": code}).json()["id"]
+    assert api.client.patch(f"/api/users/me/friends/{friendship}", headers=bob["headers"],
+                            json={"status": "accepted"}).status_code == 200
+
+    self_only = [
+        f"/api/stats/dashboard/{alice['id']}",
+        f"/api/stats/{alice['id']}/played-courses",
+        f"/api/stats/{alice['id']}/goal-report",
+        f"/api/stats/{alice['id']}/benchmark?against=handicap&handicap=15",
+        f"/api/stats/compare/{alice['id']}/{round_id}",
+        f"/api/stats/course-analytics/{alice['id']}/{course}",
+    ]
+    for path in self_only:
+        assert api.client.get(path, headers=alice["headers"]).status_code == 200, path
+        for viewer in (bob, carol):
+            assert api.client.get(path, headers=viewer["headers"]).status_code == 403, path
+        assert api.client.get(path).status_code == 401, path
+    assert api.client.get(f"/api/stats/analytics/{alice['id']}", headers=bob["headers"]).status_code == 200
+    assert api.client.get(f"/api/stats/analytics/{alice['id']}", headers=carol["headers"]).status_code == 403
+    assert api.client.get(f"/api/stats/milestones/{alice['id']}", headers=alice["headers"]).status_code == 404
 
 
 def test_saved_round_is_listed_edited_and_deleted(api):
@@ -723,7 +753,6 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
         "dashboard": f"/api/stats/dashboard/{alice['id']}",
         "analytics": f"/api/stats/analytics/{alice['id']}",
         "played": f"/api/stats/{alice['id']}/played-courses",
-        "milestones": f"/api/stats/milestones/{alice['id']}",
         "goal": f"/api/stats/{alice['id']}/goal-report",
         "compare": f"/api/stats/compare/{alice['id']}/{rounds[1]}",
         "course": f"/api/stats/course-analytics/{alice['id']}/{course}",
@@ -742,7 +771,6 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
     selected = next(row for row in window["metrics"] if row["metric"] == "score")
     assert (selected["value"], selected["average"], window["rounds"]) == (78, 82, 1)
     assert body["course"]["rounds_played"] == 3
-    assert isinstance(body["milestones"]["milestones"], list)
 
     benchmark_path = f"/api/stats/{alice['id']}/benchmark?against=handicap&handicap=15"
     benchmark = get(benchmark_path)

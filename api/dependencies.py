@@ -1,10 +1,11 @@
 import ipaddress
 import os
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from api.messages import INVALID_OR_EXPIRED_TOKEN, NOT_AUTHENTICATED, USER_NOT_FOUND
+from api.messages import FORBIDDEN, INVALID_OR_EXPIRED_TOKEN, NOT_AUTHENTICATED, USER_NOT_FOUND
 from api.error_responses import SERVICE_UNAVAILABLE
 
 
@@ -47,6 +48,7 @@ def client_ip(request: Request) -> str:
 
 from api.auth_utils import decode_access_token, get_access_token_cookie_name
 from database.db_manager import DatabaseManager
+from models import User
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -91,3 +93,9 @@ async def get_optional_current_user(
     if not user_id:
         return None
     return await db.users.get_user(user_id)
+
+
+async def get_self(user_id: UUID, current_user: User = Depends(get_current_user)) -> User:
+    if str(current_user.id) != str(user_id):
+        raise HTTPException(403, FORBIDDEN)
+    return current_user

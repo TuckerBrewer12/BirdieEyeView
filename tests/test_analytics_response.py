@@ -147,7 +147,7 @@ async def test_records_and_streaks_name_the_round_they_were_set_in(season):
 @pytest.mark.asyncio
 async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(season):
     _, db, user = season
-    dashboard = await stats.get_dashboard(UUID(user.id), db, user)
+    dashboard = await stats.get_dashboard(user=user, db=db)
     trends = await _analytics(season, limit=20)
 
     assert isinstance(dashboard, DashboardResponse)
@@ -163,7 +163,7 @@ async def test_dashboard_carries_the_trends_analytics_draws_for_the_last_20(seas
 @pytest.mark.asyncio
 async def test_goal_report_is_typed(season):
     _, db, user = season
-    report = await stats.get_goal_report(UUID(user.id), 20, db, user)
+    report = await stats.get_goal_report(limit=20, user=user, db=db)
     assert isinstance(report, GoalReportResponse)
     assert report.scoring_goal == 79
     assert report.savers

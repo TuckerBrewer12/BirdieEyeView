@@ -101,7 +101,7 @@ async def test_every_screen_reports_the_same_seeded_index():
     db.rounds.get_round_summaries_for_user = AsyncMock(return_value=history)
 
     from_users = (await users.get_user_handicap(user_id, db, user))["handicap_index"]
-    from_dashboard = (await stats.get_dashboard(user_id, db, user)).handicap_index
+    from_dashboard = (await stats.get_dashboard(user=user, db=db)).handicap_index
     from_analytics = (await stats.get_analytics(user_id, 50, None, None, db, user)).kpis.handicap_index
 
     assert from_users == from_dashboard == from_analytics == 10.0
