@@ -39,6 +39,15 @@ test("see all opens the round list", async ({ dashboard }) => {
   await dashboard.isAtRounds();
 });
 
+test("a failed load says so, and Retry brings the dashboard back", async ({ dashboard }) => {
+  await dashboard.openFailed();
+  await dashboard.seesLoadError();
+  dashboard.nextLoadSucceeds();
+  await dashboard.retry();
+  await dashboard.seesGreeting();
+  await dashboard.seesLastRound("Half Moon Bay", "78");
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 

@@ -19,3 +19,9 @@ test("handicap sheet open", async ({ dashboard }) => {
   await dashboard.seesHandicapSheet();
   await dashboard.capture("dashboard-handicap-sheet.png", { fullPage: false });
 });
+
+test("failed load", async ({ dashboard }) => {
+  await dashboard.openFailed();
+  await dashboard.seesLoadError();
+  await dashboard.capture("dashboard-load-error.png");
+});

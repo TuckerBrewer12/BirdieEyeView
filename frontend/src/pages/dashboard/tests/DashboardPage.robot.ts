@@ -1,7 +1,7 @@
 import { type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
-import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
+import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import {
   dashboardGoalReport,
   dashboardUser,
@@ -15,6 +15,7 @@ const FROZEN_NOW = "2026-06-15T18:00:00.000Z";
 
 export class DashboardRobot {
   private readonly page: Page;
+  private backend: FakeBackend | null = null;
 
   constructor(page: Page) {
     this.page = page;
@@ -42,6 +43,35 @@ export class DashboardRobot {
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await this.seesGreeting();
     await expect(this.page.locator("[data-slot=last-round-card]").locator("visible=true")).toBeVisible();
+    return this;
+  }
+
+  async openFailed(): Promise<this> {
+    await this.page.emulateMedia({ reducedMotion: "reduce" });
+    await this.page.clock.setFixedTime(new Date(FROZEN_NOW));
+    this.backend = await FakeSession.install(this.page, {
+      rounds: storedRounds,
+      handicapIndex: 12.4,
+      profile: dashboardUser,
+      goalReport: dashboardGoalReport,
+    });
+    await this.page.goto("/");
+    await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
+    return this;
+  }
+
+  async seesLoadError(): Promise<this> {
+    await expect(this.page.getByRole("alert")).toContainText("Dashboard data failed to load.");
+    return this;
+  }
+
+  nextLoadSucceeds(): this {
+    if (this.backend) this.backend.dashboard = populatedDashboard;
+    return this;
+  }
+
+  async retry(): Promise<this> {
+    await this.page.getByRole("button", { name: "Retry" }).click();
     return this;
   }
 
