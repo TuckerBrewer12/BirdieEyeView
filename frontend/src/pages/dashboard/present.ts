@@ -16,7 +16,7 @@ export function firstNameOf(user: UserDto | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
 }
 
-export function greetingFor(now: Date): string {
+export function greetingFor(now: Date = new Date()): string {
   const hour = now.getHours();
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
