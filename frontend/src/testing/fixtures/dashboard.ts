@@ -84,6 +84,37 @@ export const populatedDashboard: DashboardDto = {
   rounds_this_year: 4,
 };
 
+const emptyMix = { eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0 };
+
+export const emptyDashboard: DashboardDto = {
+  ...populatedDashboard,
+  best_round: null,
+  best_round_id: null,
+  best_round_course: null,
+  best_round_to_par: null,
+  best_round_date: null,
+  handicap_index: null,
+  total_rounds: 0,
+  scoring_average: null,
+  scoring_average_l5: null,
+  scoring_average_change: null,
+  scoring_average_verdict: null,
+  recent_rounds: [],
+  recent_score_mix: emptyMix,
+  handicap_change: { this_month: null, this_month_verdict: null },
+  whs: {
+    rows: [],
+    window_size: 0,
+    count_used: 0,
+    adjustment: 0,
+    diff_avg: null,
+    has_rated_rounds: false,
+  },
+  score_trend: [],
+  handicap_trend: [],
+  rounds_this_year: 0,
+};
+
 export const dashboardGoalReport: GoalReportDto = {
   nine_hole: null,
   scoring_average: 76.8,
@@ -112,4 +143,19 @@ export const dashboardGoalReport: GoalReportDto = {
       data: {},
     },
   ],
+};
+
+export const emptyGoalReport: GoalReportDto = {
+  nine_hole: null,
+  scoring_average: null,
+  lowest_score: null,
+  scoring_goal: 79,
+  gap: null,
+  on_track: false,
+  progress_pct: null,
+  rounds_meeting_goal: 0,
+  peak_gap: null,
+  peak_meets_goal: null,
+  attempts: [],
+  savers: [],
 };

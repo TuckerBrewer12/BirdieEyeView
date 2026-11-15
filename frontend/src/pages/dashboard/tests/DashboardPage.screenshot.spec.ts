@@ -13,6 +13,12 @@ test("populated dashboard in dark mode", async ({ dashboard }) => {
   await dashboard.capture("dashboard-populated-dark.png");
 });
 
+test("no rounds yet", async ({ dashboard }) => {
+  await dashboard.openWithoutRounds();
+  await dashboard.seesNoRoundsYet();
+  await dashboard.capture("dashboard-no-rounds.png");
+});
+
 test("handicap sheet open", async ({ dashboard }) => {
   await dashboard.open();
   await dashboard.openHandicapSheet();

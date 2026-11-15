@@ -5,6 +5,8 @@ import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import {
   dashboardGoalReport,
   dashboardUser,
+  emptyDashboard,
+  emptyGoalReport,
   populatedDashboard,
 } from "../../../testing/fixtures/dashboard";
 import { storedRounds } from "../../../testing/fixtures/rounds";
@@ -28,6 +30,21 @@ export class DashboardRobot {
   }
 
   async open(seed: FakeBackendSeed = {}): Promise<this> {
+    await this.install(seed);
+    await expect(this.page.locator("[data-slot=last-round-card]").locator("visible=true")).toBeVisible();
+    return this;
+  }
+
+  async openWithoutRounds(): Promise<this> {
+    await this.install({
+      rounds: [],
+      dashboard: emptyDashboard,
+      goalReport: emptyGoalReport,
+    });
+    return this;
+  }
+
+  private async install(seed: FakeBackendSeed): Promise<void> {
     await this.page.emulateMedia({ reducedMotion: "reduce" });
     await this.page.clock.setFixedTime(new Date(FROZEN_NOW));
     await FakeSession.install(this.page, {
@@ -41,8 +58,6 @@ export class DashboardRobot {
     await this.page.goto("/");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await this.seesGreeting();
-    await expect(this.page.locator("[data-slot=last-round-card]").locator("visible=true")).toBeVisible();
-    return this;
   }
 
   async seesGreeting(): Promise<this> {
@@ -55,6 +70,12 @@ export class DashboardRobot {
     await expect(
       this.page.locator("[data-slot=scoring-average-card]").locator("visible=true").locator("[data-slot=stat-value]"),
     ).toContainText(label);
+    return this;
+  }
+
+  async seesNoRoundsYet(): Promise<this> {
+    await expect(this.page.getByText("No other rounds yet").locator("visible=true")).toBeVisible();
+    await expect(this.page.locator("[data-slot=last-round-card]")).toHaveCount(0);
     return this;
   }
 
