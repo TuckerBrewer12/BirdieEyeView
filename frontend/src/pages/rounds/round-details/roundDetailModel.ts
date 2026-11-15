@@ -1,5 +1,6 @@
 import type { RoundComparisonDto } from "@/types/api";
 import { formatOneDecimal, formatSigned, formatTwoDecimals } from "@/domain/format";
+import { formatCourseHandicap } from "@/domain/handicap";
 import type { Round } from "@/domain";
 
 export type ComparisonWindow = RoundComparisonDto["windows"][number]["window"];
@@ -74,7 +75,7 @@ export interface SummaryFigure {
 export function summaryFigures(round: Round): SummaryFigure[] {
   return [
     {
-      label: round.courseHandicap != null ? `Net · hcp ${round.courseHandicap}` : "Net",
+      label: round.courseHandicap != null ? `Net · hcp ${formatCourseHandicap(round.courseHandicap)}` : "Net",
       value: round.netScore?.toString() ?? "—",
     },
     { label: "Putts", value: round.putts?.toString() ?? "—" },
