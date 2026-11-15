@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 from database.db_manager import DatabaseManager
 from database.exceptions import IntegrityError
 from api.messages import (
-    COURSE_ID_MUST_BE_A_VALID_UUID, COURSE_ID_NOT_FOUND, FORBIDDEN, OCR_TEXT_INVALID, PLAYER_NAME_NOT_READ,
+    COURSE_ID_MUST_BE_A_VALID_UUID, COURSE_ID_NOT_FOUND, FORBIDDEN, OCR_TEXT_INVALID, OCR_TEXT_TOO_LONG,
+    PLAYER_NAME_NOT_READ, SCAN_REVIEW_NOTES,
     UNCLEAR_PLAYER_NAME, UNREADABLE_SCORE_ROWS, UPLOAD_NOT_PROCESSED, USER_CONTEXT_INVALID,
 )
 from api.dependencies import get_current_user, get_optional_current_user, get_db
@@ -24,12 +25,11 @@ from api.schemas import OcrTextResponse, SaveScanResponse, ScanResponse
 from models import User
 from services.mistral_scorecard_parser import parse_mistral_scorecard_rows
 from services.scan_assembly import assemble_scan, scan_confidence
-from services.scan_ocr import LOG_SENSITIVE_OCR_DEBUG, read_scorecard
+from services.scan_ocr import LOG_SENSITIVE_OCR_DEBUG, MAX_OCR_TEXT_CHARS, OcrTextTooLong, read_scorecard
 from services.scan_service import ScanSaveRejected, ScanService
 
 router = APIRouter()
 
-MAX_OCR_TEXT_CHARS = 300_000
 MAX_USER_CONTEXT_CHARS = 1_500
 
 
@@ -62,6 +62,8 @@ async def prefetch_ocr(file: UploadFile = File(...)):
             diagnostics: List[str] = []
             markdown_text = await read_scorecard(upload.ocr_path, diagnostics)
             _log_diagnostics("ocr", diagnostics)
+    except OcrTextTooLong:
+        raise HTTPException(422, OCR_TEXT_TOO_LONG) from None
     except HTTPException:
         raise
     except Exception:
@@ -170,7 +172,10 @@ async def extract_scan(
                 course=course_model,
                 to_par_scoring=to_par_scoring,
             )
-            round_data, fields_needing_review = assembly.round, assembly.notes
+            round_data = assembly.round
+            fields_needing_review = assembly.warnings + [
+                SCAN_REVIEW_NOTES[note.kind].format(hole=note.hole) for note in assembly.notes
+            ]
             name_missing = bool(parsed_rows.player_name) and not parsed_rows.player_row_found
 
             present_strokes = len(
@@ -186,13 +191,15 @@ async def extract_scan(
                 )
                 error.diagnostics = diagnostics
                 raise error
-            if name_missing:
-                fields_needing_review.append(PLAYER_NAME_NOT_READ)
+            name_notes = [PLAYER_NAME_NOT_READ] if name_missing else []
+            fields_needing_review.extend(name_notes)
             _log_diagnostics("extract", diagnostics)
 
             if _rated_tees(round_data):
                 _add_course_handicaps(round_data, await player_handicap_index(db, current_user))
-            confidence_data = scan_confidence(round_data.get("hole_scores", []), fields_needing_review)
+            confidence_data = scan_confidence(
+                round_data.get("hole_scores", []), assembly.notes, round_notes=assembly.warnings + name_notes
+            )
             t_parse_end = time.perf_counter()
             logger.info(
                 "Scan stage complete: stage=mistral_parse extraction_mode=%s parse_ms=%.1f score_cells=%d putt_cells=%d gir_cells=%d shots_cells=%d to_par_hint=%s warnings=%d",
@@ -213,6 +220,10 @@ async def extract_scan(
                     "fields_needing_review": fields_needing_review,
                 }
             )
+    except OcrTextTooLong:
+        raise ScanExtractionError(
+            422, OCR_TEXT_TOO_LONG, category="unreadable_scores", stage="ocr"
+        ) from None
     except FileNotFoundError:
         raise ScanExtractionError(400, UPLOAD_NOT_PROCESSED, category="invalid_upload", stage=failure_stage) from None
     except EnvironmentError:

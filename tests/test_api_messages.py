@@ -49,3 +49,9 @@ def test_every_5xx_reply_uses_a_generic_message():
     leaking = [where for where, text in server_errors if not (isinstance(text, ast.Name) and text.id in GENERIC)]
     assert leaking == [], "5xx replies must use a constant from api/error_responses.py"
 
+
+def test_scan_review_catalog_covers_every_structured_issue():
+    from api.messages import SCAN_REVIEW_NOTES
+    from services.scan_assembly import ScanNoteKind
+
+    assert set(SCAN_REVIEW_NOTES) == {kind.value for kind in ScanNoteKind}

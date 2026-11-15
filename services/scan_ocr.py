@@ -8,6 +8,12 @@ from services.mistral_ocr_service import MistralOCRService
 
 logger = logging.getLogger(__name__)
 
+MAX_OCR_TEXT_CHARS = 300_000
+
+
+class OcrTextTooLong(ValueError):
+    ...
+
 
 def _env_bool(name: str, default: bool = False) -> bool:
     raw = os.environ.get(name)
@@ -45,8 +51,13 @@ async def read_scorecard(ocr_path: Path, diagnostics: Optional[List[str]] = None
                     )
 
     raw_markdown = MistralOCRService.extract_markdown_text(ocr_resp, diagnostics)
+    if len(raw_markdown) > MAX_OCR_TEXT_CHARS:
+        raise OcrTextTooLong
     if LOG_SENSITIVE_OCR_DEBUG:
         logger.debug("Mistral raw markdown:\n%s", raw_markdown)
     else:
         logger.info("Mistral OCR produced markdown chars=%d", len(raw_markdown))
-    return await merge_split_tables(raw_markdown, diagnostics=diagnostics)
+    markdown = await merge_split_tables(raw_markdown, diagnostics=diagnostics)
+    if len(markdown) > MAX_OCR_TEXT_CHARS:
+        raise OcrTextTooLong
+    return markdown

@@ -23,7 +23,7 @@ Response assembly lives in [round_responses.py](../../api/round_responses.py), [
 
 ## Typical request
 
-A frontend query calls an API helper; the router resolves authentication/database dependencies and validates the request. Workflow or repository calls produce domain data, then the router returns a response schema. In the current code, the scan router still assembles parsed rows into the extraction response and the stats router still calculates results; moving that logic is roadmap step 3 (upload handling has already moved out of the scan router).
+A frontend query calls an API helper; the router resolves authentication/database dependencies and validates the request. Workflow or repository calls produce domain data, then the router returns a response schema. The scan router delegates uploads to [scan_uploads.py](../../api/scan_uploads.py), OCR/merging to [scan_ocr.py](../../services/scan_ocr.py), and round assembly/confidence to [scan_assembly.py](../../services/scan_assembly.py). It owns course access, review-note wording from [messages.py](../../api/messages.py), course handicaps and error translation. Both OCR routes reject oversized provider/merged text with 422; extraction labels that failure `unreadable_scores` at stage `ocr`. The response shape is unchanged; see [extraction](extraction.md) for confidence semantics and current UI limits. The stats router still contains calculations for the remaining step 3 work.
 
 ## Changing this domain
 

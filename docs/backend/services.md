@@ -8,6 +8,8 @@
 |---|---|
 | [scan_service.py](../../services/scan_service.py) | `ScanService.save_reviewed_scan()`: plan and validate the course and round, verify a provider-picked course, then write course and round in one transaction. |
 | [scan_image.py](../../services/scan_image.py) | `prepare_for_ocr()`: the image OCR receives (pass-through for a browser-ready JPEG or a PDF, otherwise a 2,000 px quality-80 JPEG without metadata); a failed re-encode falls back to the original. It writes into a file the caller created (opened with `open_existing()`, which fails rather than create a file) and never creates or deletes files itself; `new_temp_path()` and `remove_quietly()` (logs instead of raising) are the shared temporary-file helpers. Upload checks live in [api/scan_uploads.py](../../api/scan_uploads.py). |
+| [scan_ocr.py](../../services/scan_ocr.py) | OCR/merge orchestration and text-size limits before and after merging. |
+| [scan_assembly.py](../../services/scan_assembly.py) | Parsed rows to round payloads, structured per-hole review notes and confidence; no API dependency. |
 | [scan_normalization.py](../../services/scan_normalization.py) | Converts scan-derived numbers (`"5"`, `5.0`) to the types strict Models require and rejects values that would need guessing (`true`, `5.5`, words, non-finite numbers). Used by the save request models. |
 | [golfcourse_api_service.py](../../services/golfcourse_api_service.py) | External course search and per-tee course details used only for verification. |
 | `mistral_ocr_service.py`, `mistral_scorecard_parser.py`, `gemini_table_merger.py` | OCR, parsed observations, and optional table merging; see [extraction](extraction.md). |
@@ -25,7 +27,7 @@ The scan router hands reviewed data to ScanService. The service never guesses th
 
 Verification is an exact match: every scanned tee must equal some provider tee's per-hole yardages (names ignored), the scanned pars must equal that tee's pars. Ratings are hard to read from a card, so they never block verification: a scanned course/slope rating is stored only when the matching provider tee has the same rating, and is otherwise dropped (the master keeps its existing rating for that tee; a new master has none). Provider data is compared in memory and never stored; location is never taken from the scan or the provider. All reads, provider calls and validation happen before the first write; rejected saves raise `ScanSaveRejected` (HTTP 422) and write nothing. Course and round writes share one transaction through `DatabaseManager.transaction()`.
 
-The service still imports API request types, and extraction assembly still lives partly in the router. The intended boundary is a readable orchestration function with focused steps, not a generic service framework.
+The save service still imports API request types. Extraction orchestration and assembly live in `scan_ocr.py` and `scan_assembly.py`, which import nothing from the API; the router owns catalog wording and HTTP translation. The intended boundary is a readable orchestration function with focused steps, not a generic service framework.
 
 Report submission is independent of round saving and PostgreSQL. Developer retrieval is through the report CLI described in [failed-scan reports](../failed-scan-reports.md). Do not infer live storage configuration from a checked-in guide or local file.
 

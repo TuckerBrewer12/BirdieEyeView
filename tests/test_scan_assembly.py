@@ -2,9 +2,14 @@ from pathlib import Path
 
 import pytest
 
+from api.messages import SCAN_REVIEW_NOTES
 from models import Course, Hole, Tee
 from services.mistral_scorecard_parser import ParsedScorecardRows, ParsedTeeRow, parse_mistral_scorecard_rows
-from services.scan_assembly import assemble_scan, confidence_level, scan_confidence
+from services.scan_assembly import ScanNote, ScanNoteKind, assemble_scan, confidence_level, scan_confidence
+
+
+def review_notes(assembly):
+    return assembly.warnings + [SCAN_REVIEW_NOTES[n.kind].format(hole=n.hole) for n in assembly.notes]
 
 
 @pytest.mark.parametrize(
@@ -21,7 +26,8 @@ def test_confidence_payload_scores_complete_and_missing_holes():
             {"hole_number": 1, "strokes": 4, "putts": 2, "green_in_regulation": True},
             {"hole_number": 2, "strokes": None, "putts": None, "green_in_regulation": None},
         ],
-        ["review"],
+        [],
+        round_notes=["review"],
     )
 
     assert payload["overall"] == pytest.approx(0.48)
@@ -32,7 +38,7 @@ def test_confidence_payload_scores_complete_and_missing_holes():
 
 
 def test_confidence_payload_without_holes_has_zero_confidence():
-    assert scan_confidence([], ["warning"])["overall"] == 0
+    assert scan_confidence([], [], round_notes=["warning"])["overall"] == 0
 
 
 def make_known_course_rows():
@@ -62,7 +68,7 @@ def make_known_course_rows():
         warnings=["existing warning"],
     )
     assembly = assemble_scan(parsed, course=course, to_par_scoring=None)
-    return assembly.round, assembly.notes
+    return assembly.round, review_notes(assembly)
 
 
 def test_known_course_round_preserves_course_metadata():
@@ -120,13 +126,13 @@ def make_unknown_course_rows():
         shots_to_green_row=[2, 2, 2],
     )
     assembly = assemble_scan(parsed, course=None, to_par_scoring=False)
-    return assembly.round, assembly.notes
+    return assembly.round, review_notes(assembly)
 
 
 def test_unknown_course_round_builds_ocr_course_metadata():
     payload, _ = make_unknown_course_rows()
 
-    assert (payload["course"]["name"], payload["course"]["par"]) == (None, 36)
+    assert (payload["course"]["name"], payload["course"]["par"]) == (None, None)
     assert payload["course"]["holes"][9]["par"] is None
     assert payload["course"]["tees"][0]["hole_yardages"] == {"1": 400, "3": 180}
 
@@ -151,7 +157,7 @@ def build_score_breakdown_rows(*, scores=None, putts=None, shots=None, pars=None
         course=None,
         to_par_scoring=False,
     )
-    return assembly.round, assembly.notes
+    return assembly.round, review_notes(assembly)
 
 
 def test_score_breakdown_recovers_one_missing_auxiliary_value_in_each_direction():
@@ -300,7 +306,7 @@ def test_to_par_plus_one_is_flipped_to_birdie_using_internal_rows() -> None:
         course=None,
         to_par_scoring=None,
     )
-    round_payload, fields = assembly.round, assembly.notes
+    round_payload, fields = assembly.round, review_notes(assembly)
 
     assert round_payload["hole_scores"][0]["strokes"] == 3
     assert any("score sign corrected" in f for f in fields)
@@ -321,7 +327,7 @@ def test_untrusted_auxiliary_rows_do_not_flip_valid_plus_one() -> None:
         course=None,
         to_par_scoring=None,
     )
-    round_payload, fields = assembly.round, assembly.notes
+    round_payload, fields = assembly.round, review_notes(assembly)
 
     assert round_payload["hole_scores"][0]["strokes"] == 5
     assert not any("score sign corrected" in field for field in fields)
@@ -356,3 +362,65 @@ def test_half_moon_bay_score_only_keeps_hidden_rows_and_front9_strokes() -> None
 
     front9 = [h["strokes"] for h in round_payload["hole_scores"][:9]]
     assert front9 == [5, 3, 3, 5, 4, 3, 3, 5, 4]
+
+
+@pytest.mark.parametrize("to_par", [False, True])
+@pytest.mark.parametrize("strokes", [0, 1, 15, 16])
+def test_misread_stroke_boundaries_keep_valid_values_and_report_invalid_ones(to_par, strokes):
+    parsed = ParsedScorecardRows(par_row=[4], score_row=[strokes - 4 if to_par else strokes])
+    result = assemble_scan(parsed, course=None, to_par_scoring=to_par)
+    valid = 1 <= strokes <= 15
+    assert result.round["hole_scores"][0]["strokes"] == (strokes if valid else None)
+    assert (ScanNote(ScanNoteKind.STROKES_MISREAD, 1) in result.notes) is not valid
+    assert ScanNote(ScanNoteKind.STROKES_MISSING, 1) not in result.notes
+
+
+@pytest.mark.parametrize("pars, expected", [
+    ([4] * 18, 72), ([4] * 9, None), ([None] * 9 + [4] * 9, None),
+    ([4] * 17 + [None], None), ([4] * 17 + [7], None), ([], None),
+])
+def test_unknown_course_par_requires_every_hole(pars, expected):
+    result = assemble_scan(ParsedScorecardRows(par_row=pars, score_row=[4] * 18), course=None, to_par_scoring=False)
+    assert result.round["course"]["par"] == expected
+    assert len(result.round["hole_scores"]) == 18
+
+
+@pytest.mark.parametrize("total, numbers, expected", [
+    (9, range(1, 10), range(1, 10)),
+    (18, range(1, 19), range(1, 19)),
+    (None, range(10, 19), range(1, 19)),
+    (None, [2, 17], range(1, 19)),
+])
+def test_known_course_layout_uses_numbers_without_truncating_partial_rows(total, numbers, expected):
+    course = Course(total_holes=total, holes=[Hole(number=n, par=3, handicap=n) for n in numbers])
+    parsed = ParsedScorecardRows(par_row=[4] * 18, score_row=[1] * 18)
+    result = assemble_scan(parsed, course=course, to_par_scoring=True)
+    assert [h["hole_number"] for h in result.round["hole_scores"]] == list(expected)
+    assert [h["strokes"] for h in result.round["hole_scores"]] == [4 if n in numbers else 5 for n in expected]
+    assert [h.get("handicap") for h in result.round["course"]["holes"]] == [n if n in numbers else None for n in expected]
+
+
+def test_known_course_missing_par_uses_only_valid_parsed_par():
+    course = Course(total_holes=18, holes=[Hole(number=1), Hole(number=2, par=3), Hole(number=3)])
+    result = assemble_scan(ParsedScorecardRows(par_row=[5, 4, 7], score_row=[0, 0, 0]), course=course, to_par_scoring=True)
+    assert [h["par"] for h in result.round["course"]["holes"][:3]] == [5, 3, None]
+    assert [h["strokes"] for h in result.round["hole_scores"][:3]] == [5, 3, None]
+
+
+@pytest.mark.parametrize("note_kind", list(ScanNoteKind))
+@pytest.mark.parametrize("strokes", [None, 4])
+def test_only_stroke_issues_lower_confidence_on_the_affected_hole(note_kind, strokes):
+    scores = [
+        {"hole_number": 1, "strokes": strokes, "putts": 2, "green_in_regulation": True},
+        {"hole_number": 2, "strokes": 4, "putts": 2, "green_in_regulation": True},
+    ]
+    notes = [ScanNote(note_kind, 1)]
+    confidence = scan_confidence(scores, notes, round_notes=["parser warning"])
+    expected = 0.2 if strokes is None else (0.7 if note_kind is ScanNoteKind.BREAKDOWN_CONFLICT else 0.9)
+    first, second = confidence["hole_scores"]
+    assert first["fields"]["strokes"]["final_confidence"] == expected
+    assert first["overall"] == min(expected, 0.85)
+    assert first["fields"]["putts"]["final_confidence"] == 0.85
+    assert first["fields"]["green_in_regulation"]["final_confidence"] == 0.8
+    assert second["fields"]["strokes"]["level"] == "high"
+    assert confidence["overall"] == pytest.approx((0.5 if strokes is None else 1.0) - 0.04)
