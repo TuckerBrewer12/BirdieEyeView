@@ -82,8 +82,18 @@ export class RoundsRobot {
     return this;
   }
 
-  async filterByCourse(name: string): Promise<this> {
+  async openCourseMenu(): Promise<this> {
     await this.page.getByRole("button", { name: "Course", exact: true }).click();
+    return this;
+  }
+
+  async seesCourseMenu(): Promise<this> {
+    await expect(this.page.locator("[data-slot=picker-options]")).toBeVisible();
+    return this;
+  }
+
+  async filterByCourse(name: string): Promise<this> {
+    await this.openCourseMenu();
     await this.page
       .getByRole("menuitemradio", { name, exact: true })
       .or(this.page.locator("[data-slot=sheet-option]").getByText(name, { exact: true }))
