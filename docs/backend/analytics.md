@@ -31,7 +31,11 @@
 
 ### Handicap
 
-[handicap.py](../../analytics/handicap.py) is a WHS-based **estimate**, not an official index. It uses complete 18-hole rounds with the Course/Slope Rating covering the holes played; a rating saved without coverage covers the course's whole layout, and new saves record that coverage. Differentials are rounded to the tenth with .5 up, and the same values drive selection, the index and the used-round flags (computed from the full calculation, then shown for the displayed rounds). Every caller passes the user's seed/reset and full history via `user_handicap_index`. Not implemented: adjusted gross score, playing conditions, caps, and nine-hole rounds (they need the WHS expected-score method; a front or back nine of an 18-hole course has no rating unless one was recorded).
+[handicap.py](../../analytics/handicap.py) is a WHS-based **estimate**, not an official index. It uses complete 18-hole rounds with the Course/Slope Rating covering the holes played; a rating saved without coverage covers the course's whole layout, and new saves record that coverage. Differentials are rounded to the tenth with .5 up, and the same values drive selection, the index and the used-round flags (computed from the full calculation, then shown for the displayed rounds). When there is no tee rating, a differential falls back to total minus par. The entry points are `player_handicap_index`, `player_index_window` and `player_handicap_trend` in [handicap.py](../../analytics/handicap.py); [api/player_handicap.py](../../api/player_handicap.py) loads the full history and supplies the user's seed/reset. The index selects the best of the latest 20 eligible differentials, and the trend reports the index after each round with its `differential_status`. [AIService](../../services/ai_service.py) still calls `user_handicap_index`, which uses the same calculation.
+
+A complete nine-hole round can have a course handicap and net score from half the index and a rating explicitly covering those nine holes. Nine-hole rounds do not yet contribute to the index: that needs the WHS expected-score method. Adjusted gross score, playing conditions and caps are also not implemented.
+
+Best/worst rounds and their ranks use gross scores from complete 18-hole rounds only. Nine-hole and incomplete rounds have no rank, and best/worst is `None` without a complete 18-hole round.
 
 ### Goals
 

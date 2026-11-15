@@ -1,4 +1,4 @@
--- Migration 014: scoped identities and stable history order.
+-- Migration 015: scoped identities and stable history order.
 -- Preflight conflicts; never silently delete or merge existing rows.
 BEGIN;
 DO $$

@@ -9,7 +9,9 @@ From the repository root, with the existing environment/dependencies available:
 ```bash
 .venv/bin/python -m pytest -q tests/test_models.py
 .venv/bin/python -m pytest -q --ignore=tests/integration
-.venv/bin/ruff check models services api analytics database tests
+.venv/bin/ruff check .
+.venv/bin/python scripts/dump_openapi.py --check
+for c in scripts/ci/check_*.py; do .venv/bin/python "$c"; done
 ```
 
 Use the relevant test file instead of `test_models.py` for another domain. Broaden testing when cross-domain behavior changes or failures leave uncertainty. Check real model inputs for numerical behavior; mocking the entire aggregator only proves response construction.
@@ -27,6 +29,8 @@ The command assumes that disposable database is explicitly configured. Do not su
 From `frontend/`, with dependencies installed:
 
 ```bash
+npm run check:api
+npm run check:tokens
 npm run typecheck
 npm run lint
 npm test
@@ -36,6 +40,8 @@ npm run test:screenshots
 ```
 
 Use focused test filters where appropriate. Vitest runs view-model, hook and helper tests in jsdom, with `Fake*` repositories rather than mocks. Playwright runs espresso flows (behaviour, through each page's robot) and screenshot specs (looks); both start their own Vite server on port 5174 and answer the API from `FakeBackend`. Screenshot baselines are the macOS renders CI takes (`*-darwin.png`). Update them only after reviewing the intended visual change; do not regenerate baselines to hide an unexplained failure.
+
+Refresh screenshot baselines locally (`npm run test:screenshots:update`) and commit them. [check_no_snapshot_updates.py](../../scripts/ci/check_no_snapshot_updates.py) rejects workflows that would regenerate them.
 
 ## Live checks
 

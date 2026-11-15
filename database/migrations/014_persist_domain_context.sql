@@ -1,4 +1,4 @@
--- Migration 013: preserve explicit domain context and approved golf bounds.
+-- Migration 014: preserve explicit domain context and approved golf bounds.
 -- Additive metadata remains unknown on legacy rows. No inferred nine-hole backfill.
 BEGIN;
 
