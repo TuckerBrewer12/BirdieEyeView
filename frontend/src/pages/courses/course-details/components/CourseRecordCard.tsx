@@ -1,7 +1,8 @@
 import { ChevronRight } from "lucide-react";
 import { Card, RowButton, Stat, StatLabel, StatValue, ToParFigure } from "@/brand";
 import { cn } from "@/brand/cn";
-import type { RecordFigure } from "../courseDetailModel";
+import type { CourseAnalytics } from "@/domain/courseAnalytics";
+import { recordFigures, type RecordFigure } from "../courseDetailModel";
 
 function Detail({ figure }: { figure: RecordFigure }) {
   if (!figure.toPar && !figure.note) return null;
@@ -33,10 +34,10 @@ function Figure({ figure }: { figure: RecordFigure }) {
 }
 
 export function CourseRecordCard({
-  figures,
+  analytics,
   onOpenRound,
 }: {
-  figures: RecordFigure[];
+  analytics: CourseAnalytics;
   onOpenRound: (roundId: string) => void;
 }) {
   return (
@@ -44,7 +45,7 @@ export function CourseRecordCard({
       data-slot="course-record"
       className="gap-0 divide-y divide-border py-1 md:grid md:grid-cols-2 md:content-start md:gap-1 md:divide-y-0 md:p-2"
     >
-      {figures.map((figure) => {
+      {recordFigures(analytics).map((figure) => {
         const { roundId } = figure;
         return roundId ? (
           <RowButton

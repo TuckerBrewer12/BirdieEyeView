@@ -10,23 +10,25 @@ import {
   ToggleGroupItem,
   TrendAreaChart,
 } from "@/brand";
+import { greensFigures, trendPoints } from "../courseDetailModel";
 import type { CourseDetailPageViewModel } from "../useCourseDetailPageViewModel";
 
 type CoursePerformanceProps = Pick<
   CourseDetailPageViewModel,
-  "scoreTrend" | "averageLine" | "courseHoles" | "holes" | "holeOrder" | "holeOrders" | "pickHoleOrder" | "greens"
+  "analytics" | "averageLine" | "courseHoles" | "holes" | "holeOrder" | "holeOrders" | "pickHoleOrder"
 >;
 
 export function CoursePerformance({
-  scoreTrend,
+  analytics,
   averageLine,
   courseHoles,
   holes,
   holeOrder,
   holeOrders,
   pickHoleOrder,
-  greens,
 }: CoursePerformanceProps) {
+  const scoreTrend = trendPoints(analytics?.scoreTrend ?? []);
+  const greens = greensFigures(analytics?.nineGreens ?? { front: null, back: null, total: null });
   return (
     <div data-slot="course-performance" className="flex flex-col gap-3.5 md:gap-4">
       <Card size="lg">

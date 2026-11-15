@@ -4,6 +4,7 @@ import { courseResponse } from "@/testing/fakes/courseResponses";
 import { emptyCourseAnalytics, halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
 import { halfMoonBayCourse } from "@/testing/fixtures/roundDetails";
 import {
+  courseLine,
   greensFigures,
   holesInOrder,
   nineFrom,
@@ -76,6 +77,14 @@ describe("selectedTee", () => {
     expect(selectedTee(halfMoonBayCourse, null)?.color).toBe("Blue");
     expect(selectedTee(halfMoonBayCourse, "white")?.color).toBe("White");
     expect(selectedTee(halfMoonBayCourse, "Gold")?.color).toBe("Blue");
+  });
+});
+
+describe("courseLine", () => {
+  it("joins the place and the par", () => {
+    expect(courseLine(halfMoonBayCourse)).toBe("Half Moon Bay, CA · Par 72");
+    expect(courseLine({ ...halfMoonBayCourse, location: null })).toBe("Par 72");
+    expect(courseLine({ ...halfMoonBayCourse, location: null, par: null })).toBeNull();
   });
 });
 

@@ -24,6 +24,10 @@ export function selectedTee(course: CourseDto, picked: string | null): TeeDto | 
   return (picked != null ? getTee(course, picked) : null) ?? namedTees(course)[0] ?? null;
 }
 
+export function courseLine(course: CourseDto): string | null {
+  return [course.location, course.par != null ? `Par ${course.par}` : null].filter(Boolean).join(" · ") || null;
+}
+
 export function teeLine(tee: TeeDto): string {
   return [
     tee.color ? formatTeeName(tee.color) : null,

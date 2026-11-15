@@ -24,15 +24,15 @@ describe("useCourseDetailPageViewModel", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.courseName).toBe("Half Moon Bay");
-    expect(result.current.courseLine).toBe("Half Moon Bay, CA · Par 72");
+    expect(result.current.course).toBe(halfMoonBayCourse);
     expect(result.current.tees).toEqual([
       { name: "Blue", yards: 6500 },
       { name: "White", yards: 6100 },
     ]);
-    expect(result.current.teeLine).toBe("Blue tees · 6,500 yds · 72.4 / 130");
+    expect(result.current.tee).toBe(halfMoonBayCourse.tees[0]);
     expect(result.current.nines.map((nine) => nine.side)).toEqual(["front", "back"]);
     expect(result.current.played).toBe(false);
-    expect(result.current.record).toEqual([]);
+    expect(result.current.analytics).toBeNull();
     expect(result.current.recentRounds).toEqual([]);
   });
 
@@ -61,7 +61,7 @@ describe("useCourseDetailPageViewModel", () => {
 
     act(() => result.current.selectTee("White"));
     expect(result.current.selectedTee).toBe("White");
-    expect(result.current.teeLine).toBe("White tees · 6,100 yds · 70.1 / 122");
+    expect(result.current.tee).toBe(halfMoonBayCourse.tees[1]);
   });
 
   it("adds the golfer's record, rows and latest rounds once they have played here", async () => {
@@ -71,12 +71,10 @@ describe("useCourseDetailPageViewModel", () => {
     const { result } = renderVm(repository);
     await waitFor(() => expect(result.current.played).toBe(true));
 
-    expect(result.current.record.map((figure) => [figure.label, figure.value])).toEqual([
-      ["Rounds", "2"],
-      ["Average", "75.0"],
-      ["Best", "72"],
-      ["Worst", "78"],
-    ]);
+    expect(result.current.analytics?.roundsPlayed).toBe(2);
+    expect(result.current.analytics?.scoringAverage).toBe(75);
+    expect(result.current.analytics?.bestRound?.score).toBe(72);
+    expect(result.current.analytics?.worstRound?.score).toBe(78);
     expect(result.current.recentRounds.map((round) => round.id)).toEqual(["round-1", "round-2"]);
     expect(result.current.nines[0]?.holes[0]?.averageToPar?.label).toBe("\u22120.5");
   });
@@ -91,17 +89,17 @@ describe("useCourseDetailPageViewModel", () => {
     expect(result.current.view).toBe("course");
     act(() => result.current.pickView("performance"));
     expect(result.current.view).toBe("performance");
-    expect(result.current.scoreTrend.map((point) => point.values)).toEqual([
+    expect(result.current.analytics?.scoreTrend.map((point) => [point.score, point.rollingAverage])).toEqual([
       [72, 72],
       [78, 75],
     ]);
     expect(result.current.averageLine).toEqual({ value: 75, label: "Avg 75.0" });
     expect(result.current.holes.map((hole) => hole.hole).slice(0, 3)).toEqual([1, 2, 3]);
-    expect(result.current.greens).toEqual([
-      { label: "Out", value: "72%" },
-      { label: "In", value: "78%" },
-      { label: "Total", value: "75%" },
-    ]);
+    expect(result.current.analytics?.nineGreens).toEqual({
+      front: (13 / 18) * 100,
+      back: (14 / 18) * 100,
+      total: 75,
+    });
 
     act(() => result.current.pickHoleOrder("hardest"));
     expect(result.current.holes.map((hole) => hole.hole).slice(0, 7)).toEqual([3, 6, 9, 12, 15, 18, 1]);

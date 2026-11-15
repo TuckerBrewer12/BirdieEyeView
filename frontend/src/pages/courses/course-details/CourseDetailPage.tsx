@@ -20,6 +20,7 @@ import {
 import { CoursePerformance } from "./components/CoursePerformance";
 import { CourseRecordCard } from "./components/CourseRecordCard";
 import { CourseScorecard } from "./components/CourseScorecard";
+import { courseLine, teeLine } from "./courseDetailModel";
 import { useCourseDetailPageViewModel } from "./useCourseDetailPageViewModel";
 
 export function CourseDetailPage({ userId }: { userId: string }) {
@@ -39,6 +40,8 @@ export function CourseDetailPage({ userId }: { userId: string }) {
     );
   }
 
+  const line = courseLine(viewModel.course);
+
   return (
     <div className="flex flex-col gap-3.5 pb-6 md:gap-4">
       <Button variant="outline" size="toolbar" className="self-start" onClick={() => void navigate("/courses")}>
@@ -48,9 +51,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
 
       <div data-slot="course-title" className="min-w-0">
         <PageTitle size="heading">{viewModel.courseName}</PageTitle>
-        {viewModel.courseLine && (
-          <div className="mt-0.5 text-body-sm text-muted-foreground md:mt-1 md:text-body">{viewModel.courseLine}</div>
-        )}
+        {line && <div className="mt-0.5 text-body-sm text-muted-foreground md:mt-1 md:text-body">{line}</div>}
       </div>
 
       {viewModel.played && (
@@ -76,11 +77,15 @@ export function CourseDetailPage({ userId }: { userId: string }) {
             <TeePicker tees={viewModel.tees} value={viewModel.selectedTee ?? ""} onChange={viewModel.selectTee} />
           )}
 
-          <CourseScorecard teeLine={viewModel.teeLine} nines={viewModel.nines} played={viewModel.played} />
+          <CourseScorecard
+            teeLine={viewModel.tee ? teeLine(viewModel.tee) : null}
+            nines={viewModel.nines}
+            played={viewModel.played}
+          />
 
-          {viewModel.played ? (
+          {viewModel.analytics ? (
             <div className="grid grid-cols-1 gap-3.5 md:grid-cols-course-record md:gap-4">
-              <CourseRecordCard figures={viewModel.record} onOpenRound={(id) => void navigate(`/rounds/${id}`)} />
+              <CourseRecordCard analytics={viewModel.analytics} onOpenRound={(id) => void navigate(`/rounds/${id}`)} />
               <Card data-slot="recent-rounds" className="gap-0 pt-4 pb-1 md:pb-2">
                 <CardHeader className="px-4 md:px-5">
                   <CardTitle level={2} className="text-body-lg font-semibold">
