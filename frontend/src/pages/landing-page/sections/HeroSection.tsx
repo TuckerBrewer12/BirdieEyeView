@@ -15,13 +15,14 @@ import {
   ScanReport,
 } from "@/brand";
 import { tokens } from "@/brand/theme";
-import { SCAN_STEPS } from "@/domain/scan";
+import { SCAN_STEPS, scanStepAt } from "@/domain/scan";
 import { useFilePreview } from "@/platform/useFilePreview";
 import { ScannerDemo } from "../components/ScannerDemo";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
 export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
   const previewUrl = useFilePreview(viewModel.photo);
+  const scanStep = scanStepAt(viewModel.phase);
 
   return (
     <section className="mx-auto grid max-w-276 items-center gap-10 px-5 pt-6 pb-16 md:px-6 md:pt-14 md:pb-18 lg:grid-cols-2 lg:gap-14">
@@ -63,7 +64,7 @@ export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }
             transition={{ duration: tokens.motion.scanStep.processing }}
           >
             <Card className="py-0">
-              <ScanProgress photoUrl={previewUrl} label={viewModel.phaseLabel} steps={SCAN_STEPS.length} phase={viewModel.phase} />
+              <ScanProgress photoUrl={previewUrl} label={scanStep.label} steps={SCAN_STEPS.length} phase={scanStep.phase} />
             </Card>
           </motion.div>
         ) : viewModel.photo ? (

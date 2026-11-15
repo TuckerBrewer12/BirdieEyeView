@@ -8,7 +8,7 @@ import { useExtractScorecard } from "@/data/useExtractScorecard";
 import { useFailedScanReport, type FailedScanReport } from "@/data/useFailedScanReport";
 import type { FailedScanAttempt } from "@/domain/scanReport";
 import { failedScanAttempt, scanFailureOf } from "@/lib/scanReports";
-import { NO_CARD_FACTS, SCAN_STEPS, SCAN_STEP_HOLD_MS, cardContext, scanStepAt, type CardFacts } from "@/domain/scan";
+import { NO_CARD_FACTS, SCAN_STEPS, SCAN_STEP_HOLD_MS, cardContext, type CardFacts } from "@/domain/scan";
 
 export interface TryItYourselfViewModel {
   step: "upload" | "processing" | "review";
@@ -22,7 +22,6 @@ export interface TryItYourselfViewModel {
   reset: () => void;
 
   phase: number;
-  phaseLabel: string;
 
   round: Round | null;
   hasScores: boolean;
@@ -111,7 +110,6 @@ export function useTryItYourselfViewModel(
     reset,
 
     phase,
-    phaseLabel: scanStepAt(phase).label,
 
     round,
     hasScores: (round?.holes.length ?? 0) > 0,
