@@ -1,5 +1,4 @@
 import type { RoundComparisonDto } from "@/types/api";
-import { formatOneDecimal, formatSigned, formatTwoDecimals } from "@/domain/format";
 import type { Round } from "@/domain";
 
 export type ComparisonWindow = RoundComparisonDto["windows"][number]["window"];
@@ -21,46 +20,38 @@ const METRIC_LABELS: Record<ComparisonMetric, string> = {
   scrambling: "Scrambling",
 };
 
-const HUNDREDTHS: ReadonlySet<ComparisonMetric> = new Set(["putts_per_gir"]);
-
 export interface ComparisonRow {
   metric: ComparisonMetric;
   label: string;
-  value: string;
-  average: string;
-  difference: string;
+  value: number | null;
+  average: number | null;
+  difference: number;
   verdict: ComparisonVerdict;
   direction: "up" | "down" | "flat";
 }
 
 export interface ComparisonWindowRows {
   rounds: number;
-  rows: ComparisonRow[];
-}
-
-function figure(value: number | null, metric: ComparisonMetric, fixed: boolean): string {
-  if (value == null) return "—";
-  if (HUNDREDTHS.has(metric)) return formatTwoDecimals(value);
-  return fixed ? formatOneDecimal(value) : String(value);
+  metrics: ComparisonRow[];
 }
 
 export function comparisonFrom(dto: RoundComparisonDto): Partial<Record<ComparisonWindow, ComparisonWindowRows>> {
   const windows: Partial<Record<ComparisonWindow, ComparisonWindowRows>> = {};
   for (const window of dto.windows) {
-    const rows: ComparisonRow[] = [];
+    const metrics: ComparisonRow[] = [];
     for (const metric of window.metrics) {
       if (metric.difference == null || metric.verdict == null) continue;
-      rows.push({
+      metrics.push({
         metric: metric.metric,
         label: METRIC_LABELS[metric.metric],
-        value: figure(metric.value, metric.metric, false),
-        average: figure(metric.average, metric.metric, true),
-        difference: formatSigned(metric.difference, HUNDREDTHS.has(metric.metric) ? 2 : 1),
+        value: metric.value,
+        average: metric.average,
+        difference: metric.difference,
         verdict: metric.verdict,
         direction: metric.difference > 0 ? "up" : metric.difference < 0 ? "down" : "flat",
       });
     }
-    windows[window.window] = { rounds: window.rounds, rows };
+    windows[window.window] = { rounds: window.rounds, metrics };
   }
   return windows;
 }

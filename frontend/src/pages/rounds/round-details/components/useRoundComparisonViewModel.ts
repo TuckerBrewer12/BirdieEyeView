@@ -13,7 +13,7 @@ export interface RoundComparisonViewModel {
   show: boolean;
   window: ComparisonWindow;
   windows: readonly { value: ComparisonWindow; label: string }[];
-  rows: ComparisonRow[];
+  metrics: ComparisonRow[];
   pickWindow: (value: string | undefined) => void;
 }
 
@@ -38,7 +38,7 @@ export function useRoundComparisonViewModel(
     show: comparison != null,
     window,
     windows: COMPARISON_WINDOWS,
-    rows: windows[window]?.rows ?? [],
+    metrics: windows[window]?.metrics ?? [],
     pickWindow,
   };
 }
