@@ -22,14 +22,12 @@ import {
   type ScoringAverage,
   type WhsBreakdown,
 } from "./model";
-import { greetingFor } from "./present";
 
 export type { ChangeVerdict, WhsBreakdown };
 
 export interface DashboardPageViewModel {
   loaded: boolean;
   scoringAverage: ScoringAverage;
-  greeting: string;
   user: UserDto | null;
   loading: boolean;
   error: Error | null;
@@ -66,7 +64,6 @@ const RECENT_ROUNDS = 3;
 export function useDashboardPageViewModel(
   userId: string,
   repository: DashboardRepository = dashboardRepository,
-  now: () => Date = () => new Date(),
 ): DashboardPageViewModel {
   const [handicapSheetOpen, setHandicapSheetOpen] = useState(false);
 
@@ -92,7 +89,6 @@ export function useDashboardPageViewModel(
   return {
     loaded: data !== null,
     scoringAverage: data ? scoringAverageFrom(data) : EMPTY_AVERAGE,
-    greeting: greetingFor(now()),
     user: user ?? null,
     loading,
     error: error as Error | null,

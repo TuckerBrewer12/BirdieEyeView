@@ -1,5 +1,5 @@
 import type { DashboardPageViewModel } from "../useDashboardPageViewModel";
-import { firstNameOf } from "../present";
+import { firstNameOf, greetingFor } from "../present";
 import { BestRoundCard, GoalCard, ScoreMixCard, ScoringAverageCard } from "./DashboardCards";
 import { RecentRounds } from "./RecentRounds";
 import { GreetingHeader } from "./GreetingHeader";
@@ -12,7 +12,7 @@ export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
     <div className="flex flex-col gap-4">
       <GreetingHeader
         compact
-        greeting={vm.greeting}
+        greeting={greetingFor()}
         name={firstNameOf(vm.user)}
         handicap={vm.handicap}
         handicapLine={vm.handicapLine}
