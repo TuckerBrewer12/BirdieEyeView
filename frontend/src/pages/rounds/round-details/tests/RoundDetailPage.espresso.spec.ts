@@ -17,6 +17,12 @@ test("shows the course name and score", async ({ roundDetail }) => {
   await roundDetail.seesCourse("Half Moon Bay");
 });
 
+test("share downloads the round's card", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.tapShare();
+  await roundDetail.seesSharedImage("scorecard-half-moon-bay.png");
+});
+
 test("shows the net score the server works out off the golfer's index", async ({ roundDetail }) => {
   await roundDetail.open(ratedHalfMoonBayRound, { fullCourses: [ratedHalfMoonBayCourse] });
   await roundDetail.seesScore(78);

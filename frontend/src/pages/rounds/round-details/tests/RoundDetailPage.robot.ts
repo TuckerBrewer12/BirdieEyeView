@@ -1,4 +1,4 @@
-import { type Page } from "@playwright/test";
+import { type Download, type Page } from "@playwright/test";
 import { test as base, expect } from "../../../../testing/playwright";
 import type { RoundDto } from "../../../../types/api";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
@@ -9,6 +9,7 @@ import { captureOptions } from "../../../../testing/fullPageCapture";
 
 export class RoundDetailRobot {
   private readonly page: Page;
+  private shared: Download | null = null;
 
   constructor(page: Page) {
     this.page = page;
@@ -59,6 +60,23 @@ export class RoundDetailRobot {
   async seesViewActions(): Promise<this> {
     await expect(this.page.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
+    return this;
+  }
+
+  /**
+   * Shares the round. The test browser has no share sheet, so the image comes down as a file
+   * instead.
+   */
+  async tapShare(): Promise<this> {
+    const download = this.page.waitForEvent("download");
+    await this.page.getByRole("button", { name: "Share" }).click();
+    this.shared = await download;
+    return this;
+  }
+
+  async seesSharedImage(fileName: string): Promise<this> {
+    expect(this.shared?.suggestedFilename()).toBe(fileName);
+    await expect(this.page.getByRole("button", { name: "Share" })).toBeEnabled();
     return this;
   }
 
