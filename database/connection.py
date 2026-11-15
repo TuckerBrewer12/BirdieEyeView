@@ -28,12 +28,12 @@ class DatabasePool:
 
     async def initialize(
         self,
-        dsn: str = None,
+        dsn: str | None = None,
         *,
         host: str = "localhost",
         port: int = 5432,
         database: str = "golf_scorecard",
-        user: str = None,
+        user: str | None = None,
         password: str = "",
         min_size: int = 2,
         max_size: int = 10,
@@ -83,7 +83,7 @@ class DatabasePool:
             async with self.pool.acquire() as conn:
                 await conn.fetchval("SELECT 1")
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001
             return False
 
 

@@ -168,7 +168,10 @@ export interface paths {
         /** List Courses */
         get: operations["list_courses_api_courses_get"];
         put?: never;
-        /** Create Course */
+        /**
+         * Create Course
+         * @description Create a custom course for a user.
+         */
         post: operations["create_course_api_courses_post"];
         delete?: never;
         options?: never;
@@ -555,6 +558,26 @@ export interface paths {
         patch: operations["update_user_api_users__user_id__patch"];
         trace?: never;
     };
+    "/api/users/{user_id}/handicap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User Handicap
+         * @description Return the user's current WHS-based Handicap Index estimate.
+         */
+        get: operations["get_user_handicap_api_users__user_id__handicap_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/{user_id}/tees": {
         parameters: {
             query?: never;
@@ -675,12 +698,16 @@ export interface components {
         AnalyticsKpis: {
             /** Average Putts */
             average_putts: number | null;
+            /** Average Putts Nine */
+            average_putts_nine: number | null;
             /** Best Round */
             best_round: number | null;
             /** Best Round Course */
             best_round_course: string | null;
             /** Best Round Id */
             best_round_id: string | null;
+            /** Best Round Nine */
+            best_round_nine: number | null;
             /** Gir Percentage */
             gir_percentage: number | null;
             /** Handicap Index */
@@ -689,6 +716,8 @@ export interface components {
             putts_per_gir: number | null;
             /** Scoring Average */
             scoring_average: number | null;
+            /** Scoring Average Nine */
+            scoring_average_nine: number | null;
             /** Scrambling Percentage */
             scrambling_percentage: number | null;
             /** Three Putt Rate */
@@ -942,6 +971,8 @@ export interface components {
             par: number | null;
             /** Tees */
             tees: components["schemas"]["TeeResponse"][];
+            /** Total Holes */
+            total_holes: number | null;
             /** User Id */
             user_id: string | null;
         };
@@ -996,7 +1027,7 @@ export interface components {
             /** Name */
             name: string;
             /** Tees */
-            tees?: components["schemas"]["api__routers__courses__TeeInput"][];
+            tees?: components["schemas"]["TeeInput"][];
         };
         /** CreateUserTeeRequest */
         CreateUserTeeRequest: {
@@ -1015,6 +1046,14 @@ export interface components {
         };
         /** DashboardResponse */
         DashboardResponse: {
+            /** Average Gir */
+            average_gir: number | null;
+            /** Average Gir Nine */
+            average_gir_nine: number | null;
+            /** Average Putts */
+            average_putts: number | null;
+            /** Average Putts Nine */
+            average_putts_nine: number | null;
             /** Best Round */
             best_round: number | null;
             /** Best Round Course */
@@ -1023,6 +1062,12 @@ export interface components {
             best_round_date: string | null;
             /** Best Round Id */
             best_round_id: string | null;
+            /** Best Round Nine */
+            best_round_nine: number | null;
+            /** Best Round Nine Course */
+            best_round_nine_course: string | null;
+            /** Best Round Nine Id */
+            best_round_nine_id: string | null;
             /** Best Round To Par */
             best_round_to_par: number | null;
             handicap_change: components["schemas"]["HandicapChange"];
@@ -1040,12 +1085,21 @@ export interface components {
             rounds_this_year: number;
             /** Score Trend */
             score_trend: components["schemas"]["ScoreTrendRow"][];
+            /** Scoring Average */
+            scoring_average: number | null;
             /** Scoring Average Change */
             scoring_average_change: number | null;
             /** Scoring Average L5 */
             scoring_average_l5: number | null;
+            /** Scoring Average Nine */
+            scoring_average_nine: number | null;
             /** Scoring Average Verdict */
             scoring_average_verdict: ("good" | "bad" | "neutral") | null;
+            /**
+             * Total Rounds
+             * @default 0
+             */
+            total_rounds: number;
             whs: components["schemas"]["WhsBreakdown"];
         };
         /** FieldConfidence */
@@ -1131,26 +1185,26 @@ export interface components {
         /** GirVsNonGirRow */
         GirVsNonGirRow: {
             /** Birdie */
-            birdie: number;
+            birdie: number | null;
             /** Bogey */
-            bogey: number;
+            bogey: number | null;
             /**
              * Bucket
              * @enum {string}
              */
             bucket: "GIR" | "No GIR";
             /** Double Bogey */
-            double_bogey: number;
+            double_bogey: number | null;
             /** Eagle */
-            eagle: number;
+            eagle: number | null;
             /** Holes Counted */
             holes_counted: number;
             /** Par */
-            par: number;
+            par: number | null;
             /** Quad Bogey */
-            quad_bogey: number;
+            quad_bogey: number | null;
             /** Triple Bogey */
-            triple_bogey: number;
+            triple_bogey: number | null;
         };
         /** GoalAttempt */
         GoalAttempt: {
@@ -1169,6 +1223,10 @@ export interface components {
             gap: number | null;
             /** Lowest Score */
             lowest_score: number | null;
+            /** Nine Hole */
+            nine_hole: {
+                [key: string]: unknown;
+            } | null;
             /**
              * On Track
              * @default false
@@ -1190,7 +1248,7 @@ export interface components {
             /** Scoring Average */
             scoring_average: number | null;
             /** Scoring Goal */
-            scoring_goal: number;
+            scoring_goal: number | null;
         };
         /** GoalSaver */
         GoalSaver: {
@@ -1266,7 +1324,10 @@ export interface components {
             /** Verdict */
             verdict: ("good" | "bad" | "neutral") | null;
         };
-        /** Hole */
+        /**
+         * Hole
+         * @description Represents a single hole on a golf course.
+         */
         Hole: {
             /** Handicap */
             handicap: number | null;
@@ -1313,8 +1374,6 @@ export interface components {
             handicap_played?: number | null;
             /** Hole Number */
             hole_number: number;
-            /** Net Score */
-            net_score?: number | null;
             /** Par Played */
             par_played?: number | null;
             /** Putts */
@@ -1344,6 +1403,8 @@ export interface components {
             par: number | null;
             /** Par Played */
             par_played: number | null;
+            /** Played */
+            played: boolean | null;
             /** Putts */
             putts: number | null;
             /** Running To Par */
@@ -1361,27 +1422,6 @@ export interface components {
             to_par: number | null;
             /** Yardage */
             yardage: number | null;
-        };
-        /** HoleScoreUpdate */
-        HoleScoreUpdate: {
-            /** Fairway Hit */
-            fairway_hit?: boolean | null;
-            /** Green In Regulation */
-            green_in_regulation?: boolean | null;
-            /** Handicap Played */
-            handicap_played?: number | null;
-            /** Hole Number */
-            hole_number: number;
-            /** Net Score */
-            net_score?: number | null;
-            /** Par Played */
-            par_played?: number | null;
-            /** Putts */
-            putts?: number | null;
-            /** Shots To Green */
-            shots_to_green?: number | null;
-            /** Strokes */
-            strokes?: number | null;
         };
         /** HoleSummaryResponse */
         HoleSummaryResponse: {
@@ -1415,6 +1455,11 @@ export interface components {
              * @default 0
              */
             total_3_putts: number;
+            /**
+             * Total Albatrosses
+             * @default 0
+             */
+            total_albatrosses: number;
             /**
              * Total Birdies
              * @default 0
@@ -1527,6 +1572,7 @@ export interface components {
             highest_round: components["schemas"]["MilestoneEvent"] | null;
             lowest_9_holes: components["schemas"]["MilestoneEvent"] | null;
             lowest_round: components["schemas"]["MilestoneEvent"] | null;
+            lowest_round_nine: components["schemas"]["MilestoneEvent"] | null;
             most_birdies_in_round: components["schemas"]["MilestoneEvent"] | null;
             most_eagles_in_round: components["schemas"]["MilestoneEvent"] | null;
             most_gir_in_round: components["schemas"]["MilestoneEvent"] | null;
@@ -1541,6 +1587,8 @@ export interface components {
             lowest_9_holes: number | null;
             /** Lowest Round */
             lowest_round: number | null;
+            /** Lowest Round Nine */
+            lowest_round_nine: number | null;
             /** Most Birdies In Round */
             most_birdies_in_round: number | null;
             /** Most Eagles In Round */
@@ -1656,6 +1704,11 @@ export interface components {
         /** OneYearCareerTotals */
         OneYearCareerTotals: {
             /**
+             * Albatrosses
+             * @default 0
+             */
+            albatrosses: number;
+            /**
              * Birdies
              * @default 0
              */
@@ -1742,6 +1795,8 @@ export interface components {
         };
         /** OneYearRoundMilestones */
         OneYearRoundMilestones: {
+            /** New Personal Records Achieved */
+            new_personal_records_achieved: string[];
             /**
              * New Personal Records Achieved Count
              * @default 0
@@ -1752,6 +1807,7 @@ export interface components {
         OneYearScoringRecordEvents: {
             fewest_putts_in_round: components["schemas"]["MilestoneEvent"] | null;
             lowest_round: components["schemas"]["MilestoneEvent"] | null;
+            lowest_round_nine: components["schemas"]["MilestoneEvent"] | null;
             most_birdies_in_round: components["schemas"]["MilestoneEvent"] | null;
             most_gir_in_round: components["schemas"]["MilestoneEvent"] | null;
         };
@@ -1761,6 +1817,8 @@ export interface components {
             fewest_putts_in_round: number | null;
             /** Lowest Round */
             lowest_round: number | null;
+            /** Lowest Round Nine */
+            lowest_round_nine: number | null;
             /** Most Birdies In Round */
             most_birdies_in_round: number | null;
             /** Most Gir In Round */
@@ -1974,6 +2032,8 @@ export interface components {
             holes_played: number;
             /** Id */
             id: string | null;
+            /** Intended Holes */
+            intended_holes: number[] | null;
             /** Net Score */
             net_score: number | null;
             nines: components["schemas"]["Nines"];
@@ -2029,10 +2089,13 @@ export interface components {
             /** Worst Rank */
             worst_rank: number | null;
         };
-        /** SaveRoundRequest */
+        /**
+         * SaveRoundRequest
+         * @description Request to save a reviewed/edited round.
+         */
         SaveRoundRequest: {
             /** All Tees */
-            all_tees?: components["schemas"]["api__request_models__TeeInput"][] | null;
+            all_tees?: components["schemas"]["TeeInput"][] | null;
             /** Course Holes */
             course_holes?: components["schemas"]["CourseHoleInput"][] | null;
             /** Course Id */
@@ -2057,7 +2120,7 @@ export interface components {
             tee_slope_rating?: number | null;
             /** Tee Yardages */
             tee_yardages?: {
-                [key: string]: number | null;
+                [key: string]: number;
             } | null;
             /**
              * User Id
@@ -2253,6 +2316,8 @@ export interface components {
         ScoreTrendRow: {
             /** Course Name */
             course_name: string | null;
+            /** Holes */
+            holes: number | null;
             /** Par */
             par: number | null;
             /** Rolling Average */
@@ -2334,6 +2399,40 @@ export interface components {
             /** Addressee User Id */
             addressee_user_id?: string | null;
         };
+        /** TeeInput */
+        TeeInput: {
+            /** Color */
+            color: string;
+            /** Course Rating */
+            course_rating?: number | null;
+            /** Hole Yardages */
+            hole_yardages?: {
+                [key: string]: number;
+            };
+            /** Slope Rating */
+            slope_rating?: number | null;
+        };
+        /**
+         * TeeRating
+         * @description A published rating for exactly the declared holes, never an inferred half.
+         */
+        TeeRating: {
+            /** Course Rating */
+            course_rating: number | null;
+            /** Hole Numbers */
+            hole_numbers: number[];
+            /** Slope Rating */
+            slope_rating: number | null;
+        };
+        /** TeeRatingResponse */
+        TeeRatingResponse: {
+            /** Course Rating */
+            course_rating?: number | null;
+            /** Hole Numbers */
+            hole_numbers: number[];
+            /** Slope Rating */
+            slope_rating?: number | null;
+        };
         /** TeeResponse */
         TeeResponse: {
             /** Back Nine Yardage */
@@ -2350,10 +2449,18 @@ export interface components {
             hole_yardages: {
                 [key: string]: number;
             };
+            /** Rating Holes */
+            rating_holes: number[] | null;
+            /** Ratings */
+            ratings: {
+                [key: string]: unknown;
+            }[];
             /** Slope Rating */
             slope_rating: number | null;
             /** Total Yardage */
             total_yardage: number | null;
+            /** Yardage Holes */
+            yardage_holes: number[] | null;
         };
         /** ThreePuttsTrendRow */
         ThreePuttsTrendRow: {
@@ -2369,9 +2476,9 @@ export interface components {
             /** Round Index */
             round_index: number;
             /** Three Putt Count */
-            three_putt_count: number;
+            three_putt_count: number | null;
             /** Three Putt Percentage */
-            three_putt_percentage: number;
+            three_putt_percentage: number | null;
         };
         /** ThresholdMilestone */
         ThresholdMilestone: {
@@ -2418,7 +2525,7 @@ export interface components {
             /** Course Name Played */
             course_name_played?: string | null;
             /** Hole Scores */
-            hole_scores?: components["schemas"]["HoleScoreUpdate"][] | null;
+            hole_scores?: components["schemas"]["HoleScoreInput"][] | null;
             /** Notes */
             notes?: string | null;
             /** Tee Box */
@@ -2434,6 +2541,8 @@ export interface components {
             home_course_id?: string | null;
             /** Scoring Goal */
             scoring_goal?: number | null;
+            /** Scoring Goal Nine */
+            scoring_goal_nine?: number | null;
         };
         /** UpdateUserTeeRequest */
         UpdateUserTeeRequest: {
@@ -2454,6 +2563,13 @@ export interface components {
             created_at: string | null;
             /** Email */
             email: string | null;
+            /**
+             * Email Verified
+             * @default false
+             */
+            email_verified: boolean;
+            /** Email Verified At */
+            email_verified_at: string | null;
             /** Friend Code */
             friend_code: string | null;
             /** Handicap */
@@ -2462,12 +2578,19 @@ export interface components {
             home_course_id: string | null;
             /** Id */
             id: string;
+            /** Last Handicap Update */
+            last_handicap_update: string | null;
             /** Name */
             name: string | null;
             /** Scoring Goal */
             scoring_goal: number | null;
+            /** Scoring Goal Nine */
+            scoring_goal_nine: number | null;
         };
-        /** UserTee */
+        /**
+         * UserTee
+         * @description A user-owned tee configuration, optionally linked to a master course.
+         */
         UserTee: {
             /** Course Id */
             course_id: string | null;
@@ -2483,10 +2606,53 @@ export interface components {
             id: string | null;
             /** Name */
             name: string;
+            /** Rating Holes */
+            rating_holes: number[] | null;
+            /** Ratings */
+            ratings: components["schemas"]["TeeRating"][];
             /** Slope Rating */
             slope_rating: number | null;
+            /** Total Yardage */
+            total_yardage: number | null;
             /** User Id */
             user_id: string;
+            /** Yardage Holes */
+            yardage_holes: number[] | null;
+        };
+        /** UserTeeResponse */
+        UserTeeResponse: {
+            /** Course Id */
+            course_id?: string | null;
+            /** Course Rating */
+            course_rating?: number | null;
+            /** Created At */
+            created_at?: string | null;
+            /**
+             * Hole Yardages
+             * @default {}
+             */
+            hole_yardages: {
+                [key: string]: number;
+            };
+            /** Id */
+            id?: string | null;
+            /** Name */
+            name: string;
+            /** Rating Holes */
+            rating_holes?: number[] | null;
+            /**
+             * Ratings
+             * @default []
+             */
+            ratings: components["schemas"]["TeeRatingResponse"][];
+            /** Slope Rating */
+            slope_rating?: number | null;
+            /** Total Yardage */
+            total_yardage?: number | null;
+            /** User Id */
+            user_id: string;
+            /** Yardage Holes */
+            yardage_holes?: number[] | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -2578,32 +2744,6 @@ export interface components {
             to_par: number;
             /** Yardage */
             yardage: number;
-        };
-        /** TeeInput */
-        api__request_models__TeeInput: {
-            /** Color */
-            color: string;
-            /** Course Rating */
-            course_rating?: number | null;
-            /** Hole Yardages */
-            hole_yardages?: {
-                [key: string]: number | null;
-            };
-            /** Slope Rating */
-            slope_rating?: number | null;
-        };
-        /** TeeInput */
-        api__routers__courses__TeeInput: {
-            /** Color */
-            color: string;
-            /** Course Rating */
-            course_rating?: number | null;
-            /** Hole Yardages */
-            hole_yardages?: {
-                [key: string]: unknown;
-            };
-            /** Slope Rating */
-            slope_rating?: number | null;
         };
     };
     responses: never;
@@ -3883,6 +4023,37 @@ export interface operations {
             };
         };
     };
+    get_user_handicap_api_users__user_id__handicap_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_user_tees_api_users__user_id__tees_get: {
         parameters: {
             query?: {
@@ -3902,7 +4073,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserTee"][];
+                    "application/json": components["schemas"]["UserTeeResponse"][];
                 };
             };
             /** @description Validation Error */
@@ -3937,7 +4108,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserTee"];
+                    "application/json": components["schemas"]["UserTeeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3973,7 +4144,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserTee"];
+                    "application/json": components["schemas"]["UserTeeResponse"];
                 };
             };
             /** @description Validation Error */

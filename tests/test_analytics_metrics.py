@@ -206,7 +206,7 @@ def test_course_handicap_rounds_half_up_and_halves_the_index_for_nine_holes():
 def test_a_partial_round_is_never_a_record_or_break():
     one_hole = round_({1: {"strokes": 4}}, course_obj=course(18), round_id="partial")
 
-    summary = stats.notable_achievements([one_hole], reference_date=datetime(2026, 6, 1))
+    summary = stats.notable_achievements([one_hole], reference_date=datetime(2026, 6, 1, tzinfo=timezone.utc))
 
     assert summary["scoring_records"]["lifetime"]["lowest_round"] is None
     breaks = {row["threshold"]: row["achievement"] for row in summary["round_milestones"]["lifetime"]["score_breaks"]}
@@ -218,7 +218,7 @@ def test_nine_hole_rounds_have_their_own_lowest_round():
     nine = par_round(holes=FRONT_NINE, course_obj=course(9), round_id="nine")
     eighteen = par_round(over=10, round_id="eighteen")
 
-    records = stats.notable_achievements([nine, eighteen], reference_date=datetime(2026, 6, 1))["scoring_records"]
+    records = stats.notable_achievements([nine, eighteen], reference_date=datetime(2026, 6, 1, tzinfo=timezone.utc))["scoring_records"]
 
     assert records["lifetime"]["lowest_round"] == 82
     assert records["lifetime"]["lowest_round_nine"] == 36
@@ -228,7 +228,7 @@ def test_an_albatross_is_not_an_eagle():
     scores = {n: {"strokes": p} for n, p in PARS_18.items()} | {5: {"strokes": 2}}  # par 5 in two
     albatross = round_(scores, course_obj=course(18))
 
-    summary = stats.notable_achievements([albatross], reference_date=datetime(2026, 6, 1))
+    summary = stats.notable_achievements([albatross], reference_date=datetime(2026, 6, 1, tzinfo=timezone.utc))
 
     totals = summary["career_totals"]["lifetime"]
     assert (totals["total_eagles"], totals["total_albatrosses"]) == (0, 1)
@@ -238,7 +238,7 @@ def test_an_albatross_is_not_an_eagle():
 def test_first_round_under_par_keeps_its_round_id():
     under = par_round(over=-1, round_id="under")
 
-    event = stats.notable_achievements([under], reference_date=datetime(2026, 6, 1))["round_milestones"]["lifetime"][
+    event = stats.notable_achievements([under], reference_date=datetime(2026, 6, 1, tzinfo=timezone.utc))["round_milestones"]["lifetime"][
         "first_round_under_par"
     ]
 
@@ -246,7 +246,7 @@ def test_first_round_under_par_keeps_its_round_id():
 
 
 def test_window_handles_mixed_dates_time_of_day_and_future_rounds():
-    reference = datetime(2026, 6, 1, 12)
+    reference = datetime(2026, 6, 1, 12, tzinfo=timezone.utc)
     aware = par_round(round_id="aware", date=datetime(2026, 5, 1, tzinfo=timezone.utc))
     just_inside = par_round(over=-1, round_id="inside", date=reference - timedelta(days=365) + timedelta(hours=2))
     future = par_round(over=-2, round_id="future", date=reference + timedelta(days=3))
@@ -259,12 +259,12 @@ def test_window_handles_mixed_dates_time_of_day_and_future_rounds():
 
 def test_streaks_follow_dates_not_input_order():
     early = round_({n: {"strokes": PARS_18[n] - 1} for n in (16, 17, 18)}, course_obj=course(18),
-                   round_id="early", date=datetime(2026, 1, 1))
+                   round_id="early", date=datetime(2026, 1, 1, tzinfo=timezone.utc))
     late = round_({n: {"strokes": PARS_18[n] - 1} for n in (1, 2)}, course_obj=course(18),
-                  round_id="late", date=datetime(2026, 1, 2))
+                  round_id="late", date=datetime(2026, 1, 2, tzinfo=timezone.utc))
 
-    forward = stats.notable_achievements([early, late], reference_date=datetime(2026, 6, 1))
-    backward = stats.notable_achievements([late, early], reference_date=datetime(2026, 6, 1))
+    forward = stats.notable_achievements([early, late], reference_date=datetime(2026, 6, 1, tzinfo=timezone.utc))
+    backward = stats.notable_achievements([late, early], reference_date=datetime(2026, 6, 1, tzinfo=timezone.utc))
 
     assert forward["best_performance_streaks"] == backward["best_performance_streaks"]
     assert forward["best_performance_streaks"]["lifetime"]["longest_birdie_streak"] == 5
@@ -276,8 +276,8 @@ def test_streaks_follow_dates_not_input_order():
 
 
 def test_comparisons_only_average_complete_rounds_of_the_same_format():
-    nine = par_round(holes=FRONT_NINE, course_obj=course(9), over=9, round_id="nine", date=datetime(2026, 1, 1))
-    eighteen = par_round(over=18, round_id="eighteen", date=datetime(2026, 1, 2))
+    nine = par_round(holes=FRONT_NINE, course_obj=course(9), over=9, round_id="nine", date=datetime(2026, 1, 1, tzinfo=timezone.utc))
+    eighteen = par_round(over=18, round_id="eighteen", date=datetime(2026, 1, 2, tzinfo=timezone.utc))
 
     window = stats.score_comparison([nine, eighteen])[1]
 
@@ -295,7 +295,7 @@ def test_putt_comparisons_skip_incomplete_rounds():
 
 def test_course_trend_handles_mixed_timezone_awareness():
     aware = par_round(round_id="aware", date=datetime(2026, 1, 2, tzinfo=timezone.utc))
-    naive = par_round(round_id="naive", date=datetime(2026, 1, 1))
+    naive = par_round(round_id="naive", date=datetime(2026, 1, 1, tzinfo=timezone.utc).replace(tzinfo=None))
 
     rows = stats.score_trend_on_this_course([aware, naive])
 
@@ -314,9 +314,9 @@ def test_a_combo_tee_never_borrows_a_prefix_match():
 def test_round_records_need_the_observations_they_count():
     no_putts = par_round(round_id="no-putts")  # complete, every putt unknown
     no_pars = round_({n: {"strokes": 3} for n in FULL_ROUND}, round_id="no-pars", intended=FULL_ROUND,
-                     date=datetime(2025, 1, 1))  # earlier, so it would win a 0-birdie tie if it counted
+                     date=datetime(2025, 1, 1, tzinfo=timezone.utc))  # earlier, so it would win a 0-birdie tie if it counted
 
-    summary = stats.notable_achievements([no_putts, no_pars], reference_date=datetime(2026, 6, 1))
+    summary = stats.notable_achievements([no_putts, no_pars], reference_date=datetime(2026, 6, 1, tzinfo=timezone.utc))
 
     putting = summary["putting_milestones"]["lifetime"]
     assert (putting["most_1_putts_in_round"], putting["most_3_putts_in_round"]) == (None, None)

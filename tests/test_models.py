@@ -349,7 +349,7 @@ def test_explicit_round_formats(coverage):
     assert round_.total_to_par() == 0
 
 
-@pytest.mark.parametrize('coverage', [[1, 2], list(FRONT_NINE) + [1], [str(n) for n in FRONT_NINE]])
+@pytest.mark.parametrize('coverage', [[1, 2], [*list(FRONT_NINE), 1], [str(n) for n in FRONT_NINE]])
 def test_invalid_hole_coverage(coverage):
     with pytest.raises(ValidationError):
         Round(intended_holes=coverage)
@@ -371,7 +371,7 @@ def test_unknown_nine_is_not_inferred_from_count():
 
 def test_duplicate_and_unnumbered_scores_are_not_double_counted():
     scores = [HoleScore(hole_number=n, strokes=4, par_played=4) for n in FRONT_NINE]
-    round_ = Round(intended_holes=FRONT_NINE, hole_scores=scores + [scores[0]])
+    round_ = Round(intended_holes=FRONT_NINE, hole_scores=[*scores, scores[0]])
     assert not round_.is_complete()
     assert round_.get_hole_score(1) is None
     assert round_.get_hole_par(1) is None
@@ -379,12 +379,12 @@ def test_duplicate_and_unnumbered_scores_are_not_double_counted():
     assert round_.get_par() is None
     assert round_.total_to_par() is None
     assert round_.update_hole_score(1, strokes=5) is not None
-    round_.hole_scores = scores + [HoleScore(strokes=10, putts=5)]
+    round_.hole_scores = [*scores, HoleScore(strokes=10, putts=5)]
     assert round_.calculate_total_score() == 36
     assert round_.total_to_par() == 0
     assert not round_.is_complete()
     assert len(round_.hole_scores) == 10  # Unidentified data stays available for review.
-    round_.hole_scores = scores + [HoleScore(hole_number=10, strokes=4)]
+    round_.hole_scores = [*scores, HoleScore(hole_number=10, strokes=4)]
     assert round_.calculate_total_score() is None
     assert not round_.is_complete()
 
@@ -477,7 +477,7 @@ def test_course_duplicates_summary_and_save_readiness():
     assert not course.has_required_course_data('Red')
     assert not course.has_required_course_data('Blue')
     assert course.tees[0].course_rating is None  # Ratings are optional for basic saving.
-    course.holes = holes[:-1] + [holes[0]]
+    course.holes = [*holes[:-1], holes[0]]
     assert course.get_hole(1) is None
     assert course.front_nine_par is None
     assert course.get_par() is None

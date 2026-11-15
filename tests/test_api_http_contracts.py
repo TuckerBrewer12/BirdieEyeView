@@ -79,7 +79,7 @@ NINE_HOLES = [{"number": n, "par": 4} for n in range(1, 10)]
     ("body", "message"),
     [
         ({"name": "Pebble", "holes": [{"number": 1, "par": 4}]}, "holes 1-9 or 1-18"),
-        ({"name": "Pebble", "holes": [{"number": True, "par": 4}] + NINE_HOLES[1:]}, "not true/false"),
+        ({"name": "Pebble", "holes": [{"number": True, "par": 4}, *NINE_HOLES[1:]]}, "not true/false"),
         ({"name": "Pebble", "tees": [{"color": "Blue", "hole_yardages": {"19": 400}}]}, "between 1 and 18"),
         ({"name": "Pebble", "tees": [{"color": "Blue", "hole_yardages": {"1": -20}}]}, "between 0 and 1000"),
         ({"name": "Pebble", "tees": [{"color": "Blue"}, {"color": "blue"}]}, "different name"),

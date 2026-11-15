@@ -214,7 +214,7 @@ def test_user_tee_converter_rejects_invalid_stored_yardages(yardages):
 
 
 # =========================================================
-from database.repositories.course_repo import _tee_yardage_similarity  # noqa: E402
+from database.repositories.course_repo import _tee_yardage_similarity
 
 
 @pytest.mark.parametrize(

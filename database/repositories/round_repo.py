@@ -529,7 +529,7 @@ class RoundRepositoryDB:
                 for name in ("total_score", "holes_played", "is_complete"):
                     if name in updates and updates[name] != derived[name]:
                         raise IntegrityError("Round totals and completeness are derived from hole observations")
-                values = [row["id"]] + list(updates.values())
+                values = [row["id"], *list(updates.values())]
                 assignments = ", ".join(f"{name} = ${index}" for index, name in enumerate(updates, 2))
                 await conn.execute(f"UPDATE users.rounds SET {assignments} WHERE id = $1", *values)
                 await self._persist_derived_state(conn, row["id"], round_, row["user_id"])

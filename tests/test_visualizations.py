@@ -1,19 +1,19 @@
 """Report charts: gaps for unknown data, label checks, tick limits, wording, and export runs."""
 
 import math
-from datetime import datetime
+from datetime import datetime, timezone
 
 import matplotlib
 
 matplotlib.use("Agg")
 
-import matplotlib.pyplot as plt  # noqa: E402
-import pytest  # noqa: E402
+import matplotlib.pyplot as plt
+import pytest
 
-from analytics import visualizations as viz  # noqa: E402
-from analytics import visualize_player_from_db as export  # noqa: E402
-from models.hole_layout import FULL_ROUND  # noqa: E402
-from tests.analytics_builders import PARS_18, course, par_round, round_  # noqa: E402
+from analytics import visualizations as viz
+from analytics import visualize_player_from_db as export
+from models.hole_layout import FULL_ROUND
+from tests.analytics_builders import PARS_18, course, par_round, round_
 
 
 @pytest.fixture(autouse=True)
@@ -22,7 +22,7 @@ def close_figures():
     plt.close("all")
 
 
-def full_data_round(round_id, date=datetime(2026, 1, 1)):
+def full_data_round(round_id, date=datetime(2026, 1, 1, tzinfo=timezone.utc)):
     scores = {n: {"strokes": PARS_18[n] + (n % 2), "putts": 2, "green_in_regulation": n % 3 == 0}
               for n in FULL_ROUND}
     return round_(scores, course_obj=course(18, rating=72.0, slope=113), round_id=round_id, date=date, tee_box="Blue")
@@ -74,10 +74,10 @@ def test_summary_chart_without_data_says_so():
 
 
 def test_export_writes_a_fresh_folder_per_run_and_closes_figures(tmp_path):
-    rounds = [full_data_round("a", datetime(2026, 1, 1)), full_data_round("b", None)]  # undated last, no crash
+    rounds = [full_data_round("a", datetime(2026, 1, 1, tzinfo=timezone.utc)), full_data_round("b", None)]  # undated last, no crash
 
-    first = export.export_charts("Tucker B", rounds, tmp_path, now=datetime(2026, 11, 4, 9, 0, 0))
-    second = export.export_charts("Tucker B", [par_round()], tmp_path, now=datetime(2026, 11, 4, 9, 5, 0))
+    first = export.export_charts("Tucker B", rounds, tmp_path, now=datetime(2026, 11, 4, 9, 0, 0, tzinfo=timezone.utc))
+    second = export.export_charts("Tucker B", [par_round()], tmp_path, now=datetime(2026, 11, 4, 9, 5, 0, tzinfo=timezone.utc))
 
     assert first and all(path.is_relative_to(tmp_path / "tucker-b" / "20261104-090000") for path in first)
     assert all(path.is_relative_to(tmp_path / "tucker-b" / "20261104-090500") for path in second)

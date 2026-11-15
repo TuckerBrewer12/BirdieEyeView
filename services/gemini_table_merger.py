@@ -209,7 +209,7 @@ async def merge_split_tables(markdown: str, diagnostics: Optional[List[str]] = N
         note("table merge rejected: empty response")
         return markdown
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.warning("Gemini table merge failed; using original markdown. err=%s", exc)
         note(f"table merge failed: {type(exc).__name__}")
         return markdown

@@ -1,4 +1,4 @@
-from api.messages import CANNOT_FRIEND_YOURSELF, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR, INVALID_EMAIL_FORMAT, INVALID_FRIENDSHIP_STATUS, USERS_ARE_ALREADY_FRIENDS
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -6,8 +6,10 @@ from typing import List, Optional
 from database.db_manager import DatabaseManager
 from database.exceptions import AlreadyFriendsError, FriendRequestBlockedError, ConflictError, DuplicateError, IntegrityError, NotFoundError
 from api.messages import (
-    FORBIDDEN, FRIENDSHIP_NOT_FOUND, FRIEND_CODE_NOT_FOUND, HOME_COURSE_NOT_FOUND, LINKED_COURSE_NOT_FOUND,
-    USER_NOT_FOUND, USER_TEE_EXISTS, USER_TEE_IN_USE, USER_TEE_NAME_TAKEN, USER_TEE_NOT_FOUND,
+    CANNOT_FRIEND_YOURSELF, FORBIDDEN, FRIEND_CODE_NOT_FOUND, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR,
+    FRIENDSHIP_NOT_FOUND, HOME_COURSE_NOT_FOUND, INVALID_EMAIL_FORMAT, INVALID_FRIENDSHIP_STATUS,
+    LINKED_COURSE_NOT_FOUND, USER_NOT_FOUND, USER_TEE_EXISTS, USER_TEE_IN_USE, USER_TEE_INVALID, USER_TEE_NAME_TAKEN,
+    USER_TEE_NOT_FOUND, USERS_ARE_ALREADY_FRIENDS,
 )
 from api.player_handicap import player_handicap_index_with_rounds
 from api.course_access import load_linkable_course
@@ -26,6 +28,7 @@ from models.hole_layout import rated_coverage
 from analytics import handicap as hcap
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _friendship_row_to_response(row: dict) -> FriendshipResponse:
@@ -155,9 +158,10 @@ async def create_user_tee(
     try:
         return await db.user_tees.create_user_tee(tee)
     except DuplicateError:
-        raise HTTPException(409, USER_TEE_EXISTS.format(name=req.name))
+        raise HTTPException(409, USER_TEE_EXISTS.format(name=req.name)) from None
     except IntegrityError as error:
-        raise HTTPException(422, str(error)) from error
+        logger.info("User tee rejected: %s", error)
+        raise HTTPException(422, USER_TEE_INVALID) from error
 
 
 @router.put("/{user_id}/tees/{tee_id}", response_model=UserTeeResponse)
@@ -174,11 +178,12 @@ async def update_user_tee(
     try:
         tee = await db.user_tees.update_user_tee(str(tee_id), user_id=str(user_id), **updates)
     except NotFoundError:
-        raise HTTPException(404, USER_TEE_NOT_FOUND)
+        raise HTTPException(404, USER_TEE_NOT_FOUND) from None
     except DuplicateError as error:
         raise HTTPException(409, USER_TEE_NAME_TAKEN) from error
     except IntegrityError as error:
-        raise HTTPException(422, str(error)) from error
+        logger.info("User tee rejected: %s", error)
+        raise HTTPException(422, USER_TEE_INVALID) from error
     # An empty update is a lookup, which returns None instead of raising for a missing tee.
     if tee is None:
         raise HTTPException(404, USER_TEE_NOT_FOUND)

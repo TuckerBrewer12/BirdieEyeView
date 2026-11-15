@@ -12,7 +12,7 @@ SlopeRating = Annotated[float, Field(strict=True, ge=55, le=155, allow_inf_nan=F
 class ReadOnlyYardages(dict):
     """Dictionary-compatible serialization without unchecked in-place edits."""
 
-    def _reject(self, *args, **kwargs):
+    def _reject(self, *_args, **_kwargs):
         raise TypeError('Replace yardages with update_yardages() or validated assignment')
 
     __setitem__ = __delitem__ = clear = pop = popitem = setdefault = update = __ior__ = _reject
@@ -84,7 +84,7 @@ class TeeData(BaseGolfModel):
     def _yardage_fingerprint(self) -> tuple:
         return self.yardage_holes, tuple(sorted(self.hole_yardages.items()))
 
-    def model_post_init(self, context: Any) -> None:
+    def model_post_init(self, _context: Any) -> None:
         self._total_source = self._yardage_fingerprint()
 
     @model_serializer(mode='wrap')

@@ -20,6 +20,10 @@ export function settingsProfile(overrides: Partial<UserDto> = {}): UserDto {
     handicap: 8.4,
     created_at: null,
     scoring_goal: null,
+    scoring_goal_nine: null,
+    email_verified: true,
+    email_verified_at: null,
+    last_handicap_update: null,
     ...overrides,
   };
 }

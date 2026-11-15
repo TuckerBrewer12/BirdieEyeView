@@ -6,7 +6,7 @@ from .base import BaseGolfModel, checked_list
 from .course import Course
 from .hole import HOLES_PER_NINE, HOLES_PER_ROUND
 from .hole_score import HoleScore, ScoreKind, score_kind
-from .hole_layout import FRONT_NINE, BACK_NINE, FULL_ROUND, HoleCoverage
+from .hole_layout import FRONT_NINE, FULL_ROUND, HoleCoverage
 from .tee import Tee
 from .user_tee import UserTee
 
@@ -53,23 +53,23 @@ class Round(BaseGolfModel):
     def get_intended_holes(self) -> Optional[tuple[int, ...]]:
         if self.intended_holes is not None:
             return self.intended_holes
-        if self.course is not None and self.course.total_holes == 9:
+        if self.course is not None and self.course.total_holes == HOLES_PER_NINE:
             return FRONT_NINE
         if self.course is not None and self.course.get_expected_holes() == FULL_ROUND:
             return FULL_ROUND
         numbers = [score.hole_number for score in self.hole_scores if score.hole_number is not None]
-        if len(numbers) == 18 and set(numbers) == set(FULL_ROUND):
+        if len(numbers) == HOLES_PER_ROUND and set(numbers) == set(FULL_ROUND):
             return FULL_ROUND
         return None
 
     def _stat_fingerprint(self, field: str) -> tuple:
         relevant = ('hole_number', 'strokes', 'played', field)
         return self.get_intended_holes(), tuple(
-            tuple((getattr(score, name), score._field_revisions.get(name, 0)) for name in relevant)
+            tuple((getattr(score, name), score.field_revision(name)) for name in relevant)
             for score in self.hole_scores
         )
 
-    def model_post_init(self, context: Any) -> None:
+    def model_post_init(self, _context: Any) -> None:
         for field in ('putts', 'green_in_regulation'):
             self._summary_sources[field] = self._stat_fingerprint(field)
 
@@ -89,7 +89,7 @@ class Round(BaseGolfModel):
             elif self._summary_sources.get(field) != self._stat_fingerprint(field):
                 self._summary_sources[field] = None
 
-    def _scored_holes(self, numbers=None) -> Optional[list[HoleScore]]:
+    def scored_holes(self, numbers=None) -> Optional[list[HoleScore]]:
         """Unique identified scores; duplicates or out-of-format scores are ambiguous."""
         selected = [s for s in self.hole_scores if s.hole_number is not None
                     and (numbers is None or s.hole_number in numbers)]
@@ -133,7 +133,7 @@ class Round(BaseGolfModel):
         return self._stat_total('green_in_regulation', self.total_gir)
 
     def _stat_total(self, field: str, supplied: Optional[int]) -> Optional[int]:
-        scored = self._scored_holes()
+        scored = self.scored_holes()
         if scored is None:
             return None
         observations = [getattr(s, field) for s in scored]
@@ -144,7 +144,7 @@ class Round(BaseGolfModel):
         return None
 
     def _stroke_total(self, numbers=None) -> Optional[int]:
-        scored = self._scored_holes(numbers)
+        scored = self.scored_holes(numbers)
         return sum(s.strokes for s in scored) if scored else None
 
     def calculate_total_score(self) -> Optional[int]:
@@ -162,7 +162,7 @@ class Round(BaseGolfModel):
     def is_complete(self) -> bool:
         """Check if all holes have scores."""
         intended = self.get_intended_holes()
-        scored = self._scored_holes()
+        scored = self.scored_holes()
         if intended is None or scored is None:
             return False
         if any(s.hole_number is None and s.strokes is not None for s in self.hole_scores):
@@ -192,7 +192,7 @@ class Round(BaseGolfModel):
         intended = self.get_intended_holes()
         if intended is None:
             return None
-        if self._scored_holes() is None:
+        if self.scored_holes() is None:
             return None
         pars = [self.get_hole_par(n) for n in intended]
         if all(par is not None for par in pars):
@@ -220,7 +220,7 @@ class Round(BaseGolfModel):
 
     def total_to_par(self) -> Optional[int]:
         """Compare strokes and par for exactly the same identified scored holes."""
-        scored = self._scored_holes()
+        scored = self.scored_holes()
         if not scored:
             return None
         pars = [self.get_hole_par(s.hole_number) for s in scored]
@@ -315,7 +315,7 @@ class Round(BaseGolfModel):
 
     def nine_gir(self, first: int, last: int) -> Optional[int]:
         numbers = tuple(range(first, last + 1))
-        scored = self._scored_holes(numbers)
+        scored = self.scored_holes(numbers)
         if scored is None or {s.hole_number for s in scored} != set(numbers):
             return None
         values = [s.green_in_regulation for s in scored]
@@ -323,7 +323,7 @@ class Round(BaseGolfModel):
 
     def nine_putts(self, first: int, last: int) -> Optional[int]:
         numbers = tuple(range(first, last + 1))
-        scored = self._scored_holes(numbers)
+        scored = self.scored_holes(numbers)
         if scored is None or {s.hole_number for s in scored} != set(numbers):
             return None
         values = [s.putts for s in scored]
@@ -343,7 +343,7 @@ class Round(BaseGolfModel):
 
     def _nine_total(self, first: int, last: int) -> Optional[int]:
         numbers = tuple(range(first, last + 1))
-        scored = self._scored_holes(numbers)
+        scored = self.scored_holes(numbers)
         if scored is None or {s.hole_number for s in scored} != set(numbers):
             return None
         return sum(s.strokes for s in scored)

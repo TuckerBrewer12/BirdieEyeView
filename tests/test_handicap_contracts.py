@@ -1,6 +1,6 @@
 """WHS-based estimate: eligibility, precision, selection context and one index for every caller."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -14,7 +14,7 @@ from models.hole_layout import FRONT_NINE, FULL_ROUND
 from tests.analytics_builders import course, par_round, round_
 from tests.helpers import make_mock_database, make_round_summary, make_user
 
-START = datetime(2026, 1, 1)
+START = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
 def rated_rounds(overs, *, rating=72.0, slope=113):
@@ -148,8 +148,8 @@ def test_partial_eighteen_hole_round_is_not_a_differential_and_does_not_change_t
     history = rated_rounds([10, 12, 14, 16, 18])
 
     assert handicap.score_differentials_per_round([partial])[0]["differential"] is None
-    assert handicap.handicap_index(history + [partial]) == handicap.handicap_index(history) == 10.0
-    trend = handicap.handicap_trend(history + [partial])
+    assert handicap.handicap_index([*history, partial]) == handicap.handicap_index(history) == 10.0
+    trend = handicap.handicap_trend([*history, partial])
     assert trend[-1]["used_in_hi"] is None
 
 
@@ -166,7 +166,7 @@ def test_fewer_than_three_rounds_have_no_index(count):
 
 
 def test_only_the_latest_twenty_differentials_count():
-    oldest_is_best = [0] + distinct_overs(20)  # the 0 is round 1 of 21, outside the window
+    oldest_is_best = [0, *distinct_overs(20)]  # the 0 is round 1 of 21, outside the window
 
     assert handicap.handicap_index(rated_rounds(oldest_is_best)) == expected_index(distinct_overs(20))
 

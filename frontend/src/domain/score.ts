@@ -24,15 +24,15 @@ export interface ScoreTypeShares {
   quad_bogey: number;
 }
 
-export function scoreMixFrom(row: ScoreTypeShares): ScoreMix {
+export function scoreMixFrom(row: { [K in keyof ScoreTypeShares]: number | null }): ScoreMix {
   return {
-    eagle: row.eagle,
-    birdie: row.birdie,
-    par: row.par,
-    bogey: row.bogey,
-    double: row.double_bogey,
-    triple: row.triple_bogey,
-    quad: row.quad_bogey,
+    eagle: row.eagle ?? 0,
+    birdie: row.birdie ?? 0,
+    par: row.par ?? 0,
+    bogey: row.bogey ?? 0,
+    double: row.double_bogey ?? 0,
+    triple: row.triple_bogey ?? 0,
+    quad: row.quad_bogey ?? 0,
   };
 }
 

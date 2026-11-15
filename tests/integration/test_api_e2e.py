@@ -537,7 +537,7 @@ def mint_token(user_id: str, *, expires_in: timedelta, secret: str | None = None
 
 def test_expired_and_forged_tokens_are_rejected(api):
     alice = api.user("alice@example.com")
-    bearer = lambda token: {"Authorization": f"Bearer {token}"}  # noqa: E731
+    bearer = lambda token: {"Authorization": f"Bearer {token}"}
 
     valid = mint_token(alice["id"], expires_in=timedelta(hours=1))
     assert api.client.get("/api/auth/me", headers=bearer(valid)).status_code == 200  # the mint is right
@@ -592,7 +592,7 @@ def test_round_relinks_to_master_and_cloned_courses_with_ownership(api):
     alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
     master = asyncio.run(_create_master_course(api.url))
     round_id = save_round(api, alice, custom_course(api, alice))
-    link = lambda user, course: api.client.post(  # noqa: E731
+    link = lambda user, course: api.client.post(
         f"/api/rounds/{round_id}/link-course", headers=user["headers"], json={"course_id": course})
 
     assert link(bob, master).status_code == 403
@@ -617,7 +617,7 @@ def test_round_relinks_to_master_and_cloned_courses_with_ownership(api):
     assert api.client.post(f"/api/courses/{clone_id}/clone", headers=bob["headers"]).status_code == 403
 
     assert link(alice, clone_id).status_code == 200
-    rounds_on = lambda course: api.client.get(  # noqa: E731
+    rounds_on = lambda course: api.client.get(
         f"/api/stats/course-analytics/{alice['id']}/{course}", headers=alice["headers"]).json()["rounds_played"]
     assert (rounds_on(clone_id), rounds_on(master)) == (1, 0)
 
@@ -630,7 +630,7 @@ def test_round_relinks_to_master_and_cloned_courses_with_ownership(api):
 def test_user_tee_update_and_delete(api):
     alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
     tees = f"/api/users/{alice['id']}/tees"
-    yardages = lambda y: {str(n): y for n in range(1, 19)}  # noqa: E731
+    yardages = lambda y: {str(n): y for n in range(1, 19)}
     gold = api.client.post(tees, headers=alice["headers"], json={"name": "Gold", "hole_yardages": yardages(300)})
     assert gold.status_code == 201, gold.text
     tee = f"{tees}/{gold.json()['id']}"
@@ -664,7 +664,7 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
               for over, day in ((10, "2026-09-01"), (6, "2026-09-08"), (14, "2026-09-15"))]
     assert api.client.patch(f"/api/users/{alice['id']}", headers=alice["headers"],
                             json={"scoring_goal": 80}).status_code == 200
-    get = lambda path: api.client.get(path, headers=alice["headers"])  # noqa: E731
+    get = lambda path: api.client.get(path, headers=alice["headers"])
     paths = {
         "dashboard": f"/api/stats/dashboard/{alice['id']}",
         "analytics": f"/api/stats/analytics/{alice['id']}",
@@ -741,6 +741,12 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
     assert dashboard["scoring_average_l5"] == 82.0
     assert sum(row["used"] for row in dashboard["whs"]["rows"]) == dashboard["whs"]["count_used"] == 1
 
+    edited = api.client.put(f"/api/rounds/{rounds[0]}", headers=alice["headers"],
+                            json={"hole_scores": [{"hole_number": 1, "strokes": 5, "putts": 3}]})
+    assert edited.status_code == 200, edited.text
+    saver = next(row for row in get(paths["goal"]).json()["savers"] if row["type"] == "three_putt_bleed")
+    assert (saver["headline"], saver["detail"], saver["strokes_saved"]) == ("Cut out 3-putts", "0.3 a round", 0.33)
+
 
 # ================================================================
 # Lookups that must reveal only the caller's own data
@@ -749,7 +755,7 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
 
 def test_user_lookup_by_email_reveals_only_your_own_account(api):
     alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
-    lookup = lambda email: api.client.get(f"/api/users/by-email/{email}", headers=bob["headers"])  # noqa: E731
+    lookup = lambda email: api.client.get(f"/api/users/by-email/{email}", headers=bob["headers"])
 
     own = lookup("bob@example.com")
     assert (own.status_code, own.json()["id"]) == (200, bob["id"])
@@ -766,8 +772,8 @@ def test_course_list_and_search_show_masters_and_only_your_own_courses(api):
     asyncio.run(_create_master_course(api.url))
     custom_course(api, alice, name="Alice Links")
     custom_course(api, bob, name="Bob Links")
-    names = lambda response: [c["name"] for c in response.json()]  # noqa: E731
-    get = lambda path, user=None: api.client.get(path, headers=user["headers"] if user else {})  # noqa: E731
+    names = lambda response: [c["name"] for c in response.json()]
+    get = lambda path, user=None: api.client.get(path, headers=user["headers"] if user else {})
 
     assert names(get("/api/courses", bob)) == ["Master Links"]
     assert names(get(f"/api/courses?user_id={bob['id']}", bob)) == ["Bob Links", "Master Links"]
@@ -785,8 +791,8 @@ def test_friends_list_shows_only_your_own_friendships(api):
     code = api.client.get(f"/api/users/{bob['id']}", headers=bob["headers"]).json()["friend_code"]
     friendship = api.client.post("/api/users/me/friends", headers=alice["headers"],
                                  json={"addressee_friend_code": code}).json()["id"]
-    friends = lambda user, query="": api.client.get(f"/api/users/me/friends{query}", headers=user["headers"])  # noqa: E731
-    rows = lambda user, query="": [(f["id"], f["requester_id"], f["addressee_id"], f["status"])  # noqa: E731
+    friends = lambda user, query="": api.client.get(f"/api/users/me/friends{query}", headers=user["headers"])
+    rows = lambda user, query="": [(f["id"], f["requester_id"], f["addressee_id"], f["status"])
                                    for f in friends(user, query).json()]
 
     pending = [(friendship, alice["id"], bob["id"], "pending")]
@@ -821,8 +827,8 @@ def backdate_tokens(api: Api, email: str, column: str) -> None:
 
 
 def test_resend_verification_and_the_emailed_link(api):
-    sent = lambda: [kind for kind, _, _ in api.emails].count("verify")  # noqa: E731
-    resend = lambda email: api.client.post("/api/auth/resend-verification", json={"email": email})  # noqa: E731
+    sent = lambda: [kind for kind, _, _ in api.emails].count("verify")
+    resend = lambda email: api.client.post("/api/auth/resend-verification", json={"email": email})
     api.register("cy@example.com")
     first = api.token_from("verify", "cy@example.com")
 
@@ -878,7 +884,7 @@ def report_metadata(**overrides) -> str:
 def test_failed_scan_reports_are_anonymous_and_validated(api):
     alice = api.user("alice@example.com")
     image = png_bytes()
-    post = lambda name, data, metadata=None, extra=None: api.client.post(  # noqa: E731
+    post = lambda name, data, metadata=None, extra=None: api.client.post(
         "/api/scan/reports", headers=alice["headers"], files={"file": (name, data, "image/png")},
         data={"metadata": metadata or report_metadata()} | (extra or {}))
 
@@ -912,7 +918,7 @@ def test_failed_scan_reports_are_anonymous_and_validated(api):
 
 def test_scan_uploads_are_rejected_before_ocr(api, scan_providers):
     alice = api.user("alice@example.com")
-    extract = lambda name, data, content_type="image/jpeg": api.client.post(  # noqa: E731
+    extract = lambda name, data, content_type="image/jpeg": api.client.post(
         "/api/scan/extract", headers=alice["headers"], files={"file": (name, data, content_type)})
     card = (SCORECARD_DIR / "eaglevins_90.jpg").read_bytes()
 
@@ -946,7 +952,7 @@ def test_login_locks_after_five_failed_attempts(api):
 
 def test_signup_is_rate_limited_per_email(api, monkeypatch):
     monkeypatch.setenv("REGISTER_RATE_LIMIT_PER_EMAIL_ATTEMPTS", "2")
-    attempt = lambda email: api.client.post(  # noqa: E731
+    attempt = lambda email: api.client.post(
         "/api/auth/register", json={"name": "Eve", "email": email, "password": PASSWORD}).status_code
 
     assert [attempt("eve@example.com") for _ in range(3)] == [201, 409, 429]
@@ -956,14 +962,14 @@ def test_signup_is_rate_limited_per_email(api, monkeypatch):
 def test_anonymous_scans_and_reports_are_rate_limited(api, scan_providers):
     alice = api.user("alice@example.com")
     api.client.app.dependency_overrides[scan_reports.get_scan_report_store] = lambda: None
-    ocr = lambda headers=None: api.client.post(  # noqa: E731
+    ocr = lambda headers=None: api.client.post(
         "/api/scan/ocr", headers=headers or {}, files=upload()).status_code
 
     assert [ocr() for _ in range(6)] == [200] * 6
     assert ocr() == 429
     assert ocr(alice["headers"]) == 200  # signed-in scans have their own allowance
 
-    report = lambda: api.client.post(  # noqa: E731
+    report = lambda: api.client.post(
         "/api/scan/reports", files={"file": ("card.png", png_bytes(), "image/png")},
         data={"metadata": report_metadata()}).status_code
     assert [report() for _ in range(10)] == [503] * 10
@@ -979,7 +985,7 @@ def test_hole_scores_cannot_set_net_score(api):
     alice = api.user("alice@example.com")
     course = custom_course(api, alice)
     scores = [{"hole_number": n, "strokes": p} for n, p in PARS.items()]
-    with_net = [scores[0] | {"net_score": 3}] + scores[1:]
+    with_net = [scores[0] | {"net_score": 3}, *scores[1:]]
 
     save = api.client.post("/api/scan/save", headers=alice["headers"],
                            json={"course_id": course, "tee_box": "Blue", "hole_scores": with_net})

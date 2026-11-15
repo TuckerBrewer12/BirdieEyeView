@@ -19,11 +19,11 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from analytics import eligibility as el
+from models.hole import HOLES_PER_NINE
 from models.user import User
 from models.round import Round
 
 CLOSE_TO_COUNTING = 2.0
-WHS_ROUNDS = 20
 MAX_HANDICAP_INDEX = 54.0
 WHS_WINDOW = 20
 
@@ -319,16 +319,16 @@ def index_window(rounds: Iterable[Round], use_last_n: int = WHS_WINDOW, *,
     _check_window(use_last_n)
     ordered = el.chronological(rounds)
     differentials = _differentials(ordered)
-    options = dict(seed_handicap=seed_handicap, transition_rounds=transition_rounds, seed_set_at=seed_set_at)
+    options = {"seed_handicap": seed_handicap, "transition_rounds": transition_rounds, "seed_set_at": seed_set_at}
     eligible = _eligible(differentials, **options)[-use_last_n:]
     index, used = _index_from(differentials, use_last_n=use_last_n, **options)
     used_ids = {id(d.round_obj) for d in used}
     eligible_ids = {id(d.round_obj) for d in eligible}
     count, adjustment = whs_window(len(eligible))
-    return dict(index=index, counting={i for i,r in enumerate(ordered) if id(r) in used_ids},
-                eligible={i for i,r in enumerate(ordered) if id(r) in eligible_ids},
-                threshold=max((d.value for d in used), default=None), rated=len(eligible),
-                count=count, adjustment=adjustment)
+    return {"index": index, "counting": {i for i,r in enumerate(ordered) if id(r) in used_ids},
+                "eligible": {i for i,r in enumerate(ordered) if id(r) in eligible_ids},
+                "threshold": max((d.value for d in used), default=None), "rated": len(eligible),
+                "count": count, "adjustment": adjustment}
 
 
 
@@ -350,7 +350,7 @@ def round_course_handicap(round_obj: Round, handicap_index: Optional[float]) -> 
     if handicap_index is None or rating is None or par is None or coverage is None or not round_obj.is_complete():
         return None
     course_rating, slope = rating
-    index = handicap_index / 2 if len(coverage) == 9 else handicap_index
+    index = handicap_index / 2 if len(coverage) == HOLES_PER_NINE else handicap_index
     return course_handicap(index, slope, course_rating, par)
 
 

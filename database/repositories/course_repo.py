@@ -6,6 +6,7 @@ from uuid import UUID
 
 from models import Course, Hole, Tee
 from models.course import CourseSummary
+from models.hole import HOLES_PER_NINE
 from database.connection import write_transaction
 from database.converters import course_from_rows, course_to_row, tee_yardages_to_rows, tee_to_row, tee_ratings_to_rows
 from database.exceptions import ConflictError, DuplicateError, IntegrityError, NotFoundError
@@ -312,7 +313,7 @@ class CourseRepositoryDB:
         self,
         name: str,
         location: Optional[str] = None,
-        user_id: str = None,
+        user_id: str | None = None,
     ) -> Optional[Course]:
         """Find a course owned by this specific user (excludes masters)."""
         uid = UUID(user_id)
@@ -462,7 +463,7 @@ class CourseRepositoryDB:
             )
             if not parent:
                 raise NotFoundError("Course not found")
-            if parent["total_holes"] == 9 and any(hole.number and hole.number > 9 for hole in normalized_holes):
+            if parent["total_holes"] == HOLES_PER_NINE and any(hole.number and hole.number > HOLES_PER_NINE for hole in normalized_holes):
                 raise IntegrityError("Hole is outside the declared course layout")
             # Fill hole par/handicap where NULL (or insert if hole row missing)
             for hole in normalized_holes:
@@ -669,7 +670,7 @@ class CourseRepositoryDB:
             colors = [tee.color.casefold() for tee in course.tees if tee.color is not None]
             if len(colors) != len(set(colors)):
                 raise DuplicateError("Course tee names must be unique case-insensitively")
-            if course.total_holes == 9 and any(hole.number and hole.number > 9 for hole in course.holes):
+            if course.total_holes == HOLES_PER_NINE and any(hole.number and hole.number > HOLES_PER_NINE for hole in course.holes):
                 raise IntegrityError("Hole is outside the declared course layout")
             uid = UUID(user_id) if user_id else None
             async with write_transaction(self._pool, connection) as conn:
@@ -773,7 +774,7 @@ class CourseRepositoryDB:
                         raise IntegrityError("Existing holes are outside the requested course layout")
 
                 set_clause = ", ".join(f"{k} = ${i + 2}" for i, k in enumerate(updates))
-                values = [UUID(course_id)] + list(updates.values())
+                values = [UUID(course_id), *list(updates.values())]
                 where = "id = $1"
                 if user_id:
                     values.append(UUID(user_id))
@@ -854,7 +855,7 @@ class CourseRepositoryDB:
                 )
                 if parent is None:
                     raise NotFoundError("Course not found")
-                if hole.number is None or (parent["total_holes"] == 9 and hole.number > 9):
+                if hole.number is None or (parent["total_holes"] == HOLES_PER_NINE and hole.number > HOLES_PER_NINE):
                     raise IntegrityError("Hole is unnumbered or outside the declared course layout")
                 old_par = await conn.fetchval(
                     "SELECT par FROM courses.holes WHERE course_id=$1 AND hole_number=$2",

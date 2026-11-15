@@ -37,7 +37,7 @@ def test_markdown_extraction_handles_top_level_shapes(response, expected):
 
 @pytest.mark.parametrize(("rows", "expected"), [([], ""), ([["a|b"]], "| a/b |")])
 def test_rows_to_markdown_escapes_cells(rows, expected):
-    assert MistralOCRService._rows_to_markdown(rows) == expected
+    assert MistralOCRService.rows_to_markdown(rows) == expected
 
 
 def test_html_parser_falls_back_without_beautiful_soup(monkeypatch):

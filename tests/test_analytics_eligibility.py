@@ -51,7 +51,7 @@ def test_a_rate_without_opportunities_is_unknown():
 
 def test_chronological_handles_aware_naive_and_undated_rounds():
     aware = par_round(date=datetime(2026, 1, 2, tzinfo=timezone(timedelta(hours=-8))), round_id="aware")
-    naive = par_round(date=datetime(2026, 1, 2, 12), round_id="naive")
+    naive = par_round(date=datetime(2026, 1, 2, 12, tzinfo=timezone.utc).replace(tzinfo=None), round_id="naive")
     undated = par_round(date=None, round_id="undated")
 
     ordered = el.chronological([undated, aware, naive])

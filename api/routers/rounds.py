@@ -123,13 +123,13 @@ async def update_round(
     except HTTPException:
         raise
     except NotFoundError:
-        raise HTTPException(404, ROUND_NOT_FOUND)
+        raise HTTPException(404, ROUND_NOT_FOUND) from None
     except IntegrityError:
         logger.warning("Update round rejected", exc_info=True)
-        raise HTTPException(422, ROUND_CHANGES_INVALID)
+        raise HTTPException(422, ROUND_CHANGES_INVALID) from None
     except Exception:
         logger.exception("Update round error")
-        raise HTTPException(500, ROUND_UPDATE_FAILED)
+        raise HTTPException(500, ROUND_UPDATE_FAILED) from None
 
 
 @router.post("/{round_id}/link-course", response_model=RoundSummaryResponse)
@@ -209,10 +209,10 @@ async def link_course_to_round(
         raise
     except IntegrityError:
         logger.warning("Link course rejected", exc_info=True)
-        raise HTTPException(422, ROUND_HOLES_DONT_MATCH_COURSE)
+        raise HTTPException(422, ROUND_HOLES_DONT_MATCH_COURSE) from None
     except Exception:
         logger.exception("Link course error")
-        raise HTTPException(500, ROUND_LINK_FAILED)
+        raise HTTPException(500, ROUND_LINK_FAILED) from None
 
 
 @router.delete("/{round_id}", status_code=204)

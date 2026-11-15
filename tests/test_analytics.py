@@ -240,7 +240,7 @@ def test_score_variance_by_hole():
     # Two observations per hole is below the 3-observation minimum: nothing is ranked.
     assert all(row["variance_rank"] is None for row in rows)
 
-    ranked = score_variance_by_hole(rounds + [rounds[1].model_copy(update={"id": "r3"})])
+    ranked = score_variance_by_hole([*rounds, rounds[1].model_copy(update={"id": "r3"})])
     assert ranked[0]["score_std_dev"] >= ranked[1]["score_std_dev"]
     assert (ranked[0]["variance_rank"], ranked[1]["variance_rank"]) == (1, 2)
 
@@ -600,6 +600,28 @@ def test_scoring_by_yardage_buckets_send_each_bands_average_and_score_mix():
     assert par3["score_mix"] == {
         "eagle": 0.0, "birdie": 25.0, "par": 50.0, "bogey": 0.0, "double": 25.0, "triple": 0.0, "quad": 0.0,
     }
+
+
+def test_scoring_by_yardage_buckets_mark_the_worst_band_of_each_par():
+    course = _build_course_with_yardages()
+    yardages = dict(course.tees[0].hole_yardages)
+    yardages.update({1: 120, 2: 120, 5: 330, 6: 330})
+    assert course.tees[0].update_yardages(yardages) is None
+    hole_scores = [
+        HoleScore(hole_number=i, strokes=course.get_hole(i).par + (2 if i in (1, 2) else 0), green_in_regulation=True)
+        for i in range(1, 19)
+    ]
+    round_obj = Round(id="r-worst", course=course, tee_box="Blue", date=datetime(2026, 3, 1, tzinfo=timezone.utc), hole_scores=hole_scores)
+
+    rows = scoring_by_yardage_buckets([round_obj])
+    for par in {row["par"] for row in rows}:
+        bands = [row for row in rows if row["par"] == par]
+        flagged = [row for row in bands if row["worst"]]
+        if len(bands) > 1:
+            assert flagged == [max(bands, key=lambda row: row["average_to_par"])]
+        else:
+            assert flagged == []
+    assert [row["bucket_label"] for row in rows if row["worst"]] == ["< 150", "< 350"]
 
 
 def test_notable_achievements_mark_each_milestone_first_reached_in_the_window():

@@ -3,6 +3,7 @@ from typing import Optional
 from analytics.handicap import tee_course_handicap
 from api.schemas import CourseResponse, TeeResponse
 from models import Course, Tee
+from models.hole import HOLES_PER_NINE
 
 
 def _tee(tee: Tee, par: Optional[int], handicap_index: Optional[float], coverage=None) -> TeeResponse:
@@ -11,7 +12,7 @@ def _tee(tee: Tee, par: Optional[int], handicap_index: Optional[float], coverage
         slope, course_rating = tee.slope_rating, tee.course_rating
     else:
         slope, course_rating = (rating.slope_rating, rating.course_rating) if rating else (None, None)
-    index = handicap_index / 2 if handicap_index is not None and coverage and len(coverage) == 9 else handicap_index
+    index = handicap_index / 2 if handicap_index is not None and coverage and len(coverage) == HOLES_PER_NINE else handicap_index
     return TeeResponse(
         yardage_holes=tee.yardage_holes, rating_holes=tee.rating_holes, ratings=[r.model_dump() for r in tee.ratings],
         color=tee.color,

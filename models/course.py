@@ -2,7 +2,7 @@ from pydantic import Field, PrivateAttr, model_serializer, model_validator
 from typing import Annotated, Any, List, Literal, Optional
 
 from .base import BaseGolfModel, checked_list
-from .hole import Hole
+from .hole import HOLES_PER_NINE, HOLES_PER_ROUND, Hole
 from .hole_layout import FRONT_NINE, BACK_NINE, FULL_ROUND
 from .tee import Tee
 
@@ -32,9 +32,9 @@ class Course(BaseGolfModel):
         return self
 
     def _par_fingerprint(self) -> tuple:
-        return self.total_holes, tuple((h.number, h.par, h._revision) for h in self.holes)
+        return self.total_holes, tuple((h.number, h.par, h.revision) for h in self.holes)
 
-    def model_post_init(self, context: Any) -> None:
+    def model_post_init(self, _context: Any) -> None:
         self._par_source = self._par_fingerprint()
 
     @model_serializer(mode='wrap')
@@ -51,12 +51,12 @@ class Course(BaseGolfModel):
             self._par_source = None
 
     def get_expected_holes(self) -> Optional[tuple[int, ...]]:
-        if self.total_holes == 9:
+        if self.total_holes == HOLES_PER_NINE:
             return FRONT_NINE
-        if self.total_holes == 18:
+        if self.total_holes == HOLES_PER_ROUND:
             return FULL_ROUND
         numbers = [h.number for h in self.holes]
-        if len(numbers) == 18 and set(numbers) == set(FULL_ROUND):
+        if len(numbers) == HOLES_PER_ROUND and set(numbers) == set(FULL_ROUND):
             return FULL_ROUND
         return None
 

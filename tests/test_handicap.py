@@ -103,7 +103,7 @@ def test_seed_handicap_filters_transition_rounds(dated_rounds):
 
 
 def test_seed_handicap_honors_seed_date(dated_rounds):
-    assert eligible_values(dated_rounds, seed_handicap=15.0, seed_set_at=datetime(2025, 1, 15)) == [10.0, 22.0]
+    assert eligible_values(dated_rounds, seed_handicap=15.0, seed_set_at=datetime(2025, 1, 15, tzinfo=timezone.utc)) == [10.0, 22.0]
 
 
 @pytest.mark.parametrize(("round_slice", "expected"), [(slice(None, 1), 15.0), (slice(1, 2), 10.0)])

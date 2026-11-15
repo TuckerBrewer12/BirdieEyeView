@@ -1,6 +1,6 @@
 """Resource response schemas freeze the JSON the endpoints returned as raw domain models."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -45,7 +45,7 @@ def full_user_tee() -> UserTee:
         course_rating=35.5,
         slope_rating=120,
         hole_yardages=YARDS,
-        created_at=datetime(2026, 11, 1, 9, 30),
+        created_at=datetime(2026, 11, 1, 9, 30, tzinfo=timezone.utc),
     )
 
 
@@ -54,7 +54,7 @@ def full_round() -> Round:
         id="round-1",
         course=full_course(),
         tee_box="Blue",
-        date=datetime(2026, 11, 2, 8, 0),
+        date=datetime(2026, 11, 2, 8, 0, tzinfo=timezone.utc),
         hole_scores=[
             HoleScore(
                 hole_number=n, strokes=5, putts=2, shots_to_green=3, net_score=4, played=True,
@@ -77,32 +77,33 @@ def full_user() -> User:
         name="Tucker",
         email="tucker@example.com",
         email_verified=True,
-        email_verified_at=datetime(2026, 1, 1),
+        email_verified_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         home_course_id="course-1",
         handicap=12.4,
         rounds=[full_round()],
-        created_at=datetime(2025, 6, 1),
-        last_handicap_update=datetime(2026, 10, 1),
+        created_at=datetime(2025, 6, 1, tzinfo=timezone.utc),
+        last_handicap_update=datetime(2026, 10, 1, tzinfo=timezone.utc),
         scoring_goal=89,
         scoring_goal_nine=44,
     )
 
 
 @pytest.mark.parametrize(
-    ("domain", "schema"),
+    ("domain", "schema", "left_out"),
     [
-        (full_course(), CourseResponse),
-        (full_round(), RoundResponse),
-        (full_user(), UserResponse),
-        (full_user_tee(), UserTeeResponse),
+        (full_course(), CourseResponse, set()),
+        (full_round(), RoundResponse, set()),
+        (full_user(), UserResponse, {"rounds"}),  # a user is sent as the profile; rounds have their own endpoints
+        (full_user_tee(), UserTeeResponse, set()),
     ],
     ids=["course", "round", "user", "user-tee"],
 )
-def test_response_schema_returns_the_domain_json_unchanged(domain, schema):
+def test_response_schema_returns_the_domain_json_unchanged(domain, schema, left_out):
     # FastAPI validates the returned domain object itself into the response model.
     frozen = schema.model_validate(domain).model_dump(mode="json")
+    assert not left_out & set(frozen)
 
-    expected = domain.model_dump(mode="json")
+    expected = domain.model_dump(mode="json", exclude=left_out)
     def assert_domain_fields(actual, expected):
         if isinstance(expected, dict):
             for key, value in expected.items():

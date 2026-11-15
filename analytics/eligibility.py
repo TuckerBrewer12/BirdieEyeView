@@ -24,7 +24,7 @@ NINE = 9
 
 def scored_holes(round_obj: Round) -> List[HoleScore]:
     """Scored holes in hole order; empty when hole identities are ambiguous."""
-    scored = round_obj._scored_holes()
+    scored = round_obj.scored_holes()
     return sorted(scored or [], key=lambda score: score.hole_number)
 
 
@@ -104,7 +104,7 @@ def comparable_datetime(moment: datetime) -> datetime:
 def date_key(round_obj: Round):
     """Chronological sort key: dated rounds by date, undated rounds last."""
     if round_obj.date is None:
-        return (1, datetime.min)
+        return (1, 0)
     return (0, comparable_datetime(round_obj.date))
 
 

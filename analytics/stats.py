@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional, get_args
 
 from analytics import eligibility as el
-from analytics.handicap import round_course_handicap, round_net_score, round_half_up
+from analytics.handicap import round_course_handicap, round_half_up
 from analytics.verdicts import ChangeVerdict, change_verdict
 from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
 from models.hole_layout import FRONT_NINE, BACK_NINE
@@ -203,7 +203,7 @@ def _lowest_nine_holes(rounds: List[Round]) -> tuple[Optional[int], Optional[Rou
         by_hole = {score.hole_number: score.strokes for score in el.scored_holes(round_obj)}
         nines = [
             sum(by_hole[n] for n in numbers)
-            for numbers in (range(1, 10), range(10, 19))
+            for numbers in (FRONT_NINE, BACK_NINE)
             if all(n in by_hole for n in numbers)
         ]
         return min(nines) if nines else None
@@ -247,8 +247,8 @@ def _with_putts(rounds: List[Round]) -> List[Round]:
 
 def _scoring_records(complete: List[Round], eighteen: List[Round], nine: List[Round], *, lifetime: bool):
     total = Round.calculate_total_score
-    birdies = lambda r: _round_count(r, _to_par_is(-1))  # noqa: E731
-    eagles = lambda r: _round_count(r, _to_par_is(-2))  # noqa: E731
+    birdies = lambda r: _round_count(r, _to_par_is(-1))
+    eagles = lambda r: _round_count(r, _to_par_is(-2))
     lowest, lowest_round = _best_round(eighteen, total, lower=True)
     lowest_nine, lowest_nine_round = _best_round(nine, total, lower=True)
     most_birdies, birdie_round = _best_round(_with_pars(complete), birdies, lower=False)
@@ -336,7 +336,7 @@ def _home_course(rounds: List[Round], home_course_id: Optional[str]) -> Dict[str
         return {"home_course_name": None, "most_rounds_played": 0, "lowest_score": None, "lowest_score_round": None}
     home = matched[0].course
     layout = home.get_expected_holes()
-    holes = el.NINE if layout is not None and len(layout) == 9 else el.EIGHTEEN
+    holes = el.NINE if layout is not None and len(layout) == HOLES_PER_NINE else el.EIGHTEEN
     lowest, lowest_round = _best_round(el.complete_rounds(matched, holes), Round.calculate_total_score, lower=True)
     return {
         "home_course_name": home.name or "Home Course",
@@ -359,7 +359,7 @@ def notable_achievements(
     The one-year window is rolling (default last 365 days) relative to ``reference_date`` or the
     current time, compared with the time of day kept; future-dated rounds are outside it.
     """
-    moment = reference_date or datetime.now()
+    moment = reference_date or datetime.now(timezone.utc)
     if not isinstance(moment, datetime):
         moment = datetime.combine(moment, datetime.min.time())
     now = el.comparable_datetime(moment)
@@ -415,10 +415,10 @@ def _notable_achievements(rounds_list, now, cutoff, days, home_course_id) -> Dic
     home_life = _home_course(life["rounds"], home_course_id)
     home_year = _home_course(year["rounds"], home_course_id)
 
-    one_putts = lambda r: _round_count(r, lambda row: row["putts"] == 1)  # noqa: E731
-    three_putts = lambda r: _round_count(r, lambda row: row["putts"] is not None and row["putts"] >= 3)  # noqa: E731
+    one_putts = lambda r: _round_count(r, lambda row: row["putts"] == 1)
+    three_putts = lambda r: _round_count(r, lambda row: row["putts"] is not None and row["putts"] >= 3)
 
-    def putting(window, *, lifetime: bool):
+    def putting(window):
         fewest, fewest_round = _best_round(window["eighteen"], Round.get_total_putts, lower=True)
         putting_rounds = _with_putts(window["complete"])
         most_one, one_round = _best_round(putting_rounds, one_putts, lower=False)
@@ -431,8 +431,8 @@ def _notable_achievements(rounds_list, now, cutoff, days, home_course_id) -> Dic
         }
         return values, events
 
-    putt_values, putt_events = putting(life, lifetime=True)
-    year_putt_values, year_putt_events = putting(year, lifetime=False)
+    putt_values, putt_events = putting(life)
+    year_putt_values, year_putt_events = putting(year)
     putt_break_rounds = {
         threshold: _first_round(life["eighteen"], lambda r, t=threshold: (r.get_total_putts() or t) < t)
         for threshold in PUTT_BREAK_THRESHOLDS
@@ -1387,10 +1387,12 @@ def scoring_by_yardage_buckets(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
             "gir_percentage": (sum(gir_vals) / len(gir_vals) * 100.0) if gir_vals else None,
             "sample_size": len(to_par_vals),
             "raw_scores": [{"to_par": tp, "yardage": y} for tp, y in zip(to_par_vals, entry["yardages"])],
+            "worst": False,
         })
-    worst = max(results, key=lambda row: row["average_to_par"], default=None)
-    for row in results:
-        row["worst"] = row is worst
+    for par in {row["par"] for row in results}:
+        bands = [row for row in results if row["par"] == par]
+        if len(bands) > 1:
+            max(bands, key=lambda row: row["average_to_par"])["worst"] = True
     return results
 
 

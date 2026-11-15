@@ -15,7 +15,8 @@ from api.analytics_responses import analytics_response
 from api.player_handicap import player_handicap_index
 from api.round_responses import round_detail
 from analytics import dashboard as dashboard_module
-from api.routers import stats, users
+from api.routers import stats
+from api.schemas import UserResponse
 from models import Course, Hole, HoleScore, Round, Tee, User
 
 OUT = Path(__file__).resolve().parent.parent / "frontend" / "src" / "testing" / "fixtures" / "sampleGolfer.ts"
@@ -191,7 +192,7 @@ async def _responses() -> tuple[dict, dict]:
     }
 
     best = best_round(sorted(rounds, key=lambda r: r.date, reverse=True))
-    profile = users.user_response(USER.model_copy(update={"handicap": dashboard.handicap_index}))
+    profile = UserResponse.model_validate(USER.model_copy(update={"handicap": dashboard.handicap_index}))
     seed = jsonable_encoder({
         "user": {"user_id": USER.id, "name": USER.name, "email": USER.email, "email_verified": True},
         "profile": profile,

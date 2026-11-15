@@ -22,6 +22,10 @@ export const labUser: UserDto = {
   handicap: 17.8,
   created_at: null,
   scoring_goal: 89,
+  scoring_goal_nine: null,
+  email_verified: true,
+  email_verified_at: null,
+  last_handicap_update: null,
 };
 
 const COURSES = ["Pebble Creek", "Half Moon Bay", "Muni", "Blue Rock"];
@@ -57,6 +61,9 @@ export const labAnalytics: AnalyticsDto = {
     average_putts: 34.5,
     three_putts_per_round: 2,
     three_putt_rate: 11.1,
+    scoring_average_nine: null,
+    best_round_nine: null,
+    average_putts_nine: null,
   },
   peak_game: {
     rounds: [
@@ -85,6 +92,7 @@ export const labAnalytics: AnalyticsDto = {
   ],
   score_trend: SCORES.map((score, i) => ({
     round_index: i + 1,
+    holes: 18,
     round_id: `lab-${i + 1}`,
     course_name: COURSES[i % COURSES.length],
     total_score: score,
@@ -127,6 +135,9 @@ export const averyLabAnalytics: AnalyticsDto = {
     average_putts: null,
     three_putts_per_round: null,
     three_putt_rate: null,
+    scoring_average_nine: null,
+    best_round_nine: null,
+    average_putts_nine: null,
   },
   scoring_by_par: [
     { par: 3, average_to_par: 0.35, average_strokes: 3.35, sample_size: 32 },
@@ -141,6 +152,7 @@ export const labAnalyticsByGolfer: Record<string, AnalyticsDto> = {
 };
 
 export const labGoalReport: GoalReportDto = {
+  nine_hole: null,
   scoring_goal: 89,
   scoring_average: 91.7,
   lowest_score: 89,

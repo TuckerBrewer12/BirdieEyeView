@@ -123,7 +123,7 @@ NINE_HOLES = [{"number": n, "par": 4, "handicap": n} for n in range(1, 10)]
 # test_api_http_contracts.py; the repeated handicap rank is only checked here.
 def test_create_course_request_rejects_a_repeated_handicap_rank():
     with pytest.raises(ValueError, match="handicap rank"):
-        courses.CreateCourseRequest(name="Pebble", holes=NINE_HOLES[:8] + [{"number": 9, "par": 4, "handicap": 1}])
+        courses.CreateCourseRequest(name="Pebble", holes=[*NINE_HOLES[:8], {"number": 9, "par": 4, "handicap": 1}])
 
 
 @pytest.mark.parametrize("count", [9, 18])

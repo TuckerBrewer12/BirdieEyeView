@@ -122,7 +122,7 @@ def test_display_name_keeps_facility_identity(club, course, expected):
 
 def _detail_payload():
     # Shape confirmed against GET /v1/courses/{id} on November 2, 2026; values are synthetic.
-    hole = lambda par, yards: {"par": par, "yardage": yards, "handicap": 1}  # noqa: E731
+    hole = lambda par, yards: {"par": par, "yardage": yards, "handicap": 1}
     return {
         "course": {
             "id": "42",

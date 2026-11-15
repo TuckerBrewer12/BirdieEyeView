@@ -123,7 +123,7 @@ class GolfCourseAPIService:
                 data = resp.json()
                 items = self._extract_items(data)
                 return self._normalize_items(items, limit=limit)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise CourseProviderUnavailable(f"GolfCourseAPI search failed: {exc}") from exc
 
     async def get_course_details(self, external_course_id: str) -> List[ProviderTee]:
@@ -145,7 +145,7 @@ class GolfCourseAPIService:
                 if exc.response is not None and exc.response.status_code == 404:
                     raise CourseProviderNotFound(external_course_id) from exc
                 raise CourseProviderUnavailable(f"GolfCourseAPI course lookup failed: {exc}") from exc
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise CourseProviderUnavailable(f"GolfCourseAPI course lookup failed: {exc}") from exc
         tees = self._parse_course_tees(payload)
         if not tees:

@@ -187,7 +187,7 @@ async def test_stale_master_is_updated_from_verified_scan():
     provider.get_course_details.assert_awaited_once_with("ext-1")
     call = db.courses.apply_verified_scan.await_args
     assert call.args[0] == master.id
-    assert [dict(t.hole_yardages) for t in call.args[2]][0] == dict(enumerate(BLUE, start=1))
+    assert next(dict(t.hole_yardages) for t in call.args[2]) == dict(enumerate(BLUE, start=1))
     assert call.kwargs == {"total_holes": 9, "connection": db.conn}
 
 
@@ -265,7 +265,7 @@ async def test_new_master_drops_unconfirmed_ratings(provider_rating):
 
 @pytest.mark.asyncio
 async def test_scan_without_ratings_keeps_master_ratings():
-    service, db, provider = make_service()
+    service, db, _provider = make_service()
     db.courses.get_course.return_value = make_course(external_id="ext-1", blue=[y - 10 for y in BLUE])
     request = make_save_request(
         course_id=str(uuid4()),
@@ -385,8 +385,8 @@ async def test_verified_provider_pick_creates_one_master_from_scanned_data():
 @pytest.mark.parametrize(
     "details",
     [
-        provider_tees(blue=[BLUE[0] + 1] + BLUE[1:]),
-        provider_tees(pars=[5] + PARS[1:]),
+        provider_tees(blue=[BLUE[0] + 1, *BLUE[1:]]),
+        provider_tees(pars=[5, *PARS[1:]]),
     ],
     ids=["one-yard-off", "one-par-off"],
 )
@@ -542,7 +542,7 @@ async def test_no_tee_selection_stays_unselected():
 
 def test_scan_matches_provider_by_yardage_across_groups_and_names():
     scanned = make_course()
-    female = ProviderTee("female", "Red", dict(enumerate([5] + PARS[1:], start=1)), dict(enumerate(WHITE, start=1)))
+    female = ProviderTee("female", "Red", dict(enumerate([5, *PARS[1:]], start=1)), dict(enumerate(WHITE, start=1)))
     male = ProviderTee("male", "Forward", dict(enumerate(PARS, start=1)), dict(enumerate(WHITE, start=1)))
     blue = provider_tees()[0]
 

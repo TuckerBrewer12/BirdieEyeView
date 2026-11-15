@@ -5,7 +5,7 @@ OpenAPI contract (the frontend generates its types from it), so keep them stable
 """
 
 from datetime import datetime
-from typing import Annotated, Dict, Iterable, List, Optional
+from typing import Annotated, Dict, Iterable, List, Literal, Optional
 from uuid import UUID
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -17,6 +17,7 @@ from api.input_validation import (
     sanitize_user_text,
 )
 from models.hole_layout import FRONT_NINE, FULL_ROUND
+from models.hole import HOLES_PER_ROUND
 from services.scan_normalization import normalize_decimal, normalize_whole_number
 
 
@@ -70,7 +71,7 @@ def normalize_hole_yardages(value, field: str = "hole_yardages") -> Optional[Dic
     seen = set()
     for raw_hole, raw_yards in value.items():
         hole = normalize_whole_number(raw_hole, f"{field} hole number")
-        if hole is None or not 1 <= hole <= 18:
+        if hole is None or not 1 <= hole <= HOLES_PER_ROUND:
             raise ValueError(f"{field} hole number must be between 1 and 18.")
         if hole in seen:
             raise ValueError(f"{field} lists hole {hole} more than once.")
@@ -387,4 +388,4 @@ class SendFriendRequest(BaseModel):
 
 class FriendshipStatusRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    status: str = Field(..., pattern="^(accepted|declined|blocked)$")
+    status: Literal["accepted", "declined", "blocked"]

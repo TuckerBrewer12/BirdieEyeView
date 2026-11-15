@@ -12,7 +12,7 @@ import argparse
 import asyncio
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, List, Optional
 
@@ -163,7 +163,7 @@ def _save(fig, path: Path) -> None:
 
 def export_charts(player_label: str, rounds: List[Round], outdir: Path, *, now: Optional[datetime] = None) -> List[Path]:
     """Write every chart that has data into a new run folder and return the written paths."""
-    run_dir = Path(outdir) / _slug(player_label) / (now or datetime.now()).strftime("%Y%m%d-%H%M%S")
+    run_dir = Path(outdir) / _slug(player_label) / (now or datetime.now(timezone.utc)).strftime("%Y%m%d-%H%M%S")
     run_dir.mkdir(parents=True, exist_ok=False)
     rounds = el.chronological(rounds)
     course = _primary_course_rounds(rounds)

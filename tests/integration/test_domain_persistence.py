@@ -227,17 +227,17 @@ async def test_known_course_location_survives_trigram_fallback(database_manager)
 
 async def test_saved_date_and_same_day_order_are_independent(database_manager):
     user = await create_user(database_manager, email="ordering@example.test")
-    date = datetime(2020, 4, 1)
+    date = datetime(2020, 4, 1, tzinfo=timezone.utc)
     first = await database_manager.rounds.create_round(Round(date=date, hole_scores=scores(FRONT_NINE)), user.id)
     second = await database_manager.rounds.create_round(Round(date=date, hole_scores=scores(FRONT_NINE)), user.id)
     async with database_manager._pool.acquire() as conn:
-        await conn.execute("UPDATE users.rounds SET created_at=$2 WHERE id=$1", UUID(first.id), datetime(2026, 1, 1))
-        await conn.execute("UPDATE users.rounds SET created_at=$2 WHERE id=$1", UUID(second.id), datetime(2026, 1, 2))
+        await conn.execute("UPDATE users.rounds SET created_at=TIMESTAMP '2026-01-01' WHERE id=$1", UUID(first.id))
+        await conn.execute("UPDATE users.rounds SET created_at=TIMESTAMP '2026-01-02' WHERE id=$1", UUID(second.id))
     assert (await database_manager.rounds.get_rounds_for_user(user.id, limit=1))[0].id == second.id
     assert (await database_manager.rounds.get_rounds_for_user(user.id, limit=1, offset=1))[0].id == first.id
     summary = await database_manager.rounds.get_round_summaries_for_user(user.id)
     assert [str(row.id) for row in summary] == [second.id, first.id]
-    assert (await database_manager.rounds.get_round(first.id)).date == date
+    assert (await database_manager.rounds.get_round(first.id)).date.date() == date.date()
 
 
 async def test_single_slot_pool_loads_and_updates_without_nested_acquisition(postgres_pool):

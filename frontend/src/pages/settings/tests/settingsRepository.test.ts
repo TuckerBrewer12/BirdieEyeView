@@ -12,6 +12,10 @@ const user: UserDto = {
   handicap: -1.5,
   created_at: null,
   scoring_goal: null,
+  scoring_goal_nine: null,
+  email_verified: true,
+  email_verified_at: null,
+  last_handicap_update: null,
 };
 
 describe("settingsFrom", () => {

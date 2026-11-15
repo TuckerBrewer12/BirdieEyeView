@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import logging
 import mimetypes
@@ -59,7 +60,7 @@ class MistralOCRService:
             raise EnvironmentError("MISTRAL_API_KEY environment variable is not set")
 
         path = Path(file_path)
-        if not path.exists():
+        if not await asyncio.to_thread(path.exists):
             raise FileNotFoundError(f"File not found: {path}")
 
         data_url = self._build_data_url(path)
@@ -86,7 +87,7 @@ class MistralOCRService:
                 resp = await client.post(path_part, headers=headers, json=payload)
                 resp.raise_for_status()
                 return resp.json()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise RuntimeError(f"Mistral OCR failed: {exc}") from exc
 
     def _build_data_url(self, path: Path) -> str:
@@ -124,7 +125,7 @@ class MistralOCRService:
                 for table_idx, html in enumerate(html_tables):
                     rows = MistralOCRService._html_to_rows(html, diagnostics, table_idx)
                     rows = MistralOCRService._align_rows_to_header(rows, diagnostics, table_idx)
-                    md = MistralOCRService._rows_to_markdown(rows)
+                    md = MistralOCRService.rows_to_markdown(rows)
                     if md:
                         chunks.append(md)
 
@@ -177,7 +178,7 @@ class MistralOCRService:
         return align_rows_to_header(rows, rows[header_idx], diagnostics, where=f"ocr table {table_idx}")
 
     @staticmethod
-    def _rows_to_markdown(rows: List[List[str]]) -> str:
+    def rows_to_markdown(rows: List[List[str]]) -> str:
         """Convert a list of rows to a markdown pipe table string."""
         if not rows:
             return ""
@@ -279,7 +280,7 @@ def align_rows_to_header(
                     (cell for cell in leading if any(ch.isalpha() for ch in cell) and not _RATING_RE.match(cell.strip())),
                     next((cell for cell in reversed(leading) if cell), ""),
                 )
-                row = [label] + row[extra + 1 :]
+                row = [label, *row[extra + 1:]]
                 note = f"dropped {extra} extra leading cell(s)"
             elif (
                 separator_cols
@@ -303,7 +304,7 @@ def align_rows_to_header(
                 notes.append(f"padded {pad} missing leading label cell(s)")
             if missing and missing == len(separator_cols):
                 for col in separator_cols:
-                    row = row[:col] + [""] + row[col:]
+                    row = [*row[:col], "", *row[col:]]
                 notes.append(f"padded the missing separator column(s) at {separator_cols}")
                 missing = 0
             if missing and row and not _is_label_like(row[-1]):
@@ -320,7 +321,7 @@ def align_rows_to_header(
             shifted = [col for col in separator_cols if not _is_label_like(row[col])]
             if shifted:
                 for col in shifted:
-                    row = row[:col] + [""] + row[col:-1]
+                    row = [*row[:col], "", *row[col:-1]]
                 note = f"back nine shifted right past the separator column(s) at {shifted}"
         aligned.append(row)
         if diagnostics is not None and note:

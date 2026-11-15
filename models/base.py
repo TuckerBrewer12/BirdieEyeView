@@ -44,9 +44,16 @@ def checked_list(item_type: type) -> AfterValidator:
 
 class BaseGolfModel(BaseModel):
     """Shared configuration and methods."""
-    model_config = ConfigDict(validate_assignment=True)
+    model_config = ConfigDict(validate_assignment=True, json_schema_serialization_defaults_required=True)
     _revision: int = PrivateAttr(default=0)
     _field_revisions: dict[str, int] = PrivateAttr(default_factory=dict)
+
+    @property
+    def revision(self) -> int:
+        return self._revision
+
+    def field_revision(self, name: str) -> int:
+        return self._field_revisions.get(name, 0)
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name in type(self).model_fields and hasattr(self, '__pydantic_fields_set__'):

@@ -17,12 +17,12 @@ describe("careerFrom", () => {
   const career = careerFrom(dto);
 
   it("takes the headline figures from the server", () => {
-    expect(career).toMatchObject({ roundCount: 24, holesPlayed: 432, handicapIndex: 7, windowDays: 365 });
+    expect(career).toMatchObject({ roundCount: 24, holesPlayed: 432, handicapIndex: 7.1, windowDays: 365 });
   });
 
   it("pairs the handicap trend round by round with the server's differential status", () => {
     expect(career.windows.lifetime.handicapTrend).toHaveLength(dto.handicap_trend.length);
-    expect(career.windows.lifetime.handicapTrend.at(-1)).toMatchObject({ handicapIndex: 7, differentialStatus: "counting" });
+    expect(career.windows.lifetime.handicapTrend.at(-1)).toMatchObject({ handicapIndex: 7.1, differentialStatus: "counting" });
   });
 
   it("keeps only the radar axes the golfer has figures for", () => {

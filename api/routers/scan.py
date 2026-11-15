@@ -1,6 +1,3 @@
-from api.messages import OCR_TEXT_INVALID
-from api.messages import USER_CONTEXT_INVALID
-from api.messages import COURSE_ID_MUST_BE_A_VALID_UUID
 import contextlib
 import hashlib
 import logging
@@ -18,11 +15,10 @@ logger = logging.getLogger(__name__)
 from database.db_manager import DatabaseManager
 from database.exceptions import IntegrityError
 from api.messages import (
-    COURSE_ID_NOT_FOUND, FILENAME_REQUIRED, FILE_TOO_LARGE, FORBIDDEN, HEIC_UNAVAILABLE, IMAGE_DIMENSIONS_TOO_LARGE,
-    IMAGE_PIXELS_TOO_MANY, INVALID_IMAGE_DIMENSIONS, INVALID_PDF, PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME,
-    UNREADABLE_IMAGE,
-    UNREADABLE_SCORE_ROWS, UNSUPPORTED_CONTENT_TYPE, UNSUPPORTED_FILE_TYPE, UNSUPPORTED_IMAGE_FORMAT,
-    UPLOAD_NOT_PROCESSED,
+    COURSE_ID_MUST_BE_A_VALID_UUID, COURSE_ID_NOT_FOUND, FILENAME_REQUIRED, FILE_TOO_LARGE, FORBIDDEN, HEIC_UNAVAILABLE,
+    IMAGE_DIMENSIONS_TOO_LARGE, IMAGE_PIXELS_TOO_MANY, INVALID_IMAGE_DIMENSIONS, INVALID_PDF, OCR_TEXT_INVALID,
+    PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME, UNREADABLE_IMAGE, UNREADABLE_SCORE_ROWS, UNSUPPORTED_CONTENT_TYPE,
+    UNSUPPORTED_FILE_TYPE, UNSUPPORTED_IMAGE_FORMAT, UPLOAD_NOT_PROCESSED, USER_CONTEXT_INVALID,
 )
 from api.dependencies import get_current_user, get_optional_current_user, get_db
 from api.error_responses import EXTRACTION_FAILED, OCR_FAILED, ROUND_SAVE_FAILED, SCAN_FAILED, SCAN_SAVE_FAILED
@@ -687,7 +683,7 @@ async def prefetch_ocr(
         raise
     except Exception:
         logger.exception("Prefetch OCR failed")
-        raise HTTPException(500, OCR_FAILED)
+        raise HTTPException(500, OCR_FAILED) from None
     finally:
         if ocr_path != original_tmp_path and (not PREPROCESS_CACHE_ENABLED or not cache_hit):
             with contextlib.suppress(OSError):
@@ -862,7 +858,7 @@ async def extract_scan(
         )
 
     except FileNotFoundError:
-        raise ScanExtractionError(400, UPLOAD_NOT_PROCESSED, category="invalid_upload", stage=failure_stage)
+        raise ScanExtractionError(400, UPLOAD_NOT_PROCESSED, category="invalid_upload", stage=failure_stage) from None
     except EnvironmentError:
         logger.exception("Scan extraction service unavailable")
         raise ScanExtractionError(500, SCAN_FAILED, category="service_unavailable", stage=failure_stage) from None
@@ -873,7 +869,7 @@ async def extract_scan(
         raise ScanExtractionError(exc.status_code, exc.detail, category=category, stage=failure_stage) from None
     except Exception:
         logger.exception("Scan extraction error")
-        raise ScanExtractionError(500, EXTRACTION_FAILED, category="extraction_failed", stage=failure_stage)
+        raise ScanExtractionError(500, EXTRACTION_FAILED, category="extraction_failed", stage=failure_stage) from None
     finally:
         logger.info(
             "Scan extract request complete: total_ms=%.1f",
@@ -904,10 +900,10 @@ async def save_round(
         return {"id": saved.id, "total_score": saved.calculate_total_score()}
     except ScanSaveRejected as exc:
         # Nothing was written; tell the user what to fix in review.
-        raise HTTPException(422, " ".join(exc.reasons))
+        raise HTTPException(422, " ".join(exc.reasons)) from None
     except (ValueError, IntegrityError):
         logger.exception("Save round validation failed")
         raise HTTPException(400, ROUND_SAVE_FAILED) from None
     except Exception:
         logger.exception("Save round error")
-        raise HTTPException(500, SCAN_SAVE_FAILED)
+        raise HTTPException(500, SCAN_SAVE_FAILED) from None

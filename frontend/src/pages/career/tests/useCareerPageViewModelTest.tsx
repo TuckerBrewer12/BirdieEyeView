@@ -34,7 +34,7 @@ describe("useCareerPageViewModel", () => {
     expect(repository.requests).toEqual([CAREER_FILTERS]);
     expect(CAREER_FILTERS).toEqual({ limit: 500, timeframe: "all", courseId: "all" });
     expect(client.getQueryData(queryKeys.analytics("user-1", CAREER_FILTERS))).toBe(sampleGolfer.analytics);
-    expect(result.current.career).toMatchObject({ roundCount: 24, holesPlayed: 432, handicapIndex: 7 });
+    expect(result.current.career).toMatchObject({ roundCount: 24, holesPlayed: 432, handicapIndex: 7.1 });
   });
 
   it("draws from Analytics' All rounds already in the cache without asking again", async () => {

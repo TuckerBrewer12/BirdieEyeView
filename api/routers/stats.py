@@ -1,10 +1,12 @@
-from api.messages import COURSE_ID_MUST_BE_A_VALID_UUID, FRIEND_ID_IS_REQUIRED, NO_BENCHMARK_FOR_THAT_HANDICAP, NO_ROUNDS_FOUND, NO_SCORING_GOAL, ROUND_NOT_IN_HISTORY
 from datetime import date, datetime, timedelta, timezone
 from typing import List, Literal, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from database.db_manager import DatabaseManager
-from api.messages import FORBIDDEN, USER_NOT_FOUND
+from api.messages import (
+    COURSE_ID_MUST_BE_A_VALID_UUID, FORBIDDEN, FRIEND_ID_IS_REQUIRED, NO_BENCHMARK_FOR_THAT_HANDICAP, NO_ROUNDS_FOUND,
+    NO_SCORING_GOAL, ROUND_NOT_IN_HISTORY, USER_NOT_FOUND,
+)
 from api.dependencies import get_current_user, get_db
 from api.input_validation import ensure_uuid_str
 from models import User
@@ -138,7 +140,6 @@ async def get_analytics(
     )
     rounds = list(reversed(rounds_desc))
 
-    filtered = resolved_course_id is not None or date_from is not None
     history_desc = await db.rounds.get_rounds_for_user(
         target_user_id, limit=None, offset=0,
     )
@@ -189,7 +190,9 @@ async def get_goal_report(
         if home_rounds_desc:
             home_course_rounds = list(reversed(home_rounds_desc))
 
-    return GoalReportResponse.model_validate(goal_report(rounds, user.scoring_goal, home_course_rounds, scoring_goal_nine=user.scoring_goal_nine))
+    report = goal_report(rounds, user.scoring_goal, home_course_rounds, scoring_goal_nine=user.scoring_goal_nine)
+    report["savers"] = [_goal_saver_response(saver) for saver in report["savers"]]
+    return GoalReportResponse.model_validate(report)
 
 
 @router.get("/{user_id}/benchmark", response_model=BenchmarkComparisonResponse)
@@ -361,8 +364,23 @@ def _format_totals(summaries: list, holes: int) -> dict:
         values = [v for r in rows if (v := getter(r)) is not None]
         return round(sum(values) / len(values), 1) if values else None
     best = min(rows, key=lambda r: r.calculate_total_score()) if rows else None
-    return dict(average=average(lambda r:r.calculate_total_score()),
-                best=best.calculate_total_score() if best else None,
-                best_id=str(best.id) if best else None,
-                best_course=(best.course_name_played or (best.course.name if best.course else None)) if best else None,
-                average_putts=average(lambda r:r.get_total_putts()), average_gir=average(lambda r:r.get_total_gir()))
+    return {"average": average(lambda r:r.calculate_total_score()),
+                "best": best.calculate_total_score() if best else None,
+                "best_id": str(best.id) if best else None,
+                "best_course": (best.course_name_played or (best.course.name if best.course else None)) if best else None,
+                "average_putts": average(lambda r:r.get_total_putts()), "average_gir": average(lambda r:r.get_total_gir())}
+
+
+def _goal_saver_response(saver: dict) -> dict:
+    data = saver["data"]
+    presentations = {
+        "three_putt_bleed": lambda: ("Cut out 3-putts", f"{data['avg_three_putts']:.1f} a round"),
+        "blowup_holes": lambda: ("Turn doubles into bogeys", f"{data['avg_doubles'] + data['avg_triples_plus']:.1f} doubles or worse a round"),
+        "achilles_heel": lambda: (f"Par {data['par']}s from {data['bucket_label']} yds", f"+{data['average_to_par']:.1f} a hole from there"),
+        "home_course_demon": lambda: (f"Hole {data['hole_number']} at home", f"+{data['average_to_par']:.1f} a round on it"),
+        "gir_opportunity": lambda: ("Hit more greens", f"{data['gir_percentage']:.0f}% of greens"),
+        "scrambling_opportunity": lambda: ("Save more pars after a miss", f"{data['scrambling_percentage']:.0f}% scrambling"),
+        "par5_opportunity": lambda: ("Score on par 5s", f"+{data['average_to_par']:.1f} a hole on them"),
+    }
+    headline, detail = presentations[saver["type"]]()
+    return {**saver, "headline": headline, "detail": detail}

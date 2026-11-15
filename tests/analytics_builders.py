@@ -1,6 +1,6 @@
 """Small real-model builders for analytics tests (no patched collaborators)."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Iterable, Optional
 
 from models import Course, Hole, HoleScore, Round, Tee
@@ -28,7 +28,7 @@ def course(holes: int = 18, *, course_id: str = "course-1", rating: Optional[flo
 
 
 def round_(scores: Dict[int, dict], *, course_obj: Optional[Course] = None, round_id: str = "r",
-           date: Optional[datetime] = datetime(2026, 1, 1), intended: Optional[Iterable[int]] = None,
+           date: Optional[datetime] = datetime(2026, 1, 1, tzinfo=timezone.utc), intended: Optional[Iterable[int]] = None,
            tee_box: Optional[str] = None) -> Round:
     """``scores`` maps hole number to HoleScore fields, e.g. ``{1: {"strokes": 4, "putts": 2}}``."""
     return Round(

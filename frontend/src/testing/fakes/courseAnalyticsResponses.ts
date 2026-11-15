@@ -64,6 +64,7 @@ function scoreTrend(rounds: CourseAnalyticsDto["rounds"]): CourseAnalyticsDto["s
       to_par: round.to_par,
       par: round.total_score != null && round.to_par != null ? round.total_score - round.to_par : null,
       course_name: round.course_name,
+      holes: round.hole_scores.length > 0 ? round.hole_scores.length : null,
       rolling_average: average != null ? Math.round(average * 10) / 10 : null,
       score_counts: round.score_counts,
     };

@@ -1,4 +1,3 @@
-from api.messages import Q_MUST_BE_PLAIN_TEXT_OF_AT_MOST_120_CHARACTERS
 import logging
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -9,7 +8,7 @@ from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from api.messages import (
     COURSE_ALREADY_CLONED, COURSE_CHANGES_INVALID, COURSE_DATA_INVALID, COURSE_NAME_TAKEN, COURSE_NOT_FOUND,
     COURSE_NOT_FOUND_OR_NOT_OWNED, EXTERNAL_LOOKUP_REQUIRES_AUTH, FORBIDDEN, MASTER_COURSE_READ_ONLY,
-    SOURCE_COURSE_NOT_FOUND,
+    Q_MUST_BE_PLAIN_TEXT_OF_AT_MOST_120_CHARACTERS, SOURCE_COURSE_NOT_FOUND,
 )
 from api.dependencies import get_db, get_optional_current_user, get_current_user
 from api.player_handicap import player_handicap_index
@@ -211,7 +210,7 @@ async def create_course(
         created = await db.courses.create_course(course, user_id=effective_user_id)
         return _summarize_course(created)
     except DuplicateError:
-        raise HTTPException(409, COURSE_NAME_TAKEN)
+        raise HTTPException(409, COURSE_NAME_TAKEN) from None
     except IntegrityError:
         logger.exception("Course creation integrity failure")
         raise HTTPException(500, COURSE_SAVE_FAILED) from None
@@ -257,6 +256,6 @@ async def clone_course(
         cloned = await db.courses.clone_course(str(course_id), str(current_user.id))
         return _summarize_course(cloned)
     except NotFoundError:
-        raise HTTPException(404, SOURCE_COURSE_NOT_FOUND)
+        raise HTTPException(404, SOURCE_COURSE_NOT_FOUND) from None
     except DuplicateError:
-        raise HTTPException(409, COURSE_ALREADY_CLONED)
+        raise HTTPException(409, COURSE_ALREADY_CLONED) from None

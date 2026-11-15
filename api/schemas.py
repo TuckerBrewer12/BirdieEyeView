@@ -848,7 +848,6 @@ class UserResponse(ResponseModel):
     email_verified: bool = False
     email_verified_at: Optional[datetime] = None
     last_handicap_update: Optional[datetime] = None
-    rounds: List[RoundResponse] = Field(default_factory=list)
     id: str
     friend_code: Optional[str] = None
     name: Optional[str] = None

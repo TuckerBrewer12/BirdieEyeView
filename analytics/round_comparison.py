@@ -55,7 +55,7 @@ def round_vs_average(rounds: List[Round], round_index: int) -> Dict[str, Any]:
     selected = rounds[round_index]
     format_ = el.round_format(selected)
     earlier = [r for r in rounds[:round_index] if r.is_complete() and el.round_format(r) == format_ and format_ is not None]
-    comparable = earlier + [selected]
+    comparable = [*earlier, selected]
     round_index = len(earlier)
     series = [
         (key, [row.get(field) for row in rows(comparable)], lower, digits)

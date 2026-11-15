@@ -4,7 +4,6 @@ from analytics import handicap as hcap
 from database.db_manager import DatabaseManager
 from models import Round, User
 
-WHS_WINDOW = 20
 
 
 async def player_handicap_index_with_rounds(

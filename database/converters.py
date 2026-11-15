@@ -216,7 +216,7 @@ def round_to_row(
     tee_id: Optional[UUID] = None,
 ) -> dict:
     """Round -> dict for users.rounds INSERT."""
-    scored = round_._scored_holes()
+    scored = round_.scored_holes()
     if not scored or any(score.hole_number is None for score in round_.hole_scores):
         raise IntegrityError("A saved round requires unique numbered holes and at least one score")
 

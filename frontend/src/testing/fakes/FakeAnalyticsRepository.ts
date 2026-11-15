@@ -38,6 +38,10 @@ const DEFAULT_USER: UserDto = {
   handicap: null,
   created_at: null,
   scoring_goal: null,
+  scoring_goal_nine: null,
+  email_verified: true,
+  email_verified_at: null,
+  last_handicap_update: null,
 };
 
 export class FakeAnalyticsRepository implements AnalyticsRepository {

@@ -227,12 +227,12 @@ def test_putting_savings_use_the_greens_actually_hit():
 @pytest.mark.asyncio
 async def test_suggestions_compute_real_metrics_from_rounds():
     """Public path with real rounds and hand-worked values (no patched _compute_raw)."""
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     def played(round_id, day, gir):
         scores = {n: {"strokes": PARS_18[n] + (0 if gir(n) else 1), "putts": 2, "green_in_regulation": gir(n)}
                   for n in range(1, 19)}
-        return round_(scores, course_obj=course(18), round_id=round_id, date=datetime(2026, 1, day))
+        return round_(scores, course_obj=course(18), round_id=round_id, date=datetime(2026, 1, day, tzinfo=timezone.utc))
 
     half_greens = played("a", 1, lambda n: n <= 9)        # 9 hits, 9 misses, +9
     unknown_greens = played("b", 2, lambda n: None)       # GIR unknown: not a miss, +18

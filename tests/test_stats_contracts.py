@@ -1,6 +1,6 @@
 """Stats endpoints: complete rounds by format, one response shape, scopes and errors."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -108,7 +108,7 @@ async def test_home_filter_without_a_home_course_matches_nothing():
 async def test_achievements_use_the_full_history():
     user_id = uuid4()
     user = make_user(user_id)
-    old_best = par_round(over=-1, round_id="old", date=datetime(2020, 1, 1))
+    old_best = par_round(over=-1, round_id="old", date=datetime(2020, 1, 1, tzinfo=timezone.utc))
     db = analytics_db(user, [], [old_best])
 
     result = (await stats.get_analytics(user_id, 5, None, "ytd", db, user)).model_dump()
@@ -138,7 +138,7 @@ async def test_round_comparison_finds_an_old_round_and_compares_it_with_earlier_
     user_id = uuid4()
     db = make_mock_database()
     # 250 rounds, more than the old 200-round cap; the target is the second-oldest.
-    history = [par_round(over=10 + (i % 5), round_id=str(uuid4()), date=datetime(2020, 1, 1) + timedelta(days=i))
+    history = [par_round(over=10 + (i % 5), round_id=str(uuid4()), date=datetime(2020, 1, 1, tzinfo=timezone.utc) + timedelta(days=i))
                for i in range(250)]
     target = history[1]
     db.rounds.get_rounds_for_user = AsyncMock(return_value=list(reversed(history)))  # repository: newest first
@@ -159,8 +159,8 @@ async def test_milestones_sort_by_round_date():
     user = make_user(user_id)
     db = make_mock_database()
     db.users.get_user = AsyncMock(return_value=user)
-    first = par_round(over=10, round_id="first", date=datetime(2025, 12, 31))   # breaks 85
-    later = par_round(over=-1, round_id="later", date=datetime(2026, 1, 9))    # breaks 75, under par
+    first = par_round(over=10, round_id="first", date=datetime(2025, 12, 31, tzinfo=timezone.utc))   # breaks 85
+    later = par_round(over=-1, round_id="later", date=datetime(2026, 1, 9, tzinfo=timezone.utc))    # breaks 75, under par
     db.rounds.get_rounds_for_user = AsyncMock(return_value=[later, first])
 
     result = await stats.get_milestones(user_id, 50, db, user)

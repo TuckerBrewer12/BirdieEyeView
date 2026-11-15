@@ -53,6 +53,7 @@ USER_TEE_NOT_FOUND = "User tee not found"
 USER_TEE_EXISTS = "User tee '{name}' already exists for this course"
 USER_TEE_NAME_TAKEN = "A user tee with that name already exists for this course"
 USER_TEE_IN_USE = "This tee is used by past rounds and cannot be deleted"
+USER_TEE_INVALID = "These tee details aren't valid. Check the linked course, ratings and yardages, then try again."
 LINKED_COURSE_NOT_FOUND = "Linked course was not found"
 
 # Courses

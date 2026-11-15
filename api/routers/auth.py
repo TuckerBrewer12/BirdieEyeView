@@ -209,7 +209,7 @@ async def register(req: RegisterRequest, request: Request, db: DatabaseManager =
             password_hash=password_hash,
         )
     except DuplicateError:
-        raise HTTPException(409, EMAIL_ALREADY_REGISTERED)
+        raise HTTPException(409, EMAIL_ALREADY_REGISTERED) from None
 
     await _issue_verification_token(db, user, request)
     logger.info(

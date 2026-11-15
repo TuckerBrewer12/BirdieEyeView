@@ -88,7 +88,7 @@ class ScanService:
         if req.course_id:
             try:
                 course = await self._db.courses.get_course(req.course_id)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise ValueError("Selected course_id is invalid.") from exc
             if not course:
                 raise ValueError(f"Selected course not found: {req.course_id}")
@@ -286,7 +286,7 @@ class ScanService:
         if not reasons and not course.has_required_course_data(selected_tee):
             reasons.append("Course data is incomplete.")
         if reasons:
-            raise ScanSaveRejected(["Course data is incomplete."] + reasons)
+            raise ScanSaveRejected(["Course data is incomplete.", *reasons])
 
     # ================================================================
     # Building validated models from the reviewed scan
@@ -317,7 +317,7 @@ class ScanService:
                 ],
             )
         except ValidationError as exc:
-            raise ScanSaveRejected(["Course data on the scorecard is invalid."] + _messages(exc)) from exc
+            raise ScanSaveRejected(["Course data on the scorecard is invalid.", *_messages(exc)]) from exc
 
     def _build_tees(self, req: SaveRoundRequest) -> List[TeeInput]:
         """Normalised tee list: all_tees preferred, single played tee as fallback."""
@@ -382,7 +382,7 @@ class ScanService:
             except ValidationError as exc:
                 reasons.extend(f"Hole {hole_num}: {message}" for message in _messages(exc))
         if reasons:
-            raise ScanSaveRejected(["Some hole scores are invalid."] + reasons)
+            raise ScanSaveRejected(["Some hole scores are invalid.", *reasons])
         return hole_scores
 
     @staticmethod
@@ -405,7 +405,7 @@ class ScanService:
         try:
             return Round(course=course, tee_box=tee_box, date=played_on, hole_scores=hole_scores, notes=req.notes)
         except ValidationError as exc:
-            raise ScanSaveRejected(["The round does not fit this course."] + _messages(exc)) from exc
+            raise ScanSaveRejected(["The round does not fit this course.", *_messages(exc)]) from exc
 
     # ================================================================
     # Writing (inside the save transaction)
@@ -429,7 +429,7 @@ class ScanService:
                         return existing
                 raise ScanSaveRejected([
                     "A course with this name already exists. Select it from the course search instead."
-                ])
+                ]) from None
         course_id = str(plan.course.id)
         if plan.verified_update is not None:
             scan = plan.verified_update
