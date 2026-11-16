@@ -90,7 +90,7 @@ Key files:
 
 - `routers/scan.py` — `POST /api/scan/ocr`, `POST /api/scan/extract` (typed `ScanResponse`) and `POST /api/scan/save`. Owns request checks, course access, HTTP errors, course handicaps and review-note wording from `api/messages.py`; delegates OCR and assembly to `services/scan_ocr.py` and `scan_assembly.py`, and reviewed saving to `ScanService`. Oversized provider or merged text gets 422 on both OCR routes. The frontend rings non-high strokes amber but does not display `fields_needing_review` text.
 - `routers/courses.py` — GET/POST/PUT + clone endpoint. `user_id IS NULL` = master/global course; `user_id IS NOT NULL` = user-owned custom course.
-- `routers/rounds.py` — GET/PUT/DELETE for rounds and hole scores
+- `routers/rounds.py` — GET/PUT/DELETE for rounds and hole scores. An edit merges sent fields with stored values through `HoleScore.with_edits` and is atomic (`round_repo.edit_round`); linking a course runs in `services/round_service.py` in one transaction, rolling back gap fills if the round disappears
 - `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`; a user is sent as `UserResponse` (the profile, no rounds)
 - `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report` and `GET /{user_id}/benchmark`. Each route checks access, fetches rounds and hands them to a builder (`api/dashboard_responses.py`, `analytics_responses.py`, `goal_responses.py`, `course_analytics_responses.py`); it does no golf math itself. Self-only routes take the signed-in golfer through `get_self` (`api/dependencies.py`, 403 for anyone else, friends included); analytics also lets accepted friends in.
 - `api/request_models.py` — shared Pydantic request/response models
@@ -107,7 +107,7 @@ Key files:
 - `GET/POST /api/courses` — list/create courses (`?user_id=` for custom)
 - `PUT /api/courses/{id}` — update course (403 on master courses)
 - `POST /api/courses/{id}/clone` — clone master to user-owned copy
-- `GET/PUT/DELETE /api/rounds/{id}` — round CRUD; PUT recalculates `total_score`
+- `GET/PUT/DELETE /api/rounds/{id}` — round CRUD; PUT changes only the fields sent and recalculates `total_score`
 - `GET/POST /api/users/{id}/tees` — list/create user tees
 - `PUT/DELETE /api/users/{id}/tees/{tee_id}` — update/delete user tees
 - `GET /api/stats/{user_id}/goal-report?limit=` — goal gap analysis + ranked savers, and each scored round marked met or not (`attempts`)

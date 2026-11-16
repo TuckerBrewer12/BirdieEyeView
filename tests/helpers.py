@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from typing import ClassVar
@@ -81,7 +82,14 @@ def make_async_repo(**return_values):
 def make_mock_database(**repositories):
     defaults = {name: make_async_repo() for name in ("courses", "rounds", "users", "user_tees", "friendships")}
     defaults.update(repositories)
-    return SimpleNamespace(**defaults)
+    db = SimpleNamespace(**defaults, connection=object())
+
+    @asynccontextmanager
+    async def transaction():
+        yield db.connection
+
+    db.transaction = transaction
+    return db
 
 
 def make_asyncpg_pool():

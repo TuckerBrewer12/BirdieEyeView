@@ -21,6 +21,8 @@ from api import scan_uploads
 from api.routers import auth, scan, scan_reports
 from services import scan_ocr
 from database import DatabaseManager
+from database.exceptions import IntegrityError
+from database.repositories.round_repo import RoundRepositoryDB
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
 from api.messages import PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME, UNREADABLE_SCORE_ROWS
@@ -301,6 +303,178 @@ def test_saved_round_is_listed_edited_and_deleted(api):
 
     assert api.client.delete(f"/api/rounds/{round_id}", headers=alice["headers"]).status_code == 204
     assert api.client.get(f"/api/rounds/user/{alice['id']}", headers=alice["headers"]).json() == []
+
+
+def _round_with_breakdown(api, owner, course):
+    scores = [{"hole_number": n, "strokes": p + 1, "putts": 2, "shots_to_green": p - 1} for n, p in PARS.items()]
+    response = api.client.post("/api/scan/save", headers=owner["headers"], json={
+        "course_id": course, "tee_box": "Blue", "date": "2026-10-01", "hole_scores": scores,
+    })
+    assert response.status_code == 200, response.text
+    return response.json()["id"]
+
+
+async def _mark_unplayed(url, round_id, hole_number):
+    conn = await asyncpg.connect(url)
+    try:
+        await conn.execute(
+            """UPDATE users.hole_scores SET played=false, strokes=NULL, putts=NULL, shots_to_green=NULL
+               WHERE round_id=$1 AND hole_number=$2""",
+            uuid.UUID(round_id), hole_number,
+        )
+    finally:
+        await conn.close()
+
+
+def editor_payload(detail, changes=None):
+    holes = []
+    for hole in detail["hole_scores"]:
+        edited = (changes or {}).get(hole["hole_number"], {})
+        holes.append({
+            "hole_number": hole["hole_number"],
+            "strokes": edited.get("strokes", hole["strokes"]),
+            "putts": edited.get("putts", hole["putts"]),
+            "fairway_hit": hole["fairway_hit"],
+            "green_in_regulation": hole["green_in_regulation"],
+        })
+    return {"hole_scores": holes, "tee_box": detail["tee_box"]}
+
+
+def test_saving_from_the_round_editor_keeps_what_it_does_not_send(api):
+    alice = api.user("alice@example.com")
+    round_id = _round_with_breakdown(api, alice, custom_course(api, alice))
+    asyncio.run(_mark_unplayed(api.url, round_id, 18))
+    assert api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"],
+                          json={"notes": "windy"}).status_code == 200
+    get = lambda: api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json()
+    before = get()
+
+    saved = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"],
+                           json=editor_payload(before, {1: {"strokes": 4}}))
+    assert saved.status_code == 200, saved.text
+    after = get()
+
+    holes = {h["hole_number"]: h for h in after["hole_scores"]}
+    assert holes[1]["strokes"] == 4
+    assert [holes[n]["shots_to_green"] for n in range(1, 18)] == [PARS[n] - 1 for n in range(1, 18)]
+    assert (holes[18]["played"], holes[18]["strokes"]) == (False, None)
+    assert [(h["par"], h["handicap"]) for h in after["hole_scores"]] == [(h["par"], h["handicap"]) for h in before["hole_scores"]]
+    assert (after["notes"], after["tee_box"]) == ("windy", "Blue")
+
+    completed = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"],
+                              json=editor_payload(after, {18: {"strokes": 5, "putts": 2}}))
+    assert completed.status_code == 200, completed.text
+    persisted = get()
+    last_hole = next(h for h in persisted["hole_scores"] if h["hole_number"] == 18)
+    assert (last_hole["played"], last_hole["strokes"], last_hole["putts"]) == (True, 5, 2)
+    assert persisted["holes_played"] == 18
+
+
+def test_round_editor_can_correct_strokes_below_the_stored_shots_to_green(api):
+    alice = api.user("alice@example.com")
+    round_id = _round_with_breakdown(api, alice, custom_course(api, alice))
+    get = lambda: api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json()
+    before = get()
+
+    corrected = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"],
+                              json=editor_payload(before, {1: {"strokes": 2, "putts": 1}}))
+    assert corrected.status_code == 200, corrected.text
+    holes = {h["hole_number"]: h for h in get()["hole_scores"]}
+    assert (holes[1]["strokes"], holes[1]["putts"], holes[1]["shots_to_green"]) == (2, 1, None)
+    assert holes[2]["shots_to_green"] == 3
+    assert (holes[1]["par"], holes[1]["handicap"]) == (before["hole_scores"][0]["par"], before["hole_scores"][0]["handicap"])
+
+    replacement = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"], json={
+        "hole_scores": [{"hole_number": 2, "strokes": 2, "putts": 1, "shots_to_green": 1}],
+    })
+    assert replacement.status_code == 200, replacement.text
+    second = next(h for h in get()["hole_scores"] if h["hole_number"] == 2)
+    assert (second["strokes"], second["shots_to_green"]) == (2, 1)
+
+    rejected = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"], json={
+        "hole_scores": [{"hole_number": 2, "shots_to_green": 3}, {"hole_number": 3, "strokes": 7}],
+    })
+    assert rejected.status_code == 422, rejected.text
+    unchanged = {h["hole_number"]: h for h in get()["hole_scores"]}
+    assert unchanged[2]["shots_to_green"] == 1
+    assert unchanged[3]["strokes"] == 4
+
+
+def test_a_hole_edit_changes_only_the_fields_it_sends(api):
+    alice = api.user("alice@example.com")
+    round_id = _round_with_breakdown(api, alice, custom_course(api, alice))
+    edit = lambda body: api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"], json=body)
+    hole = lambda body: {h["hole_number"]: h for h in body["hole_scores"]}[1]
+
+    putts_only = edit({"hole_scores": [{"hole_number": 1, "putts": 1}]})
+    assert putts_only.status_code == 200, putts_only.text
+    assert (hole(putts_only.json())["strokes"], hole(putts_only.json())["putts"]) == (5, 1)
+    assert hole(putts_only.json())["shots_to_green"] == 3
+
+    cleared = edit({"hole_scores": [{"hole_number": 1, "strokes": None}]})
+    assert cleared.status_code == 200, cleared.text
+    assert (hole(cleared.json())["strokes"], hole(cleared.json())["putts"]) == (None, 1)
+    assert hole(cleared.json())["shots_to_green"] == 3
+
+    too_many = edit({"hole_scores": [{"hole_number": 2, "putts": 9}, {"hole_number": 3, "strokes": 7}]})
+    assert too_many.status_code == 422
+    unchanged = api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json()
+    assert [(h["strokes"], h["putts"]) for h in unchanged["hole_scores"][1:3]] == [(5, 2), (4, 2)]
+
+
+def test_null_clears_round_fields_and_omitting_them_keeps_them(api):
+    alice = api.user("alice@example.com")
+    course = custom_course(api, alice)
+    round_id = _round_with_breakdown(api, alice, course)
+    edit = lambda body: api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"], json=body).json()
+
+    named = edit({"notes": "windy", "course_name_played": "Typed Links"})
+    assert (named["notes"], named["tee_box"], named["course_name_played"]) == ("windy", "Blue", "Typed Links")
+    kept = edit({"weather_conditions": "rain"})
+    assert (kept["notes"], kept["tee_box"], kept["course_name_played"]) == ("windy", "Blue", "Typed Links")
+
+    cleared = edit({"notes": None, "tee_box": None, "course_name_played": None})
+    assert (cleared["notes"], cleared["tee_box"], cleared["course_name_played"]) == (None, None, None)
+    assert cleared["course"]["name"] == "Home Links"
+
+
+@pytest.mark.parametrize("failure", ["invalid_link", "deleted_round"])
+def test_a_failed_course_link_leaves_the_course_unfilled(api, monkeypatch, failure):
+    alice = api.user("alice@example.com")
+    round_id = _round_with_breakdown(api, alice, custom_course(api, alice))
+    bare = api.client.post("/api/courses", headers=alice["headers"], json={
+        "name": "Bare Links", "holes": [{"number": n, "par": p} for n, p in PARS.items()],
+        "tees": [{"color": "Blue"}],
+    })
+    assert bare.status_code == 201, bare.text
+    bare_id = bare.json()["id"]
+
+    original_link = RoundRepositoryDB.link_course_to_round
+
+    async def link_fails(self, *args, **kwargs):
+        if failure == "invalid_link":
+            raise IntegrityError("link rejected after the gap fill")
+        conn = await asyncpg.connect(api.url)
+        try:
+            await conn.execute("DELETE FROM users.rounds WHERE id=$1", uuid.UUID(round_id))
+        finally:
+            await conn.close()
+        return await original_link(self, *args, **kwargs)
+
+    monkeypatch.setattr(RoundRepositoryDB, "link_course_to_round", link_fails)
+    linked = api.client.post(f"/api/rounds/{round_id}/link-course", headers=alice["headers"],
+                             json={"course_id": bare_id})
+    assert linked.status_code == (422 if failure == "invalid_link" else 404), linked.text
+
+    course = api.client.get(f"/api/courses/{bare_id}", headers=alice["headers"]).json()
+    blue = next(t for t in course["tees"] if t["color"] == "Blue")
+    assert (blue["course_rating"], blue["slope_rating"], blue["hole_yardages"]) == (None, None, {})
+    assert [h["handicap"] for h in course["holes"]] == [None] * 18
+    remaining = api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"])
+    if failure == "invalid_link":
+        assert remaining.json()["course"]["name"] == "Home Links"
+    else:
+        assert remaining.status_code == 404
 
 
 SCORECARD_DIR = Path(__file__).resolve().parents[1] / "test_scorecards"

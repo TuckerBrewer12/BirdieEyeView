@@ -14,6 +14,27 @@ from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from database.repositories.course_repo import CourseRepositoryDB
 
 
+ROUND_FIELD_MAP = {
+    "round_date": "date",
+    "weather_conditions": "weather_conditions",
+    "notes": "notes",
+    "course_name_played": "course_name_played",
+    "tee_box_played": "tee_box",
+    "intended_holes": "intended_holes",
+    "supplied_total_putts": "total_putts",
+    "supplied_total_gir": "total_gir",
+}
+ROUND_FIELDS = frozenset(ROUND_FIELD_MAP) | {
+    "tee_id",
+    "user_tee_id",
+    "total_score",
+    "holes_played",
+    "is_complete",
+    "adjusted_gross_score",
+    "score_differential",
+}
+
+
 class RoundRepositoryDB:
     def __init__(self, pool: asyncpg.Pool, course_repo: CourseRepositoryDB):
         self._pool = pool
@@ -416,67 +437,78 @@ class RoundRepositoryDB:
         except ValidationError as error:
             raise IntegrityError("Round data conflicts with the linked course layout") from error
 
+    async def _lock_round(self, conn, round_id: str, user_id):
+        values = [UUID(round_id)]
+        where = "id = $1"
+        if user_id:
+            values.append(UUID(user_id))
+            where += " AND user_id = $2"
+        return await conn.fetchrow(f"SELECT * FROM users.rounds WHERE {where} FOR UPDATE", *values)
+
+    async def _apply_round_fields(self, conn, row, round_: Round, updates: dict) -> None:
+        changes = {ROUND_FIELD_MAP[name]: value for name, value in updates.items() if name in ROUND_FIELD_MAP}
+        error = round_.update_fields(**changes)
+        if error:
+            raise IntegrityError(error)
+        if "tee_box_played" in updates and "tee_id" not in updates:
+            updates["tee_id"] = (
+                await self._resolve_tee_id(conn, row["course_id"], round_.tee_box)
+                if row["course_id"] and round_.tee_box
+                else None
+            )
+        for identity in ("tee_id", "user_tee_id"):
+            if identity in updates and updates[identity] is not None:
+                updates[identity] = UUID(str(updates[identity]))
+        await self._validate_references(
+            conn,
+            row["user_id"],
+            row["course_id"],
+            updates.get("tee_id", row["tee_id"]),
+            updates.get("user_tee_id", row["user_tee_id"]),
+        )
+        derived = round_to_row(round_, row["user_id"])
+        for name in ("total_score", "holes_played", "is_complete"):
+            if name in updates and updates[name] != derived[name]:
+                raise IntegrityError("Round totals and completeness are derived from hole observations")
+        values = [row["id"], *list(updates.values())]
+        assignments = ", ".join(f"{name} = ${index}" for index, name in enumerate(updates, 2))
+        await conn.execute(f"UPDATE users.rounds SET {assignments} WHERE id = $1", *values)
+
+    async def _write_hole_scores(self, conn, row, round_: Round, by_number: dict, numbers: list) -> None:
+        if round_.course:
+            expected = round_.course.get_expected_holes()
+            if expected and any(number not in expected for number in numbers):
+                raise IntegrityError("Hole is outside the linked course layout")
+        error = round_.update_field("hole_scores", sorted(by_number.values(), key=lambda score: score.hole_number))
+        if error:
+            raise IntegrityError(error)
+        round_to_row(round_, row["user_id"])
+        hole_ids = await self._load_hole_id_map(conn, row["course_id"]) if row["course_id"] else {}
+        await conn.executemany(
+            """INSERT INTO users.hole_scores
+               (round_id,hole_id,hole_number,strokes,net_score,putts,shots_to_green,
+                fairway_hit,green_in_regulation,par_played,handicap_played,played)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+               ON CONFLICT (round_id,hole_number) DO UPDATE SET
+                   hole_id=EXCLUDED.hole_id, strokes=EXCLUDED.strokes, net_score=EXCLUDED.net_score,
+                   putts=EXCLUDED.putts, shots_to_green=EXCLUDED.shots_to_green,
+                   fairway_hit=EXCLUDED.fairway_hit, green_in_regulation=EXCLUDED.green_in_regulation,
+                   par_played=EXCLUDED.par_played, handicap_played=EXCLUDED.handicap_played,
+                   played=EXCLUDED.played""",
+            [hole_score_to_row(by_number[number], row["id"], hole_ids.get(number)) for number in numbers],
+        )
+
     async def update_round(self, round_id: str, *, user_id=None, **fields) -> Optional[Round]:
-        field_map = {
-            "round_date": "date",
-            "weather_conditions": "weather_conditions",
-            "notes": "notes",
-            "course_name_played": "course_name_played",
-            "tee_box_played": "tee_box",
-            "intended_holes": "intended_holes",
-            "supplied_total_putts": "total_putts",
-            "supplied_total_gir": "total_gir",
-        }
-        allowed = set(field_map) | {
-            "tee_id",
-            "user_tee_id",
-            "total_score",
-            "holes_played",
-            "is_complete",
-            "adjusted_gross_score",
-            "score_differential",
-        }
-        updates = {name: value for name, value in fields.items() if name in allowed}
+        updates = {name: value for name, value in fields.items() if name in ROUND_FIELDS}
         if not updates:
             return await self.get_round(round_id, user_id=user_id)
         try:
             async with self._pool.acquire() as conn, conn.transaction():
-                values = [UUID(round_id)]
-                where = "id = $1"
-                if user_id:
-                    values.append(UUID(user_id))
-                    where += " AND user_id = $2"
-                row = await conn.fetchrow(f"SELECT * FROM users.rounds WHERE {where} FOR UPDATE", *values)
+                row = await self._lock_round(conn, round_id, user_id)
                 if not row:
                     return None
                 round_ = await self._assemble_round(conn, row)
-                changes = {field_map[name]: value for name, value in updates.items() if name in field_map}
-                error = round_.update_fields(**changes)
-                if error:
-                    raise IntegrityError(error)
-                if "tee_box_played" in updates and "tee_id" not in updates:
-                    updates["tee_id"] = (
-                        await self._resolve_tee_id(conn, row["course_id"], round_.tee_box)
-                        if row["course_id"] and round_.tee_box
-                        else None
-                    )
-                for identity in ("tee_id", "user_tee_id"):
-                    if identity in updates and updates[identity] is not None:
-                        updates[identity] = UUID(str(updates[identity]))
-                await self._validate_references(
-                    conn,
-                    row["user_id"],
-                    row["course_id"],
-                    updates.get("tee_id", row["tee_id"]),
-                    updates.get("user_tee_id", row["user_tee_id"]),
-                )
-                derived = round_to_row(round_, row["user_id"])
-                for name in ("total_score", "holes_played", "is_complete"):
-                    if name in updates and updates[name] != derived[name]:
-                        raise IntegrityError("Round totals and completeness are derived from hole observations")
-                values = [row["id"], *list(updates.values())]
-                assignments = ", ".join(f"{name} = ${index}" for index, name in enumerate(updates, 2))
-                await conn.execute(f"UPDATE users.rounds SET {assignments} WHERE id = $1", *values)
+                await self._apply_round_fields(conn, row, round_, updates)
                 await self._persist_derived_state(conn, row["id"], round_, row["user_id"])
                 fresh = await conn.fetchrow("SELECT * FROM users.rounds WHERE id = $1", row["id"])
                 return await self._assemble_round(conn, fresh)
@@ -484,6 +516,36 @@ class RoundRepositoryDB:
             raise DuplicateError("Conflicting round identity") from error
         except asyncpg.IntegrityConstraintViolationError as error:
             raise IntegrityError("Invalid round metadata or reference") from error
+
+    async def edit_round(
+        self, round_id: str, *, user_id=None, hole_changes: dict, fields: dict
+    ) -> Optional[Round]:
+        updates = {name: value for name, value in fields.items() if name in ROUND_FIELDS}
+        try:
+            async with self._pool.acquire() as conn, conn.transaction():
+                row = await self._lock_round(conn, round_id, user_id)
+                if not row:
+                    return None
+                round_ = await self._assemble_round(conn, row)
+                if hole_changes:
+                    by_number = {score.hole_number: score for score in round_.hole_scores}
+                    for number, change in hole_changes.items():
+                        stored = by_number.get(number)
+                        payload = {**change, "hole_number": number}
+                        try:
+                            by_number[number] = stored.with_edits(**payload) if stored is not None else HoleScore(**payload)
+                        except ValueError as error:
+                            raise IntegrityError(str(error)) from None
+                    await self._write_hole_scores(conn, row, round_, by_number, sorted(hole_changes))
+                if updates:
+                    await self._apply_round_fields(conn, row, round_, updates)
+                await self._persist_derived_state(conn, row["id"], round_, row["user_id"])
+                fresh = await conn.fetchrow("SELECT * FROM users.rounds WHERE id = $1", row["id"])
+                return await self._assemble_round(conn, fresh)
+        except asyncpg.UniqueViolationError as error:
+            raise DuplicateError("Conflicting round or hole identity") from error
+        except asyncpg.IntegrityConstraintViolationError as error:
+            raise IntegrityError("Invalid round edit or reference") from error
 
     async def _persist_derived_state(self, conn, round_id: UUID, round_: Round, user_id: UUID) -> None:
         data = round_to_row(round_, user_id)
@@ -507,21 +569,12 @@ class RoundRepositoryDB:
             raise IntegrityError("Hole updates require unique numbered observations")
         try:
             async with self._pool.acquire() as conn, conn.transaction():
-                values = [UUID(round_id)]
-                where = "id = $1"
-                if user_id:
-                    values.append(UUID(user_id))
-                    where += " AND user_id = $2"
-                row = await conn.fetchrow(f"SELECT * FROM users.rounds WHERE {where} FOR UPDATE", *values)
+                row = await self._lock_round(conn, round_id, user_id)
                 if not row:
                     raise NotFoundError("Round not found")
                 round_ = await self._assemble_round(conn, row)
                 by_number = {score.hole_number: score for score in round_.hole_scores}
                 for score in hole_scores:
-                    if round_.course:
-                        expected = round_.course.get_expected_holes()
-                        if expected and score.hole_number not in expected:
-                            raise IntegrityError("Hole is outside the linked course layout")
                     old_score = by_number.get(score.hole_number)
                     payload = score.model_dump()
                     if old_score is not None:
@@ -529,27 +582,7 @@ class RoundRepositoryDB:
                             if payload[snapshot] is None:
                                 payload[snapshot] = getattr(old_score, snapshot)
                     by_number[score.hole_number] = HoleScore(**payload)
-                error = round_.update_field(
-                    "hole_scores", sorted(by_number.values(), key=lambda score: score.hole_number)
-                )
-                if error:
-                    raise IntegrityError(error)
-                round_to_row(round_, row["user_id"])
-                hole_ids = await self._load_hole_id_map(conn, row["course_id"]) if row["course_id"] else {}
-                updated_scores = [by_number[number] for number in numbers]
-                await conn.executemany(
-                    """INSERT INTO users.hole_scores
-                       (round_id,hole_id,hole_number,strokes,net_score,putts,shots_to_green,
-                        fairway_hit,green_in_regulation,par_played,handicap_played,played)
-                       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-                       ON CONFLICT (round_id,hole_number) DO UPDATE SET
-                           hole_id=EXCLUDED.hole_id, strokes=EXCLUDED.strokes, net_score=EXCLUDED.net_score,
-                           putts=EXCLUDED.putts, shots_to_green=EXCLUDED.shots_to_green,
-                           fairway_hit=EXCLUDED.fairway_hit, green_in_regulation=EXCLUDED.green_in_regulation,
-                           par_played=EXCLUDED.par_played, handicap_played=EXCLUDED.handicap_played,
-                           played=EXCLUDED.played""",
-                    [hole_score_to_row(score, row["id"], hole_ids.get(score.hole_number)) for score in updated_scores],
-                )
+                await self._write_hole_scores(conn, row, round_, by_number, numbers)
                 await self._persist_derived_state(conn, row["id"], round_, row["user_id"])
                 return round_
         except asyncpg.UniqueViolationError as error:
@@ -557,15 +590,12 @@ class RoundRepositoryDB:
         except asyncpg.IntegrityConstraintViolationError as error:
             raise IntegrityError("Invalid hole score or reference") from error
 
-    async def link_course_to_round(self, round_id: str, course_id: str, *, user_id=None) -> Optional[Round]:
+    async def link_course_to_round(
+        self, round_id: str, course_id: str, *, user_id=None, connection=None
+    ) -> Optional[Round]:
         try:
-            async with self._pool.acquire() as conn, conn.transaction():
-                values = [UUID(round_id)]
-                where = "id = $1"
-                if user_id:
-                    values.append(UUID(user_id))
-                    where += " AND user_id = $2"
-                row = await conn.fetchrow(f"SELECT * FROM users.rounds WHERE {where} FOR UPDATE", *values)
+            async with write_transaction(self._pool, connection) as conn:
+                row = await self._lock_round(conn, round_id, user_id)
                 if not row:
                     return None
                 await self._validate_references(conn, row["user_id"], UUID(course_id), None, None)
