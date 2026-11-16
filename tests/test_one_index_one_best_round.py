@@ -198,7 +198,7 @@ async def test_dashboard_analytics_and_course_page_name_the_same_best_round():
     assert (analytics.kpis.best_round, analytics.kpis.best_round_id, analytics.kpis.best_round_course) == (
         74, "74-at-70", "Seventy",
     )
-    listed = await rounds_router.get_rounds_for_user(user_id, 100, 0, db, user)
+    listed = await rounds_router.get_rounds_for_user(limit=100, offset=0, user=user, db=db)
     assert next(r.id for r in listed if r.best_rank == 1) == "74-at-70"
 
 

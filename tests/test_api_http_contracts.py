@@ -139,7 +139,7 @@ def test_course_update_duplicate_is_conflict(api):
 def test_round_edit_of_missing_round_is_not_found(api):
     client, db, user_id = api
     db.rounds.get_round_owner_id = AsyncMock(return_value=str(user_id))
-    db.rounds.update_hole_scores = AsyncMock(return_value=None)
+    db.rounds.edit_round = AsyncMock(return_value=None)
 
     response = client.put(f"/api/rounds/{uuid4()}", json={"hole_scores": [{"hole_number": 1, "strokes": 4}]})
 

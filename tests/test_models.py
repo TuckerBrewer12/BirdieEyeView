@@ -720,3 +720,22 @@ def test_checked_containers_survive_validation_copies_and_updates():
 def test_user_tee_shares_tee_validation(values):
     with pytest.raises(ValidationError):
         UserTee(user_id='user1', name='Custom', **values)
+
+
+@pytest.mark.parametrize("stored, change, expected", [
+    ({"strokes": 5, "putts": 2, "shots_to_green": 3}, {"putts": 1}, (5, 1, 3, None)),
+    ({"strokes": 5, "putts": 2, "shots_to_green": 3}, {"strokes": 3, "putts": 1}, (3, 1, 3, None)),
+    ({"strokes": 5, "putts": 1, "shots_to_green": 3}, {"strokes": 2}, (2, 1, None, None)),
+    ({"strokes": None, "played": False}, {"strokes": 4}, (4, None, None, True)),
+    ({"strokes": None, "played": False}, {"putts": None}, (None, None, None, False)),
+    ({"strokes": 5, "putts": 2}, {"strokes": None}, (None, 2, None, None)),
+])
+def test_hole_edits_keep_omitted_fields_and_repair_only_stale_observations(stored, change, expected):
+    edited = HoleScore(hole_number=1, **stored).with_edits(**change)
+    assert (edited.strokes, edited.putts, edited.shots_to_green, edited.played) == expected
+
+
+@pytest.mark.parametrize("change", [{"strokes": 2, "shots_to_green": 3}, {"strokes": 1}])
+def test_hole_edits_still_reject_supplied_shots_or_strokes_below_stored_putts(change):
+    with pytest.raises(ValueError):
+        HoleScore(hole_number=1, strokes=5, putts=2, shots_to_green=3).with_edits(**change)

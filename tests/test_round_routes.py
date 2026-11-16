@@ -38,10 +38,9 @@ def owned_round_setup():
 @pytest.mark.asyncio
 async def test_update_round_updates_scores_and_metadata(owned_round_setup):
     user_id, round_id, stored_round, db = owned_round_setup
-    db.rounds.update_hole_scores = AsyncMock(return_value=stored_round)
-    db.rounds.update_round = AsyncMock(return_value=stored_round)
+    db.rounds.edit_round = AsyncMock(return_value=stored_round)
     request = rounds.UpdateRoundRequest(
-        hole_scores=[{"hole_number": 1, "strokes": 4, "putts": 2, "par_played": 4}],
+        hole_scores=[{"hole_number": 1, "strokes": 4, "putts": 2, "par_played": 4}, {"hole_number": 2, "putts": 1}],
         notes="Updated",
         weather_conditions="Windy",
         tee_box="White",
@@ -51,14 +50,35 @@ async def test_update_round_updates_scores_and_metadata(owned_round_setup):
     result = await rounds.update_round(round_id, request, db, make_user(user_id))
 
     assert result == rounds.round_detail(stored_round)
-    db.rounds.update_hole_scores.assert_awaited_once()
-    assert db.rounds.update_round.await_args.kwargs["tee_box_played"] == "White"
+    kwargs = db.rounds.edit_round.await_args.kwargs
+    assert kwargs["hole_changes"] == {
+        1: {"hole_number": 1, "strokes": 4, "putts": 2, "par_played": 4},
+        2: {"hole_number": 2, "putts": 1},
+    }
+    assert kwargs["fields"] == {
+        "notes": "Updated", "weather_conditions": "Windy", "tee_box_played": "White", "course_name_played": "New Course",
+    }
+
+
+@pytest.mark.asyncio
+async def test_update_round_sends_null_to_clear_and_leaves_out_what_was_not_sent(owned_round_setup):
+    user_id, round_id, stored_round, db = owned_round_setup
+    db.rounds.edit_round = AsyncMock(return_value=stored_round)
+    request = rounds.UpdateRoundRequest.model_validate(
+        {"tee_box": None, "course_name_played": None, "hole_scores": [{"hole_number": 3, "strokes": None}]}
+    )
+
+    await rounds.update_round(round_id, request, db, make_user(user_id))
+
+    kwargs = db.rounds.edit_round.await_args.kwargs
+    assert kwargs["fields"] == {"tee_box_played": None, "course_name_played": None}
+    assert kwargs["hole_changes"] == {3: {"hole_number": 3, "strokes": None}}
 
 
 @pytest.mark.asyncio
 async def test_update_round_rejects_invalid_scores_without_server_error(owned_round_setup):
     user_id, round_id, _, db = owned_round_setup
-    db.rounds.update_hole_scores = AsyncMock(side_effect=IntegrityError("Hole is outside the linked course layout"))
+    db.rounds.edit_round = AsyncMock(side_effect=IntegrityError("Hole is outside the linked course layout"))
     request = rounds.UpdateRoundRequest(hole_scores=[{"hole_number": 12, "strokes": 4}])
 
     with pytest.raises(HTTPException) as raised:
@@ -98,7 +118,8 @@ async def test_link_course_backfills_scan_data():
 
     assert linked_round.id == str(round_id)
     assert db.courses.fill_course_gaps.await_count == 2
-    db.rounds.link_course_to_round.assert_awaited_once()
+    assert all(call.kwargs["connection"] is db.connection for call in db.courses.fill_course_gaps.await_args_list)
+    assert db.rounds.link_course_to_round.await_args.kwargs["connection"] is db.connection
 
 
 @pytest.mark.asyncio
