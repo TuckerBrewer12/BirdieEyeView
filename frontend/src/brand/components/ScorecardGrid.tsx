@@ -30,7 +30,8 @@ interface ScorecardGridProps<H extends ScorecardGridHole, N extends ScorecardGri
   className?: string;
 }
 
-const LABEL = "pl-3 text-left text-label font-semibold whitespace-nowrap";
+// The label column is a fixed width: a label too long for it is cut off rather than drawn over hole 1.
+const LABEL = "overflow-hidden pl-3 text-left text-label font-semibold text-ellipsis whitespace-nowrap";
 const TOTAL = "bg-background p-0 text-center font-semibold";
 
 export function ScorecardGrid<H extends ScorecardGridHole, N extends ScorecardGridNine<H>>({
