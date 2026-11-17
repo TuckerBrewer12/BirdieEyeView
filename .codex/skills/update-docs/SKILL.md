@@ -1,13 +1,13 @@
 ---
 name: update-docs
-description: Project-specific documentation skill for the Golf ScoreCard app. Use after make-code-change implements a backend change, or when the user asks to bring the docs/ guides up to date with code changes, to update the affected architecture, backend domain, practices, and operations guides without touching application code.
+description: Project-specific documentation skill for the Golf ScoreCard app. Use after make-code-change implements a backend change, or when the user asks to bring the docs/ guides up to date with code changes, to update the affected architecture, backend domain, practices, and operations guides, plus CLAUDE.md and AGENTS.md, without touching application code.
 ---
 
 # Update Docs
 
 ## Purpose
 
-Keep the `docs/` guides accurate after backend behavior, responsibilities, contracts, or source file locations change. Edit documentation only; do not modify application or test code.
+Keep the `docs/` guides and the agent guides (`CLAUDE.md`, `AGENTS.md`) accurate after backend behavior, responsibilities, contracts, or source file locations change. Edit documentation only; do not modify application or test code.
 
 ## Inputs
 
@@ -15,7 +15,7 @@ Keep the `docs/` guides accurate after backend behavior, responsibilities, contr
 2. Read `docs/README.md` for the guide index.
 3. Find the changed source:
    - Within `$make-code-change`: use the implementation artifact's `### Docs To Update`, its plan amendments, and the implementation's changed files.
-   - Standalone: run `git diff --name-only $(git merge-base HEAD origin/main)` plus `git status --short`, and confirm the scope with the user if it is unclear.
+   - Standalone: diff against the branch this work will merge into, not `main` by default (`git diff --name-only $(git merge-base HEAD origin/<base>)` plus `git status --short`). Ask the user for the base when the branch's upstream or pull request does not show it, and confirm the scope if it is unclear.
 
 ## Steps
 
@@ -26,17 +26,19 @@ Keep the `docs/` guides accurate after backend behavior, responsibilities, contr
 5. Check that every repository-relative link in the edited guides resolves to an existing file or heading.
 6. Do not edit guides under `docs/frontend/` or frontend practice guides; the frontend owner maintains them. If the change appears to affect one, list it in the final response instead.
 7. Keep local review notes, planning drafts, handoff files, and `.codex/change-artifacts/` out of `docs/` unless the user explicitly asks to include them.
+8. Update the `CLAUDE.md` bullets that describe the changed files, then make the same edit in `AGENTS.md`: the two must stay identical below their headers (`tests/test_agent_docs.py` checks it; run that test).
+9. If `handoff.md` exists, update the status of the work this change completes or defers. It is an untracked local note: edit it, and never stage it.
 
-Documentation-only edits need accurate links and source references; they do not require running tests, paid providers, or database resets.
+Documentation-only edits need accurate links and source references. Apart from `tests/test_agent_docs.py`, they do not require running tests, paid providers, or database resets.
 
 ## Final Response
 
 Finish with:
 
-- guides updated, with a one-line summary of each change
+- guides updated (including `CLAUDE.md`/`AGENTS.md` and `handoff.md`), with a one-line summary of each change
 - guides checked and left unchanged
 - frontend guides that may need the frontend owner's attention
-- link check result
+- link check result and the `tests/test_agent_docs.py` result
 
 Do not commit.
 
@@ -48,13 +50,4 @@ At the end of every invocation, check whether this docs run exposed a reusable g
 - The mapping from source area to guide was wrong or incomplete.
 - The inputs above did not identify the changed source reliably.
 
-When the evidence is concrete:
-
-- Make the smallest correction to this `SKILL.md` that would have prevented the problem. Prefer fixing `docs/practices/documentation.md` when the gap is in the documentation rules themselves, and say so.
-- Keep the skill change separate from the documentation work: make it as its own edit and list it under a separate "Skill changes" heading in the final response, with the evidence, so the user can review and commit it separately.
-- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or preferences that apply only to the current task.
-- Do not weaken confirmation gates, expand mutation authority, or materially change workflow scope without explicit user approval. Propose those changes instead.
-- Preserve user-authored guidance and avoid duplicating rules already enforced elsewhere.
-- Validate the modified skill with the skill-creator `quick_validate.py` script when available.
-
-If no reusable gap appeared, leave the skill unchanged. Skill maintenance must not interrupt or replace completion of the user's primary task.
+When the evidence is concrete, follow the rules under Continuous Skill Improvement in `.codex/skills/make-code-change/SKILL.md`: the smallest correction, kept separate from the user's task and listed under "Skill changes", with no weakened gates. Prefer fixing `docs/practices/documentation.md` when the gap is in the documentation rules themselves, and say so. If no reusable gap appeared, leave the skill unchanged.

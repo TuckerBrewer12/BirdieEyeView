@@ -24,6 +24,8 @@ Treat the recon artifact as read-only. Treat the implementation artifact as read
 
 ## Implementation Loop
 
+Before the first edit, run the unit suite and the integration tests for the affected domain, and record any failure that already exists so it is not attributed to the change.
+
 Repeat until the change meets the user's request and the acceptance criteria:
 
 1. Select the next smallest coherent edit from the plan.
@@ -38,6 +40,17 @@ Repeat until the change meets the user's request and the acceptance criteria:
 Once the planned edits and validation are complete, run the Completion Review Loop below before declaring the implementation finished. Passing tests alone does not complete the change.
 
 Do not commit. Do not revert unrelated dirty work.
+
+## Final Gates
+
+Run these once the planned edits are done, and again after the last fix from the Completion Review Loop. Commands come from `docs/practices/testing.md`:
+
+- the full unit suite and the full PostgreSQL integration suite
+- lint, the OpenAPI check and the `scripts/ci/check_*.py` convention checks
+- when the OpenAPI schema changed: regenerate `frontend/openapi.json` and `api.gen.ts`, and run the frontend type check
+- `git status --short` shows only the planned files: no probe, scratch or generated leftovers
+
+Live scan evaluation calls paid providers. Run it only when the plan names it and the user has agreed to the cost.
 
 ## When The Plan Is Wrong
 
@@ -76,7 +89,7 @@ The loop is complete when:
 - The implementation satisfies the user's original request and the approved acceptance criteria, including any approved amendments.
 - The code is clean, local to the planned surface, and consistent with existing patterns.
 - The planned E2E and integration tests are in place, and every new unit test has a stated necessity reason.
-- Focused tests/checks pass, or any inability to run them is clearly explained.
+- The Final Gates pass, or any inability to run one is clearly explained. A failure that existed before the change is reported as such, not hidden.
 - The Completion Review Loop has been performed after the last implementation fix, with no remaining actionable gaps within the approved scope; unresolved findings and verification limits are explicitly reported.
 - The final response records what changed and what validation was run.
 
@@ -99,7 +112,8 @@ Finish with:
 - tests added by layer (E2E, integration, unit with its necessity reason) and the checks run with their results
 - completion review outcome, including gaps fixed and anything unresolved or unverified
 - plan amendments and small deviations, if any
-- `docs/` guides the change made inaccurate
+- `docs/` guides and `CLAUDE.md`/`AGENTS.md` bullets the change made inaccurate
+- what the frontend owner needs to know, if anything
 - recon and implementation artifact paths
 - residual risks or review notes
 
@@ -113,13 +127,4 @@ At the end of every invocation, check whether this implementation run exposed a 
 - Validation guidance pointed to the wrong command, layer, or source.
 - A recurring failure pattern took several iterations that a short rule would have avoided.
 
-When the evidence is concrete:
-
-- Make the smallest correction to this `SKILL.md` that would have prevented the problem.
-- Keep the skill change separate from the user's task: make it as its own edit and list it under a separate "Skill changes" heading in the final response, with the evidence, so the user can review and commit it apart from the feature work.
-- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or preferences that apply only to the current task.
-- Do not weaken confirmation gates, expand mutation authority, or materially change workflow scope without explicit user approval. Propose those changes instead.
-- Preserve user-authored guidance and avoid duplicating rules already enforced elsewhere.
-- Validate the modified skill with the skill-creator `quick_validate.py` script when available.
-
-If no reusable gap appeared, leave the skill unchanged. Skill maintenance must not interrupt or replace completion of the user's primary task.
+When the evidence is concrete, follow the rules under Continuous Skill Improvement in `.codex/skills/make-code-change/SKILL.md`: the smallest correction, kept separate from the user's task and listed under "Skill changes", with no weakened gates. If no reusable gap appeared, leave the skill unchanged.
