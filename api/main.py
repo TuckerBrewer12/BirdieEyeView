@@ -24,6 +24,7 @@ from api.messages import (
 from api.security import (
     SecurityTrafficMonitor,
     SlidingWindowRateLimiter,
+    cors_allowed_origins,
     enforce_https_if_needed,
     env_bool,
     env_int,
@@ -139,14 +140,9 @@ def create_app() -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
     # capacitor://localhost = iOS native; http://localhost = Android native
-    cors_origins_raw = os.environ.get(
-        "CORS_ALLOW_ORIGINS",
-        "http://localhost:5173,capacitor://localhost,http://localhost",
-    )
-    cors_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
+        allow_origins=cors_allowed_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

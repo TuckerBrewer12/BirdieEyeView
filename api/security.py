@@ -55,6 +55,22 @@ def _is_non_public_db_host(host: str) -> bool:
     return host.strip().lower() in allowlist
 
 
+DEFAULT_CORS_ALLOW_ORIGINS = "http://localhost:5173,capacitor://localhost,http://localhost"
+
+
+def cors_allowed_origins() -> list[str]:
+    raw = os.environ.get("CORS_ALLOW_ORIGINS", DEFAULT_CORS_ALLOW_ORIGINS)
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+def request_origin(request: Request) -> Optional[str]:
+    origin = request.headers.get("origin")
+    if origin:
+        return origin
+    referer = urlparse(request.headers.get("referer") or "")
+    return f"{referer.scheme}://{referer.netloc}" if referer.scheme and referer.netloc else None
+
+
 def validate_deployment_security() -> None:
     app_env = os.environ.get("APP_ENV", "development").strip().lower()
     is_prod_like = app_env in {"production", "prod", "staging"}

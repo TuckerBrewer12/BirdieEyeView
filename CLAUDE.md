@@ -91,6 +91,7 @@ Key files:
 - `routers/scan.py` — `POST /api/scan/ocr`, `POST /api/scan/extract` (typed `ScanResponse`) and `POST /api/scan/save`. Owns request checks, course access, HTTP errors, course handicaps and review-note wording from `api/messages.py`; delegates OCR and assembly to `services/scan_ocr.py` and `scan_assembly.py`, and reviewed saving to `ScanService`. Oversized provider or merged text gets 422 on both OCR routes. The frontend rings non-high strokes amber but does not display `fields_needing_review` text.
 - `routers/courses.py` — GET/POST/PUT + clone endpoint. `user_id IS NULL` = master/global course; `user_id IS NOT NULL` = user-owned custom course. Checks access and maps errors only: `course_responses.py` builds the replies and `CreateCourseRequest.to_course()` the new course. A `par` edit is 422 when the holes have pars (`Course.par_from_holes`); a provider-ID conflict is its own 409; clone returns your existing exact copy, never a similar course. The list puts the courses you've played first.
 - `routers/rounds.py` — GET/PUT/DELETE for rounds and hole scores. An edit merges sent fields with stored values through `HoleScore.with_edits` and is atomic (`round_repo.edit_round`); linking a course runs in `services/round_service.py` in one transaction, rolling back gap fills if the round disappears
+- `routers/auth.py` — register, verify, login, logout, reset; workflows in `services/auth_service.py`. A token counts only while its `users.sessions` row exists: logout ends that session, a password reset ends all of them. Cookie-only POST/PUT/PATCH/DELETE must come from an origin in `CORS_ALLOW_ORIGINS` (403 otherwise); bearer requests are unaffected. Passwords are at most 72 UTF-8 bytes (bcrypt), hashed off the event loop.
 - `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`, through `services/user_tee_service.py`) and friendships; `UpdateUserRequest` accepts `scoring_goal`; a user is sent as `UserResponse` (the profile, no rounds). Self-only routes use `get_self`. A tee `PUT` keeps omitted fields and clears `null` ones; linked tees can't have yardages outside the course's holes. Friendship replies never carry emails (`api/friendship_responses.py`); requests take a friend code; a block is invisible to the blocked person; `DELETE /me/friends/{id}` unfriends, cancels, clears a decline (the decliner) or unblocks (the blocker); the declined person can't block or remove a decline, so only the decliner can reopen it.
 - `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report` and `GET /{user_id}/benchmark`. Each route checks access, fetches rounds and hands them to a builder (`api/dashboard_responses.py`, `analytics_responses.py`, `goal_responses.py`, `course_analytics_responses.py`); it does no golf math itself. Self-only routes take the signed-in golfer through `get_self` (`api/dependencies.py`, 403 for anyone else, friends included); analytics also lets accepted friends in.
 - `api/request_models.py` — shared Pydantic request/response models
@@ -128,10 +129,11 @@ Two DB schemas: `courses` (courses, holes, tees, tee_yardages) and `users` (user
 - `repositories/user_tee_repo.py` — CRUD for `users.user_tees`
 
 **Schema source of truth:** `database/schema.sql`
-**Migrations:** `database/migrations/` (incremental SQL files, 001–015; applied by hand, with no tracking table)
+**Migrations:** `database/migrations/` (incremental SQL files, 001–016; applied by hand, with no tracking table)
 - 013: `main`'s course-name and location trigram indexes
 - 014: explicit domain context, coverage, ratings and golf bounds
 - 015: scoped identities and stable history order
+- 016: `users.sessions` (apply before deploying session checks)
 
 **Custom course design:**
 - `user_id IS NULL` = master/global course (read-only for regular users)

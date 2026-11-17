@@ -1,5 +1,6 @@
 FORBIDDEN = "Forbidden"
 NOT_AUTHENTICATED = "Not authenticated"
+CROSS_SITE_REQUEST_REFUSED = "This request came from another site and was refused."
 INVALID_OR_EXPIRED_TOKEN = "Invalid or expired token"
 INVALID_CREDENTIALS = "Invalid email or password"
 EMAIL_NOT_VERIFIED = "Email not verified. Please verify your email before signing in."

@@ -29,18 +29,21 @@ def test_database_dependency_returns_generic_unavailable_error():
 
 @pytest.fixture
 def auth_database():
-    return SimpleNamespace(users=SimpleNamespace(get_user=AsyncMock(return_value=User(id="u1"))))
+    return SimpleNamespace(users=SimpleNamespace(
+        get_user=AsyncMock(return_value=User(id="u1")), session_is_active=AsyncMock(return_value=True)
+    ))
 
 
 @pytest.mark.asyncio
 async def test_optional_current_user_accepts_bearer_token(monkeypatch, auth_database):
     request = make_http_request()
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="bearer-token")
-    monkeypatch.setattr(dependencies, "decode_access_token", lambda token: {"sub": "u1"})
+    monkeypatch.setattr(dependencies, "decode_access_token", lambda token: {"sub": "u1", "jti": "j1"})
 
     user = await dependencies.get_optional_current_user(request, credentials, auth_database)
 
     assert user.id == "u1"
+    auth_database.users.session_is_active.assert_awaited_once_with("j1", "u1")
     auth_database.users.get_user.assert_awaited_once_with("u1")
 
 

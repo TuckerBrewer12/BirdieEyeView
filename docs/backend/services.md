@@ -11,6 +11,7 @@
 | [scan_ocr.py](../../services/scan_ocr.py) | OCR/merge orchestration and text-size limits before and after merging. |
 | [scan_assembly.py](../../services/scan_assembly.py) | Parsed rows to round payloads, structured per-hole review notes and confidence; no API dependency. |
 | [scan_normalization.py](../../services/scan_normalization.py) | Converts scan-derived numbers (`"5"`, `5.0`) to the types strict Models require and rejects values that would need guessing (`true`, `5.5`, words, non-finite numbers). Used by the save request models. |
+| [auth_service.py](../../services/auth_service.py) | Sessions (start on sign-in, end on logout, end all on reset), one-time email links, and email verification and password reset, each in one transaction. |
 | [user_tee_service.py](../../services/user_tee_service.py) | User-tee create and update: the linked course's layout check and the rating coverage, recomputed when a rating changes. |
 | [golfcourse_api_service.py](../../services/golfcourse_api_service.py) | External course search and per-tee course details used only for verification. Every provider failure, including a missing API key, raises `CourseProviderUnavailable`. |
 | `mistral_ocr_service.py`, `mistral_scorecard_parser.py`, `gemini_table_merger.py` | OCR, parsed observations, and optional table merging; see [extraction](extraction.md). |

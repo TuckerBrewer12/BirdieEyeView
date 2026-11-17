@@ -26,6 +26,7 @@ from database.repositories.round_repo import RoundRepositoryDB
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
 from api.messages import (
+    CROSS_SITE_REQUEST_REFUSED,
     FRIEND_REQUEST_ALREADY_SENT, FRIEND_REQUEST_AWAITING_YOU, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR,
     FRIEND_UNBLOCK_FIRST, USER_TEE_OUTSIDE_COURSE,
     COURSE_NAME_TAKEN, COURSE_PAR_FROM_HOLES, COURSE_PROVIDER_ID_TAKEN, PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME,
@@ -38,6 +39,7 @@ from tests.test_mistral_scorecard_parser import EAGLE_VINES_WITH_INITIALS, INCOM
 pytestmark = pytest.mark.integration
 
 PASSWORD = "correct horse battery"
+APP_ORIGIN = {"Origin": "http://localhost:5173"}
 PARS = {n: 4 for n in range(1, 19)} | {3: 3, 7: 3, 12: 3, 16: 3, 5: 5, 9: 5, 13: 5, 18: 5}
 
 
@@ -163,8 +165,78 @@ def test_register_verify_login_me_logout(api):
     me = api.client.get("/api/auth/me")
     assert (me.status_code, me.json()["email"], me.json()["name"]) == (200, "ada@example.com", "Ada")
 
-    assert api.client.post("/api/auth/logout").status_code == 200
+    assert api.client.post("/api/auth/logout", headers=APP_ORIGIN).status_code == 200
     assert api.client.get("/api/auth/me").status_code == 401
+
+
+
+def test_long_passwords_are_refused_clearly(api):
+    register = lambda email, password: api.client.post(
+        "/api/auth/register", json={"name": "Golfer", "email": email, "password": password})
+
+    assert register("ascii@example.com", "a" * 73).status_code == 422
+    assert register("accents@example.com", "é" * 40).status_code == 422
+    assert register("exact@example.com", "a" * 72).status_code == 201
+
+    api.user("dee@example.com")
+    api.client.post("/api/auth/forgot-password", json={"email": "dee@example.com"})
+    token = api.token_from("reset", "dee@example.com")
+    reset = lambda password: api.client.post(
+        "/api/auth/reset-password", json={"token": token, "new_password": password})
+    assert reset("a" * 73).status_code == 422
+    assert reset("a brand new password").status_code == 200
+
+
+def test_logout_and_reset_end_sessions(api):
+    api.user("dee@example.com")
+    me = lambda headers: api.client.get("/api/auth/me", headers=headers).status_code
+    device = lambda: {"Authorization": f"Bearer {api.login('dee@example.com').json()['access_token']}"}
+    phone, laptop = device(), device()
+    api.client.cookies.clear()
+
+    assert api.client.post("/api/auth/logout", headers=phone).status_code == 200
+    assert (me(phone), me(laptop)) == (401, 200)
+
+    api.login("dee@example.com")
+    assert api.client.get("/api/auth/me").status_code == 200
+    assert api.client.post("/api/auth/logout", headers=APP_ORIGIN).status_code == 200
+    assert api.client.get("/api/auth/me").status_code == 401
+
+    api.login("dee@example.com")
+    cookie_session = api.client.cookies.get("golf_access_token")
+    assert api.client.post("/api/auth/logout", headers=laptop).status_code == 200
+    assert me({"Authorization": f"Bearer {cookie_session}"}) == 401
+    laptop = device()
+    api.client.cookies.clear()
+
+    api.client.post("/api/auth/forgot-password", json={"email": "dee@example.com"})
+    token = api.token_from("reset", "dee@example.com")
+    assert api.client.post("/api/auth/reset-password",
+                           json={"token": token, "new_password": "a brand new password"}).status_code == 200
+    assert me(laptop) == 401
+    assert api.login("dee@example.com").status_code == 401
+    assert api.login("dee@example.com", "a brand new password").status_code == 200
+
+
+def test_cookie_requests_from_other_sites_are_refused(api, scan_providers):
+    alice = api.user("alice@example.com")
+    course = custom_course(api, alice)
+    api.login("alice@example.com")
+    evil = {"Origin": "https://evil.example"}
+    clone = lambda headers: api.client.post(f"/api/courses/{course}/clone", headers=headers)
+
+    refused = clone(evil)
+    assert (refused.status_code, refused.json()["detail"]) == (403, CROSS_SITE_REQUEST_REFUSED)
+    assert clone({}).status_code == 403
+    assert clone({"Referer": "https://evil.example/page"}).status_code == 403
+    assert clone({"Referer": "http://localhost:5173/courses"}).status_code == 201
+    assert clone(APP_ORIGIN).status_code == 201
+    assert clone({**evil, **alice["headers"]}).status_code == 201
+    assert api.client.get("/api/auth/me", headers=evil).status_code == 200
+
+    scan = api.client.post("/api/scan/extract", headers=evil, files=upload())
+    assert scan.status_code == 403
+    assert scan_providers["ocr"] == []
 
 
 def test_bad_credentials_and_tokens_are_rejected(api):
@@ -832,8 +904,9 @@ def test_expired_and_forged_tokens_are_rejected(api):
     alice = api.user("alice@example.com")
     bearer = lambda token: {"Authorization": f"Bearer {token}"}
 
-    valid = mint_token(alice["id"], expires_in=timedelta(hours=1))
-    assert api.client.get("/api/auth/me", headers=bearer(valid)).status_code == 200
+    assert api.client.get("/api/auth/me", headers=alice["headers"]).status_code == 200
+    without_session = mint_token(alice["id"], expires_in=timedelta(hours=1))
+    assert api.client.get("/api/auth/me", headers=bearer(without_session)).status_code == 401
 
     expired = mint_token(alice["id"], expires_in=timedelta(hours=-1))
     assert api.client.get("/api/auth/me", headers=bearer(expired)).status_code == 401
