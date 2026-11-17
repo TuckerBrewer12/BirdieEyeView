@@ -26,6 +26,10 @@ import {
   ratingLabelForWhs,
   scoreAndRatingForWhs,
   whsContextNote,
+  whsExcludedNote,
+  whsFormulaNote,
+  whsRowNote,
+  whsRowStatusLabel,
   windowFillLabel,
 } from "../present";
 
@@ -47,8 +51,10 @@ export function HandicapBreakdownSheet({
   whs,
 }: HandicapBreakdownSheetProps) {
   const wide = useFromBreakpoint("md");
-  const { rows, windowSize, countUsed, adjustment, diffAvg, hasRatedRounds } = whs;
+  const { rows, windowSize, countUsed, adjustment, diffAvg, hasRatedRounds, startingHandicap, excludedCount } = whs;
   const adjustmentText = adjustmentLabel(adjustment);
+  const formulaNote = whsFormulaNote(hasRatedRounds);
+  const excludedNote = whsExcludedNote(excludedCount, startingHandicap);
   const stats = [
     { key: "rounds", value: windowFillLabel(windowSize), label: "Rounds so far" },
     { key: "used", value: String(countUsed), label: "Best used" },
@@ -144,8 +150,9 @@ export function HandicapBreakdownSheet({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="flex flex-col gap-3 pt-2 text-body-sm text-foreground-secondary">
-              <p>Each round’s differential is (score − course rating) × 113 ÷ slope rating.</p>
-              <p>{whsContextNote(countUsed)}</p>
+              {formulaNote && <p>{formulaNote}</p>}
+              <p>{whsContextNote(countUsed, windowSize)}</p>
+              {excludedNote && <p>{excludedNote}</p>}
               {adjustmentText && (
                 <p>
                   With only {windowSize} rounds, the index takes a {adjustmentText} adjustment until there are
@@ -161,12 +168,14 @@ export function HandicapBreakdownSheet({
 }
 
 function WhsRow({ row }: { row: WhsRound }) {
+  const note = whsRowNote(row);
   return (
     <div className="flex items-center gap-3 border-t border-border py-3 first:border-t-0 md:px-0.5">
       <div className="min-w-0 flex-1">
         <div className="truncate text-body-lg font-semibold text-foreground md:text-sm">{courseLabelForWhs(row)}</div>
         <div className="text-body-sm text-muted-foreground md:hidden">{scoreAndRatingForWhs(row)}</div>
         <div className="hidden text-body-sm text-muted-foreground md:block">{ratingLabelForWhs(row)}</div>
+        {note && <div className="text-body-sm text-muted-foreground">{note}</div>}
       </div>
       <div className="hidden w-10 text-right text-sm font-semibold text-foreground md:block">{row.score ?? "—"}</div>
       <div
@@ -178,7 +187,7 @@ function WhsRow({ row }: { row: WhsRound }) {
         {differentialLabel(row.differential)}
       </div>
       <span
-        aria-label={row.used ? "Counts toward index" : "Not counted"}
+        aria-label={whsRowStatusLabel(row)}
         className={cn(
           "inline-flex size-5 shrink-0 items-center justify-center rounded-full md:size-icon-md",
           row.used ? "bg-primary text-primary-foreground" : "border border-border-strong",

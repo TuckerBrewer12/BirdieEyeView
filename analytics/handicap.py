@@ -164,6 +164,7 @@ def _index_window(
     n = len(eligible)
     window: Dict[str, Any] = {
         "index": None, "counting": set(), "threshold": None, "rated": n, "count": 0, "adjustment": 0.0,
+        "eligible": {i for i, _ in eligible}, "seed_handicap": seed_handicap,
     }
     if n < 3:
         if seed_handicap is not None:

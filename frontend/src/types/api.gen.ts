@@ -2527,6 +2527,8 @@ export interface components {
             has_rated_rounds: boolean;
             /** Rows */
             rows: components["schemas"]["WhsRound"][];
+            /** Starting Handicap */
+            starting_handicap: number | null;
             /**
              * Window Size
              * @default 0
@@ -2541,6 +2543,11 @@ export interface components {
             course_rating: number | null;
             /** Differential */
             differential: number | null;
+            /**
+             * Excluded
+             * @default false
+             */
+            excluded: boolean;
             /** Round Index */
             round_index: number;
             /** Score */

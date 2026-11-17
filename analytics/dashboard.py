@@ -76,18 +76,21 @@ def whs_breakdown(
 ) -> Dict[str, Any]:
     by_index = {d["round_index"]: d for d in differentials}
     score_rows = analytics.score_trend(rounds)
+    eligible = index_window.get("eligible", set())
     rows = []
     for i, score_row in enumerate(score_rows):
         trend = handicap_trend[i] if i < len(handicap_trend) else {}
         diff = by_index.get(score_row["round_index"], {})
+        differential = trend.get("differential")
         rows.append({
             "round_index": score_row["round_index"],
             "course_name": score_row.get("course_name"),
             "course_rating": diff.get("course_rating"),
             "slope_rating": diff.get("slope_rating"),
             "score": diff.get("score") if diff.get("score") is not None else score_row.get("total_score"),
-            "differential": trend.get("differential"),
+            "differential": differential,
             "used": trend.get("used_in_hi") is True,
+            "excluded": differential is not None and i not in eligible,
         })
     rows.reverse()
     used = [r["differential"] for r in rows if r["used"] and r["differential"] is not None]
@@ -98,4 +101,5 @@ def whs_breakdown(
         "adjustment": index_window["adjustment"],
         "diff_avg": sum(used) / len(used) if used else None,
         "has_rated_rounds": any(d.get("course_rating") is not None for d in differentials),
+        "starting_handicap": index_window.get("seed_handicap"),
     }
