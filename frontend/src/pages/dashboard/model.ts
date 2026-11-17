@@ -62,6 +62,7 @@ export interface WhsRound {
   score: number | null;
   differential: number | null;
   used: boolean;
+  excluded: boolean;
 }
 
 export interface WhsBreakdown {
@@ -71,6 +72,8 @@ export interface WhsBreakdown {
   adjustment: number;
   diffAvg: number | null;
   hasRatedRounds: boolean;
+  startingHandicap: number | null;
+  excludedCount: number;
 }
 
 export function whsFrom(dto: WhsBreakdownDto): WhsBreakdown {
@@ -83,12 +86,15 @@ export function whsFrom(dto: WhsBreakdownDto): WhsBreakdown {
       score: row.score,
       differential: row.differential,
       used: row.used,
+      excluded: row.excluded,
     })),
     windowSize: dto.window_size,
     countUsed: dto.count_used,
     adjustment: dto.adjustment,
     diffAvg: dto.diff_avg,
     hasRatedRounds: dto.has_rated_rounds,
+    startingHandicap: dto.starting_handicap,
+    excludedCount: dto.rows.filter((row) => row.excluded).length,
   };
 }
 

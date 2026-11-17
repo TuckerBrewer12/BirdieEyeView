@@ -160,6 +160,7 @@ class WhsRound(ResponseModel):
     score: Optional[int] = None
     differential: Optional[float] = None
     used: bool = False
+    excluded: bool = False
 
 
 class WhsBreakdown(ResponseModel):
@@ -169,6 +170,7 @@ class WhsBreakdown(ResponseModel):
     adjustment: float = 0.0
     diff_avg: Optional[float] = None
     has_rated_rounds: bool = False
+    starting_handicap: Optional[float] = None
 
 
 DifferentialStatus = Literal["counting", "close", "out", "unrated"]

@@ -1,6 +1,10 @@
+from datetime import datetime, timezone
+
 from analytics import dashboard
+from analytics import handicap as hcap
 from analytics.handicap import whs_window
-from models import HoleScore, Round
+from models import HoleScore, Round, User
+from tests.helpers import make_scoring_round
 
 
 def _round(strokes, par=4, putts=2, gir=None):
@@ -68,3 +72,45 @@ def test_handicap_change_is_the_move_this_month_with_its_verdict():
     assert dashboard.handicap_change(rounds[1:], trend[1:], date(2026, 6, 21)) == {
         "this_month": None, "this_month_verdict": None,
     }
+
+
+def _whs(rounds, user):
+    window = hcap.player_index_window(user, rounds)
+    trend = hcap.player_handicap_trend(user, rounds)
+    return dashboard.whs_breakdown(rounds, trend, hcap.score_differentials_per_round(rounds), window)
+
+
+def test_whs_breakdown_marks_rounds_the_starting_handicap_leaves_out():
+    before = datetime(2026, 6, 1, tzinfo=timezone.utc)
+    after = datetime(2026, 9, 1, tzinfo=timezone.utc)
+    rounds = [
+        make_scoring_round(72 + diff, round_id=str(i), played_at=played)
+        for i, (diff, played) in enumerate(
+            [(13, before), (10, before), (12, before), (19, before), (16, before), (11, after), (15, after), (14, after)]
+        )
+    ]
+    user = User(handicap=12.5, last_handicap_update=datetime(2026, 8, 1, tzinfo=timezone.utc))
+
+    whs = _whs(rounds, user)
+
+    newest_first = [(row["differential"], row["used"], row["excluded"]) for row in whs["rows"]]
+    assert newest_first == [
+        (14.0, False, False),
+        (15.0, False, False),
+        (11.0, False, False),
+        (16.0, False, True),
+        (19.0, False, True),
+        (12.0, False, False),
+        (10.0, True, False),
+        (13.0, False, True),
+    ]
+    assert (whs["window_size"], whs["count_used"], whs["starting_handicap"]) == (5, 1, 12.5)
+
+
+def test_whs_breakdown_leaves_nothing_out_without_a_starting_handicap():
+    rounds = [make_scoring_round(72 + diff, round_id=str(i)) for i, diff in enumerate([13, 10, 12, 19, 16, 11, 15, 14])]
+
+    whs = _whs(rounds, None)
+
+    assert not any(row["excluded"] for row in whs["rows"])
+    assert (whs["window_size"], whs["count_used"], whs["starting_handicap"]) == (8, 2, None)

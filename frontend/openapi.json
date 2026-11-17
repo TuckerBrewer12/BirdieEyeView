@@ -7209,6 +7209,17 @@
             "title": "Rows",
             "type": "array"
           },
+          "starting_handicap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starting Handicap"
+          },
           "window_size": {
             "default": 0,
             "title": "Window Size",
@@ -7221,7 +7232,8 @@
           "count_used",
           "adjustment",
           "diff_avg",
-          "has_rated_rounds"
+          "has_rated_rounds",
+          "starting_handicap"
         ],
         "title": "WhsBreakdown",
         "type": "object"
@@ -7260,6 +7272,11 @@
               }
             ],
             "title": "Differential"
+          },
+          "excluded": {
+            "default": false,
+            "title": "Excluded",
+            "type": "boolean"
           },
           "round_index": {
             "title": "Round Index",
@@ -7300,7 +7317,8 @@
           "slope_rating",
           "score",
           "differential",
-          "used"
+          "used",
+          "excluded"
         ],
         "title": "WhsRound",
         "type": "object"

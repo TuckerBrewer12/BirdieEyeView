@@ -1,6 +1,7 @@
 import {
   formatCourseName,
   formatDayShort,
+  formatHandicapIndex,
   formatSigned,
   formatWeekday,
   pluralNoun,
@@ -79,6 +80,34 @@ export function adjustmentLabel(adjustment: number): string | null {
   return adjustment > 0 ? `+${adjustment}` : String(adjustment);
 }
 
-export function whsContextNote(countUsed: number): string {
-  return `The World Handicap System uses your best ${countUsed || "N"} ${pluralNoun(countUsed || 2, "differential")} from the last 20 rounds. Differentials measure how well you played relative to the course difficulty.`;
+export function whsContextNote(countUsed: number, windowSize: number): string {
+  if (countUsed === 0) {
+    return `An index needs 3 rounds that count. You have ${windowSize}.`;
+  }
+  const best = countUsed === 1 ? "your best differential" : `the average of your best ${countUsed} differentials`;
+  if (windowSize >= 20) {
+    return `The World Handicap System uses ${best} from your last 20 rounds.`;
+  }
+  return `With ${windowSize} ${pluralNoun(windowSize, "round")} that count, the World Handicap System uses ${best}. At 20 rounds it uses the average of your best 8.`;
+}
+
+export function whsFormulaNote(hasRatedRounds: boolean): string | null {
+  if (!hasRatedRounds) return null;
+  return "Each round’s differential is (score − course rating) × 113 ÷ slope rating. A round with no course rating or slope uses its score to par.";
+}
+
+export function whsExcludedNote(excludedCount: number, startingHandicap: number | null): string | null {
+  if (excludedCount === 0) return null;
+  const rounds = excludedCount === 1 ? "1 round doesn’t" : `${excludedCount} rounds don’t`;
+  const handicap = startingHandicap != null ? ` of ${formatHandicapIndex(startingHandicap)}` : "";
+  return `${rounds} count. Rounds from before you set your starting handicap${handicap} only count when they beat it.`;
+}
+
+export function whsRowNote(row: WhsRound): string | null {
+  return row.excluded ? "Before your starting handicap" : null;
+}
+
+export function whsRowStatusLabel(row: WhsRound): string {
+  if (row.used) return "Counts toward index";
+  return row.excluded ? "Doesn’t count: before your starting handicap" : "Not counted";
 }

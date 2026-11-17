@@ -56,6 +56,8 @@ const EMPTY_WHS: WhsBreakdown = {
   adjustment: 0,
   diffAvg: null,
   hasRatedRounds: false,
+  startingHandicap: null,
+  excludedCount: 0,
 };
 
 const EMPTY_AVERAGE: ScoringAverage = { average: null, change: null, verdict: null };
