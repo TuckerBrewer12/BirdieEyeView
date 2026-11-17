@@ -65,7 +65,7 @@ async def test_list_friendships_includes_user_details(database_manager):
     )
 
     assert friendships[0]["requester_name"] == "Requesting Golfer"
-    assert friendships[0]["addressee_email"] == "addressee@example.com"
+    assert "addressee_email" not in friendships[0] and "requester_email" not in friendships[0]
 
 
 async def _accept_friendship(database_manager):
@@ -115,9 +115,9 @@ async def test_blocked_friendship_is_not_accepted(database_manager):
 
     blocked = await database_manager.friendships.update_status(
         str(friendship["id"]),
-        requester.id,
+        addressee.id,
         "blocked",
     )
 
-    assert blocked["status"] == "blocked"
+    assert (blocked["status"], str(blocked["requester_id"])) == ("blocked", addressee.id)
     assert not await database_manager.friendships.are_friends(requester.id, addressee.id)

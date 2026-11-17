@@ -123,7 +123,7 @@ def test_user_tee_cannot_link_another_users_private_course(api):
 
 def test_empty_update_of_missing_user_tee_is_not_found(api):
     client, db, user_id = api
-    db.user_tees.update_user_tee = AsyncMock(return_value=None)
+    db.user_tees.get_user_tee = AsyncMock(return_value=None)
 
     assert client.put(f"/api/users/{user_id}/tees/{uuid4()}", json={}).status_code == 404
 

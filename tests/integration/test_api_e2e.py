@@ -26,6 +26,8 @@ from database.repositories.round_repo import RoundRepositoryDB
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
 from api.messages import (
+    FRIEND_REQUEST_ALREADY_SENT, FRIEND_REQUEST_AWAITING_YOU, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR,
+    FRIEND_UNBLOCK_FIRST, USER_TEE_OUTSIDE_COURSE,
     COURSE_NAME_TAKEN, COURSE_PAR_FROM_HOLES, COURSE_PROVIDER_ID_TAKEN, PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME,
     UNREADABLE_SCORE_ROWS,
 )
@@ -240,8 +242,7 @@ def test_profiles_tees_and_stats_belong_to_their_owner(api):
     assert api.client.get(f"/api/users/{alice['id']}/tees", headers=bob["headers"]).status_code == 403
     assert api.client.delete(f"/api/users/{alice['id']}/tees/{tee['id']}", headers=bob["headers"]).status_code == 403
     assert api.client.delete(f"/api/users/{bob['id']}/tees/{tee['id']}", headers=bob["headers"]).status_code == 404
-    for path in (f"/api/stats/dashboard/{alice['id']}",
-                 f"/api/users/{alice['id']}/handicap", f"/api/stats/analytics/{alice['id']}"):
+    for path in (f"/api/stats/dashboard/{alice['id']}", f"/api/stats/analytics/{alice['id']}"):
         assert api.client.get(path, headers=bob["headers"]).status_code == 403, path
 
 
@@ -928,6 +929,82 @@ def test_user_tee_update_and_delete(api):
     assert api.client.delete(tee, headers=alice["headers"]).status_code == 404
 
 
+def test_user_tee_updates_clear_rate_and_respect_the_course_layout(api):
+    alice = api.user("alice@example.com")
+    headers = alice["headers"]
+    tees = f"/api/users/{alice['id']}/tees"
+    course = custom_course(api, alice)
+    nine = api.client.post("/api/courses", headers=headers, json={
+        "name": "Nine Links", "holes": [{"number": n, "par": 4} for n in range(1, 10)]}).json()["id"]
+    edit = lambda tee, body: api.client.put(f"{tees}/{tee}", headers=headers, json=body)
+
+    rated = api.client.post(tees, headers=headers, json={
+        "name": "Gold", "course_id": course, "slope_rating": 120, "course_rating": 70.0,
+        "hole_yardages": {str(n): 300 for n in range(1, 19)}}).json()
+    cleared = edit(rated["id"], {"slope_rating": None, "course_rating": None, "hole_yardages": None})
+    assert cleared.status_code == 200, cleared.text
+    assert (cleared.json()["slope_rating"], cleared.json()["course_rating"], cleared.json()["hole_yardages"]) == (
+        None, None, {})
+    assert edit(rated["id"], {"name": None}).status_code == 422
+    assert edit(rated["id"], {}).json()["name"] == "Gold"
+
+    later = api.client.post(tees, headers=headers, json={"name": "Silver", "course_id": course}).json()
+    rated_later = edit(later["id"], {"slope_rating": 125, "course_rating": 71.0}).json()
+    assert rated_later["rating_holes"] == rated["rating_holes"] == list(range(1, 19))
+
+    outside = {"name": "Short", "course_id": nine, "hole_yardages": {"9": 300, "15": 300}}
+    refused = api.client.post(tees, headers=headers, json=outside)
+    assert (refused.status_code, refused.json()["detail"]) == (422, USER_TEE_OUTSIDE_COURSE)
+    short = api.client.post(tees, headers=headers, json={**outside, "hole_yardages": {"9": 300}}).json()
+    assert edit(short["id"], {"hole_yardages": {"15": 300}}).status_code == 422
+    assert edit(short["id"], {"hole_yardages": {"8": 290}}).json()["hole_yardages"] == {"8": 290}
+
+
+def test_friendship_lifecycle_is_private_and_reversible(api):
+    alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
+    code = lambda user: api.client.get(f"/api/users/{user['id']}", headers=user["headers"]).json()["friend_code"]
+    send = lambda sender, to: api.client.post(
+        "/api/users/me/friends", headers=sender["headers"], json={"addressee_friend_code": code(to)})
+    answer = lambda user, friendship, status: api.client.patch(
+        f"/api/users/me/friends/{friendship}", headers=user["headers"], json={"status": status})
+    remove = lambda user, friendship: api.client.delete(f"/api/users/me/friends/{friendship}", headers=user["headers"])
+    listed = lambda user: api.client.get("/api/users/me/friends", headers=user["headers"]).json()
+    conflict = lambda response: (response.status_code, response.json()["detail"])
+
+    sent = send(alice, bob)
+    assert sent.status_code == 201, sent.text
+    friendship = sent.json()["id"]
+    rows = [sent.json(), *listed(alice), *listed(bob)]
+    assert all(row["requester_email"] is None and row["addressee_email"] is None for row in rows)
+    assert conflict(send(alice, bob)) == (409, FRIEND_REQUEST_ALREADY_SENT)
+    assert conflict(send(bob, alice)) == (409, FRIEND_REQUEST_AWAITING_YOU)
+
+    assert answer(bob, friendship, "declined").status_code == 200
+    assert conflict(send(alice, bob)) == (409, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR)
+    assert remove(alice, friendship).status_code == 404
+    assert answer(alice, friendship, "blocked").status_code == 404
+    assert remove(alice, friendship).status_code == 404
+    assert conflict(send(alice, bob)) == (409, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR)
+    from_bob = send(bob, alice)
+    assert (from_bob.status_code, from_bob.json()["status"], from_bob.json()["requester_id"]) == (
+        201, "pending", bob["id"])
+    assert answer(alice, friendship, "accepted").status_code == 200
+
+    assert remove(alice, friendship).status_code == 204
+    assert listed(alice) == listed(bob) == []
+    friendship = send(bob, alice).json()["id"]
+    assert answer(alice, friendship, "accepted").status_code == 200
+
+    assert answer(bob, friendship, "blocked").json()["requester_id"] == bob["id"]
+    assert listed(alice) == []
+    assert conflict(send(alice, bob)) == (409, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR)
+    assert remove(alice, friendship).status_code == 404
+    assert answer(alice, friendship, "blocked").status_code == 404
+    assert conflict(send(bob, alice)) == (409, FRIEND_UNBLOCK_FIRST)
+    assert remove(bob, friendship).status_code == 204
+    assert send(alice, bob).status_code == 201
+
+
 def test_stats_endpoints_answer_from_seeded_rounds(api):
     alice = api.user("alice@example.com")
     course = custom_course(api, alice)
@@ -943,7 +1020,6 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
         "goal": f"/api/stats/{alice['id']}/goal-report",
         "compare": f"/api/stats/compare/{alice['id']}/{rounds[1]}",
         "course": f"/api/stats/course-analytics/{alice['id']}/{course}",
-        "handicap": f"/api/users/{alice['id']}/handicap",
     }
     responses = {name: get(path) for name, path in paths.items()}
     assert {name: r.status_code for name, r in responses.items()} == {name: 200 for name in paths}
@@ -1015,19 +1091,6 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
     assert edited.status_code == 200, edited.text
     saver = next(row for row in get(paths["goal"]).json()["savers"] if row["type"] == "three_putt_bleed")
     assert (saver["headline"], saver["detail"], saver["strokes_saved"]) == ("Cut out 3-putts", "0.3 a round", 0.33)
-
-
-def test_user_lookup_by_email_reveals_only_your_own_account(api):
-    alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
-    lookup = lambda email: api.client.get(f"/api/users/by-email/{email}", headers=bob["headers"])
-
-    own = lookup("bob@example.com")
-    assert (own.status_code, own.json()["id"]) == (200, bob["id"])
-    assert lookup("BOB@Example.COM").status_code == 200
-    assert lookup("alice@example.com").status_code == 403
-    assert lookup("ghost@example.com").status_code == 403
-    assert lookup("not-an-email").status_code == 422
-    assert alice["id"] not in lookup("alice@example.com").text
 
 
 def test_course_list_and_search_show_masters_and_only_your_own_courses(api):
