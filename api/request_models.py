@@ -316,6 +316,12 @@ class UpdateUserTeeRequest(BaseModel):
     def _validate_hole_yardages(cls, value: object) -> Optional[dict]:
         return normalize_hole_yardages(value)
 
+    @model_validator(mode="after")
+    def _reject_null_name(self):
+        if "name" in self.model_fields_set and self.name is None:
+            raise ValueError("name cannot be null.")
+        return self
+
 
 class UpdateUserRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -334,26 +340,15 @@ class UpdateUserRequest(BaseModel):
 class SendFriendRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    addressee_user_id: Optional[UUID] = None
-    addressee_friend_code: Optional[str] = Field(default=None, min_length=4, max_length=24)
+    addressee_friend_code: str = Field(..., min_length=4, max_length=24)
 
     @field_validator("addressee_friend_code")
     @classmethod
-    def _validate_friend_code(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return None
+    def _validate_friend_code(cls, v: str) -> str:
         code = sanitize_user_text(v, field_name="addressee_friend_code", max_length=24).upper()
         if not code.replace("-", "").isalnum():
             raise ValueError("addressee_friend_code must be alphanumeric.")
         return code
-
-    @model_validator(mode="after")
-    def _validate_target_selector(self):
-        if self.addressee_user_id and self.addressee_friend_code:
-            raise ValueError("Provide either addressee_user_id or addressee_friend_code, not both.")
-        if not self.addressee_user_id and not self.addressee_friend_code:
-            raise ValueError("Provide addressee_friend_code or addressee_user_id.")
-        return self
 
 
 class FriendshipStatusRequest(BaseModel):

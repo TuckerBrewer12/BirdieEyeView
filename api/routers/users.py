@@ -4,17 +4,19 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
 from database.db_manager import DatabaseManager
-from database.exceptions import AlreadyFriendsError, FriendRequestBlockedError, ConflictError, DuplicateError, IntegrityError, NotFoundError
-from api.messages import (
-    CANNOT_FRIEND_YOURSELF, FORBIDDEN, FRIEND_CODE_NOT_FOUND, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR,
-    FRIENDSHIP_NOT_FOUND, HOME_COURSE_NOT_FOUND, INVALID_EMAIL_FORMAT, INVALID_FRIENDSHIP_STATUS,
-    LINKED_COURSE_NOT_FOUND, USER_NOT_FOUND, USER_TEE_EXISTS, USER_TEE_IN_USE, USER_TEE_INVALID, USER_TEE_NAME_TAKEN,
-    USER_TEE_NOT_FOUND, USERS_ARE_ALREADY_FRIENDS,
+from database.exceptions import (
+    AlreadyFriendsError, ConflictError, DuplicateError, FriendRequestBlockedError, IntegrityError, NotFoundError,
+    RequestAlreadySentError, RequestAwaitingYouError, YouBlockedError,
 )
-from api.player_handicap import player_handicap_index_with_rounds
+from api.messages import (
+    CANNOT_FRIEND_YOURSELF, FRIEND_CODE_NOT_FOUND, FRIEND_REQUEST_ALREADY_SENT, FRIEND_REQUEST_AWAITING_YOU,
+    FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR, FRIEND_UNBLOCK_FIRST, FRIENDSHIP_NOT_FOUND, HOME_COURSE_NOT_FOUND,
+    INVALID_FRIENDSHIP_STATUS, LINKED_COURSE_NOT_FOUND, USER_NOT_FOUND, USER_TEE_EXISTS, USER_TEE_IN_USE,
+    USER_TEE_INVALID, USER_TEE_NAME_TAKEN, USER_TEE_NOT_FOUND, USER_TEE_OUTSIDE_COURSE, USERS_ARE_ALREADY_FRIENDS,
+)
 from api.course_access import load_linkable_course
-from api.dependencies import get_current_user, get_db
-from api.input_validation import normalize_email
+from api.dependencies import get_current_user, get_db, get_self
+from api.friendship_responses import friendship_list, friendship_response
 from api.request_models import (
     CreateUserTeeRequest,
     FriendshipStatusRequest,
@@ -23,139 +25,78 @@ from api.request_models import (
     UpdateUserTeeRequest,
 )
 from api.schemas import FriendshipResponse, UserResponse, UserTeeResponse
-from models import User, UserTee
-from models.hole_layout import rated_coverage
-from analytics import handicap as hcap
+from models import User
+from services import user_tee_service
+from services.user_tee_service import TeeOutsideCourseLayout
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-
-def _friendship_row_to_response(row: dict) -> FriendshipResponse:
-    return FriendshipResponse(
-        id=str(row["id"]),
-        requester_id=str(row["requester_id"]),
-        addressee_id=str(row["addressee_id"]),
-        status=row["status"],
-        created_at=row["created_at"].isoformat() if row.get("created_at") else "",
-        updated_at=row["updated_at"].isoformat() if row.get("updated_at") else "",
-        requester_name=row.get("requester_name"),
-        requester_email=row.get("requester_email"),
-        addressee_name=row.get("addressee_name"),
-        addressee_email=row.get("addressee_email"),
-    )
-
-
-@router.get("/by-email/{email}", response_model=UserResponse)
-async def get_user_by_email(
-    email: str,
-    db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    try:
-        normalized_email = normalize_email(email)
-    except ValueError:
-        raise HTTPException(422, INVALID_EMAIL_FORMAT) from None
-    if normalized_email != (current_user.email or "").lower():
-        raise HTTPException(403, FORBIDDEN)
-    user = await db.users.get_user_by_email(normalized_email)
-    if not user:
-        raise HTTPException(404, USER_NOT_FOUND)
-    return user
+FRIEND_REQUEST_CONFLICTS = (
+    (AlreadyFriendsError, USERS_ARE_ALREADY_FRIENDS),
+    (RequestAlreadySentError, FRIEND_REQUEST_ALREADY_SENT),
+    (RequestAwaitingYouError, FRIEND_REQUEST_AWAITING_YOU),
+    (YouBlockedError, FRIEND_UNBLOCK_FIRST),
+    (FriendRequestBlockedError, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR),
+)
 
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
-    user_id: UUID,
     db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    user: User = Depends(get_self),
 ):
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(403, FORBIDDEN)
-    user = await db.users.get_user(str(user_id))
-    if not user:
+    found = await db.users.get_user(str(user.id))
+    if not found:
         raise HTTPException(404, USER_NOT_FOUND)
-    return user
+    return found
 
 
 @router.patch("/{user_id}", response_model=UserResponse)
 async def update_user(
-    user_id: UUID,
     req: UpdateUserRequest,
     db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    user: User = Depends(get_self),
 ):
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(403, FORBIDDEN)
-
     updates = req.model_dump(exclude_unset=True)
-    if "home_course_id" in updates and updates["home_course_id"] is not None:
+    if updates.get("home_course_id") is not None:
         home_course_id = str(updates["home_course_id"])
         await load_linkable_course(
-            db, home_course_id, str(current_user.id), missing_detail=HOME_COURSE_NOT_FOUND
+            db, home_course_id, str(user.id), missing_detail=HOME_COURSE_NOT_FOUND
         )
         updates["home_course_id"] = home_course_id
     if "handicap" in updates:
         updates["handicap_index"] = updates.pop("handicap")
-    user = await db.users.update_user(str(user_id), **updates)
-    if not user:
+    updated = await db.users.update_user(str(user.id), **updates)
+    if not updated:
         raise HTTPException(404, USER_NOT_FOUND)
-    return user
-
-
-@router.get("/{user_id}/handicap")
-async def get_user_handicap(
-    user_id: UUID,
-    db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(403, FORBIDDEN)
-    user = await db.users.get_user(str(user_id))
-    if not user:
-        raise HTTPException(404, USER_NOT_FOUND)
-    history = await db.rounds.get_rounds_for_user(str(user_id), limit=None)
-    return {"handicap_index": hcap.user_handicap_index(history, user)}
+    return updated
 
 
 @router.get("/{user_id}/tees", response_model=List[UserTeeResponse])
 async def get_user_tees(
-    user_id: UUID,
     course_id: Optional[UUID] = Query(None),
     db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    user: User = Depends(get_self),
 ):
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(403, FORBIDDEN)
-    return await db.user_tees.get_user_tees(str(user_id), course_id=str(course_id) if course_id else None)
+    return await db.user_tees.get_user_tees(str(user.id), course_id=str(course_id) if course_id else None)
 
 
 @router.post("/{user_id}/tees", response_model=UserTeeResponse, status_code=201)
 async def create_user_tee(
-    user_id: UUID,
     req: CreateUserTeeRequest,
     db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    user: User = Depends(get_self),
 ):
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(403, FORBIDDEN)
     linked = None
     if req.course_id:
         linked = await load_linkable_course(
-            db, req.course_id, str(current_user.id), missing_detail=LINKED_COURSE_NOT_FOUND
+            db, req.course_id, str(user.id), missing_detail=LINKED_COURSE_NOT_FOUND
         )
-    layout = linked.get_expected_holes() if linked is not None else None
-    tee = UserTee(
-        user_id=str(user_id),
-        course_id=str(req.course_id) if req.course_id else None,
-        name=req.name,
-        slope_rating=req.slope_rating,
-        course_rating=req.course_rating,
-        rating_holes=rated_coverage(layout, req.course_rating, req.slope_rating),
-        hole_yardages=(req.hole_yardages or {}),
-    )
     try:
-        return await db.user_tees.create_user_tee(tee)
+        return await user_tee_service.create_user_tee(db, str(user.id), req.model_dump(), linked)
+    except TeeOutsideCourseLayout:
+        raise HTTPException(422, USER_TEE_OUTSIDE_COURSE) from None
     except DuplicateError:
         raise HTTPException(409, USER_TEE_EXISTS.format(name=req.name)) from None
     except IntegrityError as error:
@@ -165,17 +106,17 @@ async def create_user_tee(
 
 @router.put("/{user_id}/tees/{tee_id}", response_model=UserTeeResponse)
 async def update_user_tee(
-    user_id: UUID,
     tee_id: UUID,
     req: UpdateUserTeeRequest,
     db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    user: User = Depends(get_self),
 ):
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(403, FORBIDDEN)
-    updates = req.model_dump(exclude_none=True)
     try:
-        tee = await db.user_tees.update_user_tee(str(tee_id), user_id=str(user_id), **updates)
+        tee = await user_tee_service.update_user_tee(
+            db, str(user.id), str(tee_id), req.model_dump(exclude_unset=True)
+        )
+    except TeeOutsideCourseLayout:
+        raise HTTPException(422, USER_TEE_OUTSIDE_COURSE) from None
     except NotFoundError:
         raise HTTPException(404, USER_TEE_NOT_FOUND) from None
     except DuplicateError as error:
@@ -190,15 +131,12 @@ async def update_user_tee(
 
 @router.delete("/{user_id}/tees/{tee_id}", status_code=204)
 async def delete_user_tee(
-    user_id: UUID,
     tee_id: UUID,
     db: DatabaseManager = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    user: User = Depends(get_self),
 ):
-    if str(current_user.id) != str(user_id):
-        raise HTTPException(403, FORBIDDEN)
     try:
-        deleted = await db.user_tees.delete_user_tee(str(tee_id), user_id=str(user_id))
+        deleted = await db.user_tees.delete_user_tee(str(tee_id), user_id=str(user.id))
     except ConflictError as error:
         raise HTTPException(409, USER_TEE_IN_USE) from error
     if not deleted:
@@ -211,28 +149,17 @@ async def send_friend_request(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    addressee_user_id: Optional[str] = str(req.addressee_user_id) if req.addressee_user_id else None
-    addressee_friend_code = (req.addressee_friend_code or "").strip().upper()
-
-    if addressee_friend_code:
-        target_user = await db.users.get_user_by_friend_code(addressee_friend_code)
-        if not target_user or not target_user.id:
-            raise HTTPException(404, FRIEND_CODE_NOT_FOUND)
-        addressee_user_id = str(target_user.id)
-    elif not await db.users.get_user(str(addressee_user_id)):
-        raise HTTPException(404, USER_NOT_FOUND)
-
+    target = await db.users.get_user_by_friend_code(req.addressee_friend_code)
+    if not target or not target.id:
+        raise HTTPException(404, FRIEND_CODE_NOT_FOUND)
     try:
-        row = await db.friendships.send_request(str(current_user.id), str(addressee_user_id))
+        row = await db.friendships.send_request(str(current_user.id), str(target.id))
     except ValueError:
         raise HTTPException(400, CANNOT_FRIEND_YOURSELF) from None
-    except AlreadyFriendsError:
-        raise HTTPException(409, USERS_ARE_ALREADY_FRIENDS) from None
-    except FriendRequestBlockedError:
-        raise HTTPException(409, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR) from None
-    rows = await db.friendships.list_for_user(str(current_user.id))
-    match = next((r for r in rows if str(r["id"]) == str(row["id"])), row)
-    return _friendship_row_to_response(match)
+    except DuplicateError as error:
+        detail = next(message for kind, message in FRIEND_REQUEST_CONFLICTS if isinstance(error, kind))
+        raise HTTPException(409, detail) from None
+    return friendship_response(row)
 
 
 @router.patch("/me/friends/{friendship_id}", response_model=FriendshipResponse)
@@ -243,17 +170,22 @@ async def update_friendship_status(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        updated = await db.friendships.update_status(
-            str(friendship_id), str(current_user.id), req.status
-        )
+        updated = await db.friendships.update_status(str(friendship_id), str(current_user.id), req.status)
     except ValueError:
         raise HTTPException(400, INVALID_FRIENDSHIP_STATUS) from None
     if not updated:
         raise HTTPException(404, FRIENDSHIP_NOT_FOUND)
+    return friendship_response(updated)
 
-    rows = await db.friendships.list_for_user(str(current_user.id))
-    match = next((r for r in rows if str(r["id"]) == str(updated["id"])), updated)
-    return _friendship_row_to_response(match)
+
+@router.delete("/me/friends/{friendship_id}", status_code=204)
+async def remove_friendship(
+    friendship_id: UUID,
+    db: DatabaseManager = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not await db.friendships.remove(str(friendship_id), str(current_user.id)):
+        raise HTTPException(404, FRIENDSHIP_NOT_FOUND)
 
 
 @router.get("/me/friends", response_model=List[FriendshipResponse])
@@ -264,23 +196,4 @@ async def list_friendships(
 ):
     viewer = str(current_user.id)
     rows = await db.friendships.list_for_user(viewer, status=status)
-    responses = []
-    for row in rows:
-        response = _friendship_row_to_response(row)
-        if response.status == "accepted":
-            friend_id = response.addressee_id if response.requester_id == viewer else response.requester_id
-            index, last_played = await _friend_figures(db, friend_id)
-            response = response.model_copy(
-                update={"friend_handicap_index": index, "friend_last_played": last_played}
-            )
-        responses.append(response)
-    return responses
-
-
-async def _friend_figures(db: DatabaseManager, friend_id: str) -> tuple[Optional[float], Optional[str]]:
-    friend = await db.users.get_user(friend_id)
-    if friend is None:
-        return None, None
-    index, rounds = await player_handicap_index_with_rounds(db, friend)
-    last = rounds[0].date if rounds and rounds[0].date else None
-    return index, last.date().isoformat() if last else None
+    return await friendship_list(db, rows, viewer)

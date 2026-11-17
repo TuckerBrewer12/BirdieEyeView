@@ -28,3 +28,15 @@ class FriendRequestBlockedError(DuplicateError):
 
 class AlreadyFriendsError(DuplicateError):
     ...
+
+
+class RequestAlreadySentError(DuplicateError):
+    ...
+
+
+class RequestAwaitingYouError(DuplicateError):
+    ...
+
+
+class YouBlockedError(DuplicateError):
+    ...

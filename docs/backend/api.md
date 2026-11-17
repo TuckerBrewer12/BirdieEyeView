@@ -35,6 +35,17 @@ A course a user links to their own data (profile or registration home course, us
 
 Round edits (`PUT /api/rounds/{id}`) are partial: a hole field or round field (`notes`, `weather_conditions`, `tee_box`, `course_name_played`) that the request leaves out keeps its stored value, an explicit `null` clears it, and a hole not yet stored is created from the fields sent. Hole edits use `HoleScore.with_edits` and its [score-correction rules](models.md#model-contracts): entering strokes marks an unplayed hole played, and a stored shots-to-green observation that exceeds the corrected strokes is cleared if the caller omitted it. Compatible omitted observations survive the round editor's save. Explicit counts are validated against the merged hole (putts or shots to green greater than strokes return 422). The hole and round changes are written in one transaction (`round_repo.edit_round`), so a rejected edit writes nothing.
 
+User tees (`/api/users/{id}/tees`) go through [user_tee_service.py](../../services/user_tee_service.py). On `PUT`, an omitted field keeps its value and `null` clears it (`name` can't be null). Yardages on a tee linked to a course must be for that course's holes (422 otherwise). A linked tee's rating covers the course's holes (`rating_holes`) whether it was rated at creation or later; a tee with no linked course has no layout, so its ratings carry no coverage and don't count.
+
+Friendships (`/api/users/me/friends`) never carry another user's email; the email fields are always `null`. A request needs the other golfer's friend code. Sending one when the pair already has a row gives 409 with a reason:
+- already friends;
+- you already sent one;
+- they already sent you one;
+- you blocked them (unblock first);
+- a neutral "can't send right now". The neutral reply covers both a request the other golfer declined and a block they set, so the two can't be told apart.
+
+The person who declined can still send a request; the person who was declined can't block or remove that row, so a decline only ends when the decliner acts. `DELETE /api/users/me/friends/{id}` removes a friendship or a pending request (either person), a decline (the person who declined) or a block (the person who blocked). A blocked golfer doesn't see the block in their list and can't change it. Profile, user-tee and handicap routes are self-only through `get_self`; there is no lookup by email and no separate handicap route (the dashboard and analytics carry the index). [friendship_responses.py](../../api/friendship_responses.py) builds friendship replies.
+
 Linking a course (`POST /api/rounds/{id}/link-course`) runs in [round_service.py](../../services/round_service.py): the user's own destination course is filled from the round's par/handicap snapshots and tee, then the round is linked, all in one transaction. A missing course or round returns 404; if the round disappears during linking, the destination's gap fills roll back before that response.
 
 Round, course, user and user-tee detail endpoints declare explicit response models in [schemas.py](../../api/schemas.py). Response builders preserve computed values such as course par and round totals, and a new domain field doesn't appear in the JSON until it is added to the response contract.

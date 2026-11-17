@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 
 import analytics.handicap as handicap
-from api.routers import stats, users
+from api.routers import stats
 from models.hole_layout import FRONT_NINE, FULL_ROUND
 from tests.analytics_builders import course, par_round, round_
 from tests.helpers import make_mock_database, make_round_summary, make_user
@@ -100,11 +100,10 @@ async def test_every_screen_reports_the_same_seeded_index():
     db.rounds.get_rounds_for_user = AsyncMock(return_value=list(reversed(history)))
     db.rounds.get_round_summaries_for_user = AsyncMock(return_value=history)
 
-    from_users = (await users.get_user_handicap(user_id, db, user))["handicap_index"]
     from_dashboard = (await stats.get_dashboard(user=user, db=db)).handicap_index
     from_analytics = (await stats.get_analytics(user_id, 50, None, None, db, user)).kpis.handicap_index
 
-    assert from_users == from_dashboard == from_analytics == 10.0
+    assert from_dashboard == from_analytics == 10.0
     assert all(call.kwargs.get("limit") in (None, 50) for call in db.rounds.get_rounds_for_user.await_args_list)
 
 

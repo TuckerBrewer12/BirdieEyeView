@@ -54,23 +54,13 @@ def user_database():
 
 
 @pytest.mark.asyncio
-async def test_get_user_by_email_normalizes_lookup(user_database):
-    _, user, db = user_database
-
-    result = await users.get_user_by_email("GOLFER@example.com", db, user)
-
-    assert result == user
-    db.users.get_user_by_email.assert_awaited_once_with("golfer@example.com")
-
-
-@pytest.mark.asyncio
 async def test_update_user_maps_profile_fields(user_database):
-    user_id, user, db = user_database
+    _, user, db = user_database
     course_id = uuid4()
     db.courses.get_course = AsyncMock(return_value=make_course(course_id))
     request = users.UpdateUserRequest(home_course_id=course_id, handicap="+2", scoring_goal=85)
 
-    result = await users.update_user(user_id, request, db, user)
+    result = await users.update_user(request, db, user)
 
     assert result == user
     assert db.users.update_user.await_args.kwargs == {
@@ -96,10 +86,10 @@ def tee_database():
 
 @pytest.mark.asyncio
 async def test_delete_referenced_user_tee_returns_clear_conflict(tee_database):
-    user_id, tee_id, user, _, db = tee_database
+    _, tee_id, user, _, db = tee_database
     db.user_tees.delete_user_tee.side_effect = ConflictError('Used by past rounds')
     with pytest.raises(HTTPException) as raised:
-        await users.delete_user_tee(user_id, tee_id, db, user)
+        await users.delete_user_tee(tee_id, db, user)
     assert raised.value.status_code == 409
     assert 'past rounds' in raised.value.detail
 
@@ -147,17 +137,17 @@ async def test_create_user_tee_links_accessible_courses(tee_database, owner):
     db.courses.get_course = AsyncMock(return_value=make_course(course_id, owner=user_id if owner == "self" else None))
     request = users.CreateUserTeeRequest(name="Blue", course_id=course_id)
 
-    assert await users.create_user_tee(user_id, request, db, user) == user_tee
+    assert await users.create_user_tee(request, db, user) == user_tee
     assert db.user_tees.create_user_tee.await_args.args[0].course_id == str(course_id)
 
 
 @pytest.mark.asyncio
-async def test_friend_request_to_unknown_user_is_not_found(friendship_database):
+async def test_friend_request_to_unknown_code_is_not_found(friendship_database):
     _, _, user, _, db = friendship_database
-    db.users.get_user = AsyncMock(return_value=None)
+    db.users.get_user_by_friend_code = AsyncMock(return_value=None)
 
     with pytest.raises(HTTPException) as raised:
-        await users.send_friend_request(users.SendFriendRequest(addressee_user_id=uuid4()), db, user)
+        await users.send_friend_request(users.SendFriendRequest(addressee_friend_code="ABCD"), db, user)
 
     assert raised.value.status_code == 404
     db.friendships.send_request.assert_not_awaited()
@@ -167,12 +157,12 @@ async def test_friend_request_to_unknown_user_is_not_found(friendship_database):
 async def test_user_tee_rating_records_the_linked_course_layout(tee_database):
     from models import Course, Hole
 
-    user_id, _, user, _, db = tee_database
+    _, _, user, _, db = tee_database
     db.courses.get_course = AsyncMock(return_value=Course(
         id=str(uuid4()), name="Master", total_holes=18, holes=[Hole(number=n, par=4) for n in range(1, 19)]
     ))
     request = users.CreateUserTeeRequest(name="Blue", course_id=uuid4(), course_rating=71.4, slope_rating=128)
 
-    await users.create_user_tee(user_id, request, db, user)
+    await users.create_user_tee(request, db, user)
 
     assert db.user_tees.create_user_tee.await_args.args[0].rating_holes == tuple(range(1, 19))
