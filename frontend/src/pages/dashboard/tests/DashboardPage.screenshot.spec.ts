@@ -19,3 +19,11 @@ test("handicap sheet open", async ({ dashboard }) => {
   await dashboard.seesHandicapSheet();
   await dashboard.capture("dashboard-handicap-sheet.png", { fullPage: false });
 });
+
+test("a round the starting handicap leaves out", async ({ dashboard }) => {
+  await dashboard.openWithExcludedRound();
+  await dashboard.openHandicapSheet();
+  await dashboard.openHowCalculated();
+  await dashboard.seesExcludedRound();
+  await dashboard.capture("dashboard-handicap-excluded.png", { fullPage: false });
+});

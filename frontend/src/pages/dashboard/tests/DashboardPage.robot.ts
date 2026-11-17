@@ -45,6 +45,18 @@ export class DashboardRobot {
     return this;
   }
 
+  async openWithExcludedRound(): Promise<this> {
+    const rows = populatedDashboard.whs.rows.map((row) =>
+      row.course_name === "Scanned Scorecard" ? { ...row, excluded: true } : row,
+    );
+    return this.open({
+      dashboard: {
+        ...populatedDashboard,
+        whs: { ...populatedDashboard.whs, rows, window_size: 4, starting_handicap: 12.4 },
+      },
+    });
+  }
+
   async seesGreeting(): Promise<this> {
     await expect(this.page.getByRole("heading", { name: /Test$/ }).locator("visible=true")).toBeVisible();
     await expect(this.page.getByText(/^Good evening/).locator("visible=true").first()).toBeVisible();
@@ -80,6 +92,21 @@ export class DashboardRobot {
     await expect(this.page.getByRole("heading", { name: "Handicap index" })).toBeVisible();
     await expect(this.page.getByText("Rounds so far")).toBeVisible();
     await expect(this.page.locator("[data-slot=sheet-overlay]")).toBeVisible();
+    return this;
+  }
+
+  async openHowCalculated(): Promise<this> {
+    await this.page.getByRole("button", { name: "How it’s calculated" }).click();
+    return this;
+  }
+
+  async seesExcludedRound(): Promise<this> {
+    await expect(this.page.getByText("Before your starting handicap", { exact: true })).toBeVisible();
+    const explanation = this.page.getByText(
+      "1 round doesn’t count. Rounds from before you set your starting handicap of 12.4 only count when they beat it.",
+    );
+    await expect(explanation).toBeVisible();
+    await explanation.scrollIntoViewIfNeeded();
     return this;
   }
 
