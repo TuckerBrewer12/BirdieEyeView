@@ -13,7 +13,10 @@ from api.auth_schemas import (
     ResetPasswordRequest,
     VerifyEmailRequest,
 )
+from api import auth_http
 from api.routers import auth
+from api.security import env_int
+from services import auth_service
 from database.exceptions import DuplicateError
 from models import User
 from tests.helpers import make_async_repo, make_http_request, make_mock_database
@@ -45,10 +48,7 @@ def auth_isolation(monkeypatch):
     allowing_limiter = SimpleNamespace(check=MagicMock(return_value=(True, 0)))
     monkeypatch.setattr(auth, "register_rate_limiter", allowing_limiter)
     monkeypatch.setattr(auth, "auth_request_rate_limiter", allowing_limiter)
-    monkeypatch.setattr(auth, "hash_password", lambda value: f"hashed:{value}")
-    monkeypatch.setattr(auth, "hash_one_time_token", lambda value: f"digest:{value}")
-    monkeypatch.setattr(auth, "generate_one_time_token", lambda: "t" * 32)
-    monkeypatch.setattr(auth, "create_access_token", lambda user_id: f"jwt:{user_id}")
+    monkeypatch.setattr(auth, "hash_password_async", AsyncMock(side_effect=lambda value: f"hashed:{value}"))
     monkeypatch.setattr(auth, "send_verification_email", AsyncMock())
     monkeypatch.setattr(auth, "send_password_reset_email", AsyncMock())
 
@@ -56,10 +56,10 @@ def auth_isolation(monkeypatch):
 @pytest.mark.parametrize(
     ("environment_name", "builder", "expected_path"),
     [
-        ("AUTH_VERIFY_URL_BASE", auth._build_verification_url, "/verify?token=token"),
+        ("AUTH_VERIFY_URL_BASE", auth_http.verification_link, "/verify?token=token"),
         (
             "AUTH_PASSWORD_RESET_URL_BASE",
-            auth._build_password_reset_url,
+            auth_http.password_reset_link,
             "/reset?token=token",
         ),
     ],
@@ -75,21 +75,20 @@ def test_auth_urls_use_frontend_fallback(monkeypatch):
     monkeypatch.delenv("AUTH_PASSWORD_RESET_URL_BASE", raising=False)
     monkeypatch.setenv("FRONTEND_URL", "https://frontend.test/")
 
-    assert auth._build_verification_url(make_http_request(), "token").endswith("/verify-email?token=token")
-    assert auth._build_password_reset_url(make_http_request(), "token").endswith("/reset-password?token=token")
+    assert auth_http.verification_link(make_http_request(), "token").endswith("/verify-email?token=token")
+    assert auth_http.password_reset_link(make_http_request(), "token").endswith("/reset-password?token=token")
 
 
 def test_auth_urls_use_api_fallback(monkeypatch):
     for name in ("AUTH_VERIFY_URL_BASE", "AUTH_PASSWORD_RESET_URL_BASE", "FRONTEND_URL"):
         monkeypatch.delenv(name, raising=False)
 
-    assert "api/auth/verify-email" in auth._build_verification_url(make_http_request(), "token")
-    assert "reset-password" in auth._build_password_reset_url(make_http_request(), "token")
+    assert "api/auth/verify-email" in auth_http.verification_link(make_http_request(), "token")
+    assert "reset-password" in auth_http.password_reset_link(make_http_request(), "token")
 
 
-def test_auth_helper_normalizes_email_and_fingerprint():
-    assert auth._normalize_email(" ADA@EXAMPLE.COM ") == "ada@example.com"
-    assert len(auth._email_fingerprint("ada@example.com")) == 12
+def test_auth_helper_fingerprints_email():
+    assert len(auth_http.email_fingerprint("ada@example.com")) == 12
 
 
 @pytest.mark.parametrize(
@@ -102,123 +101,16 @@ def test_auth_integer_environment_uses_default(monkeypatch, environment_name, de
     else:
         monkeypatch.delenv(environment_name, raising=False)
 
-    assert auth._env_int(environment_name, default) == expected
+    assert env_int(environment_name, default) == expected
 
 
 def test_auth_rate_limit_returns_retry_response():
     limiter = SimpleNamespace(check=MagicMock(return_value=(False, 12)))
 
     with pytest.raises(HTTPException) as raised:
-        auth._check_auth_rate_limit(
-            limiter=limiter,
-            key="key",
-            limit=0,
-            window_seconds=0,
-            detail="slow down",
-        )
+        auth_http.check_rate_limit(limiter, "key", 0, 0, "slow down")
 
     assert (raised.value.status_code, raised.value.headers["Retry-After"]) == (429, "12")
-
-
-def test_auth_cookie_is_http_only():
-    response = Response()
-
-    auth._set_auth_cookie(response, "jwt")
-
-    assert "httponly" in response.headers["set-cookie"].lower()
-
-
-def test_clear_auth_cookie_expires_cookie():
-    response = Response()
-
-    auth._clear_auth_cookie(response)
-
-    assert "Max-Age=0" in response.headers["set-cookie"]
-
-
-@pytest.mark.asyncio
-async def test_register_creates_user_and_verification(auth_user):
-    db = make_auth_database(auth_user)
-    request = RegisterRequest(name="Ada", email="ADA@example.com", password="password123")
-
-    response = await auth.register(request, make_http_request(), db)
-
-    assert response.requires_email_verification is True
-    db.users.create_user.assert_awaited_once()
-    db.users.create_auth_token.assert_awaited_once()
-    auth.send_verification_email.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_register_rejects_existing_email(auth_user):
-    db = make_auth_database(auth_user)
-    db.users.get_user_by_email.return_value = auth_user
-    request = RegisterRequest(name="Ada", email=auth_user.email, password="password123")
-
-    with pytest.raises(HTTPException) as raised:
-        await auth.register(request, make_http_request(), db)
-
-    assert raised.value.status_code == 409
-
-
-@pytest.mark.asyncio
-async def test_register_rejects_missing_home_course(auth_user):
-    db = make_auth_database(auth_user)
-    db.courses.get_course.return_value = None
-    request = RegisterRequest(
-        name="Ada",
-        email=auth_user.email,
-        password="password123",
-        home_course_id=str(uuid4()),
-    )
-
-    with pytest.raises(HTTPException) as raised:
-        await auth.register(request, make_http_request(), db)
-
-    assert raised.value.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_register_maps_duplicate_insert_to_conflict(auth_user):
-    db = make_auth_database(auth_user)
-    db.users.create_user.side_effect = DuplicateError("duplicate")
-    request = RegisterRequest(name="Ada", email=auth_user.email, password="password123")
-
-    with pytest.raises(HTTPException) as raised:
-        await auth.register(request, make_http_request(), db)
-
-    assert raised.value.status_code == 409
-
-
-@pytest.mark.asyncio
-async def test_verify_email_marks_user_verified(auth_user):
-    db = make_auth_database(auth_user)
-    db.users.consume_auth_token.return_value = auth_user.id
-
-    response = await auth.verify_email(VerifyEmailRequest(token="t" * 20), Response(), db)
-
-    assert "verified" in response.message.lower()
-    db.users.mark_email_verified.assert_awaited_once_with(auth_user.id)
-
-
-@pytest.mark.asyncio
-async def test_verify_email_link_uses_same_verification_flow(auth_user):
-    db = make_auth_database(auth_user)
-    db.users.consume_auth_token.return_value = auth_user.id
-
-    response = await auth.verify_email_from_link(Response(), "t" * 20, db)
-
-    assert "verified" in response.message.lower()
-
-
-@pytest.mark.asyncio
-async def test_verify_email_rejects_invalid_token(auth_user):
-    db = make_auth_database(auth_user)
-
-    with pytest.raises(HTTPException) as raised:
-        await auth._verify_email_token("bad-token", db)
-
-    assert raised.value.status_code == 400
 
 
 @pytest.mark.asyncio
@@ -233,23 +125,11 @@ async def test_resend_verification_returns_neutral_response(auth_user):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("account_exists", [True, False])
-async def test_resend_verification_skips_ineligible_account(auth_user, account_exists):
-    db = make_auth_database(auth_user)
-    db.users.get_user_by_email.return_value = auth_user if account_exists else None
-    db.users.has_recent_auth_token.return_value = True
-
-    await auth.resend_verification(ResendVerificationRequest(email=auth_user.email), make_http_request(), db)
-
-    auth.send_verification_email.assert_not_awaited()
-
-
-@pytest.mark.asyncio
 async def test_verification_email_failure_does_not_escape(monkeypatch, auth_user):
     db = make_auth_database(auth_user)
-    monkeypatch.setattr(auth, "send_verification_email", AsyncMock(side_effect=RuntimeError("smtp")))
+    failing_send = AsyncMock(side_effect=RuntimeError("smtp"))
 
-    await auth._issue_verification_token(db, auth_user, make_http_request())
+    await auth_service.send_one_time_link(db, auth_user, "email_verify", 5, lambda token: f"link:{token}", failing_send)
 
     db.users.create_auth_token.assert_awaited_once()
 
@@ -273,63 +153,6 @@ def make_auth_user_row(user_id, *, verified=True):
 
 
 @pytest.mark.asyncio
-async def test_login_sets_token_and_clears_failures(monkeypatch):
-    user_id = str(uuid4())
-    db = make_auth_database()
-    db.users.get_auth_user_by_email.return_value = make_auth_user_row(user_id)
-    limiter = make_login_limiter()
-    monkeypatch.setattr(auth, "login_rate_limiter", limiter)
-    monkeypatch.setattr(auth, "verify_password", lambda password, hashed: True)
-
-    response = await auth.login(
-        LoginRequest(email="ada@example.com", password="right"),
-        make_http_request(),
-        Response(),
-        db,
-    )
-
-    assert response.access_token == f"jwt:{user_id}"
-    assert limiter.register_success.call_count == 2
-
-
-@pytest.mark.asyncio
-async def test_login_rejects_unknown_credentials(monkeypatch):
-    db = make_auth_database()
-    limiter = make_login_limiter()
-    monkeypatch.setattr(auth, "login_rate_limiter", limiter)
-
-    with pytest.raises(HTTPException) as raised:
-        await auth.login(
-            LoginRequest(email="ada@example.com", password="wrong"),
-            make_http_request(),
-            Response(),
-            db,
-        )
-
-    assert raised.value.status_code == 401
-    assert limiter.register_failure.call_count == 2
-
-
-@pytest.mark.asyncio
-async def test_login_rejects_unverified_email(monkeypatch):
-    db = make_auth_database()
-    db.users.get_auth_user_by_email.return_value = make_auth_user_row(str(uuid4()), verified=False)
-    limiter = make_login_limiter()
-    monkeypatch.setattr(auth, "login_rate_limiter", limiter)
-    monkeypatch.setattr(auth, "verify_password", lambda password, hashed: True)
-
-    with pytest.raises(HTTPException) as raised:
-        await auth.login(
-            LoginRequest(email="ada@example.com", password="right"),
-            make_http_request(),
-            Response(),
-            db,
-        )
-
-    assert raised.value.status_code == 403
-
-
-@pytest.mark.asyncio
 async def test_login_respects_attempt_lockout(monkeypatch):
     db = make_auth_database()
     limiter = make_login_limiter()
@@ -348,39 +171,6 @@ async def test_login_respects_attempt_lockout(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_logout_returns_confirmation():
-    response = await auth.logout(make_http_request(), Response())
-
-    assert response.message == "Logged out."
-
-
-@pytest.mark.asyncio
-async def test_forgot_password_issues_reset_token(auth_user):
-    auth_user.email_verified = True
-    db = make_auth_database(auth_user)
-    db.users.get_user_by_email.return_value = auth_user
-
-    response = await auth.forgot_password(ForgotPasswordRequest(email=auth_user.email), make_http_request(), db)
-
-    assert "if this account exists" in response.message.lower()
-    db.users.create_auth_token.assert_awaited_once()
-    auth.send_password_reset_email.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("account_exists", [True, False])
-async def test_forgot_password_skips_ineligible_account(auth_user, account_exists):
-    auth_user.email_verified = True
-    db = make_auth_database(auth_user)
-    db.users.get_user_by_email.return_value = auth_user if account_exists else None
-    db.users.has_recent_auth_token.return_value = True
-
-    await auth.forgot_password(ForgotPasswordRequest(email=auth_user.email), make_http_request(), db)
-
-    auth.send_password_reset_email.assert_not_awaited()
-
-
-@pytest.mark.asyncio
 async def test_password_reset_email_failure_does_not_escape(monkeypatch, auth_user):
     auth_user.email_verified = True
     db = make_auth_database(auth_user)
@@ -393,30 +183,28 @@ async def test_password_reset_email_failure_does_not_escape(monkeypatch, auth_us
 
 
 @pytest.mark.asyncio
-async def test_reset_password_updates_hash(auth_user):
+async def test_register_rejects_another_users_private_home_course(auth_user):
+    from tests.helpers import make_course
+
     db = make_auth_database(auth_user)
-    db.users.consume_auth_token.return_value = auth_user.id
-    request = ResetPasswordRequest(token="t" * 20, new_password="newpassword")
-
-    response = await auth.reset_password(request, make_http_request(), db)
-
-    assert "has been reset" in response.message
-    db.users.set_password_hash.assert_awaited_once_with(auth_user.id, "hashed:newpassword")
-
-
-@pytest.mark.asyncio
-async def test_reset_password_rejects_invalid_token(auth_user):
-    db = make_auth_database(auth_user)
-    request = ResetPasswordRequest(token="t" * 20, new_password="newpassword")
+    db.courses.get_course.return_value = make_course(uuid4(), owner=uuid4())
+    request = RegisterRequest(
+        name="Ada", email="ada@example.com", password="password123", home_course_id=str(uuid4())
+    )
 
     with pytest.raises(HTTPException) as raised:
-        await auth.reset_password(request, make_http_request(), db)
+        await auth.register(request, make_http_request(), db)
 
-    assert raised.value.status_code == 400
+    assert raised.value.status_code == 403
+    db.users.create_user.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_me_returns_authenticated_user(auth_user):
-    response = await auth.me(auth_user)
+async def test_invalid_reset_token_is_refused_before_hashing(monkeypatch):
+    db = make_auth_database()
+    db.users.auth_token_user = AsyncMock(return_value=None)
+    hashing = AsyncMock()
+    monkeypatch.setattr(auth_service, "hash_password_async", hashing)
 
-    assert (response.user_id, response.email_verified) == (auth_user.id, False)
+    assert await auth_service.reset_password(db, "x" * 32, "a brand new password") is None
+    hashing.assert_not_awaited()

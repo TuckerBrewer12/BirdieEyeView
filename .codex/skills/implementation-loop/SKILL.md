@@ -24,12 +24,14 @@ Treat the recon artifact as read-only. Treat the implementation artifact as read
 
 ## Implementation Loop
 
+Before the first edit, run the unit suite and the integration tests for the affected domain, and record any failure that already exists so it is not attributed to the change.
+
 Repeat until the change meets the user's request and the acceptance criteria:
 
 1. Select the next smallest coherent edit from the plan.
 2. Read the target files and nearby tests before editing.
 3. Edit with the repository's existing style and architecture.
-4. Add or update unit tests covering the new or changed behavior.
+4. Add the tests the plan names, E2E first per the Testing Priority in `.codex/skills/make-code-change/SKILL.md`. Add a unit test only with the plan's stated necessity reason, and update existing unit tests the change breaks.
 5. Run the most focused relevant test/check.
 6. If it fails, diagnose from the failure, make the smallest reasonable fix, and rerun.
 7. Broaden validation when the changed surface is shared or cross-layer.
@@ -38,6 +40,17 @@ Repeat until the change meets the user's request and the acceptance criteria:
 Once the planned edits and validation are complete, run the Completion Review Loop below before declaring the implementation finished. Passing tests alone does not complete the change.
 
 Do not commit. Do not revert unrelated dirty work.
+
+## Final Gates
+
+Run these once the planned edits are done, and again after the last fix from the Completion Review Loop. Commands come from `docs/practices/testing.md`:
+
+- the full unit suite and the full PostgreSQL integration suite
+- lint, the OpenAPI check and the `scripts/ci/check_*.py` convention checks
+- when the OpenAPI schema changed: regenerate `frontend/openapi.json` and `api.gen.ts`, and run the frontend type check
+- `git status --short` shows only the planned files: no probe, scratch or generated leftovers
+
+Live scan evaluation calls paid providers. Run it only when the plan names it and the user has agreed to the cost.
 
 ## When The Plan Is Wrong
 
@@ -63,7 +76,7 @@ Review the implementation as a reviewer looking for omissions, rather than assum
 
 1. Compare the full task diff, including added files, with the user's original request, every approved acceptance criterion, and any approved plan amendments. Check for missing behavior and unintended changes.
 2. Read the affected surrounding code and trace changed behavior through relevant callers and layer boundaries. Look for regressions, inconsistent contracts, and relevant boundary or failure cases that the existing tests could miss.
-3. Investigate suspected gaps with code evidence and focused checks at the appropriate testing layer. Add or update regression tests when they protect meaningful behavior; do not add tests merely to mirror the implementation or raise coverage.
+3. Investigate suspected gaps with code evidence and focused checks at the appropriate testing layer. Add or update regression tests when they protect meaningful behavior, at the E2E layer unless the Testing Priority's unit-test reasons apply; do not add tests merely to mirror the implementation or raise coverage. Re-check that every unit test added in this change still meets a necessity reason, and remove any that an E2E test now covers.
 4. Fix confirmed findings within the approved scope, rerun the affected checks, and repeat this review against the revised implementation. Broaden validation when the finding shows a wider impact; do not rerun unrelated checks without a reason.
 5. Finish only when the review finds no remaining actionable gaps within the approved scope and the Completion Standard is met. If a finding needs a plan amendment, follow When The Plan Is Wrong before editing that area. If a finding cannot be resolved or verified, report it explicitly and do not describe that area as complete or verified.
 
@@ -75,8 +88,8 @@ The loop is complete when:
 
 - The implementation satisfies the user's original request and the approved acceptance criteria, including any approved amendments.
 - The code is clean, local to the planned surface, and consistent with existing patterns.
-- Relevant unit tests have been added or updated.
-- Focused tests/checks pass, or any inability to run them is clearly explained.
+- The planned E2E and integration tests are in place, and every new unit test has a stated necessity reason.
+- The Final Gates pass, or any inability to run one is clearly explained. A failure that existed before the change is reported as such, not hidden.
 - The Completion Review Loop has been performed after the last implementation fix, with no remaining actionable gaps within the approved scope; unresolved findings and verification limits are explicitly reported.
 - The final response records what changed and what validation was run.
 
@@ -87,7 +100,7 @@ Follow the layer responsibilities in `docs/practices/backend.md`. In particular:
 - Keep domain validation in `models/` and request/response shape in `api/request_models.py` and `api/schemas.py`.
 - Keep business logic in `services/` when it would otherwise crowd routers.
 - Keep async database behavior in repositories and row/model conversion in `database/converters.py`.
-- Clamp unreliable scan values before constructing strict Pydantic models, following `services/scan_service.py`.
+- Normalize scan-derived values with `services/scan_normalization.py` before constructing strict Pydantic models; reject values that would need guessing instead of clamping or rewriting them.
 
 Take test and lint commands from `docs/practices/testing.md`; do not copy them from memory or older notes. Mock provider APIs and other true external boundaries. For database work, use fakes only for Python-side branching, conversion, or error translation; validate SQL, constraints, transactions, ownership filters, PostgreSQL types/extensions, and persistence round trips with the disposable PostgreSQL integration suite.
 
@@ -96,10 +109,11 @@ Take test and lint commands from `docs/practices/testing.md`; do not copy them f
 Finish with:
 
 - changed files
-- tests/checks run and their result
+- tests added by layer (E2E, integration, unit with its necessity reason) and the checks run with their results
 - completion review outcome, including gaps fixed and anything unresolved or unverified
 - plan amendments and small deviations, if any
-- `docs/` guides the change made inaccurate
+- `docs/` guides and `CLAUDE.md`/`AGENTS.md` bullets the change made inaccurate
+- what the frontend owner needs to know, if anything
 - recon and implementation artifact paths
 - residual risks or review notes
 
@@ -113,13 +127,4 @@ At the end of every invocation, check whether this implementation run exposed a 
 - Validation guidance pointed to the wrong command, layer, or source.
 - A recurring failure pattern took several iterations that a short rule would have avoided.
 
-When the evidence is concrete:
-
-- Make the smallest correction to this `SKILL.md` that would have prevented the problem.
-- Keep the skill change separate from the user's task: make it as its own edit and list it under a separate "Skill changes" heading in the final response, with the evidence, so the user can review and commit it apart from the feature work.
-- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or preferences that apply only to the current task.
-- Do not weaken confirmation gates, expand mutation authority, or materially change workflow scope without explicit user approval. Propose those changes instead.
-- Preserve user-authored guidance and avoid duplicating rules already enforced elsewhere.
-- Validate the modified skill with the skill-creator `quick_validate.py` script when available.
-
-If no reusable gap appeared, leave the skill unchanged. Skill maintenance must not interrupt or replace completion of the user's primary task.
+When the evidence is concrete, follow the rules under Continuous Skill Improvement in `.codex/skills/make-code-change/SKILL.md`: the smallest correction, kept separate from the user's task and listed under "Skill changes", with no weakened gates. If no reusable gap appeared, leave the skill unchanged.

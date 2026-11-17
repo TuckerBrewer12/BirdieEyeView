@@ -12,8 +12,8 @@ def _round(strokes, par=4, putts=2, gir=None):
 
 def test_scoring_average_over_all_or_the_last_few():
     rounds = [_round([5] * 18), _round([4] * 18), _round([4] * 9)]
-    assert dashboard.scoring_average(rounds) == (90 + 72 + 36) / 3
-    assert dashboard.scoring_average(rounds, 2) == (72 + 36) / 2
+    assert dashboard.scoring_average(rounds) == (90 + 72) / 2
+    assert dashboard.scoring_average(rounds, 2) == (90 + 72) / 2
     assert dashboard.scoring_average([]) is None
 
 

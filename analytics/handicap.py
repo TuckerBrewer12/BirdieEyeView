@@ -1,12 +1,18 @@
 from __future__ import annotations
 
-import math
+from dataclasses import dataclass
 from datetime import date, datetime
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from models.hole import HOLES_PER_ROUND
-from models.round import Round
+from analytics import eligibility as el
+from models.hole import HOLES_PER_NINE
 from models.user import User
+from models.round import Round
+
+CLOSE_TO_COUNTING = 2.0
+MAX_HANDICAP_INDEX = 54.0
+WHS_WINDOW = 20
 
 _WHS_TABLE: List[tuple[int, float]] = [
     (1, -2.0),
@@ -30,19 +36,269 @@ _WHS_TABLE: List[tuple[int, float]] = [
 ]
 
 
-def whs_window(rated_rounds: int) -> tuple[int, float]:
-    n = min(rated_rounds, 20)
-    if n < 3:
-        return 0, 0.0
-    return _WHS_TABLE[min(n - 3, len(_WHS_TABLE) - 1)]
+def round_half_up(value: float, places: int = 0) -> float:
+    step = Decimal(1).scaleb(-places)
+    return float(Decimal(str(value)).quantize(step, rounding=ROUND_HALF_UP))
 
 
-def score_differential(score: int, course_rating: float, slope_rating: float) -> float:
-    return (score - course_rating) * 113.0 / slope_rating
+def round_rating(round_obj: Round) -> Optional[Tuple[float, float]]:
+    tee = round_obj.get_tee()
+    coverage = round_obj.get_intended_holes()
+    if tee is None or coverage is None:
+        return None
+    rating = tee.get_rating(coverage)
+    if rating is not None:
+        values = (rating.course_rating, rating.slope_rating)
+    elif tee.rating_holes is None and not tee.ratings:
+        layout = round_obj.course.get_expected_holes() if round_obj.course is not None else None
+        values = (tee.course_rating, tee.slope_rating) if layout == coverage else (None, None)
+    else:
+        values = (None, None)
+    return values if None not in values else None
 
 
 def course_handicap(handicap_index: float, slope_rating: float, course_rating: float, par: int) -> int:
-    return math.floor(handicap_index * slope_rating / 113 + (course_rating - par) + 0.5)
+    return int(round_half_up(handicap_index * slope_rating / 113 + (course_rating - par), 0))
+
+
+def score_differential(score: int, course_rating: float, slope_rating: float) -> float:
+    if not slope_rating:
+        raise ValueError("Slope Rating must be positive")
+    return (score - course_rating) * 113.0 / slope_rating
+
+
+def _get_differential_for_round(round_obj: Round) -> Optional[float]:
+    if el.round_format(round_obj) != el.EIGHTEEN or not round_obj.is_complete():
+        return None
+    total = round_obj.calculate_total_score()
+    rating = round_rating(round_obj)
+    if rating is not None:
+        return round_half_up(score_differential(total, *rating), 1)
+    par = round_obj.get_par()
+    return float(total - par) if par is not None else None
+
+
+@dataclass(frozen=True)
+class _Differential:
+    round_obj: Round
+    value: float
+
+
+def _differentials(rounds: List[Round]) -> List[_Differential]:
+    found = []
+    for round_obj in rounds:
+        value = _get_differential_for_round(round_obj)
+        if value is not None:
+            found.append(_Differential(round_obj, value))
+    return found
+
+
+def _eligible(
+    differentials: List[_Differential],
+    *,
+    seed_handicap: Optional[float],
+    transition_rounds: int,
+    seed_set_at: Optional[datetime],
+) -> List[_Differential]:
+    if seed_handicap is None:
+        return differentials
+    if seed_set_at is not None:
+        cutoff: date = seed_set_at.date()
+        before, after = [], []
+        for d in differentials:
+            played = d.round_obj.date.date() if d.round_obj.date is not None else None
+            (before if played is not None and played < cutoff else after).append(d)
+        return [d for d in before if d.value < seed_handicap] + after
+    early, late = differentials[:transition_rounds], differentials[transition_rounds:]
+    return [d for d in early if d.value < seed_handicap] + late
+
+
+def _select(eligible: List[_Differential], use_last_n: int) -> Tuple[List[_Differential], float]:
+    recent = eligible[-use_last_n:]
+    count, adjustment = _WHS_TABLE[min(len(recent) - 3, len(_WHS_TABLE) - 1)]
+    ordered = sorted(enumerate(recent), key=lambda item: (item[1].value, -item[0]))
+    return [d for _, d in ordered[:count]], adjustment
+
+
+def _index_from(
+    differentials: List[_Differential],
+    *,
+    use_last_n: int,
+    seed_handicap: Optional[float],
+    transition_rounds: int,
+    seed_set_at: Optional[datetime],
+) -> Tuple[Optional[float], List[_Differential]]:
+    eligible = _eligible(
+        differentials, seed_handicap=seed_handicap, transition_rounds=transition_rounds, seed_set_at=seed_set_at,
+    )
+    recent = eligible[-use_last_n:]
+    if len(recent) < 3:
+        if seed_handicap is None:
+            return None, []
+        best = min([seed_handicap] + [d.value for d in recent])
+        return round_half_up(min(best, MAX_HANDICAP_INDEX), 1), []
+    used, adjustment = _select(eligible, use_last_n)
+    index = sum(d.value for d in used) / len(used) + adjustment
+    return round_half_up(min(index, MAX_HANDICAP_INDEX), 1), used
+
+
+def _check_window(use_last_n: int) -> None:
+    if not 1 <= use_last_n <= WHS_WINDOW:
+        raise ValueError(f"use_last_n must be between 1 and {WHS_WINDOW}")
+
+
+def score_differentials_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
+    results: List[Dict[str, Any]] = []
+    for index, round_obj in enumerate(rounds, start=1):
+        rating = round_rating(round_obj)
+        results.append(
+            {
+                "round_index": index,
+                "round_id": round_obj.id,
+                "score": round_obj.calculate_total_score() if round_obj.is_complete() else None,
+                "course_rating": rating[0] if rating else None,
+                "slope_rating": rating[1] if rating else None,
+                "differential": _get_differential_for_round(round_obj),
+            }
+        )
+    return results
+
+
+def handicap_index(
+    rounds: Iterable[Round],
+    use_last_n: int = WHS_WINDOW,
+    *,
+    seed_handicap: Optional[float] = None,
+    transition_rounds: int = 10,
+    seed_set_at: Optional[datetime] = None,
+) -> Optional[float]:
+    _check_window(use_last_n)
+    index, _ = _index_from(
+        _differentials(el.chronological(rounds)),
+        use_last_n=use_last_n,
+        seed_handicap=seed_handicap,
+        transition_rounds=transition_rounds,
+        seed_set_at=seed_set_at,
+    )
+    return index
+
+
+def user_handicap_index(rounds: Iterable[Round], user: Any) -> Optional[float]:
+    return handicap_index(
+        rounds,
+        seed_handicap=getattr(user, "handicap", None),
+        seed_set_at=getattr(user, "last_handicap_update", None),
+    )
+
+
+def handicap_trend(
+    rounds: Iterable[Round],
+    *,
+    seed_handicap: Optional[float] = None,
+    transition_rounds: int = 10,
+    seed_set_at: Optional[datetime] = None,
+) -> List[Dict[str, Any]]:
+    ordered = el.chronological(rounds)
+    differentials = _differentials(ordered)
+    by_round = {id(d.round_obj): d for d in differentials}
+    options = {"use_last_n": WHS_WINDOW, "seed_handicap": seed_handicap,
+               "transition_rounds": transition_rounds, "seed_set_at": seed_set_at}
+
+    results: List[Dict[str, Any]] = []
+    seen: List[_Differential] = []
+    for i, round_obj in enumerate(ordered, start=1):
+        this = by_round.get(id(round_obj))
+        if this is not None:
+            seen.append(this)
+        index, _ = _index_from(list(seen), **options)
+        results.append(
+            {
+                "round_index": i,
+                "round_id": round_obj.id,
+                "handicap_index": index,
+                "differential": this.value if this is not None else None,
+                "used_in_hi": None,
+                "hi_threshold": None,
+            }
+        )
+
+    _, used = _index_from(differentials, **options)
+    used_ids = {id(d.round_obj) for d in used}
+    threshold = max((d.value for d in used), default=None)
+    for entry, round_obj in zip(results, ordered):
+        entry["hi_threshold"] = threshold
+        if entry["differential"] is not None:
+            entry["used_in_hi"] = id(round_obj) in used_ids
+    eligible = _eligible(differentials, seed_handicap=seed_handicap, transition_rounds=transition_rounds, seed_set_at=seed_set_at)[-WHS_WINDOW:]
+    eligible_ids = {id(d.round_obj) for d in eligible}
+    for entry, round_obj in zip(results, ordered):
+        entry["differential_status"] = differential_status(entry["differential"], bool(entry["used_in_hi"]), entry["hi_threshold"] if id(round_obj) in eligible_ids else None)
+    return results
+
+
+def differential_status(differential: Optional[float], used: bool, threshold: Optional[float]) -> str:
+    if differential is None:
+        return "unrated"
+    if used:
+        return "counting"
+    if threshold is not None and differential - threshold <= CLOSE_TO_COUNTING:
+        return "close"
+    return "out"
+
+
+def player_handicap_trend(user: Optional[User], history: List[Round]) -> List[Dict[str, Any]]:
+    return handicap_trend(history, **_seed(user))
+
+
+def player_handicap_index(user: Optional[User], rounds: Iterable[Round]) -> Optional[float]:
+    return player_index_window(user, rounds)["index"]
+
+
+def player_index_window(user: Optional[User], rounds: Iterable[Round]) -> Dict[str, Any]:
+    return index_window(rounds, **_seed(user))
+
+
+def _seed(user: Optional[User]) -> Dict[str, Any]:
+    if user is None:
+        return {"seed_handicap": None, "seed_set_at": None}
+    return {"seed_handicap": user.handicap, "seed_set_at": user.last_handicap_update}
+
+
+def index_window(rounds: Iterable[Round], use_last_n: int = WHS_WINDOW, *,
+                 seed_handicap: Optional[float] = None, transition_rounds: int = 10,
+                 seed_set_at: Optional[datetime] = None) -> Dict[str, Any]:
+    _check_window(use_last_n)
+    ordered = el.chronological(rounds)
+    differentials = _differentials(ordered)
+    options = {"seed_handicap": seed_handicap, "transition_rounds": transition_rounds, "seed_set_at": seed_set_at}
+    eligible = _eligible(differentials, **options)[-use_last_n:]
+    index, used = _index_from(differentials, use_last_n=use_last_n, **options)
+    used_ids = {id(d.round_obj) for d in used}
+    eligible_ids = {id(d.round_obj) for d in eligible}
+    count, adjustment = whs_window(len(eligible))
+    return {"index": index, "counting": {i for i,r in enumerate(ordered) if id(r) in used_ids},
+                "eligible": {i for i,r in enumerate(ordered) if id(r) in eligible_ids},
+                "threshold": max((d.value for d in used), default=None), "rated": len(eligible),
+                "count": count, "adjustment": adjustment}
+
+
+def round_net_score(round_obj: Round, handicap_index: Optional[float]) -> Optional[int]:
+    gross = round_obj.calculate_total_score()
+    strokes = round_course_handicap(round_obj, handicap_index)
+    if gross is None or strokes is None:
+        return None
+    return gross - strokes
+
+
+def round_course_handicap(round_obj: Round, handicap_index: Optional[float]) -> Optional[int]:
+    rating = round_rating(round_obj)
+    par = round_obj.get_par()
+    coverage = round_obj.get_intended_holes()
+    if handicap_index is None or rating is None or par is None or coverage is None or not round_obj.is_complete():
+        return None
+    course_rating, slope = rating
+    index = handicap_index / 2 if len(coverage) == HOLES_PER_NINE else handicap_index
+    return course_handicap(index, slope, course_rating, par)
 
 
 def tee_course_handicap(
@@ -56,241 +312,8 @@ def tee_course_handicap(
     return course_handicap(handicap_index, slope_rating, course_rating, par)
 
 
-def round_course_handicap(round_obj: Round, handicap_index: Optional[float]) -> Optional[int]:
-    tee = round_obj.get_tee()
-    if tee is None or round_obj.holes_played() < HOLES_PER_ROUND:
-        return None
-    return tee_course_handicap(handicap_index, tee.slope_rating, tee.course_rating, round_obj.get_par())
-
-
-def round_net_score(round_obj: Round, handicap_index: Optional[float]) -> Optional[int]:
-    gross = round_obj.calculate_total_score()
-    strokes = round_course_handicap(round_obj, handicap_index)
-    if gross is None or strokes is None:
-        return None
-    return gross - strokes
-
-
-def _get_differential_for_round(round_obj: Round) -> Optional[float]:
-    total = round_obj.calculate_total_score()
-    if total is None:
-        return None
-
-    holes_played = round_obj.holes_played()
-
-    tee = round_obj.get_tee()
-    if tee is not None and tee.course_rating is not None and tee.slope_rating is not None:
-        if holes_played < HOLES_PER_ROUND and tee.course_rating >= 50.0:
-            return None
-        return score_differential(total, tee.course_rating, tee.slope_rating)
-
-    par = round_obj.get_par()
-    if par is None:
-        return None
-    if holes_played < HOLES_PER_ROUND and par >= 50:
-        return None
-    return float(total - par)
-
-
-def score_differentials_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    results: List[Dict[str, Any]] = []
-    for index, round_obj in enumerate(rounds, start=1):
-        diff = _get_differential_for_round(round_obj)
-        tee = round_obj.get_tee()
-        results.append(
-            {
-                "round_index": index,
-                "round_id": round_obj.id,
-                "score": round_obj.calculate_total_score(),
-                "course_rating": tee.course_rating if tee else None,
-                "slope_rating": tee.slope_rating if tee else None,
-                "differential": round(diff, 1) if diff is not None else None,
-            }
-        )
-    return results
-
-
-WHS_ROUNDS = 20
-
-
-def _eligible(
-    rounds: List[Round],
-    diffs: List[Optional[float]],
-    *,
-    seed_handicap: Optional[float] = None,
-    transition_rounds: int = 10,
-    seed_set_at: Optional[datetime] = None,
-) -> List[Tuple[int, float]]:
-    rated = [(i, d) for i, d in enumerate(diffs) if d is not None]
-    if seed_handicap is None:
-        return rated
-    if seed_set_at is not None:
-        cutoff: date = seed_set_at.date()
-        eligible: List[Tuple[int, float]] = []
-        for i, d in rated:
-            played = rounds[i].date
-            day = played.date() if isinstance(played, datetime) else played
-            if day is None or day >= cutoff or d < seed_handicap:
-                eligible.append((i, d))
-        return eligible
-    return [(i, d) for k, (i, d) in enumerate(rated) if k >= transition_rounds or d < seed_handicap]
-
-
-def _eligible_differentials(
-    rounds: List[Round],
-    *,
-    seed_handicap: Optional[float] = None,
-    transition_rounds: int = 10,
-    seed_set_at: Optional[datetime] = None,
-) -> List[float]:
-    diffs = [_get_differential_for_round(r) for r in rounds]
-    return [d for _, d in _eligible(
-        rounds, diffs, seed_handicap=seed_handicap, transition_rounds=transition_rounds, seed_set_at=seed_set_at,
-    )]
-
-
-def _index_window(
-    rounds: List[Round],
-    diffs: List[Optional[float]],
-    use_last_n: int = WHS_ROUNDS,
-    *,
-    seed_handicap: Optional[float] = None,
-    transition_rounds: int = 10,
-    seed_set_at: Optional[datetime] = None,
-) -> Dict[str, Any]:
-    eligible = _eligible(
-        rounds, diffs, seed_handicap=seed_handicap, transition_rounds=transition_rounds, seed_set_at=seed_set_at,
-    )[-use_last_n:]
-    n = len(eligible)
-    window: Dict[str, Any] = {
-        "index": None, "counting": set(), "threshold": None, "rated": n, "count": 0, "adjustment": 0.0,
-    }
+def whs_window(rated_rounds: int) -> tuple[int, float]:
+    n = min(rated_rounds, 20)
     if n < 3:
-        if seed_handicap is not None:
-            window["index"] = round(min([seed_handicap] + [d for _, d in eligible]), 1)
-        return window
-
-    count, adjustment = whs_window(n)
-    ranked = sorted(eligible, key=lambda pair: (pair[1], -pair[0]))
-    best = ranked[:count]
-    hi = min(sum(d for _, d in best) / count + adjustment, 54.0)
-    window.update(
-        index=round(hi, 1),
-        counting={i for i, _ in best},
-        threshold=ranked[count - 1][1],
-        count=count,
-        adjustment=adjustment,
-    )
-    return window
-
-
-def index_window(
-    rounds: Iterable[Round],
-    use_last_n: int = WHS_ROUNDS,
-    *,
-    seed_handicap: Optional[float] = None,
-    transition_rounds: int = 10,
-    seed_set_at: Optional[datetime] = None,
-) -> Dict[str, Any]:
-    all_rounds = list(rounds)
-    return _index_window(
-        all_rounds,
-        [_get_differential_for_round(r) for r in all_rounds],
-        use_last_n,
-        seed_handicap=seed_handicap,
-        transition_rounds=transition_rounds,
-        seed_set_at=seed_set_at,
-    )
-
-
-def handicap_index(
-    rounds: Iterable[Round],
-    use_last_n: int = WHS_ROUNDS,
-    *,
-    seed_handicap: Optional[float] = None,
-    transition_rounds: int = 10,
-    seed_set_at: Optional[datetime] = None,
-) -> Optional[float]:
-    return index_window(
-        rounds,
-        use_last_n,
-        seed_handicap=seed_handicap,
-        transition_rounds=transition_rounds,
-        seed_set_at=seed_set_at,
-    )["index"]
-
-
-def _seed(user: Optional[User]) -> Dict[str, Any]:
-    if user is None:
-        return {"seed_handicap": None, "seed_set_at": None}
-    return {"seed_handicap": user.handicap, "seed_set_at": user.last_handicap_update}
-
-
-def player_index_window(user: Optional[User], rounds: Iterable[Round]) -> Dict[str, Any]:
-    return index_window(list(rounds)[-WHS_ROUNDS:], **_seed(user))
-
-
-def player_handicap_index(user: Optional[User], rounds: Iterable[Round]) -> Optional[float]:
-    return player_index_window(user, rounds)["index"]
-
-
-def handicap_trend(
-    rounds: Iterable[Round],
-    *,
-    seed_handicap: Optional[float] = None,
-    transition_rounds: int = 10,
-    seed_set_at: Optional[datetime] = None,
-) -> List[Dict[str, Any]]:
-    all_rounds = list(rounds)
-    diffs = [_get_differential_for_round(r) for r in all_rounds]
-    results: List[Dict[str, Any]] = []
-    for i, round_obj in enumerate(all_rounds, start=1):
-        start = max(0, i - WHS_ROUNDS)
-        hi = _index_window(
-            all_rounds[start:i],
-            diffs[start:i],
-            seed_handicap=seed_handicap,
-            transition_rounds=transition_rounds,
-            seed_set_at=seed_set_at,
-        )["index"]
-        this_diff = diffs[i - 1]
-        results.append(
-            {
-                "round_index": i,
-                "round_id": round_obj.id,
-                "handicap_index": hi,
-                "differential": round(this_diff, 1) if this_diff is not None else None,
-                "used_in_hi": None,
-                "hi_threshold": None,
-                "differential_status": "unrated",
-            }
-        )
-    return results
-
-
-def player_handicap_trend(user: Optional[User], history: List[Round]) -> List[Dict[str, Any]]:
-    trend = handicap_trend(history, **_seed(user))
-    current = player_index_window(user, history)
-    offset = max(0, len(history) - WHS_ROUNDS)
-    counting = {offset + i for i in current["counting"]}
-    threshold = current["threshold"]
-    for i, entry in enumerate(trend):
-        diff = entry["differential"]
-        used = i in counting
-        entry["hi_threshold"] = round(threshold, 1) if threshold is not None else None
-        entry["used_in_hi"] = None if diff is None else used
-        entry["differential_status"] = differential_status(diff, used, threshold if i >= offset else None)
-    return trend
-
-
-CLOSE_TO_COUNTING = 2.0
-
-
-def differential_status(differential: Optional[float], used: bool, threshold: Optional[float]) -> str:
-    if differential is None:
-        return "unrated"
-    if used:
-        return "counting"
-    if threshold is not None and differential - threshold <= CLOSE_TO_COUNTING:
-        return "close"
-    return "out"
+        return 0, 0.0
+    return _WHS_TABLE[min(n - 3, len(_WHS_TABLE) - 1)]

@@ -1,6 +1,8 @@
 import os
 import re
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 
 import httpx
 
@@ -11,6 +13,46 @@ def _normalize_course_name(value: str) -> str:
     base = re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).strip()
     base = _GOLF_STOP_WORDS.sub(" ", base)
     return " ".join(base.split())
+
+
+class CourseProviderUnavailable(RuntimeError):
+    ...
+
+
+class CourseProviderNotFound(LookupError):
+    ...
+
+
+@dataclass(frozen=True)
+class ProviderTee:
+    """Provider data must never be stored."""
+
+    group: str
+    name: Optional[str]
+    pars: Dict[int, int]
+    yardages: Dict[int, int]
+    course_rating: Optional[float] = None
+    slope_rating: Optional[int] = None
+
+
+def _provider_int(value: Any) -> Optional[int]:
+    return value if isinstance(value, int) and not isinstance(value, bool) else None
+
+
+def _provider_number(value: Any) -> Optional[float]:
+    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+
+
+def _display_name(club_name: Optional[str], course_name: Optional[str]) -> Optional[str]:
+    club = (club_name or "").strip()
+    course = (course_name or "").strip()
+    if not club or not course:
+        return club or course or None
+    if course.casefold() in club.casefold():
+        return club
+    if club.casefold() in course.casefold():
+        return course
+    return f"{club} {course}"
 
 
 class GolfCourseAPIService:
@@ -39,9 +81,7 @@ class GolfCourseAPIService:
         if len(q) < 2:
             return []
         if not self._api_key:
-            raise EnvironmentError(
-                "GOLFCOURSE_API_KEY environment variable is not set"
-            )
+            raise CourseProviderUnavailable("GOLFCOURSE_API_KEY environment variable is not set")
 
         headers = {"Authorization": f"Key {self._api_key}"}
         path = self._search_path if self._search_path.startswith("/") else f"/{self._search_path}"
@@ -55,7 +95,62 @@ class GolfCourseAPIService:
                 items = self._extract_items(data)
                 return self._normalize_items(items, limit=limit)
             except Exception as exc:
-                raise RuntimeError(f"GolfCourseAPI search failed: {exc}") from exc
+                raise CourseProviderUnavailable(f"GolfCourseAPI search failed: {exc}") from exc
+
+    async def get_course_details(self, external_course_id: str) -> List[ProviderTee]:
+        if not self._api_key:
+            raise CourseProviderUnavailable("GOLFCOURSE_API_KEY environment variable is not set")
+        headers = {"Authorization": f"Key {self._api_key}"}
+        path = f"/v1/courses/{quote(str(external_course_id), safe='')}"
+        async with httpx.AsyncClient(base_url=self._base_url, timeout=self._timeout) as client:
+            try:
+                resp = await client.get(path, headers=headers)
+                resp.raise_for_status()
+                payload = resp.json()
+            except httpx.HTTPStatusError as exc:
+                if exc.response is not None and exc.response.status_code == 404:
+                    raise CourseProviderNotFound(external_course_id) from exc
+                raise CourseProviderUnavailable(f"GolfCourseAPI course lookup failed: {exc}") from exc
+            except Exception as exc:
+                raise CourseProviderUnavailable(f"GolfCourseAPI course lookup failed: {exc}") from exc
+        tees = self._parse_course_tees(payload)
+        if not tees:
+            raise CourseProviderUnavailable("GolfCourseAPI course has no per-hole tee data")
+        return tees
+
+    @staticmethod
+    def _parse_course_tees(payload: Any) -> List[ProviderTee]:
+        course = payload.get("course", payload) if isinstance(payload, dict) else None
+        groups = course.get("tees") if isinstance(course, dict) else None
+        if not isinstance(groups, dict):
+            return []
+        out: List[ProviderTee] = []
+        for group, tees in groups.items():
+            if not isinstance(tees, list):
+                continue
+            for tee in tees:
+                holes = tee.get("holes") if isinstance(tee, dict) else None
+                if not isinstance(holes, list) or not holes:
+                    continue
+                pars: Dict[int, int] = {}
+                yardages: Dict[int, int] = {}
+                for number, hole in enumerate(holes, start=1):
+                    if not isinstance(hole, dict):
+                        continue
+                    if (par := _provider_int(hole.get("par"))) is not None:
+                        pars[number] = par
+                    if (yards := _provider_int(hole.get("yardage"))) is not None:
+                        yardages[number] = yards
+                name = tee.get("tee_name")
+                out.append(ProviderTee(
+                    str(group),
+                    name if isinstance(name, str) else None,
+                    pars,
+                    yardages,
+                    course_rating=_provider_number(tee.get("course_rating")),
+                    slope_rating=_provider_int(tee.get("slope_rating")),
+                ))
+        return out
 
     def _normalize_search_query(self, query: str) -> str:
         cleaned = _normalize_course_name(query)
@@ -82,17 +177,7 @@ class GolfCourseAPIService:
         for row in items:
             external_id = self._extract_external_id(row)
             location_obj = row.get("location") if isinstance(row.get("location"), dict) else {}
-            club_name = row.get("club_name")
-            course_name = row.get("course_name")
-            resolved_name = (
-                row.get("name")
-                or row.get("course_name")
-                or (
-                    f"{club_name} {course_name}".strip()
-                    if club_name and course_name
-                    else club_name or course_name
-                )
-            )
+            resolved_name = row.get("name") or _display_name(row.get("club_name"), row.get("course_name"))
             out.append(
                 {
                     "external_course_id": str(external_id) if external_id is not None else None,

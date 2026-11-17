@@ -1,0 +1,152 @@
+{
+ "document_annotation": null,
+ "model": "mistral-ocr-latest",
+ "pages": [
+  {
+   "blocks": [
+    {
+     "bottom_right_x": 399,
+     "bottom_right_y": 384,
+     "confidence_scores": null,
+     "content": "# Fun Starts Now Guide",
+     "top_left_x": 80,
+     "top_left_y": 350,
+     "type": "title"
+    },
+    {
+     "bottom_right_x": 697,
+     "bottom_right_y": 444,
+     "confidence_scores": null,
+     "content": "Be happy... Practice your best Bob Marley One World/One Love imitation and treat all respectfully.",
+     "top_left_x": 80,
+     "top_left_y": 388,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 751,
+     "bottom_right_y": 1085,
+     "confidence_scores": null,
+     "content": "<table><tr><td colspan=\"2\">HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td colspan=\"2\">BLACK</td><td>533</td><td>394</td><td>388</td><td>469</td><td>133</td><td>525</td><td>187</td><td>297</td><td>409</td><td>3335</td></tr><tr><td>BLACK</td><td>BLUE</td><td>533</td><td>394</td><td>388</td><td>415</td><td>133</td><td>525</td><td>187</td><td>297</td><td>381</td><td>3053</td></tr><tr><td colspan=\"2\">BLUE</td><td>504</td><td>356</td><td>357</td><td>415</td><td>108</td><td>484</td><td>163</td><td>262</td><td>381</td><td>3030</td></tr><tr><td>BLUE</td><td>WHITE</td><td>504</td><td>356</td><td>357</td><td>378</td><td>108</td><td>484</td><td>163</td><td>262</td><td>358</td><td>2970</td></tr><tr><td colspan=\"2\">WHITE</td><td>473</td><td>327</td><td>329</td><td>378</td><td>89</td><td>451</td><td>145</td><td>256</td><td>358</td><td>2806</td></tr><tr><td colspan=\"2\">RED</td><td>439</td><td>292</td><td>289</td><td>339</td><td>79</td><td>397</td><td>128</td><td>178</td><td>316</td><td>2457</td></tr><tr><td colspan=\"2\">YELLOW</td><td>401</td><td>264</td><td>255</td><td>287</td><td>72</td><td>369</td><td>120</td><td>165</td><td>278</td><td>2211</td></tr><tr><td colspan=\"2\">PAR</td><td>5</td><td>4</td><td>4</td><td>4</td><td>3</td><td>5</td><td>3</td><td>4</td><td>4</td><td>36</td></tr><tr><td colspan=\"2\">HANDICAP</td><td>10</td><td>12</td><td>6</td><td>2</td><td>18</td><td>14</td><td>8</td><td>16</td><td>4</td><td></td></tr><tr><td colspan=\"2\">D</td><td>4</td><td>2</td><td>4</td><td>4</td><td>2</td><td>4</td><td>1</td><td>2</td><td>3</td><td></td></tr><tr><td colspan=\"2\"></td><td>3</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td colspan=\"2\"></td><td>2</td><td>0</td><td>2</td><td>2</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>8</td></tr><tr><td colspan=\"2\">G</td><td>5</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>5</td></tr><tr><td colspan=\"2\"></td><td>2</td><td>3</td><td>1</td><td>2</td><td>3</td><td>2</td><td>2</td><td>1</td><td>2</td><td></td></tr></table>",
+     "table_id": "tbl-0.html",
+     "top_left_x": 66,
+     "top_left_y": 466,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1437,
+     "bottom_right_y": 428,
+     "confidence_scores": null,
+     "content": "Slow play is a drag... so please keep it moving. A few less practice swings is a start and remember not every putt is to win the Masters.",
+     "top_left_x": 761,
+     "top_left_y": 256,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1488,
+     "bottom_right_y": 1071,
+     "confidence_scores": null,
+     "content": "<table><tr><td rowspan=\"13\">P<br/>L<br/>A<br/>Y<br/>E<br/>R</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>444</td><td>248</td><td>474</td><td>332</td><td>370</td><td>495</td><td>179</td><td>579</td><td>418</td><td>3539</td><td>6874</td><td></td><td></td></tr><tr><td>405</td><td>220</td><td>442</td><td>332</td><td>370</td><td>495</td><td>179</td><td>559</td><td>390</td><td>3392</td><td>6645</td><td></td><td></td></tr><tr><td>405</td><td>220</td><td>442</td><td>306</td><td>340</td><td>464</td><td>147</td><td>559</td><td>390</td><td>3273</td><td>6303</td><td></td><td></td></tr><tr><td>373</td><td>185</td><td>402</td><td>306</td><td>340</td><td>464</td><td>147</td><td>515</td><td>364</td><td>3096</td><td>6066</td><td></td><td></td></tr><tr><td>373</td><td>185</td><td>402</td><td>280</td><td>304</td><td>430</td><td>130</td><td>515</td><td>364</td><td>2983</td><td>5789</td><td></td><td></td></tr><tr><td>348</td><td>160</td><td>369</td><td>259</td><td>274</td><td>397</td><td>112</td><td>479</td><td>346</td><td>2744</td><td>5201</td><td></td><td></td></tr><tr><td>319</td><td>149</td><td>352</td><td>239</td><td>250</td><td>371</td><td>105</td><td>452</td><td>319</td><td>2556</td><td>4767</td><td></td><td></td></tr><tr><td>4</td><td>3</td><td>4</td><td>4</td><td>4</td><td>5</td><td>3</td><td>5</td><td>4</td><td>36</td><td>72</td><td></td><td></td></tr><tr><td>7</td><td>5</td><td>1</td><td>15</td><td>13</td><td>17</td><td>11</td><td>9</td><td>3</td><td></td><td></td><td></td><td></td></tr><tr><td>4</td><td>2</td><td>3</td><td>2</td><td>3</td><td>3</td><td>2</td><td>3</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td>2</td><td>1</td><td>3</td><td>3</td><td>1</td><td>2</td><td>3</td><td>3</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td>2</td><td>0</td><td>2</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>2</td><td>7</td><td>17</td><td></td><td></td></tr><tr><td>1</td><td>3</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td><td>7</td><td>12</td><td></td><td></td></tr><tr><td>2</td><td>4</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-1.html",
+     "top_left_x": 761,
+     "top_left_y": 428,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 224,
+     "bottom_right_y": 1247,
+     "confidence_scores": null,
+     "content": "![img-0.jpeg](img-0.jpeg)",
+     "image_id": "img-0.jpeg",
+     "top_left_x": 74,
+     "top_left_y": 1095,
+     "type": "image"
+    },
+    {
+     "bottom_right_x": 709,
+     "bottom_right_y": 1173,
+     "confidence_scores": null,
+     "content": "You'll Remember Your Friends More Than Your Scores!",
+     "top_left_x": 248,
+     "top_left_y": 1137,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 596,
+     "bottom_right_y": 1217,
+     "confidence_scores": null,
+     "content": "KEEP FUN ALIVE!",
+     "top_left_x": 345,
+     "top_left_y": 1183,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 934,
+     "bottom_right_y": 1177,
+     "confidence_scores": null,
+     "content": "Player's Signature",
+     "top_left_x": 788,
+     "top_left_y": 1149,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1251,
+     "bottom_right_y": 1177,
+     "confidence_scores": null,
+     "content": "Date",
+     "top_left_x": 1201,
+     "top_left_y": 1153,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 844,
+     "bottom_right_y": 1217,
+     "confidence_scores": null,
+     "content": "Attest:",
+     "top_left_x": 788,
+     "top_left_y": 1195,
+     "type": "text"
+    }
+   ],
+   "confidence_scores": null,
+   "dimensions": {
+    "dpi": 200,
+    "height": 2000,
+    "width": 1500
+   },
+   "footer": null,
+   "header": null,
+   "hyperlinks": [],
+   "images": [
+    {
+     "bottom_right_x": 224,
+     "bottom_right_y": 1247,
+     "id": "img-0.jpeg",
+     "image_annotation": null,
+     "image_base64": null,
+     "top_left_x": 74,
+     "top_left_y": 1095
+    }
+   ],
+   "index": 0,
+   "markdown": "# Fun Starts Now Guide\n\nBe happy... Practice your best Bob Marley One World/One Love imitation and treat all respectfully.\n\n[tbl-0.html](tbl-0.html)\n\nSlow play is a drag... so please keep it moving. A few less practice swings is a start and remember not every putt is to win the Masters.\n\n[tbl-1.html](tbl-1.html)\n\n![img-0.jpeg](img-0.jpeg)\n\nYou'll Remember Your Friends More Than Your Scores!\n\nKEEP FUN ALIVE!\n\nPlayer's Signature\n\nDate\n\nAttest:",
+   "tables": [
+    {
+     "content": "<table><tr><td colspan=\"2\">HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td colspan=\"2\">BLACK</td><td>533</td><td>394</td><td>388</td><td>469</td><td>133</td><td>525</td><td>187</td><td>297</td><td>409</td><td>3335</td></tr><tr><td>BLACK</td><td>BLUE</td><td>533</td><td>394</td><td>388</td><td>415</td><td>133</td><td>525</td><td>187</td><td>297</td><td>381</td><td>3053</td></tr><tr><td colspan=\"2\">BLUE</td><td>504</td><td>356</td><td>357</td><td>415</td><td>108</td><td>484</td><td>163</td><td>262</td><td>381</td><td>3030</td></tr><tr><td>BLUE</td><td>WHITE</td><td>504</td><td>356</td><td>357</td><td>378</td><td>108</td><td>484</td><td>163</td><td>262</td><td>358</td><td>2970</td></tr><tr><td colspan=\"2\">WHITE</td><td>473</td><td>327</td><td>329</td><td>378</td><td>89</td><td>451</td><td>145</td><td>256</td><td>358</td><td>2806</td></tr><tr><td colspan=\"2\">RED</td><td>439</td><td>292</td><td>289</td><td>339</td><td>79</td><td>397</td><td>128</td><td>178</td><td>316</td><td>2457</td></tr><tr><td colspan=\"2\">YELLOW</td><td>401</td><td>264</td><td>255</td><td>287</td><td>72</td><td>369</td><td>120</td><td>165</td><td>278</td><td>2211</td></tr><tr><td colspan=\"2\">PAR</td><td>5</td><td>4</td><td>4</td><td>4</td><td>3</td><td>5</td><td>3</td><td>4</td><td>4</td><td>36</td></tr><tr><td colspan=\"2\">HANDICAP</td><td>10</td><td>12</td><td>6</td><td>2</td><td>18</td><td>14</td><td>8</td><td>16</td><td>4</td><td></td></tr><tr><td colspan=\"2\">D</td><td>4</td><td>2</td><td>4</td><td>4</td><td>2</td><td>4</td><td>1</td><td>2</td><td>3</td><td></td></tr><tr><td colspan=\"2\"></td><td>3</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td colspan=\"2\"></td><td>2</td><td>0</td><td>2</td><td>2</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>8</td></tr><tr><td colspan=\"2\">G</td><td>5</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>5</td></tr><tr><td colspan=\"2\"></td><td>2</td><td>3</td><td>1</td><td>2</td><td>3</td><td>2</td><td>2</td><td>1</td><td>2</td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-0.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td rowspan=\"13\">P<br/>L<br/>A<br/>Y<br/>E<br/>R</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>444</td><td>248</td><td>474</td><td>332</td><td>370</td><td>495</td><td>179</td><td>579</td><td>418</td><td>3539</td><td>6874</td><td></td><td></td></tr><tr><td>405</td><td>220</td><td>442</td><td>332</td><td>370</td><td>495</td><td>179</td><td>559</td><td>390</td><td>3392</td><td>6645</td><td></td><td></td></tr><tr><td>405</td><td>220</td><td>442</td><td>306</td><td>340</td><td>464</td><td>147</td><td>559</td><td>390</td><td>3273</td><td>6303</td><td></td><td></td></tr><tr><td>373</td><td>185</td><td>402</td><td>306</td><td>340</td><td>464</td><td>147</td><td>515</td><td>364</td><td>3096</td><td>6066</td><td></td><td></td></tr><tr><td>373</td><td>185</td><td>402</td><td>280</td><td>304</td><td>430</td><td>130</td><td>515</td><td>364</td><td>2983</td><td>5789</td><td></td><td></td></tr><tr><td>348</td><td>160</td><td>369</td><td>259</td><td>274</td><td>397</td><td>112</td><td>479</td><td>346</td><td>2744</td><td>5201</td><td></td><td></td></tr><tr><td>319</td><td>149</td><td>352</td><td>239</td><td>250</td><td>371</td><td>105</td><td>452</td><td>319</td><td>2556</td><td>4767</td><td></td><td></td></tr><tr><td>4</td><td>3</td><td>4</td><td>4</td><td>4</td><td>5</td><td>3</td><td>5</td><td>4</td><td>36</td><td>72</td><td></td><td></td></tr><tr><td>7</td><td>5</td><td>1</td><td>15</td><td>13</td><td>17</td><td>11</td><td>9</td><td>3</td><td></td><td></td><td></td><td></td></tr><tr><td>4</td><td>2</td><td>3</td><td>2</td><td>3</td><td>3</td><td>2</td><td>3</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td>2</td><td>1</td><td>3</td><td>3</td><td>1</td><td>2</td><td>3</td><td>3</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td>2</td><td>0</td><td>2</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>2</td><td>7</td><td>17</td><td></td><td></td></tr><tr><td>1</td><td>3</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td><td>7</td><td>12</td><td></td><td></td></tr><tr><td>2</td><td>4</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-1.html",
+     "word_confidence_scores": null
+    }
+   ]
+  }
+ ],
+ "usage_info": {
+  "doc_size_bytes": 444210,
+  "pages_processed": 1
+ }
+}

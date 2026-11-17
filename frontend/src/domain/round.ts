@@ -326,8 +326,17 @@ function fromScan(scan: ScannedRoundDto): Round {
     user_id: null,
     front_nine_par: null,
     back_nine_par: null,
+    total_holes: null,
     holes: scanned.holes,
-    tees: scanned.tees.map((tee) => ({ ...tee, total_yardage: null, front_nine_yardage: null, back_nine_yardage: null })),
+    tees: scanned.tees.map((tee) => ({
+      ...tee,
+      total_yardage: null,
+      front_nine_yardage: null,
+      back_nine_yardage: null,
+      rating_holes: null,
+      ratings: [],
+      yardage_holes: null,
+    })),
   };
   const unread: Round = {
     id: "",

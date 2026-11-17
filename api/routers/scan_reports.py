@@ -3,7 +3,14 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
-from api.routers.scan import MAX_UPLOAD_BYTES, _extract_upload_suffix, _save_upload_to_temp, _validate_upload_payload
+from api.messages import (
+    FILE_TOO_LARGE, REPORT_FIELDS_NOT_ALLOWED, REPORT_FILE_REJECTED, REPORT_FILE_TYPE_UNSUPPORTED,
+    REPORT_METADATA_INVALID,
+)
+from api.error_responses import REPORT_NOT_SAVED, REPORT_STORAGE_UNAVAILABLE
+from api.scan_uploads import (
+    MAX_UPLOAD_BYTES, check_upload_name, remove_quietly, save_upload_to_temp, validate_upload_payload,
+)
 from api.scan_report_schemas import ReportErrorCode, ScanReportErrorResponse, ScanReportMetadata, ScanReportResponse
 from services.scan_report_service import (
     AnonymousScanReport,
@@ -26,17 +33,17 @@ def _unavailable(code: ReportErrorCode, detail: str | None = None) -> JSONRespon
 
 
 def _validated_image(file: UploadFile) -> tuple[bytes, str]:
-    suffix = _extract_upload_suffix(file)
-    path, _ = _save_upload_to_temp(file, suffix)
+    suffix = check_upload_name(file)
+    path = save_upload_to_temp(file, suffix)
     try:
-        _validate_upload_payload(path, suffix)
+        validate_upload_payload(path, suffix)
         media_type = {
             ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
             ".webp": "image/webp", ".heic": "image/heic", ".pdf": "application/pdf",
         }[suffix]
         return path.read_bytes(), media_type
     finally:
-        path.unlink(missing_ok=True)
+        remove_quietly(path)
 
 
 @router.post(
@@ -52,31 +59,34 @@ async def report_failed_scan(
 ):
     form = await request.form()
     if sorted(key for key, _ in form.multi_items()) != ["file", "metadata"]:
-        raise HTTPException(422, "Only a scorecard and report metadata are accepted.")
+        raise HTTPException(422, REPORT_FIELDS_NOT_ALLOWED)
     if len(metadata) > 2048:
-        raise HTTPException(422, "Invalid report metadata.")
+        raise HTTPException(422, REPORT_METADATA_INVALID)
     try:
         values = ScanReportMetadata.model_validate_json(metadata)
     except ValidationError:
         # Pydantic errors include input values; never echo submitted identity fields.
-        raise HTTPException(422, "Invalid report metadata.") from None
+        raise HTTPException(422, REPORT_METADATA_INVALID) from None
 
     if file.size is not None and file.size > MAX_UPLOAD_BYTES:
-        raise HTTPException(413, "File too large. Maximum size is 20 MB.")
+        raise HTTPException(413, FILE_TOO_LARGE)
     try:
-        _extract_upload_suffix(file)
+        check_upload_name(file)
     except HTTPException:
-        raise HTTPException(400, "Unsupported scorecard file type.") from None
+        raise HTTPException(400, REPORT_FILE_TYPE_UNSUPPORTED) from None
 
     # Do not read/copy the image when nothing can store it. UploadFile is closed
     # by FastAPI after the request; there is no temporary report archive.
     if store is None:
-        return _unavailable("report_storage_unavailable", "Reporting is not available yet. Your report was not saved.")
+        return JSONResponse(
+            status_code=503,
+            content={"code": "report_storage_unavailable", "detail": REPORT_STORAGE_UNAVAILABLE},
+        )
 
     try:
         image, media_type = await run_in_threadpool(_validated_image, file)
     except HTTPException as exc:
-        raise HTTPException(exc.status_code, "This file cannot be reported. Use a supported scorecard up to 20 MB.") from None
+        raise HTTPException(exc.status_code, REPORT_FILE_REJECTED) from None
 
     report = AnonymousScanReport(image=image, media_type=media_type, **values.model_dump())
     try:
@@ -84,5 +94,8 @@ async def report_failed_scan(
     except ReportStorageUnavailable:
         return _unavailable("report_storage_unavailable")
     except ReportNotSaved:
-        return _unavailable("report_not_saved", "Your report was not saved. Please try again.")
-    return ScanReportResponse(status="saved")
+        return JSONResponse(
+            status_code=503,
+            content={"code": "report_not_saved", "detail": REPORT_NOT_SAVED},
+        )
+    return {"status": "saved"}

@@ -5,9 +5,10 @@ import base64
 import logging
 import mimetypes
 import os
+import re
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any, Dict, List, Optional, override
+from typing import Any, Dict, List, Optional
 
 import httpx
 try:
@@ -46,7 +47,11 @@ class MistralOCRService:
         if not self._api_key:
             raise EnvironmentError("MISTRAL_API_KEY environment variable is not set")
 
-        data_url = await asyncio.to_thread(self._build_data_url, Path(file_path))
+        path = Path(file_path)
+        if not await asyncio.to_thread(path.exists):
+            raise FileNotFoundError(f"File not found: {path}")
+
+        data_url = self._build_data_url(path)
         payload: Dict[str, Any] = {
             "model": self._model,
             "document": {"type": "document_url", "document_url": data_url},
@@ -74,15 +79,16 @@ class MistralOCRService:
                 raise RuntimeError(f"Mistral OCR failed: {exc}") from exc
 
     def _build_data_url(self, path: Path) -> str:
-        if not path.exists():
-            raise FileNotFoundError(f"File not found: {path}")
         mime_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         raw = path.read_bytes()
         b64 = base64.b64encode(raw).decode("ascii")
         return f"data:{mime_type};base64,{b64}"
 
     @staticmethod
-    def extract_markdown_text(ocr_response: Dict[str, Any]) -> str:
+    def extract_markdown_text(
+        ocr_response: Dict[str, Any],
+        diagnostics: Optional[List[str]] = None,
+    ) -> str:
         pages = ocr_response.get("pages")
         if not isinstance(pages, list):
             output_text = ocr_response.get("markdown") or ocr_response.get("text")
@@ -97,9 +103,10 @@ class MistralOCRService:
             html_tables = [t["content"] for t in tables if isinstance(t.get("content"), str)]
 
             if html_tables:
-                for html in html_tables:
-                    rows = MistralOCRService._html_to_rows(html)
-                    md = MistralOCRService._rows_to_markdown(rows)
+                for table_idx, html in enumerate(html_tables):
+                    rows = MistralOCRService._html_to_rows(html, diagnostics, table_idx)
+                    rows = MistralOCRService._align_rows_to_header(rows, diagnostics, table_idx)
+                    md = MistralOCRService.rows_to_markdown(rows)
                     if md:
                         chunks.append(md)
 
@@ -115,58 +122,37 @@ class MistralOCRService:
         return "\n\n".join(chunks)
 
     @staticmethod
-    def _html_to_rows(html: str) -> List[List[str]]:
+    def _html_to_rows(
+        html: str,
+        diagnostics: Optional[List[str]] = None,
+        table_idx: int = 0,
+    ) -> List[List[str]]:
         if BeautifulSoup is not None:
             soup = BeautifulSoup(html, "html.parser")
-            return [
-                [cell.get_text(" ", strip=True) for cell in tr.find_all(["th", "td"])]
+            raw_rows = [
+                [
+                    (cell.get_text(" ", strip=True), _span(cell.get("rowspan")), _span(cell.get("colspan")))
+                    for cell in tr.find_all(["th", "td"])
+                ]
                 for tr in soup.find_all("tr")
             ]
-
-        class _TableParser(HTMLParser):
-            def __init__(self) -> None:
-                super().__init__(convert_charrefs=True)
-                self.rows: List[List[str]] = []
-                self._in_row = False
-                self._in_cell = False
-                self._cell_parts: List[str] = []
-                self._current_row: List[str] = []
-
-            @override
-            def handle_starttag(self, tag: str, attrs: List[tuple[str, Optional[str]]]) -> None:
-                lower = tag.lower()
-                if lower == "tr":
-                    self._in_row = True
-                    self._current_row = []
-                elif self._in_row and lower in {"td", "th"}:
-                    self._in_cell = True
-                    self._cell_parts = []
-
-            @override
-            def handle_data(self, data: str) -> None:
-                if self._in_cell:
-                    self._cell_parts.append(data)
-
-            @override
-            def handle_endtag(self, tag: str) -> None:
-                lower = tag.lower()
-                if self._in_row and lower in {"td", "th"} and self._in_cell:
-                    text = " ".join("".join(self._cell_parts).split())
-                    self._current_row.append(text)
-                    self._in_cell = False
-                    self._cell_parts = []
-                elif lower == "tr" and self._in_row:
-                    if self._current_row:
-                        self.rows.append(self._current_row)
-                    self._in_row = False
-                    self._current_row = []
-
-        parser = _TableParser()
-        parser.feed(html)
-        return parser.rows
+        else:
+            raw_rows = _StdlibTableParser.parse(html)
+        return _expand_spans(raw_rows, diagnostics, table_idx)
 
     @staticmethod
-    def _rows_to_markdown(rows: List[List[str]]) -> str:
+    def _align_rows_to_header(
+        rows: List[List[str]],
+        diagnostics: Optional[List[str]] = None,
+        table_idx: int = 0,
+    ) -> List[List[str]]:
+        header_idx = next((i for i, row in enumerate(rows) if _hole_header_width(row)), None)
+        if header_idx is None:
+            return rows
+        return align_rows_to_header(rows, rows[header_idx], diagnostics, where=f"ocr table {table_idx}")
+
+    @staticmethod
+    def rows_to_markdown(rows: List[List[str]]) -> str:
         if not rows:
             return ""
         return "\n".join(
@@ -187,3 +173,217 @@ class MistralOCRService:
                 continue
             kept_lines.append(line)
         return "\n".join(kept_lines).strip()
+
+
+_HOLE_RUN_MIN = 6
+_RATING_RE = re.compile(r"^\d{2}(?:\.\d)?\s*/\s*\d{2,3}$")
+
+
+def _span(value: Any) -> int:
+    try:
+        return max(1, int(str(value)))
+    except (TypeError, ValueError):
+        return 1
+
+
+def _expand_spans(
+    raw_rows: List[List[tuple[str, int, int]]],
+    diagnostics: Optional[List[str]],
+    table_idx: int,
+) -> List[List[str]]:
+    grid: List[List[str]] = []
+    pending: Dict[tuple[int, int], str] = {}
+    expanded = 0
+    for r, cells in enumerate(raw_rows):
+        row: List[str] = []
+        col = 0
+        for text, rowspan, colspan in cells:
+            col = _fill_pending(row, pending, r, col)
+            for k in range(colspan):
+                row.append(text if k == 0 else "")
+                for dr in range(1, rowspan):
+                    pending[(r + dr, col + k)] = ""
+            if rowspan > 1 or colspan > 1:
+                expanded += 1
+            col += colspan
+        _fill_pending(row, pending, r, col)
+        if row:
+            grid.append(row)
+    if expanded and diagnostics is not None:
+        diagnostics.append(f"ocr table {table_idx}: expanded {expanded} merged cell(s) into the grid")
+    return grid
+
+
+def align_rows_to_header(
+    rows: List[List[str]],
+    header: List[str],
+    diagnostics: Optional[List[str]] = None,
+    *,
+    where: str = "table",
+) -> List[List[str]]:
+    # Mistral often gives a row more or fewer cells than the header: the player's name or a
+    # tee rating in an extra leading cell, a missing leading label cell, a missing INITIALS
+    # separator column, or an INITIALS rowspan one row too long plus that row's own blank.
+    width = len(header)
+    label_count = _leading_label_count(header)
+    separator_cols = _separator_columns(header)
+    aligned: List[List[str]] = []
+    for row_idx, row in enumerate(rows):
+        extra = len(row) - width
+        note: Optional[str] = None
+        if row is header:
+            pass
+        elif extra > 0:
+            leading = row[: extra + 1]
+            if all(_is_label_like(cell) for cell in leading):
+                label = next(
+                    (cell for cell in leading if any(ch.isalpha() for ch in cell) and not _RATING_RE.match(cell.strip())),
+                    next((cell for cell in reversed(leading) if cell), ""),
+                )
+                row = [label, *row[extra + 1:]]
+                note = f"dropped {extra} extra leading cell(s)"
+            elif (
+                separator_cols
+                and _leading_label_count(row) == label_count
+                and _blank(row[separator_cols[0] : separator_cols[-1] + 1 + extra])
+            ):
+                gap = separator_cols[0]
+                row = row[:gap] + row[gap + extra :]
+                note = f"dropped {extra} extra blank cell(s) in the separator gap at {separator_cols}"
+            else:
+                note = f"{extra} cell(s) wider than the hole header but the leading cells hold values; left unaligned"
+        elif extra < 0:
+            missing = -extra
+            row_labels = _leading_label_count(row)
+            notes: List[str] = []
+            if row_labels < label_count:
+                pad = min(missing, label_count - row_labels)
+                row = row[:row_labels] + [""] * pad + row[row_labels:]
+                missing -= pad
+                notes.append(f"padded {pad} missing leading label cell(s)")
+            if missing and missing == len(separator_cols):
+                for col in separator_cols:
+                    row = [*row[:col], "", *row[col:]]
+                notes.append(f"padded the missing separator column(s) at {separator_cols}")
+                missing = 0
+            if missing and row and not _is_label_like(row[-1]):
+                row = row + [""] * missing
+                notes.append(f"padded {missing} missing trailing cell(s)")
+                missing = 0
+            if missing:
+                row = rows[row_idx]
+                notes = [f"{missing} cell(s) narrower than the hole header; left unaligned"]
+            note = "; ".join(notes)
+        elif separator_cols and row and _is_label_like(row[-1]):
+            # Same width, but a hole value sits in the separator column (INITIALS): the row is
+            # missing that blank and carries an extra blank at the end instead.
+            shifted = [col for col in separator_cols if not _is_label_like(row[col])]
+            if shifted:
+                for col in shifted:
+                    row = [*row[:col], "", *row[col:-1]]
+                note = f"back nine shifted right past the separator column(s) at {shifted}"
+        aligned.append(row)
+        if diagnostics is not None and note:
+            diagnostics.append(f"{where} row {row_idx}: {note}")
+    return aligned
+
+
+def _leading_label_count(row: List[str]) -> int:
+    count = 0
+    for cell in row:
+        if _is_label_like(cell) and not cell.strip().isdigit():
+            count += 1
+        else:
+            break
+    return count
+
+
+def _blank(cells: List[str]) -> bool:
+    return all(not cell.strip() for cell in cells)
+
+
+def _separator_columns(header: List[str]) -> List[int]:
+    positions = {cell.strip(): i for i, cell in enumerate(header)}
+    nine, ten = positions.get("9"), positions.get("10")
+    if nine is None or ten is None or ten <= nine + 1:
+        return []
+    return list(range(nine + 2, ten))
+
+
+def _fill_pending(row: List[str], pending: Dict[tuple[int, int], str], r: int, col: int) -> int:
+    while (r, col) in pending:
+        row.append(pending.pop((r, col)))
+        col += 1
+    return col
+
+
+def _hole_header_width(row: List[str]) -> bool:
+    run = 0
+    previous: Optional[int] = None
+    for cell in row:
+        try:
+            n = int(cell.strip())
+        except ValueError:
+            n = None
+        if n is not None and 1 <= n <= 18 and (previous is None or n == previous + 1):
+            run += 1
+            previous = n
+            if run >= _HOLE_RUN_MIN:
+                return True
+        else:
+            run, previous = 0, None
+    return False
+
+
+def _is_label_like(cell: str) -> bool:
+    text = cell.strip()
+    if not text:
+        return True
+    if _RATING_RE.match(text):
+        return True
+    return not any(ch.isdigit() for ch in text)
+
+
+class _StdlibTableParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.rows: List[List[tuple[str, int, int]]] = []
+        self._in_row = False
+        self._in_cell = False
+        self._cell_parts: List[str] = []
+        self._cell_spans = (1, 1)
+        self._current_row: List[tuple[str, int, int]] = []
+
+    @classmethod
+    def parse(cls, html: str) -> List[List[tuple[str, int, int]]]:
+        parser = cls()
+        parser.feed(html)
+        return parser.rows
+
+    def handle_starttag(self, tag: str, attrs: List[tuple[str, Optional[str]]]) -> None:
+        lower = tag.lower()
+        if lower == "tr":
+            self._in_row = True
+            self._current_row = []
+        elif self._in_row and lower in {"td", "th"}:
+            self._in_cell = True
+            self._cell_parts = []
+            attr_map = {name.lower(): value for name, value in attrs}
+            self._cell_spans = (_span(attr_map.get("rowspan")), _span(attr_map.get("colspan")))
+
+    def handle_data(self, data: str) -> None:
+        if self._in_cell:
+            self._cell_parts.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        lower = tag.lower()
+        if self._in_row and lower in {"td", "th"} and self._in_cell:
+            text = " ".join("".join(self._cell_parts).split())
+            self._current_row.append((text, *self._cell_spans))
+            self._in_cell = False
+            self._cell_parts = []
+        elif lower == "tr" and self._in_row:
+            if self._current_row:
+                self.rows.append(self._current_row)
+            self._in_row = False
+            self._current_row = []

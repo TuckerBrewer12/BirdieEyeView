@@ -1,0 +1,154 @@
+{
+ "document_annotation": null,
+ "model": "mistral-ocr-latest",
+ "pages": [
+  {
+   "blocks": [
+    {
+     "bottom_right_x": 1498,
+     "bottom_right_y": 1367,
+     "confidence_scores": null,
+     "content": "<table><tr><td>Hole</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>Out</td><td>Initials</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>In</td><td>Total</td><td>Hcp</td><td>N</td></tr><tr><td>Blue</td><td>388</td><td>404</td><td>632</td><td>234</td><td>437</td><td>559</td><td>136</td><td>418</td><td>443</td><td>3651</td><td></td><td>392</td><td>393</td><td>411</td><td>178</td><td>498</td><td>450</td><td>454</td><td>110</td><td>359</td><td>3245</td><td>6896</td><td></td><td></td></tr><tr><td>White</td><td>372</td><td>387</td><td>579</td><td>208</td><td>397</td><td>516</td><td>111</td><td>402</td><td>411</td><td>3383</td><td></td><td>371</td><td>377</td><td>390</td><td>163</td><td>478</td><td>421</td><td>414</td><td>100</td><td>344</td><td>3058</td><td>6441</td><td></td><td></td></tr><tr><td>Gold</td><td>355</td><td>369</td><td>530</td><td>182</td><td>355</td><td>499</td><td>100</td><td>385</td><td>387</td><td>3162</td><td></td><td>351</td><td>361</td><td>369</td><td>152</td><td>460</td><td>392</td><td>381</td><td>84</td><td>328</td><td>2878</td><td>6040</td><td></td><td></td></tr><tr><td>Handicap</td><td>13</td><td>9</td><td>1</td><td>11</td><td>15</td><td>3</td><td>17</td><td>7</td><td>5</td><td></td><td></td><td>6</td><td>12</td><td>8</td><td>16</td><td>10</td><td>4</td><td>2</td><td>18</td><td>14</td><td></td><td></td><td></td><td></td></tr><tr><td>G</td><td>3</td><td>3</td><td>3</td><td>2</td><td>2</td><td>3</td><td>1</td><td>3</td><td>3</td><td></td><td></td><td>3</td><td>2</td><td>2</td><td>1</td><td>4</td><td>3</td><td>3</td><td>1</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>1</td><td></td><td></td><td>1</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>3</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>2</td><td></td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>2</td><td>0</td><td>0</td><td>3</td><td>76</td><td></td><td></td></tr><tr><td>Par</td><td>4</td><td>4</td><td>5</td><td>3</td><td>4</td><td>5</td><td>3</td><td>4</td><td>4</td><td>36</td><td></td><td>4</td><td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>4</td><td>3</td><td>4</td><td>35</td><td>71</td><td></td><td></td></tr><tr><td>D</td><td>3</td><td>3</td><td>4</td><td>2</td><td>2</td><td>4</td><td>1</td><td>3</td><td>3</td><td></td><td></td><td>3</td><td>2</td><td>3</td><td>3</td><td>3</td><td>3</td><td>4</td><td>2</td><td>3</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>3</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>3</td><td>3</td><td>2</td><td></td><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>2</td><td>1</td><td>9</td><td></td><td>1</td><td>0</td><td>1</td><td>2</td><td>0</td><td>1</td><td>2</td><td>1</td><td>1</td><td>9</td><td></td><td></td><td></td></tr><tr><td>Red</td><td>348</td><td>362</td><td>456</td><td>172</td><td>346</td><td>492</td><td>93</td><td>378</td><td>307</td><td>2954</td><td></td><td>270</td><td>354</td><td>239</td><td>142</td><td>452</td><td>256</td><td>268</td><td>77</td><td>321</td><td>2379</td><td>5333</td><td></td><td></td></tr><tr><td>Handicap</td><td>7</td><td>11</td><td>3</td><td>15</td><td>13</td><td>1</td><td>17</td><td>5</td><td>9</td><td></td><td></td><td>4</td><td>10</td><td>18</td><td>12</td><td>2</td><td>8</td><td>6</td><td>14</td><td>16</td><td></td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-0.html",
+     "top_left_x": 0,
+     "top_left_y": 392,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 482,
+     "bottom_right_y": 1620,
+     "confidence_scores": null,
+     "content": "Scorer: ____________________\nAttest: ____________________\nDate: ____________________",
+     "top_left_x": 0,
+     "top_left_y": 1373,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 775,
+     "bottom_right_y": 1610,
+     "confidence_scores": null,
+     "content": "![img-0.jpeg](img-0.jpeg)",
+     "image_id": "img-0.jpeg",
+     "top_left_x": 533,
+     "top_left_y": 1365,
+     "type": "image"
+    },
+    {
+     "bottom_right_x": 1156,
+     "bottom_right_y": 1413,
+     "confidence_scores": null,
+     "content": "# Men's Course Rating/Slope",
+     "top_left_x": 827,
+     "top_left_y": 1377,
+     "type": "title"
+    },
+    {
+     "bottom_right_x": 1132,
+     "bottom_right_y": 1459,
+     "confidence_scores": null,
+     "content": "Blue...73.5/127",
+     "top_left_x": 830,
+     "top_left_y": 1427,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1131,
+     "bottom_right_y": 1499,
+     "confidence_scores": null,
+     "content": "White...71.4/121",
+     "top_left_x": 830,
+     "top_left_y": 1465,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1134,
+     "bottom_right_y": 1538,
+     "confidence_scores": null,
+     "content": "Gold...69.3/120",
+     "top_left_x": 832,
+     "top_left_y": 1506,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1134,
+     "bottom_right_y": 1578,
+     "confidence_scores": null,
+     "content": "Red...66.0/113",
+     "top_left_x": 832,
+     "top_left_y": 1544,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1498,
+     "bottom_right_y": 1401,
+     "confidence_scores": null,
+     "content": "# Women's Course Rating/Slope",
+     "top_left_x": 1212,
+     "top_left_y": 1367,
+     "type": "title"
+    },
+    {
+     "bottom_right_x": 1498,
+     "bottom_right_y": 1447,
+     "confidence_scores": null,
+     "content": "White...77.0/",
+     "top_left_x": 1215,
+     "top_left_y": 1415,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1498,
+     "bottom_right_y": 1487,
+     "confidence_scores": null,
+     "content": "Gold...75.0/",
+     "top_left_x": 1216,
+     "top_left_y": 1455,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1498,
+     "bottom_right_y": 1526,
+     "confidence_scores": null,
+     "content": "Red...70.7/",
+     "top_left_x": 1216,
+     "top_left_y": 1495,
+     "type": "text"
+    }
+   ],
+   "confidence_scores": null,
+   "dimensions": {
+    "dpi": 200,
+    "height": 2000,
+    "width": 1500
+   },
+   "footer": null,
+   "header": null,
+   "hyperlinks": [],
+   "images": [
+    {
+     "bottom_right_x": 775,
+     "bottom_right_y": 1610,
+     "id": "img-0.jpeg",
+     "image_annotation": null,
+     "image_base64": null,
+     "top_left_x": 533,
+     "top_left_y": 1365
+    }
+   ],
+   "index": 0,
+   "markdown": "[tbl-0.html](tbl-0.html)\n\nScorer: ____________________\nAttest: ____________________\nDate: ____________________\n\n![img-0.jpeg](img-0.jpeg)\n\n# Men's Course Rating/Slope\n\nBlue...73.5/127\n\nWhite...71.4/121\n\nGold...69.3/120\n\nRed...66.0/113\n\n# Women's Course Rating/Slope\n\nWhite...77.0/\n\nGold...75.0/\n\nRed...70.7/",
+   "tables": [
+    {
+     "content": "<table><tr><td>Hole</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>Out</td><td>Initials</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>In</td><td>Total</td><td>Hcp</td><td>N</td></tr><tr><td>Blue</td><td>388</td><td>404</td><td>632</td><td>234</td><td>437</td><td>559</td><td>136</td><td>418</td><td>443</td><td>3651</td><td></td><td>392</td><td>393</td><td>411</td><td>178</td><td>498</td><td>450</td><td>454</td><td>110</td><td>359</td><td>3245</td><td>6896</td><td></td><td></td></tr><tr><td>White</td><td>372</td><td>387</td><td>579</td><td>208</td><td>397</td><td>516</td><td>111</td><td>402</td><td>411</td><td>3383</td><td></td><td>371</td><td>377</td><td>390</td><td>163</td><td>478</td><td>421</td><td>414</td><td>100</td><td>344</td><td>3058</td><td>6441</td><td></td><td></td></tr><tr><td>Gold</td><td>355</td><td>369</td><td>530</td><td>182</td><td>355</td><td>499</td><td>100</td><td>385</td><td>387</td><td>3162</td><td></td><td>351</td><td>361</td><td>369</td><td>152</td><td>460</td><td>392</td><td>381</td><td>84</td><td>328</td><td>2878</td><td>6040</td><td></td><td></td></tr><tr><td>Handicap</td><td>13</td><td>9</td><td>1</td><td>11</td><td>15</td><td>3</td><td>17</td><td>7</td><td>5</td><td></td><td></td><td>6</td><td>12</td><td>8</td><td>16</td><td>10</td><td>4</td><td>2</td><td>18</td><td>14</td><td></td><td></td><td></td><td></td></tr><tr><td>G</td><td>3</td><td>3</td><td>3</td><td>2</td><td>2</td><td>3</td><td>1</td><td>3</td><td>3</td><td></td><td></td><td>3</td><td>2</td><td>2</td><td>1</td><td>4</td><td>3</td><td>3</td><td>1</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>1</td><td></td><td></td><td>1</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>3</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>2</td><td></td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>2</td><td>0</td><td>0</td><td>3</td><td>76</td><td></td><td></td></tr><tr><td>Par</td><td>4</td><td>4</td><td>5</td><td>3</td><td>4</td><td>5</td><td>3</td><td>4</td><td>4</td><td>36</td><td></td><td>4</td><td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>4</td><td>3</td><td>4</td><td>35</td><td>71</td><td></td><td></td></tr><tr><td>D</td><td>3</td><td>3</td><td>4</td><td>2</td><td>2</td><td>4</td><td>1</td><td>3</td><td>3</td><td></td><td></td><td>3</td><td>2</td><td>3</td><td>3</td><td>3</td><td>3</td><td>4</td><td>2</td><td>3</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>3</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td>3</td><td>3</td><td>2</td><td></td><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>2</td><td>1</td><td>9</td><td></td><td>1</td><td>0</td><td>1</td><td>2</td><td>0</td><td>1</td><td>2</td><td>1</td><td>1</td><td>9</td><td></td><td></td><td></td></tr><tr><td>Red</td><td>348</td><td>362</td><td>456</td><td>172</td><td>346</td><td>492</td><td>93</td><td>378</td><td>307</td><td>2954</td><td></td><td>270</td><td>354</td><td>239</td><td>142</td><td>452</td><td>256</td><td>268</td><td>77</td><td>321</td><td>2379</td><td>5333</td><td></td><td></td></tr><tr><td>Handicap</td><td>7</td><td>11</td><td>3</td><td>15</td><td>13</td><td>1</td><td>17</td><td>5</td><td>9</td><td></td><td></td><td>4</td><td>10</td><td>18</td><td>12</td><td>2</td><td>8</td><td>6</td><td>14</td><td>16</td><td></td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-0.html",
+     "word_confidence_scores": null
+    }
+   ]
+  }
+ ],
+ "usage_info": {
+  "doc_size_bytes": 450015,
+  "pages_processed": 1
+ }
+}

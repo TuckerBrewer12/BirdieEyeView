@@ -253,6 +253,17 @@
             ],
             "title": "Average Putts"
           },
+          "average_putts_nine": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Putts Nine"
+          },
           "best_round": {
             "anyOf": [
               {
@@ -285,6 +296,17 @@
               }
             ],
             "title": "Best Round Id"
+          },
+          "best_round_nine": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round Nine"
           },
           "gir_percentage": {
             "anyOf": [
@@ -329,6 +351,17 @@
               }
             ],
             "title": "Scoring Average"
+          },
+          "scoring_average_nine": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average Nine"
           },
           "scrambling_percentage": {
             "anyOf": [
@@ -381,6 +414,9 @@
           }
         },
         "required": [
+          "scoring_average_nine",
+          "best_round_nine",
+          "average_putts_nine",
           "scoring_average",
           "gir_percentage",
           "putts_per_gir",
@@ -1439,6 +1475,17 @@
             "title": "Tees",
             "type": "array"
           },
+          "total_holes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Holes"
+          },
           "user_id": {
             "anyOf": [
               {
@@ -1452,6 +1499,7 @@
           }
         },
         "required": [
+          "total_holes",
           "id",
           "name",
           "external_course_id",
@@ -1629,7 +1677,7 @@
           },
           "tees": {
             "items": {
-              "$ref": "#/components/schemas/api__routers__courses__TeeInput"
+              "$ref": "#/components/schemas/TeeInput"
             },
             "maxItems": 12,
             "title": "Tees",
@@ -1660,8 +1708,7 @@
           "course_rating": {
             "anyOf": [
               {
-                "maximum": 85.0,
-                "minimum": 55.0,
+                "exclusiveMinimum": 0.0,
                 "type": "number"
               },
               {
@@ -1710,6 +1757,50 @@
       },
       "DashboardResponse": {
         "properties": {
+          "average_gir": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Gir"
+          },
+          "average_gir_nine": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Gir Nine"
+          },
+          "average_putts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Putts"
+          },
+          "average_putts_nine": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Putts Nine"
+          },
           "best_round": {
             "anyOf": [
               {
@@ -1754,6 +1845,39 @@
               }
             ],
             "title": "Best Round Id"
+          },
+          "best_round_nine": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round Nine"
+          },
+          "best_round_nine_course": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round Nine Course"
+          },
+          "best_round_nine_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Round Nine Id"
           },
           "best_round_to_par": {
             "anyOf": [
@@ -1809,6 +1933,17 @@
             "title": "Score Trend",
             "type": "array"
           },
+          "scoring_average": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average"
+          },
           "scoring_average_change": {
             "anyOf": [
               {
@@ -1831,6 +1966,17 @@
             ],
             "title": "Scoring Average L5"
           },
+          "scoring_average_nine": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Average Nine"
+          },
           "scoring_average_verdict": {
             "anyOf": [
               {
@@ -1847,11 +1993,26 @@
             ],
             "title": "Scoring Average Verdict"
           },
+          "total_rounds": {
+            "default": 0,
+            "title": "Total Rounds",
+            "type": "integer"
+          },
           "whs": {
             "$ref": "#/components/schemas/WhsBreakdown"
           }
         },
         "required": [
+          "total_rounds",
+          "scoring_average",
+          "average_putts",
+          "average_gir",
+          "scoring_average_nine",
+          "best_round_nine",
+          "best_round_nine_id",
+          "best_round_nine_course",
+          "average_putts_nine",
+          "average_gir_nine",
           "best_round",
           "best_round_id",
           "best_round_course",
@@ -2148,12 +2309,26 @@
       "GirVsNonGirRow": {
         "properties": {
           "birdie": {
-            "title": "Birdie",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birdie"
           },
           "bogey": {
-            "title": "Bogey",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bogey"
           },
           "bucket": {
             "enum": [
@@ -2164,28 +2339,63 @@
             "type": "string"
           },
           "double_bogey": {
-            "title": "Double Bogey",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Double Bogey"
           },
           "eagle": {
-            "title": "Eagle",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eagle"
           },
           "holes_counted": {
             "title": "Holes Counted",
             "type": "integer"
           },
           "par": {
-            "title": "Par",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Par"
           },
           "quad_bogey": {
-            "title": "Quad Bogey",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quad Bogey"
           },
           "triple_bogey": {
-            "title": "Triple Bogey",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triple Bogey"
           }
         },
         "required": [
@@ -2263,6 +2473,18 @@
             ],
             "title": "Lowest Score"
           },
+          "nine_hole": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nine Hole"
+          },
           "on_track": {
             "default": false,
             "title": "On Track",
@@ -2325,11 +2547,19 @@
             "title": "Scoring Average"
           },
           "scoring_goal": {
-            "title": "Scoring Goal",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Goal"
           }
         },
         "required": [
+          "nine_hole",
           "scoring_average",
           "lowest_score",
           "scoring_goal",
@@ -2813,17 +3043,6 @@
             "title": "Hole Number",
             "type": "integer"
           },
-          "net_score": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Net Score"
-          },
           "par_played": {
             "anyOf": [
               {
@@ -2986,6 +3205,17 @@
             ],
             "title": "Par Played"
           },
+          "played": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Played"
+          },
           "putts": {
             "anyOf": [
               {
@@ -3059,6 +3289,7 @@
           }
         },
         "required": [
+          "played",
           "hole_number",
           "strokes",
           "net_score",
@@ -3077,120 +3308,6 @@
           "running_to_par"
         ],
         "title": "HoleScoreResponse",
-        "type": "object"
-      },
-      "HoleScoreUpdate": {
-        "additionalProperties": false,
-        "properties": {
-          "fairway_hit": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Fairway Hit"
-          },
-          "green_in_regulation": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Green In Regulation"
-          },
-          "handicap_played": {
-            "anyOf": [
-              {
-                "maximum": 18.0,
-                "minimum": 1.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Handicap Played"
-          },
-          "hole_number": {
-            "maximum": 18.0,
-            "minimum": 1.0,
-            "title": "Hole Number",
-            "type": "integer"
-          },
-          "net_score": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Net Score"
-          },
-          "par_played": {
-            "anyOf": [
-              {
-                "maximum": 6.0,
-                "minimum": 3.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Par Played"
-          },
-          "putts": {
-            "anyOf": [
-              {
-                "maximum": 10.0,
-                "minimum": 0.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Putts"
-          },
-          "shots_to_green": {
-            "anyOf": [
-              {
-                "maximum": 10.0,
-                "minimum": 1.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Shots To Green"
-          },
-          "strokes": {
-            "anyOf": [
-              {
-                "maximum": 15.0,
-                "minimum": 1.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Strokes"
-          }
-        },
-        "required": [
-          "hole_number"
-        ],
-        "title": "HoleScoreUpdate",
         "type": "object"
       },
       "HoleSummaryResponse": {
@@ -3309,6 +3426,11 @@
             "title": "Total 3 Putts",
             "type": "integer"
           },
+          "total_albatrosses": {
+            "default": 0,
+            "title": "Total Albatrosses",
+            "type": "integer"
+          },
           "total_birdies": {
             "default": 0,
             "title": "Total Birdies",
@@ -3366,6 +3488,7 @@
           }
         },
         "required": [
+          "total_albatrosses",
           "total_rounds_played",
           "total_holes_played",
           "total_birdies",
@@ -3639,6 +3762,16 @@
               }
             ]
           },
+          "lowest_round_nine": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MilestoneEvent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "most_birdies_in_round": {
             "anyOf": [
               {
@@ -3671,6 +3804,7 @@
           }
         },
         "required": [
+          "lowest_round_nine",
           "lowest_round",
           "highest_round",
           "lowest_9_holes",
@@ -3728,6 +3862,17 @@
             ],
             "title": "Lowest Round"
           },
+          "lowest_round_nine": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lowest Round Nine"
+          },
           "most_birdies_in_round": {
             "anyOf": [
               {
@@ -3763,6 +3908,7 @@
           }
         },
         "required": [
+          "lowest_round_nine",
           "lowest_round",
           "highest_round",
           "lowest_9_holes",
@@ -4147,6 +4293,11 @@
       },
       "OneYearCareerTotals": {
         "properties": {
+          "albatrosses": {
+            "default": 0,
+            "title": "Albatrosses",
+            "type": "integer"
+          },
           "birdies": {
             "default": 0,
             "title": "Birdies",
@@ -4194,6 +4345,7 @@
           }
         },
         "required": [
+          "albatrosses",
           "rounds_played",
           "birdies",
           "eagles",
@@ -4370,6 +4522,13 @@
       },
       "OneYearRoundMilestones": {
         "properties": {
+          "new_personal_records_achieved": {
+            "items": {
+              "type": "string"
+            },
+            "title": "New Personal Records Achieved",
+            "type": "array"
+          },
           "new_personal_records_achieved_count": {
             "default": 0,
             "title": "New Personal Records Achieved Count",
@@ -4377,6 +4536,7 @@
           }
         },
         "required": [
+          "new_personal_records_achieved",
           "new_personal_records_achieved_count"
         ],
         "title": "OneYearRoundMilestones",
@@ -4395,6 +4555,16 @@
             ]
           },
           "lowest_round": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MilestoneEvent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lowest_round_nine": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/MilestoneEvent"
@@ -4426,6 +4596,7 @@
           }
         },
         "required": [
+          "lowest_round_nine",
           "lowest_round",
           "most_birdies_in_round",
           "most_gir_in_round",
@@ -4458,6 +4629,17 @@
             ],
             "title": "Lowest Round"
           },
+          "lowest_round_nine": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lowest Round Nine"
+          },
           "most_birdies_in_round": {
             "anyOf": [
               {
@@ -4482,6 +4664,7 @@
           }
         },
         "required": [
+          "lowest_round_nine",
           "lowest_round",
           "most_birdies_in_round",
           "most_gir_in_round",
@@ -5181,6 +5364,20 @@
             ],
             "title": "Id"
           },
+          "intended_holes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intended Holes"
+          },
           "net_score": {
             "anyOf": [
               {
@@ -5331,6 +5528,7 @@
           "yards",
           "score_counts",
           "holes_played",
+          "intended_holes",
           "id",
           "course",
           "tee_box",
@@ -5512,7 +5710,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/api__request_models__TeeInput"
+                  "$ref": "#/components/schemas/TeeInput"
                 },
                 "type": "array"
               },
@@ -5626,8 +5824,7 @@
           "tee_course_rating": {
             "anyOf": [
               {
-                "maximum": 85.0,
-                "minimum": 55.0,
+                "exclusiveMinimum": 0.0,
                 "type": "number"
               },
               {
@@ -5653,14 +5850,7 @@
             "anyOf": [
               {
                 "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
+                  "type": "integer"
                 },
                 "type": "object"
               },
@@ -6215,6 +6405,17 @@
             ],
             "title": "Course Name"
           },
+          "holes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holes"
+          },
           "par": {
             "anyOf": [
               {
@@ -6279,6 +6480,7 @@
           }
         },
         "required": [
+          "holes",
           "round_index",
           "round_id",
           "total_score",
@@ -6452,32 +6654,145 @@
         "additionalProperties": false,
         "properties": {
           "addressee_friend_code": {
-            "anyOf": [
-              {
-                "maxLength": 24,
-                "minLength": 4,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Addressee Friend Code"
-          },
-          "addressee_user_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Addressee User Id"
+            "maxLength": 24,
+            "minLength": 4,
+            "title": "Addressee Friend Code",
+            "type": "string"
           }
         },
+        "required": [
+          "addressee_friend_code"
+        ],
         "title": "SendFriendRequest",
+        "type": "object"
+      },
+      "TeeInput": {
+        "additionalProperties": false,
+        "properties": {
+          "color": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Color",
+            "type": "string"
+          },
+          "course_rating": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Rating"
+          },
+          "hole_yardages": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Hole Yardages",
+            "type": "object"
+          },
+          "slope_rating": {
+            "anyOf": [
+              {
+                "maximum": 155.0,
+                "minimum": 55.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slope Rating"
+          }
+        },
+        "required": [
+          "color"
+        ],
+        "title": "TeeInput",
+        "type": "object"
+      },
+      "TeeRating": {
+        "properties": {
+          "course_rating": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Rating"
+          },
+          "hole_numbers": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Hole Numbers",
+            "type": "array"
+          },
+          "slope_rating": {
+            "anyOf": [
+              {
+                "maximum": 155.0,
+                "minimum": 55.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slope Rating"
+          }
+        },
+        "required": [
+          "hole_numbers",
+          "course_rating",
+          "slope_rating"
+        ],
+        "title": "TeeRating",
+        "type": "object"
+      },
+      "TeeRatingResponse": {
+        "properties": {
+          "course_rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Rating"
+          },
+          "hole_numbers": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Hole Numbers",
+            "type": "array"
+          },
+          "slope_rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slope Rating"
+          }
+        },
+        "required": [
+          "hole_numbers"
+        ],
+        "title": "TeeRatingResponse",
         "type": "object"
       },
       "TeeResponse": {
@@ -6544,6 +6859,28 @@
             "title": "Hole Yardages",
             "type": "object"
           },
+          "rating_holes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating Holes"
+          },
+          "ratings": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Ratings",
+            "type": "array"
+          },
           "slope_rating": {
             "anyOf": [
               {
@@ -6565,9 +6902,26 @@
               }
             ],
             "title": "Total Yardage"
+          },
+          "yardage_holes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yardage Holes"
           }
         },
         "required": [
+          "yardage_holes",
+          "rating_holes",
+          "ratings",
           "color",
           "slope_rating",
           "course_rating",
@@ -6607,12 +6961,26 @@
             "type": "integer"
           },
           "three_putt_count": {
-            "title": "Three Putt Count",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Three Putt Count"
           },
           "three_putt_percentage": {
-            "title": "Three Putt Percentage",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Three Putt Percentage"
           }
         },
         "required": [
@@ -6748,8 +7116,8 @@
           "par": {
             "anyOf": [
               {
-                "maximum": 90.0,
-                "minimum": 54.0,
+                "maximum": 108.0,
+                "minimum": 27.0,
                 "type": "integer"
               },
               {
@@ -6780,7 +7148,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/HoleScoreUpdate"
+                  "$ref": "#/components/schemas/HoleScoreInput"
                 },
                 "maxItems": 18,
                 "type": "array"
@@ -6859,8 +7227,8 @@
           "scoring_goal": {
             "anyOf": [
               {
-                "maximum": 150.0,
-                "minimum": 50.0,
+                "maximum": 270.0,
+                "minimum": 18.0,
                 "type": "integer"
               },
               {
@@ -6868,6 +7236,19 @@
               }
             ],
             "title": "Scoring Goal"
+          },
+          "scoring_goal_nine": {
+            "anyOf": [
+              {
+                "maximum": 135.0,
+                "minimum": 9.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Goal Nine"
           }
         },
         "title": "UpdateUserRequest",
@@ -6879,8 +7260,7 @@
           "course_rating": {
             "anyOf": [
               {
-                "maximum": 85.0,
-                "minimum": 55.0,
+                "exclusiveMinimum": 0.0,
                 "type": "number"
               },
               {
@@ -6954,6 +7334,23 @@
             ],
             "title": "Email"
           },
+          "email_verified": {
+            "default": false,
+            "title": "Email Verified",
+            "type": "boolean"
+          },
+          "email_verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Verified At"
+          },
           "friend_code": {
             "anyOf": [
               {
@@ -6991,6 +7388,18 @@
             "title": "Id",
             "type": "string"
           },
+          "last_handicap_update": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Handicap Update"
+          },
           "name": {
             "anyOf": [
               {
@@ -7012,14 +7421,29 @@
               }
             ],
             "title": "Scoring Goal"
+          },
+          "scoring_goal_nine": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoring Goal Nine"
           }
         },
         "required": [
+          "email_verified",
+          "email_verified_at",
+          "last_handicap_update",
           "id",
           "friend_code",
           "name",
           "email",
           "home_course_id",
+          "scoring_goal_nine",
           "handicap",
           "created_at",
           "scoring_goal"
@@ -7043,8 +7467,7 @@
           "course_rating": {
             "anyOf": [
               {
-                "maximum": 85.0,
-                "minimum": 55.0,
+                "exclusiveMinimum": 0.0,
                 "type": "number"
               },
               {
@@ -7087,6 +7510,27 @@
             "title": "Name",
             "type": "string"
           },
+          "rating_holes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating Holes"
+          },
+          "ratings": {
+            "items": {
+              "$ref": "#/components/schemas/TeeRating"
+            },
+            "title": "Ratings",
+            "type": "array"
+          },
           "slope_rating": {
             "anyOf": [
               {
@@ -7100,22 +7544,182 @@
             ],
             "title": "Slope Rating"
           },
+          "total_yardage": {
+            "anyOf": [
+              {
+                "maximum": 18000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Yardage"
+          },
           "user_id": {
             "title": "User Id",
             "type": "string"
+          },
+          "yardage_holes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yardage Holes"
           }
         },
         "required": [
+          "total_yardage",
+          "hole_yardages",
+          "yardage_holes",
+          "course_rating",
+          "slope_rating",
+          "rating_holes",
+          "ratings",
           "id",
           "user_id",
           "course_id",
           "name",
-          "slope_rating",
-          "course_rating",
-          "hole_yardages",
           "created_at"
         ],
         "title": "UserTee",
+        "type": "object"
+      },
+      "UserTeeResponse": {
+        "properties": {
+          "course_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Id"
+          },
+          "course_rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Course Rating"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "hole_yardages": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "default": {},
+            "title": "Hole Yardages",
+            "type": "object"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "rating_holes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating Holes"
+          },
+          "ratings": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TeeRatingResponse"
+            },
+            "title": "Ratings",
+            "type": "array"
+          },
+          "slope_rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slope Rating"
+          },
+          "total_yardage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Yardage"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "yardage_holes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yardage Holes"
+          }
+        },
+        "required": [
+          "user_id",
+          "name"
+        ],
+        "title": "UserTeeResponse",
         "type": "object"
       },
       "ValidationError": {
@@ -7377,109 +7981,6 @@
         ],
         "title": "YardageScore",
         "type": "object"
-      },
-      "api__request_models__TeeInput": {
-        "additionalProperties": false,
-        "properties": {
-          "color": {
-            "maxLength": 40,
-            "minLength": 1,
-            "title": "Color",
-            "type": "string"
-          },
-          "course_rating": {
-            "anyOf": [
-              {
-                "maximum": 85.0,
-                "minimum": 55.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Course Rating"
-          },
-          "hole_yardages": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "title": "Hole Yardages",
-            "type": "object"
-          },
-          "slope_rating": {
-            "anyOf": [
-              {
-                "maximum": 155.0,
-                "minimum": 55.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Slope Rating"
-          }
-        },
-        "required": [
-          "color"
-        ],
-        "title": "TeeInput",
-        "type": "object"
-      },
-      "api__routers__courses__TeeInput": {
-        "additionalProperties": false,
-        "properties": {
-          "color": {
-            "maxLength": 40,
-            "minLength": 1,
-            "title": "Color",
-            "type": "string"
-          },
-          "course_rating": {
-            "anyOf": [
-              {
-                "maximum": 85.0,
-                "minimum": 55.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Course Rating"
-          },
-          "hole_yardages": {
-            "additionalProperties": true,
-            "title": "Hole Yardages",
-            "type": "object"
-          },
-          "slope_rating": {
-            "anyOf": [
-              {
-                "maximum": 155.0,
-                "minimum": 55.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Slope Rating"
-          }
-        },
-        "required": [
-          "color"
-        ],
-        "title": "TeeInput",
-        "type": "object"
       }
     },
     "securitySchemes": {
@@ -7670,6 +8171,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Logout",
         "tags": [
           "auth"
@@ -8652,11 +9158,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "summary": "Prefetch Ocr",
         "tags": [
           "scan"
@@ -8862,21 +9363,21 @@
         "parameters": [
           {
             "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
             "name": "round_id",
             "required": true,
             "schema": {
               "format": "uuid",
               "title": "Round Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
               "type": "string"
             }
           }
@@ -8920,21 +9421,21 @@
         "parameters": [
           {
             "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
             "name": "course_id",
             "required": true,
             "schema": {
               "format": "uuid",
               "title": "Course Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
               "type": "string"
             }
           }
@@ -9015,64 +9516,6 @@
           }
         ],
         "summary": "Get Dashboard",
-        "tags": [
-          "stats"
-        ]
-      }
-    },
-    "/api/stats/milestones/{user_id}": {
-      "get": {
-        "operationId": "get_milestones_api_stats_milestones__user_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 12,
-              "maximum": 50,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Get Milestones",
         "tags": [
           "stats"
         ]
@@ -9296,53 +9739,6 @@
         ]
       }
     },
-    "/api/users/by-email/{email}": {
-      "get": {
-        "operationId": "get_user_by_email_api_users_by_email__email__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "email",
-            "required": true,
-            "schema": {
-              "title": "Email",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Get User By Email",
-        "tags": [
-          "users"
-        ]
-      }
-    },
     "/api/users/me/friends": {
       "get": {
         "operationId": "list_friendships_api_users_me_friends_get",
@@ -9447,6 +9843,45 @@
       }
     },
     "/api/users/me/friends/{friendship_id}": {
+      "delete": {
+        "operationId": "remove_friendship_api_users_me_friends__friendship_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "friendship_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Friendship Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Remove Friendship",
+        "tags": [
+          "users"
+        ]
+      },
       "patch": {
         "operationId": "update_friendship_status_api_users_me_friends__friendship_id__patch",
         "parameters": [
@@ -9646,7 +10081,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/UserTee"
+                    "$ref": "#/components/schemas/UserTeeResponse"
                   },
                   "title": "Response Get User Tees Api Users  User Id  Tees Get",
                   "type": "array"
@@ -9705,7 +10140,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserTee"
+                  "$ref": "#/components/schemas/UserTeeResponse"
                 }
               }
             },
@@ -9739,21 +10174,21 @@
         "parameters": [
           {
             "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
             "name": "tee_id",
             "required": true,
             "schema": {
               "format": "uuid",
               "title": "Tee Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
               "type": "string"
             }
           }
@@ -9788,21 +10223,21 @@
         "parameters": [
           {
             "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
             "name": "tee_id",
             "required": true,
             "schema": {
               "format": "uuid",
               "title": "Tee Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
               "type": "string"
             }
           }
@@ -9822,7 +10257,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserTee"
+                  "$ref": "#/components/schemas/UserTeeResponse"
                 }
               }
             },

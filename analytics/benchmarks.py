@@ -60,14 +60,10 @@ def _par_averages(scoring_by_par: List[Dict[str, Any]]) -> Dict[int, Optional[fl
 def player_shape(rounds: List[Round]) -> Optional[Dict[str, Any]]:
     if not rounds:
         return None
-    scrambling = [
-        r["scrambling_percentage"] for r in analytics.scrambling_per_round(rounds)
-        if r["scrambling_percentage"] is not None
-    ]
     par_averages = _par_averages(analytics.scoring_by_par(rounds))
     return {
         "gir_percentage": _rounded(analytics.overall_gir_percentage(rounds)["gir_percentage"], 1),
-        "scrambling_percentage": _rounded(sum(scrambling) / len(scrambling), 1) if scrambling else None,
+        "scrambling_percentage": _rounded(analytics.overall_scrambling(rounds)["percentage"], 1),
         "putts_per_gir": _rounded(analytics.overall_putts_per_gir(rounds)["putts_per_gir"], 2),
         **{f"par{par}_to_par": par_averages[par] for par in PARS},
     }

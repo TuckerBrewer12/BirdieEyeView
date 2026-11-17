@@ -53,6 +53,9 @@ function teeResponse(tee: StoredTee): TeeDto {
     front_nine_yardage: nineYardage(tee, 1),
     back_nine_yardage: nineYardage(tee, 10),
     course_handicap: tee.course_handicap ?? null,
+    rating_holes: null,
+    ratings: [],
+    yardage_holes: null,
   };
 }
 
@@ -66,6 +69,7 @@ export function courseResponse(course: StoredCourse): CourseDto {
     par: coursePar(course),
     front_nine_par: ninePar(course, 1),
     back_nine_par: ninePar(course, 10),
+    total_holes: course.holes.length > 0 ? course.holes.length : null,
     holes: course.holes,
     tees: course.tees
       .map(teeResponse)

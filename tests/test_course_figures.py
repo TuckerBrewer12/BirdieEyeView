@@ -45,9 +45,9 @@ def test_course_response_carries_par_nines_and_tee_yardages():
     assert (white.total_yardage, white.front_nine_yardage) == (6100, None)
 
 
-def test_stored_par_wins_over_the_hole_sum():
+def test_observed_holes_win_over_a_stale_stored_par():
     course = Course(par=71, holes=_holes())
-    assert course_detail(course).par == 71
+    assert course_detail(course).par == 72
     assert course_detail(course).front_nine_par == 36
 
 

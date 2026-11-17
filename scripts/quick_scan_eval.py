@@ -1,15 +1,23 @@
+"""Usage:
+    python -m scripts.quick_scan_eval
+    python -m scripts.quick_scan_eval --suite large
+"""
+
 from __future__ import annotations
 
 import argparse
 import asyncio
 import json
+import logging
 import mimetypes
 import os
 import statistics
+import subprocess
 import sys
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
@@ -74,6 +82,7 @@ class CaseResult:
     effective_seconds: float = 0.0
     mismatches: list[CellMismatch] = field(default_factory=list)
     operational_error: Optional[str] = None
+    diagnostics: list[str] = field(default_factory=list)
 
     @property
     def accuracy(self) -> float:
@@ -103,6 +112,14 @@ class SuiteRun:
     case_results: list[CaseResult]
     ocr_seconds_by_image: dict[str, float]
     suite_seconds: float
+    ocr_diagnostics_by_image: dict[str, list[str]] = field(default_factory=dict)
+
+    @property
+    def merge_rejected_images(self) -> int:
+        return sum(
+            any("table merge rejected" in line or "table merge failed" in line for line in lines)
+            for lines in self.ocr_diagnostics_by_image.values()
+        )
 
     @property
     def completed_cases(self) -> int:
@@ -316,6 +333,32 @@ def prepare_image_for_upload(image_name: str, image_bytes: bytes) -> tuple[str, 
     return f"{Path(image_name).stem}.jpg", output.getvalue()
 
 
+class _DiagnosticsCapture(logging.Handler):
+    LOGGERS = ("api.routers.scan", "services.gemini_table_merger")
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.INFO)
+        self.lines: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if not record.name.startswith(self.LOGGERS):
+            return
+        message = record.getMessage()
+        if "Scan diagnostics" in message:
+            _stage, _, body = message.partition("): ")
+            self.lines.extend(part.strip() for part in body.split(" | ") if part.strip() and part.strip() != "none")
+        elif "table merge" in message:
+            self.lines.append(message)
+
+    def take(self) -> list[str]:
+        lines, self.lines = self.lines, []
+        return lines
+
+
+def _as_json(response: Any) -> Any:
+    return response.model_dump(mode="json") if hasattr(response, "model_dump") else response
+
+
 def _error_text(exc: Exception) -> str:
     detail = getattr(exc, "detail", None)
     if isinstance(detail, str) and detail:
@@ -346,7 +389,38 @@ async def run_suite(
     suite_start = clock()
     results: list[CaseResult] = []
     ocr_seconds_by_image: dict[str, float] = {}
+    ocr_diagnostics_by_image: dict[str, list[str]] = {}
+    capture = _DiagnosticsCapture()
+    root = logging.getLogger()
+    root.addHandler(capture)
+    previous_levels = {name: logging.getLogger(name).level for name in capture.LOGGERS}
+    for name in capture.LOGGERS:
+        if not logging.getLogger(name).isEnabledFor(logging.INFO):
+            logging.getLogger(name).setLevel(logging.INFO)
 
+    try:
+        return await _run_grouped(
+            grouped, scorecard_dir, prefetch, extract, clock, suite_start,
+            results, ocr_seconds_by_image, ocr_diagnostics_by_image, capture,
+        )
+    finally:
+        root.removeHandler(capture)
+        for name, level in previous_levels.items():
+            logging.getLogger(name).setLevel(level)
+
+
+async def _run_grouped(
+    grouped: dict[str, list[EvalCase]],
+    scorecard_dir: Path,
+    prefetch: PrefetchCallable,
+    extract: ExtractCallable,
+    clock: Callable[[], float],
+    suite_start: float,
+    results: list[CaseResult],
+    ocr_seconds_by_image: dict[str, float],
+    ocr_diagnostics_by_image: dict[str, list[str]],
+    capture: _DiagnosticsCapture,
+) -> SuiteRun:
     for image_name, image_cases in grouped.items():
         image_path = scorecard_dir / image_name
         prepared_name, image_bytes = prepare_image_for_upload(
@@ -355,10 +429,12 @@ async def run_suite(
         )
         ocr_upload = _make_upload(prepared_name, image_bytes)
         ocr_start = clock()
+        capture.take()
         try:
-            response = await prefetch(ocr_upload, current_user=None)
+            response = _as_json(await prefetch(ocr_upload))
             ocr_seconds = clock() - ocr_start
             ocr_seconds_by_image[image_name] = ocr_seconds
+            ocr_diagnostics_by_image[image_name] = capture.take()
             if not isinstance(response, Mapping):
                 raise RuntimeError("OCR prefetch returned an invalid response")
             ocr_text = response.get("ocr_text")
@@ -366,6 +442,7 @@ async def run_suite(
                 raise RuntimeError("OCR prefetch returned empty text")
         except Exception as exc:  # noqa: BLE001 - provider failures belong in the report
             ocr_seconds_by_image[image_name] = clock() - ocr_start
+            ocr_diagnostics_by_image[image_name] = capture.take()
             error = _error_text(exc)
             for case in image_cases:
                 results.append(
@@ -384,30 +461,31 @@ async def run_suite(
         for case in image_cases:
             extract_upload = _make_upload(prepared_name, image_bytes)
             extract_start = clock()
+            capture.take()
             try:
-                response = await extract(
+                response = _as_json(await extract(
                     extract_upload,
                     user_context=case.user_context,
                     course_id=None,
                     ocr_text=ocr_text,
                     db=SimpleNamespace(),
                     current_user=None,
-                )
+                ))
                 extraction_seconds = clock() - extract_start
-                round_payload = getattr(response, "round", None)
+                round_payload = response.get("round") if isinstance(response, Mapping) else getattr(response, "round", None)
                 if not isinstance(round_payload, Mapping):
                     raise RuntimeError("Extraction returned an invalid round payload")
                 hole_scores = round_payload.get("hole_scores")
                 if not isinstance(hole_scores, list):
                     raise RuntimeError("Extraction returned invalid hole scores")
-                results.append(
-                    grade_case(
-                        case,
-                        hole_scores,
-                        extraction_seconds=extraction_seconds,
-                        effective_seconds=ocr_seconds + extraction_seconds,
-                    )
+                graded = grade_case(
+                    case,
+                    hole_scores,
+                    extraction_seconds=extraction_seconds,
+                    effective_seconds=ocr_seconds + extraction_seconds,
                 )
+                graded.diagnostics = capture.take()
+                results.append(graded)
             except Exception as exc:  # noqa: BLE001 - keep evaluating other cases
                 extraction_seconds = clock() - extract_start
                 results.append(
@@ -418,6 +496,7 @@ async def run_suite(
                         extraction_seconds=extraction_seconds,
                         effective_seconds=ocr_seconds + extraction_seconds,
                         operational_error=f"Extraction failed: {_error_text(exc)}",
+                        diagnostics=capture.take(),
                     )
                 )
             finally:
@@ -427,6 +506,7 @@ async def run_suite(
         case_results=results,
         ocr_seconds_by_image=ocr_seconds_by_image,
         suite_seconds=clock() - suite_start,
+        ocr_diagnostics_by_image=ocr_diagnostics_by_image,
     )
 
 
@@ -459,6 +539,7 @@ def render_report(run: SuiteRun, *, suite: str = "quick") -> str:
         f"  {summary.failed}/{summary.total} failed below 80% or had an operational error",
         f"  {summary.total - run.completed_cases}/{summary.total} had an operational error",
         f"  {sum(1 for r in run.case_results if r.case.known_gap)}/{summary.total} are known scanner gaps",
+        f"  {run.merge_rejected_images}/{len(run.ocr_seconds_by_image)} images had the table merge rejected",
         "",
         "Cases",
     ]
@@ -479,6 +560,8 @@ def render_report(run: SuiteRun, *, suite: str = "quick") -> str:
                 f"    {mismatch.field_name} hole {mismatch.hole_number}: "
                 f"expected {mismatch.expected}, got {mismatch.actual!r}"
             )
+        for line in [*run.ocr_diagnostics_by_image.get(result.case.image, []), *result.diagnostics]:
+            lines.append(f"    - {line}")
 
     lines.extend(["", "Timing"])
     for image_name, seconds in run.ocr_seconds_by_image.items():
@@ -509,10 +592,156 @@ def _validate_provider_keys() -> None:
         raise EvalConfigurationError(f"Missing required environment variables: {', '.join(missing)}")
 
 
+def results_metadata(environment=None):
+    environment = os.environ if environment is None else environment
+    now = datetime.now(timezone.utc)
+
+    def git(*args):
+        try:
+            result = subprocess.run(["git", *args], cwd=ROOT_DIR, capture_output=True, text=True, check=False)
+        except OSError:
+            return None
+        return result.stdout.strip() if result.returncode == 0 else None
+
+    from services.scan_ocr import MISTRAL_OCR_MODEL
+    from services.gemini_table_merger import GEMINI_MERGE_MODEL
+
+    state = git("status", "--porcelain", "--untracked-files=normal", "--", "api", "services", "scripts", "models", "analytics", "database")
+    return {
+        "dirty": None if state is None else bool(state),
+        "id": environment.get("SCAN_EVAL_RUN_ID") or "local-" + now.strftime("%Y%m%dT%H%M%S%fZ"),
+        "suite": environment.get("SCAN_EVAL_SUITE", "quick"),
+        "created_at": now.isoformat(timespec="microseconds").replace("+00:00", "Z"),
+        "branch": environment.get("SCAN_EVAL_BRANCH") or git("branch", "--show-current") or None,
+        "commit": environment.get("SCAN_EVAL_COMMIT") or git("rev-parse", "HEAD"),
+        "head_commit": environment.get("SCAN_EVAL_HEAD_COMMIT") or None,
+        "pr": int(environment["SCAN_EVAL_PR"]) if environment.get("SCAN_EVAL_PR") else None,
+        "run_url": environment.get("SCAN_EVAL_RUN_URL") or None,
+        "models": {"ocr": MISTRAL_OCR_MODEL, "merge": GEMINI_MERGE_MODEL},
+    }
+
+
+def results_payload(run, *, suite, metadata, scorecard_dir=SCORECARD_DIR):
+    import hashlib
+    from scripts.eval_results import validate
+
+    def short(value):
+        return value if value is None or len(value) <= 500 else value[:497] + "..."
+
+    def lines(values):
+        bounded = [short(value) for value in values[:200]]
+        if len(values) > 200:
+            bounded[-1] = "Additional diagnostics omitted (export limit)."
+        return bounded
+
+    cases = []
+    for result in run.case_results:
+        case = result.case
+        digest = hashlib.sha256((Path(scorecard_dir) / case.image).read_bytes())
+        digest.update(json.dumps({"expected": case.expected, "user_context": case.user_context,
+                                  "player": case.player_name, "source_score_format": case.source_score_format},
+                                 sort_keys=True, separators=(",", ":")).encode())
+        cases.append({
+            "id": case.case_id, "image": case.image, "player": case.player_name,
+            "fingerprint": digest.hexdigest(), "status": _case_status(result),
+            "matched_cells": result.matched_cells, "total_cells": result.total_cells,
+            "known_gap": short(case.known_gap), "operational_error": short(result.operational_error),
+            "extraction_seconds": result.extraction_seconds, "effective_seconds": result.effective_seconds,
+            "mismatches": [{"field": m.field_name, "hole": m.hole_number, "expected": m.expected,
+                            "actual": m.actual} for m in result.mismatches],
+            "diagnostics": lines(result.diagnostics),
+        })
+    summary = summarize(run.case_results)
+    payload = {
+        "schema_version": 1, "run": {**metadata, "suite": suite},
+        "summary": {
+            "images": len(run.ocr_seconds_by_image), "cases": summary.total,
+            "matched_cells": sum(r.matched_cells for r in run.case_results),
+            "total_cells": sum(r.total_cells for r in run.case_results),
+            "perfect": summary.perfect, "at_least_90": summary.at_least_90,
+            "at_least_80": summary.at_least_80, "failed": summary.failed,
+            "operational_errors": summary.total - run.completed_cases,
+            "known_gaps": sum(bool(r.case.known_gap) for r in run.case_results),
+            "merge_rejected_images": run.merge_rejected_images, "suite_seconds": run.suite_seconds,
+        },
+        "images": [{"image": image, "ocr_seconds": seconds,
+                    "diagnostics": lines(run.ocr_diagnostics_by_image.get(image, []))}
+                   for image, seconds in run.ocr_seconds_by_image.items()],
+        "cases": cases,
+    }
+    return validate(payload)
+
+
+def redact_payload(value, secrets):
+    if isinstance(value, str):
+        for secret in secrets:
+            if secret:
+                value = value.replace(secret, "[REDACTED]")
+        return value
+    if isinstance(value, list):
+        return [redact_payload(item, secrets) for item in value]
+    if isinstance(value, dict):
+        return {key: redact_payload(item, secrets) for key, item in value.items()}
+    return value
+
+
+def render_markdown(run=None, payload=None):
+    import html
+
+    if payload is None:
+        payload = run
+
+    def escape(value):
+        text = html.escape(str(value), quote=True)
+        for char in "|`[]()@#*_~!":
+            text = text.replace(char, "&#" + str(ord(char)) + ";")
+        return text.replace("\r", " ").replace("\n", "<br>")
+
+    info = payload["run"]
+    lines = [f"# {info['suite'].capitalize()} scan evaluation", "",
+             "Branch: " + escape(info["branch"] or "unknown"), "",
+             "Tested commit: " + escape(info["commit"] or "unknown"), "",
+             "Working tree: " + ({True: "modified", False: "clean", None: "unknown"}[info["dirty"]]), "",
+             "Models: " + escape(info["models"]["ocr"]) + " / " + escape(info["models"]["merge"]), "",
+             "| Metric | Value |", "| --- | ---: |"]
+    lines += ["| " + escape(key.replace("_", " ")) + " | " + escape(value) + " |"
+              for key, value in payload["summary"].items()]
+    lines += ["", "## Cases", "", "| Status | Case | Cells | Accuracy | Time |", "| --- | --- | ---: | ---: | ---: |"]
+    for case in payload["cases"]:
+        percentage = 100 * case["matched_cells"] / case["total_cells"]
+        lines.append("| " + " | ".join([escape(case["status"]), escape(case["id"]),
+                     f"{case['matched_cells']}/{case['total_cells']}", f"{percentage:.1f}%",
+                     f"{case['effective_seconds']:.2f}s"]) + " |")
+    for case in payload["cases"]:
+        block = []
+        if case["status"] == "PERFECT" and not case["known_gap"]:
+            continue
+        block += ["", "<details>", "<summary>" + escape(case["id"]) + "</summary>", ""]
+        for value in (case["known_gap"], case["operational_error"]):
+            if value:
+                block += [escape(value), ""]
+        for cell in case["mismatches"]:
+            block.append("- " + escape(f"{cell['field']} hole {cell['hole']}: expected {cell['expected']}, got {cell['actual']}"))
+        image = next(image for image in payload["images"] if image["image"] == case["image"])
+        for line in [*image["diagnostics"], *case["diagnostics"]][:40]:
+            block.append("- " + escape(line))
+        if len(image["diagnostics"]) + len(case["diagnostics"]) > 40:
+            block.append("- Additional diagnostics are in results.json.")
+        block += ["", "</details>"]
+        if len(("\n".join(lines + block)).encode("utf-8")) > 900_000:
+            lines += ["", "Further case details are available in the structured results artifact."]
+            break
+        lines.extend(block)
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Run a live scorecard scan evaluation.")
     parser.add_argument("--suite", choices=SUITE_MANIFEST_PATHS, default="quick")
-    suite = parser.parse_args(argv).suite
+    parser.add_argument("--results-json", type=Path)
+    parser.add_argument("--summary-markdown", type=Path)
+    args = parser.parse_args(argv)
+    suite = args.suite
     load_dotenv(ROOT_DIR / ".env")
     try:
         _validate_provider_keys()
@@ -526,6 +755,22 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 130
 
     print(render_report(run, suite=suite))
+    if args.results_json or args.summary_markdown:
+        from scripts.eval_results import ResultsError, encode
+        try:
+            payload = results_payload(run, suite=suite, metadata=results_metadata())
+            payload = redact_payload(payload, [os.environ.get(key) for key in ("MISTRAL_API_KEY", "GOOGLE_API_KEY")])
+            if args.results_json:
+                args.results_json.parent.mkdir(parents=True, exist_ok=True)
+                args.results_json.write_bytes(encode(payload))
+            if args.summary_markdown:
+                args.summary_markdown.parent.mkdir(parents=True, exist_ok=True)
+                args.summary_markdown.write_text(render_markdown(payload), encoding="utf-8")
+        except (ResultsError, OSError, ValueError) as error:
+            print(f"Warning: structured results not exported: {error}", file=sys.stderr)
+            for path in (args.results_json, args.summary_markdown):
+                if path:
+                    path.unlink(missing_ok=True)
     return exit_code_for_run(run)
 
 

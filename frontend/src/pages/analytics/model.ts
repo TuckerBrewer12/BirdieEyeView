@@ -194,9 +194,9 @@ export function analyticsFrom(data: AnalyticsDto): Analytics {
       two: data.putts_per_hole.two,
       threeOrMore: data.putts_per_hole.three_or_more,
     },
-    threePutts: data.three_putts_trend
-      .filter((row) => withPutts.has(row.round_id))
-      .map((row) => ({ count: row.three_putt_count, costly: row.costly })),
+    threePutts: data.three_putts_trend.flatMap((row) =>
+      withPutts.has(row.round_id) && row.three_putt_count != null ? [{ count: row.three_putt_count, costly: row.costly }] : [],
+    ),
     yardageBuckets: yardageBucketsFrom(data.scoring_by_yardage),
     peakGame: data.peak_game,
   };

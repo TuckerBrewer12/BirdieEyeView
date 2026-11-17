@@ -233,27 +233,27 @@ def test_score_variance_by_hole():
     rows = score_variance_by_hole(rounds)
 
     assert len(rows) == 18
-    assert rows[0]["score_std_dev"] >= rows[1]["score_std_dev"]
-    assert rows[0]["variance_rank"] == 1
-    assert rows[1]["variance_rank"] == 2
-
     by_hole = {row["hole_number"]: row for row in rows}
     assert by_hole[2]["score_variance"] == pytest.approx(0.0)
     assert by_hole[2]["score_std_dev"] == pytest.approx(0.0)
     assert by_hole[2]["sample_size"] == 2
+    assert all(row["variance_rank"] is None for row in rows)
+
+    ranked = score_variance_by_hole([*rounds, rounds[1].model_copy(update={"id": "r3"})])
+    assert ranked[0]["score_std_dev"] >= ranked[1]["score_std_dev"]
+    assert (ranked[0]["variance_rank"], ranked[1]["variance_rank"]) == (1, 2)
 
 
 def test_three_putts_per_round():
     rounds = _build_rounds()
-    rows = three_putts_per_round(rounds)
+    three_and_four = rounds[0].model_copy(deep=True)
+    for score in three_and_four.hole_scores:
+        score.putts = {1: 3, 2: 4}.get(score.hole_number, 2)
+    rows = three_putts_per_round([rounds[0], three_and_four])
 
-    assert rows[0]["three_putt_count"] == 0
-    assert rows[0]["holes_with_putt_data"] == 18
-    assert rows[0]["three_putt_percentage"] == 0.0
-
-    assert rows[1]["three_putt_count"] == 0
-    assert rows[1]["holes_with_putt_data"] == 18
-    assert rows[1]["three_putt_percentage"] == 0.0
+    assert (rows[0]["three_putt_count"], rows[0]["holes_with_putt_data"], rows[0]["three_putt_percentage"]) == (0, 18, 0.0)
+    assert rows[1]["three_putt_count"] == 2
+    assert rows[1]["three_putt_percentage"] == pytest.approx(2 / 18 * 100)
 
 
 def test_scrambling_per_round():
@@ -261,8 +261,8 @@ def test_scrambling_per_round():
     rows = scrambling_per_round(rounds)
 
     assert rows[0]["scramble_opportunities"] == 8
-    assert rows[0]["scramble_successes"] == 4
-    assert rows[0]["scrambling_percentage"] == 50.0
+    assert rows[0]["scramble_successes"] == 8
+    assert rows[0]["scrambling_percentage"] == 100.0
 
     assert rows[1]["scramble_opportunities"] == 9
     assert rows[1]["scramble_successes"] == 2
@@ -553,10 +553,10 @@ def test_notable_achievements_lifetime_and_one_year():
 
 
 def test_round_half_up_takes_a_half_up_as_the_app_always_has():
-    assert round_half_up(82.25) == 82.3
-    assert round_half_up(82.24) == 82.2
+    assert round_half_up(82.25, 1) == 82.3
+    assert round_half_up(82.24, 1) == 82.2
     assert round_half_up(0.125, 2) == 0.13
-    assert round_half_up(-0.25) == -0.2
+    assert round_half_up(-0.25, 1) == -0.3
 
 
 def test_rolling_average_over_five_rounds_skips_unscored_ones():
@@ -597,6 +597,28 @@ def test_scoring_by_yardage_buckets_send_each_bands_average_and_score_mix():
     }
 
 
+def test_scoring_by_yardage_buckets_mark_the_worst_band_of_each_par():
+    course = _build_course_with_yardages()
+    yardages = dict(course.tees[0].hole_yardages)
+    yardages.update({1: 120, 2: 120, 5: 330, 6: 330})
+    assert course.tees[0].update_yardages(yardages) is None
+    hole_scores = [
+        HoleScore(hole_number=i, strokes=course.get_hole(i).par + (2 if i in (1, 2) else 0), green_in_regulation=True)
+        for i in range(1, 19)
+    ]
+    round_obj = Round(id="r-worst", course=course, tee_box="Blue", date=datetime(2026, 3, 1, tzinfo=timezone.utc), hole_scores=hole_scores)
+
+    rows = scoring_by_yardage_buckets([round_obj])
+    for par in {row["par"] for row in rows}:
+        bands = [row for row in rows if row["par"] == par]
+        flagged = [row for row in bands if row["worst"]]
+        if len(bands) > 1:
+            assert flagged == [max(bands, key=lambda row: row["average_to_par"])]
+        else:
+            assert flagged == []
+    assert [row["bucket_label"] for row in rows if row["worst"]] == ["< 150", "< 350"]
+
+
 def test_notable_achievements_mark_each_milestone_first_reached_in_the_window():
     rounds = _build_rounds()
     course = rounds[0].course
@@ -631,6 +653,6 @@ def test_notable_achievements_mark_each_milestone_first_reached_in_the_window():
     for key in ("first_round_under_par", "first_eagle", "first_hole_in_one"):
         assert lifetime[key]["round_id"] == "r3"
         assert lifetime[key]["in_window"] is True
-    assert summary["round_milestones"]["one_year"] == {"new_personal_records_achieved_count": 3}
+    assert summary["round_milestones"]["one_year"]["new_personal_records_achieved_count"] == 3
 
     assert "in_window" not in summary["scoring_records_events"]["lifetime"]["lowest_round"]

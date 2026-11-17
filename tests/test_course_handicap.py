@@ -52,7 +52,7 @@ def _round(course: Course, over: int, holes: int = 18, played: datetime | None =
 def test_course_handicap_is_the_whs_formula_to_the_nearest_stroke():
     assert course_handicap(10.4, 130, 72.4, 72) == 12
     assert course_handicap(0, 113, 72.5, 72) == 1
-    assert course_handicap(-2, 113, 71.5, 72) == -2
+    assert course_handicap(-2, 113, 71.5, 72) == -3
 
 
 def test_a_tee_has_no_course_handicap_without_an_index_ratings_or_par():
@@ -162,7 +162,7 @@ def test_a_nine_reads_to_par_against_its_own_holes():
     assert _round(_course(), over=4).total_to_par() == 4
 
 
-def test_best_puts_full_rounds_first_by_to_par_then_nines():
+def test_ranks_use_complete_eighteen_hole_gross_scores():
     par_70 = Course(
         id="par-70",
         par=70,
@@ -178,8 +178,8 @@ def test_best_puts_full_rounds_first_by_to_par_then_nines():
     unrated = Round(id="no-par", hole_scores=[HoleScore(hole_number=1, strokes=4)])
     listed = [level_par_nine, seventy_four_at_par_70, unrated, seventy_five_at_par_72]
 
-    assert [r.best_rank for r in round_list(listed)] == [3, 2, None, 1]
-    assert [r.worst_rank for r in round_list(listed)] == [3, 1, None, 2]
+    assert [r.best_rank for r in round_list(listed)] == [None, 1, None, 2]
+    assert [r.worst_rank for r in round_list(listed)] == [None, 2, None, 1]
 
 
 def test_a_round_under_par_reads_after_the_score_breaks_above_the_golfers_usual_par():

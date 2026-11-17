@@ -1,0 +1,194 @@
+{
+ "document_annotation": null,
+ "model": "mistral-ocr-latest",
+ "pages": [
+  {
+   "blocks": [
+    {
+     "bottom_right_x": 1479,
+     "bottom_right_y": 657,
+     "confidence_scores": null,
+     "content": "![img-0.jpeg](img-0.jpeg)",
+     "image_id": "img-0.jpeg",
+     "top_left_x": 45,
+     "top_left_y": 488,
+     "type": "image"
+    },
+    {
+     "bottom_right_x": 767,
+     "bottom_right_y": 871,
+     "confidence_scores": null,
+     "content": "<table><tr><td>HOLE</td><td></td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td>BLACK</td><td>73.8/134</td><td>424</td><td>181</td><td>565</td><td>413</td><td>520</td><td>202</td><td>366</td><td>357</td><td>417</td><td>3445</td></tr><tr><td>BLUE</td><td>72.2/130</td><td>405</td><td>160</td><td>519</td><td>402</td><td>503</td><td>188</td><td>357</td><td>335</td><td>391</td><td>3260</td></tr><tr><td>WHITE</td><td>M:70.9/127<br/>W:76.8/130</td><td>396</td><td>140</td><td>483</td><td>392</td><td>470</td><td>167</td><td>343</td><td>294</td><td>373</td><td>3058</td></tr><tr><td>GOLD</td><td>67.7/123</td><td>382</td><td>119</td><td>473</td><td>331</td><td>424</td><td>148</td><td>315</td><td>272</td><td>332</td><td>2796</td></tr></table>",
+     "table_id": "tbl-0.html",
+     "top_left_x": 45,
+     "top_left_y": 657,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 767,
+     "bottom_right_y": 1101,
+     "confidence_scores": null,
+     "content": "<table><tr><td>HANDICAP</td><td></td><td>6</td><td>18</td><td>8</td><td>2</td><td>12</td><td>16</td><td>10</td><td>14</td><td>4</td><td></td></tr><tr><td></td><td>G</td><td>3</td><td>2</td><td>4</td><td>2</td><td>3</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td></td><td></td><td>3</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td></td><td></td><td>2</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>5</td></tr></table>",
+     "table_id": "tbl-1.html",
+     "top_left_x": 45,
+     "top_left_y": 871,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 767,
+     "bottom_right_y": 1341,
+     "confidence_scores": null,
+     "content": "<table><tr><td>PAR</td><td></td><td>4</td><td>3</td><td>5</td><td>4</td><td>5</td><td>3</td><td>4</td><td>4</td><td>4</td><td>36</td></tr><tr><td></td><td>0</td><td>2</td><td>1</td><td>3</td><td>2</td><td>4</td><td>2</td><td>2</td><td>2</td><td>3</td><td></td></tr><tr><td></td><td></td><td>2</td><td>3</td><td>2</td><td>3</td><td>1</td><td>2</td><td>3</td><td>2</td><td>1</td><td></td></tr><tr><td></td><td></td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>4</td></tr></table>",
+     "table_id": "tbl-2.html",
+     "top_left_x": 45,
+     "top_left_y": 1101,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 767,
+     "bottom_right_y": 1441,
+     "confidence_scores": null,
+     "content": "<table><tr><td>HANDICAP</td><td></td><td>3</td><td>17</td><td>1</td><td>5</td><td>11</td><td>15</td><td>7</td><td>13</td><td>9</td><td></td></tr><tr><td>RED</td><td>73.3/124</td><td>382</td><td>119</td><td>473</td><td>331</td><td>424</td><td>148</td><td>315</td><td>272</td><td>332</td><td>2796</td></tr></table>",
+     "table_id": "tbl-3.html",
+     "top_left_x": 45,
+     "top_left_y": 1341,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1485,
+     "bottom_right_y": 871,
+     "confidence_scores": null,
+     "content": "<table><tr><td>INTL</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td><td>ADI</td></tr><tr><td></td><td>381</td><td>437</td><td>212</td><td>436</td><td>578</td><td>439</td><td>423</td><td>220</td><td>529</td><td>3655</td><td>7100</td><td></td><td></td><td></td></tr><tr><td></td><td>365</td><td>400</td><td>186</td><td>415</td><td>563</td><td>428</td><td>408</td><td>200</td><td>514</td><td>3479</td><td>6739</td><td></td><td></td><td></td></tr><tr><td></td><td>343</td><td>376</td><td>170</td><td>393</td><td>548</td><td>408</td><td>394</td><td>185</td><td>497</td><td>3314</td><td>6372</td><td></td><td></td><td></td></tr><tr><td></td><td>305</td><td>323</td><td>128</td><td>355</td><td>489</td><td>361</td><td>351</td><td>146</td><td>445</td><td>2903</td><td>5699</td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-4.html",
+     "top_left_x": 767,
+     "top_left_y": 657,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1485,
+     "bottom_right_y": 1101,
+     "confidence_scores": null,
+     "content": "<table><tr><td></td><td>13</td><td>11</td><td>17</td><td>9</td><td>1</td><td>3</td><td>7</td><td>15</td><td>5</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>3</td><td>2</td><td>2</td><td>3</td><td>3</td><td>2</td><td>1</td><td>3</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>2</td><td>7</td><td>79</td><td></td><td></td></tr></table>",
+     "table_id": "tbl-5.html",
+     "top_left_x": 767,
+     "top_left_y": 871,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1485,
+     "bottom_right_y": 1341,
+     "confidence_scores": null,
+     "content": "<table><tr><td></td><td>4</td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td><td>4</td><td>3</td><td>5</td><td>36</td><td>72</td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>1</td><td>3</td><td>4</td><td>4</td><td>3</td><td>1</td><td>4</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>3</td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td></td><td></td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-6.html",
+     "top_left_x": 767,
+     "top_left_y": 1101,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1485,
+     "bottom_right_y": 1441,
+     "confidence_scores": null,
+     "content": "<table><tr><td></td><td>14</td><td>6</td><td>18</td><td>12</td><td>2</td><td>10</td><td>8</td><td>16</td><td>4</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>305</td><td>323</td><td>128</td><td>355</td><td>489</td><td>361</td><td>351</td><td>146</td><td>445</td><td>2903</td><td>5699</td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-7.html",
+     "top_left_x": 767,
+     "top_left_y": 1341,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 104,
+     "bottom_right_y": 1485,
+     "confidence_scores": null,
+     "content": "SCORER",
+     "top_left_x": 23,
+     "top_left_y": 1455,
+     "type": "text"
+    },
+    {
+     "bottom_right_x": 1330,
+     "bottom_right_y": 1461,
+     "confidence_scores": null,
+     "content": "DATE",
+     "top_left_x": 1279,
+     "top_left_y": 1431,
+     "type": "text"
+    }
+   ],
+   "confidence_scores": null,
+   "dimensions": {
+    "dpi": 200,
+    "height": 2000,
+    "width": 1500
+   },
+   "footer": null,
+   "header": null,
+   "hyperlinks": [],
+   "images": [
+    {
+     "bottom_right_x": 1479,
+     "bottom_right_y": 657,
+     "id": "img-0.jpeg",
+     "image_annotation": null,
+     "image_base64": null,
+     "top_left_x": 45,
+     "top_left_y": 488
+    }
+   ],
+   "index": 0,
+   "markdown": "![img-0.jpeg](img-0.jpeg)\n\n[tbl-0.html](tbl-0.html)\n\n[tbl-1.html](tbl-1.html)\n\n[tbl-2.html](tbl-2.html)\n\n[tbl-3.html](tbl-3.html)\n\n[tbl-4.html](tbl-4.html)\n\n[tbl-5.html](tbl-5.html)\n\n[tbl-6.html](tbl-6.html)\n\n[tbl-7.html](tbl-7.html)\n\nSCORER\n\nDATE",
+   "tables": [
+    {
+     "content": "<table><tr><td>HOLE</td><td></td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td>BLACK</td><td>73.8/134</td><td>424</td><td>181</td><td>565</td><td>413</td><td>520</td><td>202</td><td>366</td><td>357</td><td>417</td><td>3445</td></tr><tr><td>BLUE</td><td>72.2/130</td><td>405</td><td>160</td><td>519</td><td>402</td><td>503</td><td>188</td><td>357</td><td>335</td><td>391</td><td>3260</td></tr><tr><td>WHITE</td><td>M:70.9/127<br/>W:76.8/130</td><td>396</td><td>140</td><td>483</td><td>392</td><td>470</td><td>167</td><td>343</td><td>294</td><td>373</td><td>3058</td></tr><tr><td>GOLD</td><td>67.7/123</td><td>382</td><td>119</td><td>473</td><td>331</td><td>424</td><td>148</td><td>315</td><td>272</td><td>332</td><td>2796</td></tr></table>",
+     "format": "html",
+     "id": "tbl-0.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>HANDICAP</td><td></td><td>6</td><td>18</td><td>8</td><td>2</td><td>12</td><td>16</td><td>10</td><td>14</td><td>4</td><td></td></tr><tr><td></td><td>G</td><td>3</td><td>2</td><td>4</td><td>2</td><td>3</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td></td><td></td><td>3</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td></tr><tr><td></td><td></td><td>2</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>5</td></tr></table>",
+     "format": "html",
+     "id": "tbl-1.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>PAR</td><td></td><td>4</td><td>3</td><td>5</td><td>4</td><td>5</td><td>3</td><td>4</td><td>4</td><td>4</td><td>36</td></tr><tr><td></td><td>0</td><td>2</td><td>1</td><td>3</td><td>2</td><td>4</td><td>2</td><td>2</td><td>2</td><td>3</td><td></td></tr><tr><td></td><td></td><td>2</td><td>3</td><td>2</td><td>3</td><td>1</td><td>2</td><td>3</td><td>2</td><td>1</td><td></td></tr><tr><td></td><td></td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>4</td></tr></table>",
+     "format": "html",
+     "id": "tbl-2.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>HANDICAP</td><td></td><td>3</td><td>17</td><td>1</td><td>5</td><td>11</td><td>15</td><td>7</td><td>13</td><td>9</td><td></td></tr><tr><td>RED</td><td>73.3/124</td><td>382</td><td>119</td><td>473</td><td>331</td><td>424</td><td>148</td><td>315</td><td>272</td><td>332</td><td>2796</td></tr></table>",
+     "format": "html",
+     "id": "tbl-3.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>INTL</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td><td>ADI</td></tr><tr><td></td><td>381</td><td>437</td><td>212</td><td>436</td><td>578</td><td>439</td><td>423</td><td>220</td><td>529</td><td>3655</td><td>7100</td><td></td><td></td><td></td></tr><tr><td></td><td>365</td><td>400</td><td>186</td><td>415</td><td>563</td><td>428</td><td>408</td><td>200</td><td>514</td><td>3479</td><td>6739</td><td></td><td></td><td></td></tr><tr><td></td><td>343</td><td>376</td><td>170</td><td>393</td><td>548</td><td>408</td><td>394</td><td>185</td><td>497</td><td>3314</td><td>6372</td><td></td><td></td><td></td></tr><tr><td></td><td>305</td><td>323</td><td>128</td><td>355</td><td>489</td><td>361</td><td>351</td><td>146</td><td>445</td><td>2903</td><td>5699</td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-4.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td></td><td>13</td><td>11</td><td>17</td><td>9</td><td>1</td><td>3</td><td>7</td><td>15</td><td>5</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>3</td><td>2</td><td>2</td><td>3</td><td>3</td><td>2</td><td>1</td><td>3</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>2</td><td>7</td><td>79</td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-5.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td></td><td>4</td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td><td>4</td><td>3</td><td>5</td><td>36</td><td>72</td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>1</td><td>3</td><td>4</td><td>4</td><td>3</td><td>1</td><td>4</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>3</td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td></td><td></td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-6.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td></td><td>14</td><td>6</td><td>18</td><td>12</td><td>2</td><td>10</td><td>8</td><td>16</td><td>4</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>305</td><td>323</td><td>128</td><td>355</td><td>489</td><td>361</td><td>351</td><td>146</td><td>445</td><td>2903</td><td>5699</td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-7.html",
+     "word_confidence_scores": null
+    }
+   ]
+  }
+ ],
+ "usage_info": {
+  "doc_size_bytes": 401212,
+  "pages_processed": 1
+ }
+}

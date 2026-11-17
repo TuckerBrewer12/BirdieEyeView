@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https: http:; img-src 'self' data:; object-src 'none'; base-uri 'self'"
+    />
+    <link rel="icon" href="data:," />
+    <title>Scan Lab · BirdieEyeView</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="lib.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="#/"
+          ><span class="brand-mark" aria-hidden="true">↗</span> BirdieEyeView
+          <span class="brand-label">SCAN LAB</span></a
+        >
+        <span class="live-label" id="data-label">Evaluation history</span>
+      </div>
+    </header>
+    <div class="shell">
+      <nav class="toolbar" aria-label="Report controls">
+        <a class="back" href="#/">← All runs</a>
+        <label
+          >Suite
+          <span class="select-control"
+            ><select id="suite">
+              <option value="large">Large</option>
+              <option value="quick">Quick</option>
+              <option value="">All suites</option>
+            </select></span
+          ></label
+        >
+        <label class="toggle"
+          ><input type="checkbox" id="exclude" /> Exclude known gaps</label
+        >
+        <button id="refresh" type="button">Refresh</button>
+      </nav>
+      <main id="app" aria-live="polite">
+        <p class="notice">Loading evaluation history…</p>
+      </main>
+      <footer>
+        <span>Public fixtures · live provider evaluations</span
+        ><span id="source"></span>
+      </footer>
+    </div>
+  </body>
+</html>

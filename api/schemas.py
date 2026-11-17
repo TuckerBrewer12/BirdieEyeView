@@ -1,14 +1,22 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, Dict, List, Literal, Optional
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from analytics.verdicts import ChangeVerdict
 from models import Hole, UserTee
 from models.hole_score import ScoreKind
+from services.scan_assembly import ConfidenceLevel
 
 
 class ResponseModel(BaseModel):
-    model_config = ConfigDict(json_schema_serialization_defaults_required=True)
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True, from_attributes=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def serialize_domain(cls, value):
+        if isinstance(value, BaseModel) and not isinstance(value, ResponseModel):
+            return value.model_dump()
+        return value
 
 
 class ScoreCounts(ResponseModel):
@@ -22,6 +30,9 @@ class ScoreCounts(ResponseModel):
 
 
 class TeeResponse(ResponseModel):
+    yardage_holes: Optional[Tuple[int, ...]] = None
+    rating_holes: Optional[Tuple[int, ...]] = None
+    ratings: List[Dict[str, Any]] = Field(default_factory=list)
     color: Optional[str] = None
     slope_rating: Optional[float] = None
     course_rating: Optional[float] = None
@@ -33,6 +44,7 @@ class TeeResponse(ResponseModel):
 
 
 class CourseResponse(ResponseModel):
+    total_holes: Optional[int] = None
     id: Optional[str] = None
     name: Optional[str] = None
     external_course_id: Optional[str] = None
@@ -46,6 +58,7 @@ class CourseResponse(ResponseModel):
 
 
 class HoleScoreResponse(ResponseModel):
+    played: Optional[bool] = None
     hole_number: int
     strokes: Optional[int] = None
     net_score: Optional[int] = None
@@ -123,6 +136,7 @@ class WorstStretch(ResponseModel):
 
 
 class RoundResponse(RoundFigures):
+    intended_holes: Optional[Tuple[int, ...]] = None
     id: Optional[str] = None
     course: Optional[CourseResponse] = None
     tee_box: Optional[str] = None
@@ -175,6 +189,7 @@ DifferentialStatus = Literal["counting", "close", "out", "unrated"]
 
 
 class ScoreTrendRow(ResponseModel):
+    holes: Optional[int] = None
     round_index: int
     round_id: Optional[str] = None
     total_score: Optional[int] = None
@@ -197,6 +212,17 @@ class HandicapTrendRow(ResponseModel):
 
 
 class DashboardResponse(ResponseModel):
+    total_rounds: int = 0
+    scoring_average: Optional[float] = None
+    average_putts: Optional[float] = None
+    average_gir: Optional[float] = None
+    scoring_average_nine: Optional[float] = None
+    best_round_nine: Optional[int] = None
+    best_round_nine_id: Optional[str] = None
+    best_round_nine_course: Optional[str] = None
+    average_putts_nine: Optional[float] = None
+    average_gir_nine: Optional[float] = None
+
     best_round: Optional[int] = None
     best_round_id: Optional[str] = None
     best_round_course: Optional[str] = None
@@ -216,6 +242,9 @@ class DashboardResponse(ResponseModel):
 
 
 class AnalyticsKpis(ResponseModel):
+    scoring_average_nine: Optional[float] = None
+    best_round_nine: Optional[int] = None
+    average_putts_nine: Optional[float] = None
     scoring_average: Optional[float] = None
     gir_percentage: Optional[float] = None
     putts_per_gir: Optional[float] = None
@@ -262,9 +291,9 @@ class PuttsTrendRow(ResponseModel):
 class ThreePuttsTrendRow(ResponseModel):
     round_index: int
     round_id: Optional[str] = None
-    three_putt_count: int
+    three_putt_count: Optional[int]
     holes_with_putt_data: int
-    three_putt_percentage: float
+    three_putt_percentage: Optional[float]
     costly: bool = False
 
 
@@ -303,13 +332,13 @@ class ScoringByHandicapRow(ResponseModel):
 class GirVsNonGirRow(ResponseModel):
     bucket: Literal["GIR", "No GIR"]
     holes_counted: int
-    eagle: float
-    birdie: float
-    par: float
-    bogey: float
-    double_bogey: float
-    triple_bogey: float
-    quad_bogey: float
+    eagle: Optional[float]
+    birdie: Optional[float]
+    par: Optional[float]
+    bogey: Optional[float]
+    double_bogey: Optional[float]
+    triple_bogey: Optional[float]
+    quad_bogey: Optional[float]
 
 
 class MilestoneEvent(ResponseModel):
@@ -332,6 +361,7 @@ class ThresholdMilestone(ResponseModel):
 
 
 class LifetimeScoringRecords(ResponseModel):
+    lowest_round_nine: Optional[int] = None
     lowest_round: Optional[int] = None
     highest_round: Optional[int] = None
     lowest_9_holes: Optional[int] = None
@@ -342,6 +372,7 @@ class LifetimeScoringRecords(ResponseModel):
 
 
 class OneYearScoringRecords(ResponseModel):
+    lowest_round_nine: Optional[int] = None
     lowest_round: Optional[int] = None
     most_birdies_in_round: Optional[int] = None
     most_gir_in_round: Optional[int] = None
@@ -354,6 +385,7 @@ class ScoringRecords(ResponseModel):
 
 
 class LifetimeScoringRecordEvents(ResponseModel):
+    lowest_round_nine: Optional[MilestoneEvent] = None
     lowest_round: Optional[MilestoneEvent] = None
     highest_round: Optional[MilestoneEvent] = None
     lowest_9_holes: Optional[MilestoneEvent] = None
@@ -364,6 +396,7 @@ class LifetimeScoringRecordEvents(ResponseModel):
 
 
 class OneYearScoringRecordEvents(ResponseModel):
+    lowest_round_nine: Optional[MilestoneEvent] = None
     lowest_round: Optional[MilestoneEvent] = None
     most_birdies_in_round: Optional[MilestoneEvent] = None
     most_gir_in_round: Optional[MilestoneEvent] = None
@@ -376,6 +409,7 @@ class ScoringRecordEvents(ResponseModel):
 
 
 class LifetimeCareerTotals(ResponseModel):
+    total_albatrosses: int = 0
     total_rounds_played: int = 0
     total_holes_played: int = 0
     total_birdies: int = 0
@@ -391,6 +425,7 @@ class LifetimeCareerTotals(ResponseModel):
 
 
 class OneYearCareerTotals(ResponseModel):
+    albatrosses: int = 0
     rounds_played: int = 0
     birdies: int = 0
     eagles: int = 0
@@ -528,6 +563,7 @@ class LifetimeRoundMilestones(ResponseModel):
 
 
 class OneYearRoundMilestones(ResponseModel):
+    new_personal_records_achieved: List[str] = Field(default_factory=list)
     new_personal_records_achieved_count: int = 0
 
 
@@ -666,9 +702,10 @@ class GoalAttempt(ResponseModel):
 
 
 class GoalReportResponse(ResponseModel):
+    nine_hole: Optional[Dict[str, Any]] = None
     scoring_average: Optional[float] = None
     lowest_score: Optional[int] = None
-    scoring_goal: int
+    scoring_goal: Optional[int] = None
     gap: Optional[float] = None
     on_track: bool = False
     progress_pct: Optional[float] = None
@@ -809,18 +846,18 @@ class AISuggestionsResponse(ResponseModel):
 
 
 class UserResponse(ResponseModel):
+    email_verified: bool = False
+    email_verified_at: Optional[datetime] = None
+    last_handicap_update: Optional[datetime] = None
     id: str
     friend_code: Optional[str] = None
     name: Optional[str] = None
     email: Optional[str] = None
     home_course_id: Optional[str] = None
+    scoring_goal_nine: Optional[int] = None
     handicap: Optional[float] = None
     created_at: Optional[datetime] = None
     scoring_goal: Optional[int] = None
-
-
-ConfidenceLevel = Literal["high", "medium", "low", "very_low"]
-"""How sure the scan is of a reading, from its 0-1 confidence."""
 
 
 class ScannedHole(ResponseModel):
@@ -900,3 +937,57 @@ class OcrTextResponse(ResponseModel):
 class SaveScanResponse(ResponseModel):
     id: str
     total_score: Optional[int] = None
+
+
+class DomainResponse(BaseModel):
+    @model_validator(mode="before")
+    @classmethod
+    def _serialize_domain_model(cls, value: Any) -> Any:
+        if isinstance(value, BaseModel) and not isinstance(value, DomainResponse):
+            return value.model_dump()
+        return value
+
+
+class HoleResponse(DomainResponse):
+    number: Optional[int] = None
+    par: Optional[int] = None
+    handicap: Optional[int] = None
+
+
+class TeeRatingResponse(DomainResponse):
+    hole_numbers: Tuple[int, ...]
+    course_rating: Optional[float] = None
+    slope_rating: Optional[float] = None
+
+
+class TeeDataResponse(DomainResponse):
+    total_yardage: Optional[int] = None
+    hole_yardages: Dict[int, int] = {}
+    yardage_holes: Optional[Tuple[int, ...]] = None
+    course_rating: Optional[float] = None
+    slope_rating: Optional[float] = None
+    rating_holes: Optional[Tuple[int, ...]] = None
+    ratings: List[TeeRatingResponse] = []
+
+
+class UserTeeResponse(TeeDataResponse):
+    id: Optional[str] = None
+    user_id: str
+    course_id: Optional[str] = None
+    name: str
+    created_at: Optional[datetime] = None
+
+
+class FriendshipResponse(BaseModel):
+    id: str
+    requester_id: str
+    addressee_id: str
+    status: Literal["pending", "accepted", "declined", "blocked"]
+    created_at: str
+    updated_at: str
+    requester_name: Optional[str] = None
+    requester_email: Optional[str] = None
+    addressee_name: Optional[str] = None
+    addressee_email: Optional[str] = None
+    friend_handicap_index: Optional[float] = None
+    friend_last_played: Optional[str] = None

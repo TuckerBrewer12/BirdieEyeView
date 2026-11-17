@@ -1,5 +1,6 @@
 import asyncpg
-from typing import Optional
+from contextlib import asynccontextmanager
+from typing import AsyncIterator, Optional
 
 from models import Course, Round, User
 from database.repositories.course_repo import CourseRepositoryDB
@@ -18,25 +19,25 @@ class DatabaseManager:
         self.user_tees = UserTeeRepositoryDB(pool)
         self.friendships = FriendshipRepositoryDB(pool)
 
+    @asynccontextmanager
+    async def transaction(self) -> AsyncIterator:
+        async with self._pool.acquire() as conn, conn.transaction():
+            yield conn
 
     async def get_course(self, course_id: str) -> Optional[Course]:
         return await self.courses.get_course(course_id)
 
-    async def find_course_by_name(
-        self, name: str, location: Optional[str] = None
-    ) -> Optional[Course]:
+    async def find_course_by_name(self, name: str, location: Optional[str] = None) -> Optional[Course]:
         return await self.courses.find_course_by_name(name, location)
 
     async def create_course(self, course: Course) -> Course:
         return await self.courses.create_course(course)
-
 
     async def get_user(self, user_id: str) -> Optional[User]:
         return await self.users.get_user(user_id)
 
     async def create_user(self, user: User) -> User:
         return await self.users.create_user(user)
-
 
     async def get_round(self, round_id: str) -> Optional[Round]:
         return await self.rounds.get_round(round_id)

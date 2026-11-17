@@ -18,10 +18,10 @@ def test_score_kind_buckets_the_extremes():
     assert score_kind(None) is None
 
 
-def test_hole_par_prefers_the_course_then_par_played():
+def test_hole_par_prefers_historical_par_then_course():
     course = Course(holes=[Hole(number=1, par=3)])
     round_ = Round(course=course, hole_scores=_holes([4, 5], par_played=5))
-    assert round_.get_hole_par(1) == 3
+    assert round_.get_hole_par(1) == 5
     assert round_.get_hole_par(2) == 5
 
 
@@ -34,13 +34,13 @@ def test_a_nine_totals_only_once_all_nine_are_scored():
     assert part_played.calculate_front_nine() is None
 
 
-def test_hole_handicap_prefers_the_course_then_handicap_played():
+def test_hole_handicap_preserves_the_played_rank():
     course = Course(holes=[Hole(number=1, par=4, handicap=7)])
     round_ = Round(course=course, hole_scores=[
         HoleScore(hole_number=1, strokes=4, handicap_played=3),
         HoleScore(hole_number=2, strokes=4, handicap_played=11),
     ])
-    assert round_.get_hole_handicap(1) == 7
+    assert round_.get_hole_handicap(1) == 3
     assert round_.get_hole_handicap(2) == 11
 
 
@@ -49,12 +49,12 @@ def test_yardage_comes_from_the_tee_played_then_the_user_tee():
     course = Course(holes=[Hole(number=1, par=4)], tees=[tee])
     played_blue = Round(course=course, tee_box="blue", hole_scores=_holes([4, 3]))
     assert played_blue.get_hole_yardage(1) == 400
-    assert played_blue.get_total_yardage() == 6500
+    assert played_blue.get_total_yardage() is None
 
     user_tee = UserTee(user_id="u1", name="Mine", hole_yardages={1: 380, 2: 140})
     own_tee = Round(user_tee=user_tee, hole_scores=_holes([4, 3]))
     assert own_tee.get_hole_yardage(2) == 140
-    assert own_tee.get_total_yardage() == 520
+    assert own_tee.get_total_yardage() is None
 
     assert Round(hole_scores=_holes([4])).get_hole_yardage(1) is None
 
@@ -96,10 +96,10 @@ def test_round_detail_sends_the_scorecard_figures():
     ])
     response = round_detail(round_)
     assert (response.hole_scores[0].handicap, response.hole_scores[0].yardage) == (5, 410)
-    assert response.nines.front.putts == 2
-    assert response.nines.front.gir == 0
+    assert response.nines.front.putts is None
+    assert response.nines.front.gir is None
     assert response.nines.front.par is None
-    assert response.yards == 410
+    assert response.yards is None
 
 
 def test_running_to_par_skips_holes_it_cannot_read():
@@ -130,7 +130,7 @@ def test_score_counts_leave_out_holes_without_par():
     assert round_.get_score_counts() == {"birdie": 1, "par": 1, "double": 1}
 
 
-def test_list_row_becomes_a_round_that_reads_course_par_first():
+def test_list_row_preserves_historical_par_without_inventing_coverage():
     row = {
         "id": "r1",
         "course_id": "c1",
@@ -148,9 +148,9 @@ def test_list_row_becomes_a_round_that_reads_course_par_first():
     }
     round_ = round_from_summary_row(row)
     assert round_.course.name == "Blue Rock"
-    assert round_.get_hole_par(1) == 4
+    assert round_.get_hole_par(1) == 5
     assert round_.get_hole_par(2) == 3
-    assert round_.get_par() == 72
+    assert round_.get_par() is None
     assert round_.get_total_putts() == 3
     assert round_.get_total_gir() == 1
 

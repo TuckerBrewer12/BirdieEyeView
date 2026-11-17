@@ -62,7 +62,7 @@ Both commands require `MISTRAL_API_KEY` and `GOOGLE_API_KEY`. The evaluator uses
 
 The answer key grades final numeric values by field and hole number. To-par handwriting is compared against normalized raw strokes. Cards with recorded putts and shots-to-green grade those fields too. Results are cumulative: a 100% case also counts in the 90%+ and 80%+ totals. Cases below 80% are labeled failed and list every mismatch, but accuracy failures do not make the command exit unsuccessfully.
 
-The report includes OCR/merge time per image, extraction and effective time per case, and total suite time. Provider latency varies across runs. Ordinary pytest uses deterministic provider replacements.
+The report includes OCR/merge time per image, extraction and effective time per case, and total suite time, plus how many images had the Gemini table merge rejected. Under each case it lists the scan's internal diagnostics: what the OCR clean-up changed, whether the merge was accepted or why it was rejected, and each parser decision or refusal (which row was taken as the player, how the back nine was paired, why a name was not found). Provider latency and Gemini output vary across runs; the deterministic regression gate is the Mistral-capture scenario in `tests/integration/test_api_e2e.py`.
 
 ### Run from a pull request
 
@@ -73,7 +73,26 @@ In GitHub, create the two labels below if they are missing and configure `MISTRA
 | `run-scan-evals` | Large |
 | `run-quick-scan-eval` | Quick |
 
-The [live eval workflow](.github/workflows/scan-evals.yml) evaluates the PR merge commit, posts accuracy and timing on the PR, and uploads a detailed report to the Actions run. The check is optional for merging. Remove and re-add the label to request a new run after a push. A new request on the same PR supersedes a paid run already in progress.
+The [live eval workflow](.github/workflows/scan-evals.yml) evaluates the PR merge commit and posts accuracy, timing, a **Readable report** link to the Actions Summary, and the run ID on the PR. The raw text remains a downloadable artifact. A separate publishing job validates the structured report and appends it to the public `eval-results` branch. If the structured report can't be produced or is rejected, the eval still passes or fails on its own results and only that run is missing from the dashboard; a publishing failure does not block the PR comment. The check is optional for merging. Remove and re-add the label to request a new run after a push. A new request on the same PR supersedes a paid run already in progress.
+
+### Dashboard and saved results
+
+Open the static dashboard locally; no npm install or app server is needed:
+
+```bash
+cd eval-dashboard
+python3 -m http.server 8080
+```
+
+Visit [http://localhost:8080/](http://localhost:8080/). It reads published history from the public `eval-results` branch. Add `?data=./sample-data/` to explore three illustrative runs without contacting providers. The dashboard includes suite filters, known-gap exclusion, case diagnostics/history, and two-run comparisons. Comparisons flag changed fixtures, hints, or answer keys instead of calling those scanner improvements. The data URL is shown in the footer; GitHub's raw-content cache may delay new results.
+
+For a local live run, optionally export the same report formats:
+
+```bash
+python -m scripts.quick_scan_eval --suite large --results-json outputs/results.json --summary-markdown outputs/summary.md
+```
+
+Only public eval-fixture results belong on `eval-results`; never publish private user scans, photos, or raw OCR there. These changes do not use Railway storage or require GitHub Pages. See [dashboard setup, schema, and manual publication](eval-dashboard/README.md). Enabling optional Pages hosting later does not change the data source.
 
 For production hardening (HTTPS, secret handling, DB network restrictions, security logging), see:
 

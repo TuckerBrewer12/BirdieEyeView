@@ -1,5 +1,6 @@
 from typing import Any, Callable, Dict, List, Literal, Optional
 
+from analytics import eligibility as el
 from analytics import stats
 from analytics.verdicts import change_verdict
 from models import Round
@@ -51,8 +52,13 @@ def _metric(
 
 
 def round_vs_average(rounds: List[Round], round_index: int) -> Dict[str, Any]:
+    selected = rounds[round_index]
+    format_ = el.round_format(selected)
+    earlier = [r for r in rounds[:round_index] if r.is_complete() and el.round_format(r) == format_ and format_ is not None]
+    comparable = [*earlier, selected]
+    round_index = len(earlier)
     series = [
-        (key, [row.get(field) for row in rows(rounds)], lower, digits)
+        (key, [row.get(field) for row in rows(comparable)], lower, digits)
         for key, rows, field, lower, digits in METRICS
     ]
     windows = []

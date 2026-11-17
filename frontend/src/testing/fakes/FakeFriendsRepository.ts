@@ -25,6 +25,10 @@ export class FakeFriendsRepository implements SocialRepository {
       handicap: null,
       home_course_id: null,
       scoring_goal: null,
+      scoring_goal_nine: null,
+      email_verified: true,
+      email_verified_at: null,
+      last_handicap_update: null,
       friend_code: this.myCode,
       created_at: null,
     };

@@ -33,10 +33,9 @@ Create the parent directory when needed. Preserve existing user-authored notes i
 - Keep the blast radius narrow and name any intentional tradeoffs.
 - Include tests as part of the plan, not as an afterthought.
 - Include database migrations only when schema changes are required.
-- Name the `docs/` guides the change will make inaccurate, so `$update-docs` can update them after implementation.
-- Ask the user concise clarification questions when implementation preferences affect the API contract, data model, test depth, rollout risk, or long-term maintainability.
-- Treat file organization, helper abstractions, dependency placement, CI job structure, testing-layer ownership, parameterization, and narrow-versus-broad cleanup as clarification topics when multiple reasonable choices would materially change the result.
-- Do not record an unresolved preference as a decision. A recommended approach is not user confirmation.
+- Name the `docs/` guides the change will make inaccurate, and the `CLAUDE.md`/`AGENTS.md` bullets, so `$update-docs` can update them after implementation.
+- When a response or request model changes, plan the regeneration of `frontend/openapi.json` and `api.gen.ts` and say what the frontend owner needs to know.
+- Resolve material implementation preferences with the user before finishing the plan (see Clarification Checkpoint). A recommended approach is not user confirmation.
 - Do not repeat a question already answered in the request or recon artifact.
 - Avoid committing changes; final review and commits belong to the user.
 
@@ -57,30 +56,20 @@ This clarification requirement includes choices about:
 - which testing layer owns a contract and what counts as redundant coverage
 - parameterized cases versus separate named tests when that changes readability or reporting
 - compatibility, rollout, persistence, performance, privacy, or reliability tradeoffs
+- API shape, request/response fields, or backward compatibility
+- migrations and data backfill decisions
 
 The final approval question is not a substitute for clarification. Do not bury unresolved options in a completed plan and rely on the user to notice them during blanket approval.
 
-Good clarification topics include:
-
-- API shape, request/response fields, or backward compatibility
-- whether to favor a narrow fix or broader cleanup
-- test coverage targets and whether mocks or integration tests are preferred
-- persistence, migrations, and data backfill decisions
-- performance, privacy, or reliability tradeoffs
-
-Ask only the questions needed to plan responsibly. If the best path is clear from the codebase and user request, proceed without asking. Final blanket approval of the plan is not a substitute for resolving a material implementation preference.
-
-Do not repeat a question the user has already answered. When several unresolved choices are related, ask them together in a concise numbered list and explain the practical consequence of each option.
+Ask only the questions needed to plan responsibly. If the best path is clear from the codebase and user request, proceed without asking. When several unresolved choices are related, ask them together in a concise numbered list and explain the practical consequence of each option.
 
 If clarification is needed, preserve the useful planning work already completed, mark the unresolved item clearly, and do not present the plan as final. Ask immediately and stop. After the user answers, update the implementation artifact with the user-confirmed decision, finish the plan, and then ask for implementation approval.
 
 ## Test Planning
 
-Take test commands from `docs/practices/testing.md`, which is the maintained source; do not copy commands from memory or older notes. Plan the smallest meaningful test set first, then broaden when the change crosses domains. Choose the layer by what the test must prove:
+Take test commands from `docs/practices/testing.md`, which is the maintained source; do not copy commands from memory or older notes. Choose layers by the Testing Priority in `.codex/skills/make-code-change/SKILL.md`: E2E first, PostgreSQL integration for what the API cannot observe, and unit tests only when absolutely necessary. Plan the smallest meaningful test set, and list the final gates the loop will run (the full unit and integration suites and the checks in `docs/practices/testing.md`).
 
-- Python branching, conversion, or error translation: focused unit tests with fakes.
-- SQL, constraints, ownership filters, transactions, PostgreSQL types/extensions, and persistence round trips: the disposable PostgreSQL integration suite, not mocked asyncpg execution.
-- Live scan evaluation calls paid providers; plan it only when the task needs it.
+In the Test Plan, name each new test and its layer. For every new unit test, state which necessity reason from the Testing Priority applies; a unit test without one does not belong in the plan. Live scan evaluation calls paid providers; plan it only when the task needs it.
 
 ## Output Format
 
@@ -101,7 +90,10 @@ Write or update this content in the implementation artifact:
 - `<command or test file>`: <what it proves>
 
 ### Docs To Update
-- `<docs path>`: <what will become inaccurate, or "None">
+- `<docs path, CLAUDE.md/AGENTS.md bullet, or handoff.md entry>`: <what will become inaccurate, or "None">
+
+### Frontend Impact
+<None, or: regenerated types, changed responses or errors, and what the frontend owner needs to do.>
 
 ### Acceptance Criteria
 - <observable condition>
@@ -132,13 +124,4 @@ At the end of every invocation, check whether this planning run exposed a reusab
 - Implementation later needed a plan amendment that planning should have anticipated.
 - The test plan named a command, file, or layer that turned out to be wrong.
 
-When the evidence is concrete:
-
-- Make the smallest correction to this `SKILL.md` that would have prevented the problem.
-- Keep the skill change separate from the user's task: make it as its own edit and list it under a separate "Skill changes" heading in the final response, with the evidence, so the user can review and commit it apart from the feature work.
-- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or preferences that apply only to the current task.
-- Do not weaken confirmation gates, expand mutation authority, or materially change workflow scope without explicit user approval. Propose those changes instead.
-- Preserve user-authored guidance and avoid duplicating rules already enforced elsewhere.
-- Validate the modified skill with the skill-creator `quick_validate.py` script when available.
-
-If no reusable gap appeared, leave the skill unchanged. Skill maintenance must not interrupt or replace completion of the user's primary task.
+When the evidence is concrete, follow the rules under Continuous Skill Improvement in `.codex/skills/make-code-change/SKILL.md`: the smallest correction, kept separate from the user's task and listed under "Skill changes", with no weakened gates. If no reusable gap appeared, leave the skill unchanged.

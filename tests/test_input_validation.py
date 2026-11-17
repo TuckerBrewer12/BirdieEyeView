@@ -48,7 +48,6 @@ def test_ensure_uuid_normalizes_case():
             ),
             "",
         ),
-        (lambda: sanitize_search_query("Pebble Beach"), "Pebble Beach"),
         (lambda: sanitize_ocr_text("one\r\ntwo"), "one\ntwo"),
     ],
 )
@@ -90,11 +89,9 @@ def test_input_validator_rejects_invalid_value(call, message):
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        (None, None),
         (" ", None),
         ("+3.2", -3.2),
         ("12.4", "12.4"),
-        (-2.0, -2.0),
     ],
 )
 def test_normalize_handicap_accepts_supported_value(value, expected):

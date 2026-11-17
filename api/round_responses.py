@@ -101,6 +101,7 @@ def round_list(rounds: List[Round]) -> List[RoundSummaryResponse]:
 def round_detail(round_: Round, handicap_index: Optional[float] = None) -> RoundResponse:
     return RoundResponse(
         **_figures(round_),
+        intended_holes=round_.intended_holes,
         id=round_.id,
         course=course_detail(round_.course, handicap_index) if round_.course else None,
         tee_box=round_.tee_box,

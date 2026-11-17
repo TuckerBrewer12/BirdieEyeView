@@ -1,6 +1,7 @@
 from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from analytics import eligibility as el
 from analytics import stats as analytics
 from analytics.verdicts import change_verdict
 from models import Round
@@ -10,7 +11,7 @@ SCORE_KINDS = analytics.SCORE_KINDS
 
 
 def scoring_average(rounds: List[Round], window: Optional[int] = None) -> Optional[float]:
-    scores = [s for s in (r.calculate_total_score() for r in rounds) if s is not None]
+    scores = [s for s in (r.calculate_total_score() for r in el.complete_rounds(rounds, el.EIGHTEEN)) if s is not None]
     if window is not None:
         scores = scores[-window:]
     return sum(scores) / len(scores) if scores else None
@@ -98,4 +99,22 @@ def whs_breakdown(
         "adjustment": index_window["adjustment"],
         "diff_avg": sum(used) / len(used) if used else None,
         "has_rated_rounds": any(d.get("course_rating") is not None for d in differentials),
+    }
+
+
+def format_totals(summaries: List[Round], holes: int) -> Dict[str, Any]:
+    rows = [r for r in summaries if r.is_complete() and len(r.get_intended_holes()) == holes]
+
+    def average(getter):
+        values = [v for r in rows if (v := getter(r)) is not None]
+        return round(sum(values) / len(values), 1) if values else None
+
+    best = min(rows, key=lambda r: r.calculate_total_score()) if rows else None
+    return {
+        "average": average(lambda r: r.calculate_total_score()),
+        "best": best.calculate_total_score() if best else None,
+        "best_id": str(best.id) if best else None,
+        "best_course": (best.course_name_played or (best.course.name if best.course else None)) if best else None,
+        "average_putts": average(lambda r: r.get_total_putts()),
+        "average_gir": average(lambda r: r.get_total_gir()),
     }

@@ -42,7 +42,7 @@ def test_a_nine_stays_out_of_the_average_beside_full_rounds():
     assert (response.best_round_id, response.worst_round_id) == ("r1", "r1")
 
     only_nines = course_analytics("c1", [nine])
-    assert (only_nines.scoring_average, only_nines.scoring_average_to_par) == (36.0, 0.0)
+    assert (only_nines.scoring_average, only_nines.scoring_average_to_par) == (None, None)
 
 
 def test_each_hole_carries_how_it_plays():
@@ -137,5 +137,5 @@ def test_tees_list_longest_first_with_ties_by_colour():
             Tee(color="Gold", hole_yardages={1: 350}),
         ],
     )
-    assert [t.color for t in course.tees_by_length()] == ["Blue", "Gold", "white", "Red"]
-    assert [t.color for t in course_detail(course).tees] == ["Blue", "Gold", "white", "Red"]
+    assert [t.color for t in course.tees_by_length()] == ["Blue", "Gold", "Red", "white"]
+    assert [t.color for t in course_detail(course).tees] == ["Blue", "Gold", "Red", "white"]

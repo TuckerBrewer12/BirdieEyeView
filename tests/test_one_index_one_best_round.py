@@ -28,7 +28,7 @@ def _database(user: User, rounds: list[Round]):
         return user
 
     async def get_round_summaries_for_user(_user_id, *, limit=100, offset=0):
-        return newest_first[offset:offset + limit]
+        return newest_first[offset:offset + limit if limit is not None else None]
 
     async def get_rounds_for_user(_user_id, limit=20, offset=0, course_id=None, date_from=None):
         picked = [
@@ -36,7 +36,7 @@ def _database(user: User, rounds: list[Round]):
             if (course_id is None or (r.course and r.course.id == course_id))
             and (date_from is None or r.date.date() >= date_from)
         ]
-        return picked[offset:offset + limit]
+        return picked[offset:offset + limit if limit is not None else None]
 
     async def get_round(round_id):
         return next(r for r in rounds if r.id == round_id)
@@ -74,7 +74,7 @@ async def test_every_screen_shows_the_golfers_own_index(golfer):
     assert index is not None
     assert index != hcap.handicap_index(rounds[-20:])
 
-    dashboard = await stats_router.get_dashboard(user_id, db, user)
+    dashboard = await stats_router.get_dashboard(user=user, db=db)
     assert dashboard.handicap_index == index
     assert dashboard.handicap_trend[-1].handicap_index == index
 
@@ -113,7 +113,7 @@ async def test_a_timeframe_narrows_the_rounds_not_the_index(golfer, monkeypatch)
 @pytest.mark.asyncio
 async def test_the_dashboards_breakdown_and_change_add_up_to_the_index_shown(golfer):
     user, _, db = golfer
-    dashboard = await stats_router.get_dashboard(UUID(user.id), db, user)
+    dashboard = await stats_router.get_dashboard(user=user, db=db)
     whs = dashboard.whs
     used = [row.differential for row in whs.rows if row.used]
     assert len(used) == whs.count_used
@@ -173,13 +173,13 @@ def _mixed_season():
     ]
 
 
-def test_best_is_the_round_lists_best_lowest_to_par_full_rounds_first():
+def test_best_is_the_lowest_complete_eighteen_hole_gross_score():
     season = _mixed_season()
     newest_first = list(reversed(season))
-    assert stats.best_round(newest_first).id == "75"
+    assert stats.best_round(newest_first).id == "74-at-70"
     places = stats.best_round_ranks(newest_first)
-    assert newest_first[next(i for i, p in places.items() if p == 1)].id == "75"
-    assert stats.best_round([_round("nine-a", 2, holes=9), _round("nine-b", 1, holes=9)]).id == "nine-b"
+    assert newest_first[next(i for i, p in places.items() if p == 1)].id == "74-at-70"
+    assert stats.best_round([_round("nine-a", 2, holes=9), _round("nine-b", 1, holes=9)]) is None
     assert stats.best_round([Round(id="blank")]) is None
     assert stats.best_round([_round("newer", 3, day=5), _round("older", 3, day=1)]).id == "newer"
 
@@ -191,15 +191,15 @@ async def test_dashboard_analytics_and_course_page_name_the_same_best_round():
     db = _database(user, season)
     user_id = UUID(user.id)
 
-    dashboard = await stats_router.get_dashboard(user_id, db, user)
-    assert (dashboard.best_round, dashboard.best_round_id) == (75, "75")
+    dashboard = await stats_router.get_dashboard(user=user, db=db)
+    assert (dashboard.best_round, dashboard.best_round_id) == (74, "74-at-70")
 
     analytics = await stats_router.get_analytics(user_id, 50, None, None, db, user)
     assert (analytics.kpis.best_round, analytics.kpis.best_round_id, analytics.kpis.best_round_course) == (
-        75, "75", "Course 75",
+        74, "74-at-70", "Seventy",
     )
-    listed = await rounds_router.get_rounds_for_user(user_id, 100, 0, db, user)
-    assert next(r.id for r in listed if r.best_rank == 1) == "75"
+    listed = await rounds_router.get_rounds_for_user(limit=100, offset=0, user=user, db=db)
+    assert next(r.id for r in listed if r.best_rank == 1) == "74-at-70"
 
 
 def test_the_course_page_best_round_is_never_a_nine():
@@ -229,4 +229,4 @@ def test_the_goal_report_and_peak_read_full_rounds_for_lowest_and_best():
     season = _mixed_season()
     report = goals.goal_report(season, 79)
     assert report["lowest_score"] == 74
-    assert [r.id for r in peak.peak_rounds(season)] == ["75", "74-at-70", "78"]
+    assert [r.id for r in peak.peak_rounds(season)] == ["74-at-70", "75", "78"]

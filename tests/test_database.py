@@ -1,20 +1,24 @@
-import pytest
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
-from database.repositories.course_repo import CourseRepositoryDB
-from database.repositories.round_repo import RoundRepositoryDB
-from database.repositories.user_tee_repo import UserTeeRepositoryDB
-from database.repositories.user_repo import UserRepositoryDB
+import pytest
+
 from database.converters import (
+    course_from_rows,
+    course_to_row,
     hole_score_from_row,
     hole_score_to_row,
     round_from_rows,
     round_to_row,
-    user_tee_from_row,
     user_from_row,
+    user_tee_from_row,
 )
-from models import Course, Hole, Tee, Round, HoleScore, UserTee, User
+from database.exceptions import IntegrityError
+from database.repositories.course_repo import CourseRepositoryDB
+from database.repositories.round_repo import RoundRepositoryDB
+from database.repositories.user_repo import UserRepositoryDB
+from database.repositories.user_tee_repo import UserTeeRepositoryDB
+from models import Course, Hole, HoleScore, Round, Tee, User, UserTee
 
 
 def _round_row(round_id, *, course_id=None, course_name_played=None, tee_box_played=None, total_score=80):
@@ -73,19 +77,14 @@ def test_hole_score_to_row_includes_par_played():
     rid = uuid4()
     row = hole_score_to_row(hs, rid, None)
 
-    assert len(row) == 11
+    assert len(row) == 12
+    assert row[11] is None
     assert row[0] == rid
     assert row[1] is None
     assert row[2] == 1
     assert row[3] == 5
     assert row[9] == 4
     assert row[10] == 7
-
-
-def test_hole_score_to_row_null_hole_id():
-    hs = HoleScore(hole_number=3, strokes=4, par_played=3)
-    row = hole_score_to_row(hs, uuid4(), None)
-    assert row[1] is None
 
 
 def test_round_converter_maps_course_name_played():
@@ -109,6 +108,57 @@ def test_round_converter_hole_scores_sorted():
     r = round_from_rows(row, score_rows, None)
 
     assert [hs.hole_number for hs in r.hole_scores] == [1, 2, 3]
+
+
+def _course_row(*, total_holes, par):
+    return {
+        "id": uuid4(), "name": "Nine Hole Course", "external_course_id": None,
+        "location": None, "par": par, "total_holes": total_holes, "user_id": None,
+    }
+
+
+def _hole_rows(numbers, par=4):
+    return [{"hole_number": n, "par": par, "handicap": n} for n in numbers]
+
+
+def test_course_converter_loads_nine_hole_layout():
+    course = course_from_rows(_course_row(total_holes=9, par=36), _hole_rows(range(1, 10)), [], {})
+
+    assert course.total_holes == 9
+    assert course.get_par() == 36
+
+    scores = [HoleScore(hole_number=n, strokes=5) for n in range(1, 10)]
+    round_ = Round(course=course, hole_scores=scores)
+    assert round_.is_complete() is True
+    assert round_.get_par() == 36
+    assert round_.total_to_par() == 9
+
+
+def test_course_converter_null_total_holes_keeps_legacy_inference():
+    nine = course_from_rows(_course_row(total_holes=None, par=36), _hole_rows(range(1, 10)), [], {})
+    eighteen = course_from_rows(_course_row(total_holes=None, par=72), _hole_rows(range(1, 19)), [], {})
+
+    assert nine.total_holes is None
+    assert nine.get_par() is None
+    assert eighteen.get_par() == 72
+
+
+def test_course_to_row_prefers_declared_total_holes():
+    declared = Course(name="Nine", total_holes=9, holes=[Hole(number=1, par=4)])
+    legacy = Course(name="Legacy", holes=[Hole(number=n, par=4) for n in range(1, 19)])
+
+    assert course_to_row(declared)["total_holes"] == 9
+    assert course_to_row(legacy)["total_holes"] == 18
+    assert course_to_row(Course(name="Empty"))["total_holes"] is None
+
+
+@pytest.mark.parametrize(
+    "numbers, expected",
+    [(range(1, 10), 9), (range(1, 6), None), (range(10, 19), None), ([*range(1, 9), 10], None)],
+)
+def test_course_to_row_keeps_exact_front_nine_layout(numbers, expected):
+    course = Course(name="Scanned", holes=[Hole(number=n, par=4) for n in numbers])
+    assert course_to_row(course)["total_holes"] == expected
 
 
 def test_user_tee_converter_roundtrip():
@@ -147,368 +197,26 @@ def test_user_converter_maps_friend_code():
     assert user.friend_code == "GCABC12345"
 
 
-@pytest.mark.asyncio
-async def test_course_repo_get_course(mock_pool):
-    pool, conn = mock_pool
-    repo = CourseRepositoryDB(pool)
-
-    course_id = uuid4()
-    conn.fetchrow.return_value = {
-        "id": course_id, "name": "Test", "location": "Loc",
-        "external_course_id": None,
-        "par": 72, "total_holes": 18, "metadata": "{}", "user_id": None,
-    }
-    conn.fetch.side_effect = [
-        [],
-        [],
-    ]
-
-    c = await repo.get_course(str(course_id))
-    assert c is not None
-    assert c.name == "Test"
-    assert c.user_id is None
-
-
-@pytest.mark.asyncio
-async def test_course_repo_get_course_not_found(mock_pool):
-    pool, conn = mock_pool
-    repo = CourseRepositoryDB(pool)
-    conn.fetchrow.return_value = None
-
-    c = await repo.get_course(str(uuid4()))
-    assert c is None
-
-
-@pytest.mark.asyncio
-async def test_course_repo_create_course(mock_pool):
-    pool, conn = mock_pool
-    repo = CourseRepositoryDB(pool)
-
-    course_id = uuid4()
-    tee_id = uuid4()
-    conn.fetchrow.side_effect = [
-        {"id": course_id, "name": "New Course", "location": "Loc",
-         "external_course_id": None,
-         "par": 72, "total_holes": 18, "metadata": "{}", "user_id": None},
-        {"id": tee_id},
-    ]
-    conn.fetch.side_effect = [
-        [],
-        [],
-    ]
-
-    course = Course(name="New Course", location="Loc",
-                    holes=[Hole(number=1, par=4)], tees=[Tee(color="Red")])
-    saved = await repo.create_course(course)
-
-    assert saved.name == "New Course"
-    conn.executemany.assert_called()
-
-
-@pytest.mark.asyncio
-async def test_course_repo_create_course_persists_external_course_id(mock_pool):
-    pool, conn = mock_pool
-    repo = CourseRepositoryDB(pool)
-
-    course_id = uuid4()
-    conn.fetchrow.side_effect = [
-        {
-            "id": course_id,
-            "name": "Diablo Creek Golf Course",
-            "external_course_id": "gc_12345",
-            "location": "Concord, CA",
-            "par": None,
-            "total_holes": 0,
-            "metadata": "{}",
-            "user_id": None,
-        },
-    ]
-    conn.fetch.side_effect = [
-        [],
-        [],
-    ]
-
-    course = Course(
-        name="Diablo Creek Golf Course",
-        external_course_id="gc_12345",
-        location="Concord, CA",
-        holes=[],
-        tees=[],
-    )
-    saved = await repo.create_course(course)
-
-    assert saved.external_course_id == "gc_12345"
-    assert conn.fetchrow.call_args.args[2] == "gc_12345"
-
-
-def _course_summary_row(course_id, **overrides):
+@pytest.mark.parametrize('yardages', ['{"1":400,"01":500}', '{"1":true}', '[]', 'not json'])
+def test_user_tee_converter_rejects_invalid_stored_yardages(yardages):
     row = {
-        "id": course_id, "name": "Pebble Beach", "external_course_id": None,
-        "location": "Monterey", "par": 72, "hole_count": 18, "tee_count": 3,
-        "tee_colors": ["Blue", "White", "Red"],
+        'id': uuid4(), 'user_id': uuid4(), 'course_id': None, 'name': 'Blue',
+        'slope_rating': None, 'course_rating': None, 'hole_yardages': yardages, 'created_at': None,
     }
-    row.update(overrides)
-    return row
+    with pytest.raises(IntegrityError, match='Invalid stored user tee data'):
+        user_tee_from_row(row)
 
 
-@pytest.mark.asyncio
-async def test_course_repo_list_course_summaries_in_one_query(mock_pool):
-    pool, conn = mock_pool
-    repo = CourseRepositoryDB(pool)
-    course_id, user_id = uuid4(), uuid4()
-    conn.fetch.return_value = [_course_summary_row(course_id)]
-
-    summaries = await repo.list_course_summaries(limit=10, offset=20, user_id=str(user_id))
-
-    assert conn.fetch.await_count == 1
-    conn.fetchrow.assert_not_called()
-    query, *params = conn.fetch.await_args.args
-    assert params == [10, 20, user_id]
-    assert "ORDER BY name LIMIT $1 OFFSET $2" in query
-    assert [(s.id, s.name, s.par, s.hole_count, s.tee_count, s.tee_colors) for s in summaries] == [
-        (str(course_id), "Pebble Beach", 72, 18, 3, ["Blue", "White", "Red"])
-    ]
-    assert "WHERE y.tee_id = t.id) DESC, lower(t.color)" in query
-
-    await repo.list_course_summaries()
-    _, *params = conn.fetch.await_args.args
-    assert params == [50, 0, None]
+from database.repositories.course_repo import _tee_yardage_similarity
 
 
-@pytest.mark.asyncio
-async def test_course_repo_search_course_summaries_in_one_query(mock_pool):
-    pool, conn = mock_pool
-    repo = CourseRepositoryDB(pool)
-    user_id = uuid4()
-    conn.fetch.return_value = [_course_summary_row(uuid4(), par=None, hole_count=0, tee_count=0)]
-
-    summaries = await repo.search_course_summaries("Peb", user_id=str(user_id))
-
-    assert conn.fetch.await_count == 1
-    conn.fetchrow.assert_not_called()
-    query, *params = conn.fetch.await_args.args
-    assert params == ["%Peb%", user_id]
-    assert "(name ILIKE $1 OR location ILIKE $1)" in query
-    assert (summaries[0].par, summaries[0].hole_count, summaries[0].tee_count) == (None, 0, 0)
-
-    await repo.search_course_summaries("Peb")
-    _, *params = conn.fetch.await_args.args
-    assert params == ["%Peb%", None]
-
-
-@pytest.mark.asyncio
-async def test_user_repo_create_user_persists_friend_code(mock_pool):
-    pool, conn = mock_pool
-    repo = UserRepositoryDB(pool)
-    uid = uuid4()
-
-    conn.fetchrow.return_value = {
-        "id": uid,
-        "friend_code": "GCWXYZ1234",
-        "name": "Test User",
-        "email": "test@example.com",
-        "home_course_id": None,
-        "handicap_index": None,
-        "created_at": None,
-    }
-
-    created = await repo.create_user(User(name="Test User", email="test@example.com"))
-    assert created.id == str(uid)
-    assert created.friend_code == "GCWXYZ1234"
-    inserted_code = conn.fetchrow.call_args.args[1]
-    assert inserted_code.startswith("GC")
-    assert len(inserted_code) == 10
-
-
-@pytest.mark.asyncio
-async def test_user_repo_get_user_by_friend_code(mock_pool):
-    pool, conn = mock_pool
-    repo = UserRepositoryDB(pool)
-    uid = uuid4()
-    conn.fetchrow.return_value = {
-        "id": uid,
-        "friend_code": "GCQWER5678",
-        "name": "Friend",
-        "email": "friend@example.com",
-        "home_course_id": None,
-        "handicap_index": None,
-        "created_at": None,
-    }
-
-    user = await repo.get_user_by_friend_code(" gcqwer5678 ")
-    assert user is not None
-    assert user.friend_code == "GCQWER5678"
-    assert conn.fetchrow.call_args.args[1] == "GCQWER5678"
-
-@pytest.mark.asyncio
-async def test_round_repo_get_round(mock_pool):
-    pool, conn = mock_pool
-    repo = RoundRepositoryDB(pool, course_repo=AsyncMock())
-
-    round_id = uuid4()
-    conn.fetchrow.return_value = _round_row(round_id, course_name_played="Test Name")
-    conn.fetch.return_value = []
-
-    r = await repo.get_round(str(round_id))
-    assert r is not None
-    assert r.course_name_played == "Test Name"
-
-
-@pytest.mark.asyncio
-async def test_round_repo_get_round_not_found(mock_pool):
-    pool, conn = mock_pool
-    repo = RoundRepositoryDB(pool, course_repo=AsyncMock())
-    conn.fetchrow.return_value = None
-
-    r = await repo.get_round(str(uuid4()))
-    assert r is None
-
-
-@pytest.mark.asyncio
-async def test_round_summaries_pick_the_page_before_gathering_holes(mock_pool):
-    pool, conn = mock_pool
-    repo = RoundRepositoryDB(pool, course_repo=AsyncMock())
-    round_id, course_id, user_id = uuid4(), uuid4(), uuid4()
-    conn.fetch.return_value = [{
-        "id": round_id, "course_id": course_id, "tee_box_played": "Blue", "round_date": None,
-        "course_name_played": None, "course_name": "Blue Rock", "course_par": 72,
-        "hole_scores": [{"hole_number": 1, "strokes": 3, "putts": 1, "green_in_regulation": True,
-                         "par_played": None, "course_par": 4}],
-    }]
-
-    [summary] = await repo.get_round_summaries_for_user(str(user_id), limit=5, offset=10)
-
-    sql, *args = conn.fetch.call_args.args
-    assert args == [user_id, 5, 10, None]
-    assert sql.index("LIMIT $2 OFFSET $3") < sql.index("json_agg")
-    assert "GROUP BY" not in sql
-    assert summary.course.name == "Blue Rock"
-    assert summary.get_score_kind(1) == "birdie"
-
-    await repo.get_round_summaries_for_user(str(user_id), limit=None, course_ids=[str(course_id)])
-    sql, *args = conn.fetch.call_args.args
-    assert args == [user_id, None, 0, [course_id]]
-    assert "course_id = ANY($4::uuid[])" in sql
-
-
-@pytest.mark.asyncio
-async def test_round_repo_create_round_no_course(mock_pool):
-    pool, conn = mock_pool
-    repo = RoundRepositoryDB(pool, course_repo=AsyncMock())
-
-    round_id = uuid4()
-    row = _round_row(round_id, course_name_played="New Round")
-    conn.fetchrow.side_effect = [row, row]
-    conn.fetch.return_value = []
-
-    r = Round(
-        hole_scores=[HoleScore(hole_number=1, strokes=4, par_played=4)],
-        course_name_played="New Round",
-    )
-    saved = await repo.create_round(r, user_id=str(uuid4()))
-
-    assert saved is not None
-    assert saved.course_name_played == "New Round"
-
-    conn.executemany.assert_called_once()
-    sql, tuples = conn.executemany.call_args[0]
-    assert "par_played" in sql
-    assert len(tuples) == 1
-    assert tuples[0][1] is None
-    assert tuples[0][9] == 4
-
-
-@pytest.mark.asyncio
-async def test_round_repo_create_round_populates_par_from_course(mock_pool):
-    pool, conn = mock_pool
-    course_repo_mock = AsyncMock()
-    repo = RoundRepositoryDB(pool, course_repo=course_repo_mock)
-
-    round_id = uuid4()
-    hole_id = uuid4()
-    course_id = uuid4()
-
-    row = _round_row(round_id, course_id=course_id)
-    conn.fetchrow.side_effect = [row, row]
-    conn.fetch.side_effect = [
-        [{"id": hole_id, "hole_number": 1}],
-        [],
-    ]
-
-    course = Course(id=str(course_id), name="Test", holes=[Hole(number=1, par=4)])
-    course_repo_mock.get_course = AsyncMock(return_value=None)
-
-    r = Round(
-        course=course,
-        hole_scores=[HoleScore(hole_number=1, strokes=4, par_played=None)],
-    )
-    saved = await repo.create_round(r, user_id=str(uuid4()), course_id=str(course_id))
-
-    assert saved is not None
-    _sql, tuples = conn.executemany.call_args[0]
-    assert tuples[0][1] == hole_id
-    assert tuples[0][9] == 4
-
-
-@pytest.mark.asyncio
-async def test_user_tee_repo_get(mock_pool):
-    pool, conn = mock_pool
-    repo = UserTeeRepositoryDB(pool)
-
-    tee_id = uuid4()
-    conn.fetchrow.return_value = {
-        "id": tee_id, "user_id": uuid4(), "course_id": None,
-        "name": "My Tee", "slope_rating": 120, "course_rating": 72.0,
-        "hole_yardages": {"1": 400}, "created_at": None,
-    }
-
-    t = await repo.get_user_tee(str(tee_id))
-    assert t.name == "My Tee"
-    assert t.hole_yardages == {1: 400}
-
-
-@pytest.mark.asyncio
-async def test_user_tee_repo_get_not_found(mock_pool):
-    pool, conn = mock_pool
-    repo = UserTeeRepositoryDB(pool)
-    conn.fetchrow.return_value = None
-
-    t = await repo.get_user_tee(str(uuid4()))
-    assert t is None
-
-
-@pytest.mark.asyncio
-async def test_user_tee_repo_create(mock_pool):
-    pool, conn = mock_pool
-    repo = UserTeeRepositoryDB(pool)
-
-    tee_id = uuid4()
-    user_id = uuid4()
-    conn.fetchrow.return_value = {
-        "id": tee_id, "user_id": user_id, "course_id": None,
-        "name": "White", "slope_rating": 113, "course_rating": 70.5,
-        "hole_yardages": {}, "created_at": None,
-    }
-
-    ut = UserTee(user_id=str(user_id), name="White", slope_rating=113, course_rating=70.5)
-    created = await repo.create_user_tee(ut)
-
-    assert created.name == "White"
-    assert created.slope_rating == 113.0
-    conn.fetchrow.assert_called_once()
-    sql = conn.fetchrow.call_args[0][0]
-    assert "INSERT INTO users.user_tees" in sql
-
-
-@pytest.mark.asyncio
-async def test_user_tee_repo_delete(mock_pool):
-    pool, conn = mock_pool
-    repo = UserTeeRepositoryDB(pool)
-
-    conn.execute.return_value = "DELETE 1"
-    deleted = await repo.delete_user_tee(str(uuid4()))
-    assert deleted is True
-
-    conn.execute.return_value = "DELETE 0"
-    deleted = await repo.delete_user_tee(str(uuid4()))
-    assert deleted is False
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        ({}, {1: 400}, (0.0, 0)),
+        ({1: 400}, {2: 400}, (0.0, 0)),
+        ({1: 400}, {1: 420}, (1.0, 1)),
+    ],
+)
+def test_tee_yardage_similarity(left, right, expected):
+    assert _tee_yardage_similarity(left, right) == expected

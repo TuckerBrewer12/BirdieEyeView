@@ -24,7 +24,7 @@ import { useSettingsPageViewModel } from "./useSettingsPageViewModel";
 export function SettingsPage({ userId }: { userId: string }) {
   const viewModel = useSettingsPageViewModel(userId);
   const { preference: theme, setPreference: setTheme } = useTheme();
-  const signOut = useSignOut(useAuth());
+  const { signOut, isPending: signingOut } = useSignOut(useAuth());
   const guard = useLeaveGuard(viewModel.dirty);
 
   if (viewModel.loading) return <LoadingState>Loading settings…</LoadingState>;
@@ -77,10 +77,10 @@ export function SettingsPage({ userId }: { userId: string }) {
             <SettingsGroup>
               <SettingsRow
                 type="action"
-                label={signOut.isPending ? "Signing out…" : "Sign out"}
+                label={signingOut ? "Signing out…" : "Sign out"}
                 tone="danger"
-                disabled={signOut.isPending}
-                onClick={() => signOut.mutate()}
+                disabled={signingOut}
+                onClick={signOut}
               />
             </SettingsGroup>
           </>

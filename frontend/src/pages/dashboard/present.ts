@@ -8,6 +8,7 @@ import {
   type RoundSummary,
   type ScoreKind,
 } from "@/domain";
+import { teeRatingLabel } from "@/domain/course";
 import type { UserDto } from "@/types/api";
 import type { BestRound, WhsRound } from "./model";
 
@@ -15,7 +16,7 @@ export function firstNameOf(user: UserDto | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
 }
 
-export function greetingFor(now: Date): string {
+export function greetingFor(now: Date = new Date()): string {
   const hour = now.getHours();
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
@@ -57,9 +58,7 @@ export function courseLabelForWhs(row: WhsRound): string {
 }
 
 export function ratingLabelForWhs(row: WhsRound): string | null {
-  return row.courseRating != null && row.slopeRating != null
-    ? `${row.courseRating} / ${row.slopeRating}`
-    : null;
+  return teeRatingLabel({ course_rating: row.courseRating, slope_rating: row.slopeRating });
 }
 
 export function scoreAndRatingForWhs(row: WhsRound): string {

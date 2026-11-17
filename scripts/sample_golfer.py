@@ -15,7 +15,8 @@ from api.analytics_responses import analytics_response
 from api.player_handicap import player_handicap_index
 from api.round_responses import round_detail
 from analytics import dashboard as dashboard_module
-from api.routers import stats, users
+from api.routers import stats
+from api.schemas import UserResponse
 from models import Course, Hole, HoleScore, Round, Tee, User
 
 OUT = Path(__file__).resolve().parent.parent / "frontend" / "src" / "testing" / "fixtures" / "sampleGolfer.ts"
@@ -135,7 +136,7 @@ def _database(rounds: list[Round]):
         return USER
 
     async def get_round_summaries_for_user(_user_id, *, limit=100, offset=0):
-        return newest_first[offset:offset + limit]
+        return newest_first[offset:offset + limit if limit is not None else None]
 
     async def get_rounds_for_user(_user_id, limit=100, offset=0, course_id=None, date_from=None):
         picked = [
@@ -143,7 +144,7 @@ def _database(rounds: list[Round]):
             if (course_id is None or r.course.id == course_id)
             and (date_from is None or r.date.date() >= date_from)
         ]
-        return picked[offset:offset + limit]
+        return picked[offset:offset + limit if limit is not None else None]
 
     async def get_played_courses_for_user(_user_id):
         courses = {r.course.id: r.course for r in rounds}.values()
@@ -179,19 +180,19 @@ async def _responses() -> tuple[dict, dict]:
     last_day = max(r.date for r in rounds).date()
     dashboard_module.today = lambda: last_day + timedelta(days=1)
 
-    dashboard = await stats.get_dashboard(user_id, db, USER)
+    dashboard = await stats.get_dashboard(user=USER, db=db)
     analytics = await stats.get_analytics(user_id, 50, None, None, db, USER)
-    goal_report = await stats.get_goal_report(user_id, 20, db, USER)
-    played_courses = await stats.get_played_courses(user_id, db, USER)
+    goal_report = await stats.get_goal_report(limit=20, user=USER, db=db)
+    played_courses = await stats.get_played_courses(user=USER, db=db)
     links_analytics = await stats.get_analytics(user_id, 50, HALF_MOON_BAY.id, None, db, USER)
 
     benchmarks = {
-        f"handicap:{handicap}": await stats.get_benchmark_comparison(user_id, "handicap", handicap, None, 50, db, USER)
+        f"handicap:{handicap}": await stats.get_benchmark_comparison(against="handicap", handicap=handicap, friend_id=None, limit=50, user=USER, db=db)
         for handicap in (0, 5, 10, 15, 20, 25)
     }
 
     best = best_round(sorted(rounds, key=lambda r: r.date, reverse=True))
-    profile = users.user_response(USER.model_copy(update={"handicap": dashboard.handicap_index}))
+    profile = UserResponse.model_validate(USER.model_copy(update={"handicap": dashboard.handicap_index}))
     seed = jsonable_encoder({
         "user": {"user_id": USER.id, "name": USER.name, "email": USER.email, "email_verified": True},
         "profile": profile,

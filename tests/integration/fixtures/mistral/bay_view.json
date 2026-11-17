@@ -1,0 +1,142 @@
+{
+ "document_annotation": null,
+ "model": "mistral-ocr-latest",
+ "pages": [
+  {
+   "blocks": [
+    {
+     "bottom_right_x": 758,
+     "bottom_right_y": 935,
+     "confidence_scores": null,
+     "content": "<table><tr><td>HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td>BLACK</td><td>330</td><td>517</td><td>125</td><td>368</td><td>186</td><td>473</td><td>381</td><td>400</td><td>523</td><td>3303</td></tr><tr><td>GOLD</td><td>307</td><td>482</td><td>116</td><td>344</td><td>170</td><td>392</td><td>343</td><td>376</td><td>501</td><td>3031</td></tr><tr><td>SILVER</td><td>293</td><td>446</td><td>106</td><td>286</td><td>121</td><td>369</td><td>262</td><td>262</td><td>487</td><td>2632</td></tr><tr><td>HANDICAP</td><td>15</td><td>3</td><td>17</td><td>5</td><td>7</td><td>11</td><td>9</td><td>1</td><td>13</td><td></td></tr><tr><td>D</td><td>4</td><td>5</td><td>2</td><td>4</td><td>2</td><td>3</td><td>2</td><td>5</td><td>4</td><td></td></tr><tr><td></td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>3</td><td>2</td><td></td></tr><tr><td></td><td>1</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>3</td><td>1</td><td>11</td></tr></table>",
+     "table_id": "tbl-0.html",
+     "top_left_x": 35,
+     "top_left_y": 392,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 758,
+     "bottom_right_y": 1289,
+     "confidence_scores": null,
+     "content": "<table><tr><td>PAR</td><td>4</td><td>5</td><td>3</td><td>4</td><td>3</td><td>4</td><td>4</td><td>4</td><td>5</td><td>36</td></tr><tr><td>G</td><td>2</td><td>4</td><td>1</td><td>4</td><td>1</td><td>4</td><td>2</td><td>5</td><td>4</td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>3</td><td>1</td><td>2</td><td>1</td><td>2</td><td>2</td><td>3</td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>2</td><td>9</td></tr></table>",
+     "table_id": "tbl-1.html",
+     "top_left_x": 35,
+     "top_left_y": 943,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 757,
+     "bottom_right_y": 1411,
+     "confidence_scores": null,
+     "content": "<table><tr><td>GREEN</td><td>273</td><td>357</td><td>99</td><td>214</td><td>115</td><td>285</td><td>255</td><td>255</td><td>470</td><td>2323</td></tr><tr><td>HANDICAP</td><td>15</td><td>3</td><td>17</td><td>5</td><td>9</td><td>13</td><td>11</td><td>1</td><td>7</td><td></td></tr></table>",
+     "table_id": "tbl-2.html",
+     "top_left_x": 26,
+     "top_left_y": 1293,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 751,
+     "bottom_right_y": 1477,
+     "confidence_scores": null,
+     "content": "SCORER: \u00a9 Gulf ScoreCards, Inc. 10/2022 1-800-238-7267",
+     "top_left_x": 26,
+     "top_left_y": 1417,
+     "type": "header"
+    },
+    {
+     "bottom_right_x": 1476,
+     "bottom_right_y": 935,
+     "confidence_scores": null,
+     "content": "<table><tr><td rowspan=\"6\">INITIAL</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>376</td><td>335</td><td>412</td><td>159</td><td>576</td><td>540</td><td>196</td><td>398</td><td>406</td><td>3398</td><td>6701</td><td></td><td></td></tr><tr><td>360</td><td>322</td><td>371</td><td>141</td><td>492</td><td>510</td><td>163</td><td>373</td><td>390</td><td>3122</td><td>6153</td><td></td><td></td></tr><tr><td>340</td><td>310</td><td>337</td><td>123</td><td>467</td><td>467</td><td>128</td><td>286</td><td>353</td><td>2811</td><td>5443</td><td></td><td></td></tr><tr><td>8</td><td>16</td><td>2</td><td>18</td><td>14</td><td>12</td><td>6</td><td>10</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td>3</td><td>3</td><td>4</td><td>3</td><td>4</td><td>4</td><td>5</td><td>3</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>1</td><td>1</td><td>2</td><td>0</td><td>0</td><td>1</td><td>4</td><td>1</td><td>2</td><td></td><td></td><td></td><td></td></tr></table>",
+     "table_id": "tbl-3.html",
+     "top_left_x": 761,
+     "top_left_y": 392,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1476,
+     "bottom_right_y": 1289,
+     "confidence_scores": null,
+     "content": "<table><tr><td></td><td>4</td><td>4</td><td>4</td><td>3</td><td>5</td><td>5</td><td>3</td><td>4</td><td>4</td><td>36</td><td>72</td></tr><tr><td></td><td>5</td><td>2</td><td>5</td><td>4</td><td>4</td><td>3</td><td>1</td><td>3</td><td>2</td><td></td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>3</td><td>2</td><td>2</td><td></td><td></td></tr><tr><td></td><td>3</td><td>0</td><td>3</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td></td><td></td></tr></table>",
+     "table_id": "tbl-4.html",
+     "top_left_x": 761,
+     "top_left_y": 935,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1476,
+     "bottom_right_y": 1411,
+     "confidence_scores": null,
+     "content": "<table><tr><td></td><td>325</td><td>237</td><td>260</td><td>113</td><td>403</td><td>445</td><td>78</td><td>211</td><td>316</td><td>2388</td><td>4711</td></tr><tr><td></td><td>14</td><td>16</td><td>6</td><td>18</td><td>2</td><td>4</td><td>12</td><td>10</td><td>8</td><td></td><td></td></tr></table>",
+     "table_id": "tbl-5.html",
+     "top_left_x": 761,
+     "top_left_y": 1293,
+     "type": "table"
+    },
+    {
+     "bottom_right_x": 1476,
+     "bottom_right_y": 1477,
+     "confidence_scores": null,
+     "content": "ATTEST: DATE:",
+     "top_left_x": 761,
+     "top_left_y": 1417,
+     "type": "footer"
+    }
+   ],
+   "confidence_scores": null,
+   "dimensions": {
+    "dpi": 200,
+    "height": 2000,
+    "width": 1500
+   },
+   "footer": null,
+   "header": null,
+   "hyperlinks": [],
+   "images": [],
+   "index": 0,
+   "markdown": "[tbl-0.html](tbl-0.html)\n\n[tbl-1.html](tbl-1.html)\n\n[tbl-2.html](tbl-2.html)\n\nSCORER: \u00a9 Gulf ScoreCards, Inc. 10/2022 1-800-238-7267\n\n[tbl-3.html](tbl-3.html)\n\n[tbl-4.html](tbl-4.html)\n\n[tbl-5.html](tbl-5.html)\n\nATTEST: DATE:",
+   "tables": [
+    {
+     "content": "<table><tr><td>HOLE</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>OUT</td></tr><tr><td>BLACK</td><td>330</td><td>517</td><td>125</td><td>368</td><td>186</td><td>473</td><td>381</td><td>400</td><td>523</td><td>3303</td></tr><tr><td>GOLD</td><td>307</td><td>482</td><td>116</td><td>344</td><td>170</td><td>392</td><td>343</td><td>376</td><td>501</td><td>3031</td></tr><tr><td>SILVER</td><td>293</td><td>446</td><td>106</td><td>286</td><td>121</td><td>369</td><td>262</td><td>262</td><td>487</td><td>2632</td></tr><tr><td>HANDICAP</td><td>15</td><td>3</td><td>17</td><td>5</td><td>7</td><td>11</td><td>9</td><td>1</td><td>13</td><td></td></tr><tr><td>D</td><td>4</td><td>5</td><td>2</td><td>4</td><td>2</td><td>3</td><td>2</td><td>5</td><td>4</td><td></td></tr><tr><td></td><td>1</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>3</td><td>2</td><td></td></tr><tr><td></td><td>1</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>3</td><td>1</td><td>11</td></tr></table>",
+     "format": "html",
+     "id": "tbl-0.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>PAR</td><td>4</td><td>5</td><td>3</td><td>4</td><td>3</td><td>4</td><td>4</td><td>4</td><td>5</td><td>36</td></tr><tr><td>G</td><td>2</td><td>4</td><td>1</td><td>4</td><td>1</td><td>4</td><td>2</td><td>5</td><td>4</td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>3</td><td>1</td><td>2</td><td>1</td><td>2</td><td>2</td><td>3</td><td></td></tr><tr><td></td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td>3</td><td>2</td><td>9</td></tr></table>",
+     "format": "html",
+     "id": "tbl-1.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td>GREEN</td><td>273</td><td>357</td><td>99</td><td>214</td><td>115</td><td>285</td><td>255</td><td>255</td><td>470</td><td>2323</td></tr><tr><td>HANDICAP</td><td>15</td><td>3</td><td>17</td><td>5</td><td>9</td><td>13</td><td>11</td><td>1</td><td>7</td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-2.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td rowspan=\"6\">INITIAL</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td><td>17</td><td>18</td><td>IN</td><td>TOT</td><td>HCP</td><td>NET</td></tr><tr><td>376</td><td>335</td><td>412</td><td>159</td><td>576</td><td>540</td><td>196</td><td>398</td><td>406</td><td>3398</td><td>6701</td><td></td><td></td></tr><tr><td>360</td><td>322</td><td>371</td><td>141</td><td>492</td><td>510</td><td>163</td><td>373</td><td>390</td><td>3122</td><td>6153</td><td></td><td></td></tr><tr><td>340</td><td>310</td><td>337</td><td>123</td><td>467</td><td>467</td><td>128</td><td>286</td><td>353</td><td>2811</td><td>5443</td><td></td><td></td></tr><tr><td>8</td><td>16</td><td>2</td><td>18</td><td>14</td><td>12</td><td>6</td><td>10</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td>3</td><td>3</td><td>4</td><td>3</td><td>4</td><td>4</td><td>5</td><td>3</td><td>4</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>2</td><td>2</td><td>2</td><td></td><td></td><td></td><td></td></tr><tr><td></td><td>1</td><td>1</td><td>2</td><td>0</td><td>0</td><td>1</td><td>4</td><td>1</td><td>2</td><td></td><td></td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-3.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td></td><td>4</td><td>4</td><td>4</td><td>3</td><td>5</td><td>5</td><td>3</td><td>4</td><td>4</td><td>36</td><td>72</td></tr><tr><td></td><td>5</td><td>2</td><td>5</td><td>4</td><td>4</td><td>3</td><td>1</td><td>3</td><td>2</td><td></td><td></td></tr><tr><td></td><td>2</td><td>2</td><td>2</td><td>2</td><td>1</td><td>2</td><td>3</td><td>2</td><td>2</td><td></td><td></td></tr><tr><td></td><td>3</td><td>0</td><td>3</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-4.html",
+     "word_confidence_scores": null
+    },
+    {
+     "content": "<table><tr><td></td><td>325</td><td>237</td><td>260</td><td>113</td><td>403</td><td>445</td><td>78</td><td>211</td><td>316</td><td>2388</td><td>4711</td></tr><tr><td></td><td>14</td><td>16</td><td>6</td><td>18</td><td>2</td><td>4</td><td>12</td><td>10</td><td>8</td><td></td><td></td></tr></table>",
+     "format": "html",
+     "id": "tbl-5.html",
+     "word_confidence_scores": null
+    }
+   ]
+  }
+ ],
+ "usage_info": {
+  "doc_size_bytes": 390873,
+  "pages_processed": 1
+ }
+}

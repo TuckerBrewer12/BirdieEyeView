@@ -4,7 +4,6 @@ from analytics import handicap as hcap
 from database.db_manager import DatabaseManager
 from models import Round, User
 
-WHS_WINDOW = 20
 
 
 async def player_handicap_index_with_rounds(
@@ -12,7 +11,7 @@ async def player_handicap_index_with_rounds(
 ) -> Tuple[Optional[float], List[Round]]:
     if user is None or user.id is None:
         return None, []
-    rounds = await db.rounds.get_rounds_for_user(str(user.id), limit=WHS_WINDOW)
+    rounds = await db.rounds.get_rounds_for_user(str(user.id), limit=None)
     return hcap.player_handicap_index(user, list(reversed(rounds))), rounds
 
 

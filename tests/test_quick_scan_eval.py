@@ -15,6 +15,7 @@ from scripts.quick_scan_eval import (
     SuiteRun,
     exit_code_for_run,
     grade_case,
+    SUITE_MANIFEST_PATHS,
     load_cases,
     prepare_image_for_upload,
     render_report,
@@ -225,6 +226,26 @@ def test_report_includes_cumulative_counts_mismatches_errors_and_timing():
     assert "Total suite wall time: 7.00s" in report
 
 
+def test_report_shows_scan_diagnostics_under_each_case_and_counts_rejected_merges():
+    errored = make_result("errored_case", 0, error="Extraction failed: unreadable")
+    errored.diagnostics = ["no row labeled 'D' with hole values (0 label match(es)) among 9 table rows"]
+    run = SuiteRun(
+        case_results=[make_result("perfect_case", 10), errored],
+        ocr_seconds_by_image={"card.png": 2.25, "other.png": 1.0},
+        suite_seconds=7.0,
+        ocr_diagnostics_by_image={
+            "card.png": ["ocr table 0: expanded 2 merged cell(s) into the grid", "table merge rejected: line 7 has 23 columns, expected 22"],
+            "other.png": ["table merge accepted"],
+        },
+    )
+
+    report = render_report(run)
+
+    assert "1/2 images had the table merge rejected" in report
+    assert "    - table merge rejected: line 7 has 23 columns, expected 22" in report
+    assert "    - no row labeled 'D' with hole values" in report
+
+
 @pytest.mark.asyncio
 async def test_runner_prepares_shared_image_once_and_reuses_bytes(monkeypatch, tmp_path):
     image_path = tmp_path / "card.png"
@@ -240,10 +261,9 @@ async def test_runner_prepares_shared_image_once_and_reuses_bytes(monkeypatch, t
 
     monkeypatch.setattr(quick_eval, "prepare_image_for_upload", counted_prepare)
 
-    async def fake_prefetch(upload, *, current_user):
+    async def fake_prefetch(upload):
         calls["prefetch"] += 1
         assert upload.filename == "card.jpg"
-        assert current_user is None
         uploaded_payloads.append(upload.file.read())
         return {"ocr_text": "merged markdown"}
 
@@ -273,6 +293,28 @@ async def test_runner_prepares_shared_image_once_and_reuses_bytes(monkeypatch, t
     with Image.open(BytesIO(uploaded_payloads[0])) as prepared:
         assert (prepared.format, max(prepared.size)) == ("JPEG", 1200)
     assert [result.matched_cells for result in run.case_results] == [18, 18]
+
+
+@pytest.mark.asyncio
+async def test_runner_drives_the_real_scan_routes_with_a_captured_ocr_response(monkeypatch):
+    from services import scan_ocr
+
+    cases = [case for case in load_cases(SUITE_MANIFEST_PATHS["quick"]) if case.case_id == "eagle_vines_tucker"]
+    capture = Path(__file__).parent / "integration" / "fixtures" / "mistral" / "eaglevins_90.json"
+
+    async def captured_ocr(self, file_path, **kwargs):
+        return json.loads(capture.read_text())
+
+    async def unmerged(markdown, diagnostics=None):
+        return markdown
+
+    monkeypatch.setattr(scan_ocr.MistralOCRService, "ocr_file", captured_ocr)
+    monkeypatch.setattr(scan_ocr, "merge_split_tables", unmerged)
+
+    run = await run_suite(cases)
+
+    assert [result.operational_error for result in run.case_results] == [None]
+    assert run.case_results[0].matched_cells == run.case_results[0].total_cells == 18
 
 
 @pytest.mark.asyncio
@@ -311,3 +353,95 @@ def test_accuracy_failure_does_not_fail_process_but_unusable_run_does():
 
     assert exit_code_for_run(accuracy_failure) == 0
     assert exit_code_for_run(unusable) == 2
+
+
+def test_results_export_and_markdown_use_existing_grading(tmp_path):
+    from scripts.eval_results import validate
+    fixture = tmp_path/'card.png'
+    fixture.write_bytes(b'fixture pixels')
+    cases = [make_case('perfect'), make_case('wrong'), make_case('error')]
+    perfect = grade_case(cases[0], [{'hole_number':n,'strokes':n} for n in range(1,19)])
+    wrong = grade_case(cases[1], [{'hole_number':n,'strokes':n if n>2 else None} for n in range(1,19)])
+    error = CaseResult(cases[2],0,18,operational_error='Timeout <script>|` @owner\n[next](https://bad.invalid)')
+    error.diagnostics = ['a'*600]
+    run = SuiteRun([perfect,wrong,error],{'card.png':1.2},2.4)
+    meta = quick_eval.results_metadata({})
+    result = quick_eval.results_payload(run,suite='large',metadata=meta,scorecard_dir=tmp_path)
+    validate(result)
+    assert result['summary']['matched_cells'] == 34
+    assert result['summary']['operational_errors'] == 1
+    assert len(result['cases'][2]['diagnostics'][0]) == 500
+    report = quick_eval.render_markdown(result)
+    assert '<script>' not in report and '@owner' not in report and '[next]' not in report
+    assert 'PERFECT' in report and 'ERROR' in report and '34' in report
+    changed = quick_eval.results_payload(run,suite='large',metadata=meta,scorecard_dir=tmp_path)
+    assert changed['cases'][0]['fingerprint'] == result['cases'][0]['fingerprint']
+    fixture.write_bytes(b'different fixture')
+    changed = quick_eval.results_payload(run,suite='large',metadata=meta,scorecard_dir=tmp_path)
+    assert changed['cases'][0]['fingerprint'] != result['cases'][0]['fingerprint']
+
+
+def test_metadata_and_redaction_preserve_json_special_characters():
+    meta = quick_eval.results_metadata({'SCAN_EVAL_RUN_ID':'123-2','SCAN_EVAL_BRANCH':'feature',
+        'SCAN_EVAL_COMMIT':'a'*40,'SCAN_EVAL_HEAD_COMMIT':'b'*40,'SCAN_EVAL_PR':'650',
+        'SCAN_EVAL_RUN_URL':'https://github.com/TuckerBrewer12/BirdieEyeView/actions/runs/123'})
+    assert (meta['id'],meta['commit'],meta['head_commit'],meta['pr']) == ('123-2','a'*40,'b'*40,650)
+    secret = 'key"with\\special'
+    redacted = quick_eval.redact_payload({'diagnostics':[secret+' message']},[secret])
+    assert json.loads(json.dumps(redacted)) == {'diagnostics':['[REDACTED] message']}
+
+
+def test_main_writes_structured_outputs_without_live_calls(monkeypatch,tmp_path,capsys):
+    case = make_case(image='card.png')
+    (tmp_path/'card.png').write_bytes(b'fixture')
+    result = grade_case(case,[{'hole_number':n,'strokes':n} for n in range(1,19)])
+    async def fake_run(cases):
+        return SuiteRun([result],{'card.png':1.0},2.0)
+    original_export = quick_eval.results_payload
+    monkeypatch.setattr(quick_eval,'results_payload',lambda *a,**kw: original_export(*a,**kw,scorecard_dir=tmp_path))
+    monkeypatch.setattr(quick_eval,'run_suite',fake_run)
+    monkeypatch.setattr(quick_eval,'load_cases',lambda *args: [case])
+    monkeypatch.setattr(quick_eval,'load_dotenv',lambda *args: None)
+    monkeypatch.setenv('MISTRAL_API_KEY','fake-key-mistral')
+    monkeypatch.setenv('GOOGLE_API_KEY','fake-key-google')
+    assert quick_eval.main(['--results-json',str(tmp_path/'r.json'),'--summary-markdown',str(tmp_path/'summary.md')]) == 0
+    assert json.loads((tmp_path/'r.json').read_text())['summary']['perfect'] == 1
+    assert 'Quick scan evaluation' in (tmp_path/'summary.md').read_text()
+    assert 'Quick scan evaluation' in capsys.readouterr().out
+
+
+def test_local_metadata_without_git_is_explicitly_unknown(monkeypatch):
+    def no_git(*args,**kwargs):
+        raise FileNotFoundError('git is unavailable')
+    monkeypatch.setattr(quick_eval.subprocess,'run',no_git)
+    meta=quick_eval.results_metadata({})
+    assert meta['id'].startswith('local-')
+    assert meta['branch'] is None and meta['commit'] is None and meta['dirty'] is None
+
+
+def test_failed_structured_export_warns_but_keeps_the_eval_exit_code(monkeypatch, tmp_path, capsys):
+    from scripts.eval_results import ResultsError
+
+    case = make_case(image='card.png')
+    result = grade_case(case, [{'hole_number': n, 'strokes': n} for n in range(1, 19)])
+
+    async def fake_run(cases):
+        return SuiteRun([result], {'card.png': 1.0}, 2.0)
+
+    def broken_export(*args, **kwargs):
+        raise ResultsError('Invalid run.run_url')
+
+    stale = tmp_path / 'r.json'
+    stale.write_text('{"left": "over"}')
+    monkeypatch.setattr(quick_eval, 'results_payload', broken_export)
+    monkeypatch.setattr(quick_eval, 'run_suite', fake_run)
+    monkeypatch.setattr(quick_eval, 'load_cases', lambda *args: [case])
+    monkeypatch.setattr(quick_eval, 'load_dotenv', lambda *args: None)
+    monkeypatch.setenv('MISTRAL_API_KEY', 'fake-key-mistral')
+    monkeypatch.setenv('GOOGLE_API_KEY', 'fake-key-google')
+
+    assert quick_eval.main(['--results-json', str(stale)]) == 0
+    captured = capsys.readouterr()
+    assert 'Quick scan evaluation' in captured.out
+    assert 'Warning: structured results not exported: Invalid run.run_url' in captured.err
+    assert not stale.exists()
