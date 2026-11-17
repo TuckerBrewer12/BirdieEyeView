@@ -6,6 +6,12 @@ Take a photo of a paper scorecard after your round. BirdieEyeView reads it, chec
 
 ![Dashboard](frontend/public/demo-tour/dashboard-wide.png)
 
+## Ways to keep score
+
+Golfers fill in paper cards differently, and the scanner reads the common ways. Before a scan you tell the app your name, whether scores are written as strokes or to par, and which extra rows the card has (putts, shots to green) and in what order.
+
+![Two real scorecards. On the first, Tucker's row of strokes is highlighted: a circled 4 on hole 1 is 4 strokes. On the second, G's rows are highlighted: a score of 1 to par on a par-4 hole 1 is 5 strokes, with 3 shots to reach the green and 2 putts.](docs/assets/ways-to-score.png)
+
 ## What it does
 
 **Scan a card.** Photograph any course's scorecard, handwritten. The scanner reads hole-by-hole scores (written as strokes or to par), putts and shots to green, and picks your rows out of a card with several players on it. OCR starts as soon as you pick the photo, while you're still filling in your name, so the result is usually ready when you hit Read card.
