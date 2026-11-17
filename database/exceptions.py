@@ -14,6 +14,10 @@ class IntegrityError(DatabaseError):
     ...
 
 
+class DuplicateProviderIdError(DuplicateError):
+    ...
+
+
 class ConflictError(IntegrityError):
     ...
 

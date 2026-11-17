@@ -25,7 +25,10 @@ from database.exceptions import IntegrityError
 from database.repositories.round_repo import RoundRepositoryDB
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
-from api.messages import PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME, UNREADABLE_SCORE_ROWS
+from api.messages import (
+    COURSE_NAME_TAKEN, COURSE_PAR_FROM_HOLES, COURSE_PROVIDER_ID_TAKEN, PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME,
+    UNREADABLE_SCORE_ROWS,
+)
 from scripts.quick_scan_eval import SUITE_MANIFEST_PATHS, grade_case, load_cases
 from tests.scan_report_fixtures import pdf_card
 from tests.test_mistral_scorecard_parser import EAGLE_VINES_WITH_INITIALS, INCOMPLETE_FULL_ROW
@@ -55,6 +58,16 @@ async def _create_master_course(url: str) -> str:
             tees=[Tee(color="Blue", hole_yardages={n: 400 for n in PARS})],
         )
         return str((await DatabaseManager(pool).courses.create_course(course, user_id=None)).id)
+    finally:
+        await pool.close()
+
+
+
+async def _create_master_courses(url: str, courses: list[Course]) -> list[str]:
+    pool = await asyncpg.create_pool(url, min_size=1, max_size=1)
+    try:
+        db = DatabaseManager(pool)
+        return [str((await db.courses.create_course(course, user_id=None)).id) for course in courses]
     finally:
         await pool.close()
 
@@ -1034,6 +1047,85 @@ def test_course_list_and_search_show_masters_and_only_your_own_courses(api):
     assert names(get("/api/courses/search?q=links")) == ["Master Links"]
     assert get(f"/api/courses/search?q=links&user_id={alice['id']}", bob).status_code == 403
     assert get("/api/courses/search?q=nowhere&include_external=true").status_code == 401
+
+    custom_course(api, bob, name="Bob_s Links")
+    assert names(get("/api/courses/search?q=_", bob)) == ["Bob_s Links"]
+    assert names(get("/api/courses/search?q=%25", bob)) == []
+
+
+def test_course_clone_edit_and_create_rules(api):
+    alice = api.user("alice@example.com")
+    headers = alice["headers"]
+    course = lambda course_id: api.client.get(f"/api/courses/{course_id}", headers=headers).json()
+    edit = lambda course_id, body: api.client.put(f"/api/courses/{course_id}", headers=headers, json=body)
+    (master,) = asyncio.run(_create_master_courses(api.url, [Course(
+        name="Provider Links", external_course_id="ext-1", total_holes=18,
+        holes=[Hole(number=n, par=p, handicap=n) for n, p in PARS.items()],
+        tees=[Tee(color="Blue", hole_yardages={n: 400 for n in PARS})],
+    )]))
+    lookalike = custom_course(api, alice, name="Provider Links North")
+
+    clone = api.client.post(f"/api/courses/{master}/clone", headers=headers).json()["id"]
+    assert edit(clone, {"name": "My Links"}).status_code == 200
+    again = api.client.post(f"/api/courses/{master}/clone", headers=headers)
+    assert (again.status_code, again.json()["id"]) == (201, clone)
+
+    other = custom_course(api, alice, name="Other Links")
+    provider_taken = edit(other, {"external_course_id": "ext-1"})
+    assert (provider_taken.status_code, provider_taken.json()["detail"]) == (409, COURSE_PROVIDER_ID_TAKEN)
+    name_taken = edit(other, {"name": "my links"})
+    assert (name_taken.status_code, name_taken.json()["detail"]) == (409, COURSE_NAME_TAKEN)
+
+    par_from_holes = edit(lookalike, {"par": 70})
+    assert (par_from_holes.status_code, par_from_holes.json()["detail"]) == (422, COURSE_PAR_FROM_HOLES)
+    assert course(lookalike)["par"] == 72
+    bare = api.client.post("/api/courses", headers=headers, json={"name": "Bare Links"}).json()["id"]
+    assert edit(bare, {"par": 70}).status_code == 200
+    assert course(bare)["par"] == 70
+
+    nine = lambda yardages: api.client.post("/api/courses", headers=headers, json={
+        "name": "Nine Links", "holes": [{"number": n, "par": 4} for n in range(1, 10)],
+        "tees": [{"color": "White", "hole_yardages": yardages}],
+    })
+    assert nine({"9": 380, "15": 400}).status_code == 422
+    created = nine({"9": 380})
+    assert created.status_code == 201, created.text
+    assert course(created.json()["id"])["tees"][0]["hole_yardages"] == {"9": 380}
+
+
+def test_courses_page_lists_your_played_courses_first_and_pages_stably(api):
+    alice = api.user("alice@example.com")
+    headers = alice["headers"]
+    full = lambda name: Course(
+        name=name, total_holes=18,
+        holes=[Hole(number=n, par=p, handicap=n) for n, p in PARS.items()],
+        tees=[Tee(color="Blue", hole_yardages={n: 400 for n in PARS})],
+    )
+    ids = asyncio.run(_create_master_courses(
+        api.url,
+        [Course(name=f"Course {i:02d}", location="CA") for i in range(55)]
+        + [Course(name="Twin Oaks", location=f"City {i}") for i in range(4)]
+        + [full("Zinfandel Links"), full("Yarrow Links")],
+    ))
+    zinfandel, yarrow = ids[-2], ids[-1]
+    save_round(api, alice, yarrow, date="2026-09-01")
+    save_round(api, alice, zinfandel, date="2026-10-01")
+    own = custom_course(api, alice, name="Alice Links")
+    listed = lambda **params: api.client.get(
+        "/api/courses", headers=headers, params={"user_id": alice["id"], **params}).json()
+
+    first_page = [c["id"] for c in listed()]
+    assert len(first_page) == 50
+    assert first_page[:2] == [zinfandel, yarrow]
+    assert first_page[2] == own
+    assert first_page[3] == ids[0]
+
+    every = [c["id"] for c in listed(limit=100)]
+    assert len(set(every)) == len(every) == 62
+    twin_oaks = every[56:62]
+    assert {c["name"] for c in listed(limit=4, offset=58)} == {"Twin Oaks"}
+    walked = [c["id"] for offset in range(56, 62, 2) for c in listed(limit=2, offset=offset)]
+    assert walked == twin_oaks
 
 
 def test_friends_list_shows_only_your_own_friendships(api):

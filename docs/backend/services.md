@@ -11,7 +11,7 @@
 | [scan_ocr.py](../../services/scan_ocr.py) | OCR/merge orchestration and text-size limits before and after merging. |
 | [scan_assembly.py](../../services/scan_assembly.py) | Parsed rows to round payloads, structured per-hole review notes and confidence; no API dependency. |
 | [scan_normalization.py](../../services/scan_normalization.py) | Converts scan-derived numbers (`"5"`, `5.0`) to the types strict Models require and rejects values that would need guessing (`true`, `5.5`, words, non-finite numbers). Used by the save request models. |
-| [golfcourse_api_service.py](../../services/golfcourse_api_service.py) | External course search and per-tee course details used only for verification. |
+| [golfcourse_api_service.py](../../services/golfcourse_api_service.py) | External course search and per-tee course details used only for verification. Every provider failure, including a missing API key, raises `CourseProviderUnavailable`. |
 | `mistral_ocr_service.py`, `mistral_scorecard_parser.py`, `gemini_table_merger.py` | OCR, parsed observations, and optional table merging; see [extraction](extraction.md). |
 | [ai_service.py](../../services/ai_service.py) | Rule-based recommendations, strengths, and peer comparisons from Analytics. No LLM call. |
 | `scan_report_service.py`, `scan_report_sanitizer.py`, `scan_report_crypto.py`, `scan_report_storage.py` | Anonymous report validation, metadata removal, authenticated encryption, and private S3-compatible persistence. |

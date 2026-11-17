@@ -10,7 +10,8 @@ from api.input_validation import (
     normalize_handicap_value,
     sanitize_user_text,
 )
-from models.hole_layout import FRONT_NINE, FULL_ROUND
+from models import Course, Hole, Tee
+from models.hole_layout import FRONT_NINE, FULL_ROUND, rated_coverage
 from models.hole import HOLES_PER_ROUND
 from services.scan_normalization import normalize_decimal, normalize_whole_number
 
@@ -219,7 +220,28 @@ class CreateCourseRequest(BaseModel):
         numbers = tuple(sorted(h.number for h in self.holes))
         if numbers and numbers not in (FRONT_NINE, FULL_ROUND):
             raise ValueError("Course holes must be holes 1-9 or 1-18.")
+        if numbers and any(int(hole) not in numbers for tee in self.tees for hole in tee.hole_yardages):
+            raise ValueError("Tee yardages must be for the course's holes.")
         return self
+
+    def to_course(self) -> Course:
+        layout = tuple(sorted(h.number for h in self.holes))
+        return Course(
+            name=self.name,
+            external_course_id=self.external_course_id,
+            location=self.location,
+            holes=[Hole(number=h.number, par=h.par, handicap=h.handicap) for h in self.holes],
+            tees=[
+                Tee(
+                    color=t.color,
+                    slope_rating=t.slope_rating,
+                    course_rating=t.course_rating,
+                    rating_holes=rated_coverage(layout, t.course_rating, t.slope_rating),
+                    hole_yardages={int(hole): yards for hole, yards in t.hole_yardages.items()},
+                )
+                for t in self.tees
+            ],
+        )
 
 
 class UpdateCourseRequest(BaseModel):
