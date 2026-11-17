@@ -53,6 +53,8 @@ COURSE_CHANGES_INVALID = "These course changes are invalid."
 COURSE_NAME_TAKEN = "A course with that name already exists for this user"
 MASTER_COURSE_READ_ONLY = "Cannot edit a master course. Clone it first."
 COURSE_ALREADY_CLONED = "You already have a custom copy of this course"
+COURSE_PROVIDER_ID_TAKEN = "Another of your courses is already linked to that course."
+COURSE_PAR_FROM_HOLES = "This course's par comes from its holes, so it can't be set directly."
 
 ROUND_NOT_FOUND = "Round not found"
 ROUND_NOT_IN_HISTORY = "Round not found in user history"

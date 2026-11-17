@@ -89,7 +89,7 @@ Key files:
 ### `api/` — FastAPI routers
 
 - `routers/scan.py` — `POST /api/scan/ocr`, `POST /api/scan/extract` (typed `ScanResponse`) and `POST /api/scan/save`. Owns request checks, course access, HTTP errors, course handicaps and review-note wording from `api/messages.py`; delegates OCR and assembly to `services/scan_ocr.py` and `scan_assembly.py`, and reviewed saving to `ScanService`. Oversized provider or merged text gets 422 on both OCR routes. The frontend rings non-high strokes amber but does not display `fields_needing_review` text.
-- `routers/courses.py` — GET/POST/PUT + clone endpoint. `user_id IS NULL` = master/global course; `user_id IS NOT NULL` = user-owned custom course.
+- `routers/courses.py` — GET/POST/PUT + clone endpoint. `user_id IS NULL` = master/global course; `user_id IS NOT NULL` = user-owned custom course. Checks access and maps errors only: `course_responses.py` builds the replies and `CreateCourseRequest.to_course()` the new course. A `par` edit is 422 when the holes have pars (`Course.par_from_holes`); a provider-ID conflict is its own 409; clone returns your existing exact copy, never a similar course. The list puts the courses you've played first.
 - `routers/rounds.py` — GET/PUT/DELETE for rounds and hole scores. An edit merges sent fields with stored values through `HoleScore.with_edits` and is atomic (`round_repo.edit_round`); linking a course runs in `services/round_service.py` in one transaction, rolling back gap fills if the round disappears
 - `routers/users.py` — user management + user tee CRUD (`/api/users/{id}/tees`); `UpdateUserRequest` accepts `scoring_goal`; a user is sent as `UserResponse` (the profile, no rounds)
 - `routers/stats.py` — player analytics endpoints; includes `GET /{user_id}/goal-report` and `GET /{user_id}/benchmark`. Each route checks access, fetches rounds and hands them to a builder (`api/dashboard_responses.py`, `analytics_responses.py`, `goal_responses.py`, `course_analytics_responses.py`); it does no golf math itself. Self-only routes take the signed-in golfer through `get_self` (`api/dependencies.py`, 403 for anyone else, friends included); analytics also lets accepted friends in.
@@ -105,7 +105,7 @@ Key files:
 - `POST /api/scan/extract` — run LLM extraction on uploaded image
 - `POST /api/scan/save` — save extracted round (accepts `course_holes: [{hole_number, par}]`)
 - `GET/POST /api/courses` — list/create courses (`?user_id=` for custom)
-- `PUT /api/courses/{id}` — update course (403 on master courses)
+- `PUT /api/courses/{id}` — update course (403 on master courses; 422 for `par` when the holes have pars)
 - `POST /api/courses/{id}/clone` — clone master to user-owned copy
 - `GET/PUT/DELETE /api/rounds/{id}` — round CRUD; PUT changes only the fields sent and recalculates `total_score`
 - `GET/POST /api/users/{id}/tees` — list/create user tees

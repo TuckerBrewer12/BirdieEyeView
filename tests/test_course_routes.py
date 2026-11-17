@@ -105,10 +105,7 @@ async def test_create_course_hides_integrity_error_detail():
     with pytest.raises(HTTPException) as raised:
         await courses.create_course(make_create_request(), None, db, make_user(user_id))
 
-    assert (raised.value.status_code, raised.value.detail) == (
-        500,
-        "We couldn't save this course. Please try again.",
-    )
+    assert (raised.value.status_code, raised.value.detail) == (422, "Course data is invalid.")
     assert sql_error not in raised.value.detail
 
 
