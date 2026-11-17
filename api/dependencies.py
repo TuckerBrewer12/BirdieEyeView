@@ -5,7 +5,11 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from api.messages import FORBIDDEN, INVALID_OR_EXPIRED_TOKEN, NOT_AUTHENTICATED, USER_NOT_FOUND
+from typing import Optional
+
+from api.messages import (
+    CROSS_SITE_REQUEST_REFUSED, FORBIDDEN, INVALID_OR_EXPIRED_TOKEN, NOT_AUTHENTICATED, USER_NOT_FOUND,
+)
 from api.error_responses import SERVICE_UNAVAILABLE
 
 
@@ -47,6 +51,7 @@ def client_ip(request: Request) -> str:
     return peer_host
 
 from api.auth_utils import decode_access_token, get_access_token_cookie_name
+from api.security import cors_allowed_origins, request_origin
 from database.db_manager import DatabaseManager
 from models import User
 
@@ -60,19 +65,39 @@ def get_db(request: Request) -> DatabaseManager:
     return db_manager
 
 
+UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
+def request_token(request: Request, credentials: Optional[HTTPAuthorizationCredentials]) -> Optional[str]:
+    if credentials:
+        return credentials.credentials
+    token = request.cookies.get(get_access_token_cookie_name())
+    if token and request.method in UNSAFE_METHODS and request_origin(request) not in cors_allowed_origins():
+        raise HTTPException(403, CROSS_SITE_REQUEST_REFUSED)
+    return token
+
+
+async def _session_payload(db: DatabaseManager, token: str) -> Optional[dict]:
+    payload = decode_access_token(token)
+    if not payload or not payload.get("sub") or not payload.get("jti"):
+        return None
+    if not await db.users.session_is_active(payload["jti"], payload["sub"]):
+        return None
+    return payload
+
+
 async def get_current_user(
     request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: DatabaseManager = Depends(get_db),
 ):
-    token = credentials.credentials if credentials else request.cookies.get(get_access_token_cookie_name())
+    token = request_token(request, credentials)
     if not token:
         raise HTTPException(401, NOT_AUTHENTICATED)
-    payload = decode_access_token(token)
+    payload = await _session_payload(db, token)
     if not payload:
         raise HTTPException(401, INVALID_OR_EXPIRED_TOKEN)
-    user_id = payload.get("sub")
-    user = await db.users.get_user(user_id)
+    user = await db.users.get_user(payload["sub"])
     if not user:
         raise HTTPException(401, USER_NOT_FOUND)
     return user
@@ -83,16 +108,11 @@ async def get_optional_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: DatabaseManager = Depends(get_db),
 ):
-    token = credentials.credentials if credentials else request.cookies.get(get_access_token_cookie_name())
+    token = request_token(request, credentials)
     if not token:
         return None
-    payload = decode_access_token(token)
-    if not payload:
-        return None
-    user_id = payload.get("sub")
-    if not user_id:
-        return None
-    return await db.users.get_user(user_id)
+    payload = await _session_payload(db, token)
+    return await db.users.get_user(payload["sub"]) if payload else None
 
 
 async def get_self(user_id: UUID, current_user: User = Depends(get_current_user)) -> User:

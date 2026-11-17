@@ -1,6 +1,8 @@
+import asyncio
 import os
 import secrets
 import uuid
+from dataclasses import dataclass
 from hashlib import sha256
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -98,18 +100,34 @@ def verify_password(plain: str, hashed: str) -> bool:
         return False
 
 
-def create_access_token(user_id: str) -> str:
+async def hash_password_async(plain: str) -> str:
+    return await asyncio.to_thread(hash_password, plain)
+
+
+async def verify_password_async(plain: str, hashed: str) -> bool:
+    return await asyncio.to_thread(verify_password, plain, hashed)
+
+
+@dataclass(frozen=True)
+class AccessToken:
+    token: str
+    jti: str
+    expires_at: datetime
+
+
+def create_access_token(user_id: str) -> AccessToken:
     now = datetime.now(timezone.utc)
     expire = now + timedelta(seconds=get_access_token_expiry_seconds())
+    jti = str(uuid.uuid4())
     payload = {
         "sub": user_id,
         "exp": expire,
         "iat": now,
         "iss": get_jwt_issuer(),
         "aud": get_jwt_audience(),
-        "jti": str(uuid.uuid4()),
+        "jti": jti,
     }
-    return jwt.encode(payload, get_secret_key(), algorithm=ALGORITHM)
+    return AccessToken(jwt.encode(payload, get_secret_key(), algorithm=ALGORITHM), jti, expire)
 
 
 def decode_access_token(token: str) -> Optional[dict]:

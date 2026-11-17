@@ -1,5 +1,6 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -155,3 +156,34 @@ async def test_delete_user_removes_user(database_manager):
 
     assert deleted is True
     assert await database_manager.users.get_user(created.id) is None
+
+
+def _in(minutes: int) -> datetime:
+    return datetime.now(timezone.utc) + timedelta(minutes=minutes)
+
+
+async def test_login_session_is_refused_once_the_password_changed(database_manager):
+    user = await create_user(database_manager, email="ada@example.com")
+    users = database_manager.users
+
+    await users.set_password_hash(user.id, "new-password-hash")
+
+    assert await users.create_session(user.id, str(uuid4()), _in(60), expected_password_hash="test-password-hash") is False
+    jti = str(uuid4())
+    assert await users.create_session(user.id, jti, _in(60), expected_password_hash="new-password-hash") is True
+    assert await users.session_is_active(jti, user.id)
+
+
+async def test_reset_and_a_new_link_wait_for_each_other_instead_of_deadlocking(database_manager, postgres_pool):
+    user = await create_user(database_manager, email="ada@example.com")
+    users = database_manager.users
+    await users.create_auth_token(user.id, "password_reset", "a" * 64, _in(30))
+
+    async with postgres_pool.acquire() as reset, reset.transaction():
+        assert await users.consume_auth_token("password_reset", "a" * 64, connection=reset) == user.id
+        new_link = asyncio.create_task(users.create_auth_token(user.id, "password_reset", "b" * 64, _in(30)))
+        await asyncio.sleep(0.3)
+        await users.set_password_hash(user.id, "new-password-hash", connection=reset)
+
+    await asyncio.wait_for(new_link, timeout=5)
+    assert await users.auth_token_user("password_reset", "b" * 64) == user.id

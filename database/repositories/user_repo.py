@@ -7,6 +7,7 @@ from uuid import UUID
 import asyncpg
 
 from models import User
+from database.connection import write_transaction
 from database.converters import user_from_row, user_to_row
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 
@@ -173,8 +174,8 @@ class UserRepositoryDB:
             if result == "UPDATE 0":
                 raise NotFoundError(f"User {user_id} not found")
 
-    async def set_password_hash(self, user_id: str, password_hash: str) -> None:
-        async with self._pool.acquire() as conn:
+    async def set_password_hash(self, user_id: str, password_hash: str, *, connection=None) -> None:
+        async with write_transaction(self._pool, connection) as conn:
             result = await conn.execute(
                 "UPDATE users.users SET password_hash = $2 WHERE id = $1",
                 UUID(user_id),
@@ -183,8 +184,8 @@ class UserRepositoryDB:
             if result == "UPDATE 0":
                 raise NotFoundError(f"User {user_id} not found")
 
-    async def mark_email_verified(self, user_id: str) -> None:
-        async with self._pool.acquire() as conn:
+    async def mark_email_verified(self, user_id: str, *, connection=None) -> None:
+        async with write_transaction(self._pool, connection) as conn:
             result = await conn.execute(
                 """UPDATE users.users
                    SET email_verified = TRUE, email_verified_at = NOW()
@@ -224,8 +225,29 @@ class UserRepositoryDB:
                     expires_at,
                 )
 
-    async def consume_auth_token(self, token_type: str, token_hash: str) -> Optional[str]:
+    async def auth_token_user(self, token_type: str, token_hash: str, *, connection=None) -> Optional[str]:
+        async def lookup(conn) -> Optional[str]:
+            user_id = await conn.fetchval(
+                """SELECT user_id FROM users.auth_tokens
+                   WHERE token_type = $1 AND token_hash = $2
+                     AND used_at IS NULL AND expires_at > (clock_timestamp() AT TIME ZONE 'UTC')
+                   ORDER BY created_at DESC, id DESC LIMIT 1""",
+                token_type,
+                token_hash,
+            )
+            return str(user_id) if user_id else None
+
+        if connection is not None:
+            return await lookup(connection)
         async with self._pool.acquire() as conn:
+            return await lookup(conn)
+
+    async def consume_auth_token(self, token_type: str, token_hash: str, *, connection=None) -> Optional[str]:
+        async with write_transaction(self._pool, connection) as conn:
+            owner = await self.auth_token_user(token_type, token_hash, connection=conn)
+            if owner is None:
+                return None
+            await conn.fetchrow("SELECT id FROM users.users WHERE id = $1 FOR UPDATE", UUID(owner))
             row = await conn.fetchrow(
                 """UPDATE users.auth_tokens t
                    SET used_at = (clock_timestamp() AT TIME ZONE 'UTC')
@@ -266,6 +288,50 @@ class UserRepositoryDB:
                 min_created_at,
             )
             return bool(row)
+
+    async def create_session(
+        self, user_id: str, jti: str, expires_at: datetime, *, expected_password_hash: Optional[str] = None,
+        connection=None,
+    ) -> bool:
+        if expires_at.tzinfo is not None:
+            expires_at = expires_at.astimezone(timezone.utc).replace(tzinfo=None)
+        async with write_transaction(self._pool, connection) as conn:
+            if expected_password_hash is not None:
+                current = await conn.fetchval(
+                    "SELECT password_hash FROM users.users WHERE id = $1 FOR SHARE", UUID(user_id)
+                )
+                if current != expected_password_hash:
+                    return False
+            await conn.execute(
+                """DELETE FROM users.sessions
+                   WHERE user_id = $1 AND expires_at <= (clock_timestamp() AT TIME ZONE 'UTC')""",
+                UUID(user_id),
+            )
+            await conn.execute(
+                "INSERT INTO users.sessions (jti, user_id, expires_at) VALUES ($1, $2, $3)",
+                UUID(jti),
+                UUID(user_id),
+                expires_at,
+            )
+            return True
+
+    async def session_is_active(self, jti: str, user_id: str) -> bool:
+        async with self._pool.acquire() as conn:
+            return bool(await conn.fetchval(
+                """SELECT 1 FROM users.sessions
+                   WHERE jti = $1 AND user_id = $2
+                     AND expires_at > (clock_timestamp() AT TIME ZONE 'UTC')""",
+                UUID(jti),
+                UUID(user_id),
+            ))
+
+    async def end_session(self, jti: str) -> None:
+        async with self._pool.acquire() as conn:
+            await conn.execute("DELETE FROM users.sessions WHERE jti = $1", UUID(jti))
+
+    async def end_all_sessions(self, user_id: str, *, connection=None) -> None:
+        async with write_transaction(self._pool, connection) as conn:
+            await conn.execute("DELETE FROM users.sessions WHERE user_id = $1", UUID(user_id))
 
     async def delete_user(self, user_id: str) -> bool:
         async with self._pool.acquire() as conn:
