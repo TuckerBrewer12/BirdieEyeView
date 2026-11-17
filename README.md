@@ -1,110 +1,69 @@
 # BirdieEyeView
-[birdie-eye-view.com
-](https://www.birdie-eye-view.com/)
 
-Photograph a physical scorecard. A Mistral OCR + Gemini LLM pipeline extracts scores, putts, GIR, and tee boxes into a complete digital round — with course and player analytics across all your rounds.
+**[birdie-eye-view.com](https://www.birdie-eye-view.com/)**
 
-## Documentation
+Take a photo of a paper scorecard after your round. BirdieEyeView reads it, checks it, and turns it into a round you can edit, track and compare against every round you've played.
 
-Start with the [documentation index](docs/README.md) for [backend domain guides](docs/backend/README.md), [frontend page guides](docs/frontend/README.md), and [coding practices](docs/practices/README.md). These distinguish current behavior from refactor work still awaiting integration.
+![Dashboard](frontend/public/demo-tour/dashboard-wide.png)
 
----
+## What it does
 
-## What It Does
+**Scan a card.** Photograph any course's scorecard, handwritten. The scanner reads hole-by-hole scores (written as strokes or to par), putts and shots to green, and picks your rows out of a card with several players on it. OCR starts as soon as you pick the photo, while you're still filling in your name, so the result is usually ready when you hit Read card.
 
-**Scan** — Take a picture of any physical scorecard after your round. The app uses an LLM to pull out your scores, course info, hole pars, and shot stats automatically. Review the extraction and fix anything before saving.
+**Review before saving.** Scores the scanner is unsure of are ringed in amber so you know where to look. Fix anything, pick the course and tee, and save. You can also enter a round by hand, and you can try a scan from the landing page without an account.
 
-**Track** — Every round is stored with hole-by-hole detail: strokes, putts, fairways, greens in regulation. The scorecard view shows your score against par for each hole and your front/back/total.
+**Rounds and courses.** Every round keeps its full scorecard, its round flow (running to-par, hole by hole) and how it compares to your last 5, last 20 and all rounds. Each course page shows your record there, your score trend, and your average and greens hole by hole, with the hardest holes ranked.
 
-**Analyze** — The analytics dashboard breaks down your game across all your rounds:
-- Score type distribution (eagles through quad bogeys)
-- GIR and putting averages
-- Scoring by hole distance and par type
-- Worst and best holes
-- Handicap trend over time
+**Analytics.** Five sections: Profile, Scoring, Ball striking, Putting and Approach. Headline figures (scoring average, greens, putts, scrambling, three-putt rate) show their move over your last five rounds.
 
-**Improve** — Set a scoring goal (break 90, 85, 80, etc.) and the app identifies your highest-ROI improvement areas: three-putt bleed, blowup holes, weak yardage zones, GIR opportunities, and more. Each insight is ranked by how many strokes it's worth.
+**Goals.** Pick a target like "break 80" and the app ranks where your strokes are going: three-putts, blow-up holes, your weakest yardage, a demon hole at your home course, and more. Each is sized in strokes saved.
 
----
+**Handicap.** A WHS handicap index from your rounds, with a course handicap and net score on every round.
 
-## Running the App
+**Friends.** Add friends by code, see their handicap and last round, and put your profile side by side with theirs on the radar chart.
 
-Two terminals.
+![Analytics profile](frontend/public/demo-tour/profile-wide.png)
 
-**Terminal 1 — Backend**
-```bash
-source .venv/bin/activate
-uvicorn api.main:app --reload
+## How a scan works
+
+```mermaid
+flowchart LR
+    A[Photo] --> B[Mistral OCR<br/>tables as HTML]
+    B --> C[Table clean-up<br/>merged cells, row alignment]
+    C --> D[Gemini Flash-Lite<br/>stitch split front/back nines]
+    D --> E[Validator<br/>reject a bad merge]
+    E --> F[Parser<br/>find rows, player, holes]
+    F --> G[Assembly<br/>to-par to strokes, cross-checks]
+    G --> H[Review screen<br/>unsure cells flagged]
 ```
 
-**Terminal 2 — Frontend**
-```bash
-cd frontend
-npm run dev
-```
+Mistral OCR reads the card into tables. Gemini's only job is to stitch a card printed in two halves back into one table, and a validator rejects any merge that doesn't line up (for example, `line 10 has 23 columns, expected 22`). Deciding which row is par, which row is yours and what each cell means is plain code, and anything ambiguous goes back to you as a review warning instead of a guess.
 
-Open [http://localhost:5173](http://localhost:5173). Backend runs on port 8000; the frontend proxies to it automatically.
+Here's a real card from the eval set. Two golfers, G and T, scores written to par, with shots to green and putts under each score row:
 
-Copy `.env.example` to `.env` and fill required keys (`GOOGLE_API_KEY`, `MISTRAL_API_KEY`, `SECRET_KEY`, `DATABASE_URL`).  
-For auth emails in production, also set `RESEND_API_KEY` and `AUTH_FROM_EMAIL`.
+![A scorecard photo with its hole, tee, par, score, shots-to-green and putts rows highlighted, each linked to the matching row of the same round on the app's review screen](docs/assets/scan-card.png)
 
-## Scan Evaluation
+The rows check each other. A hole's shots to green plus putts should equal its score. When they don't, the hole is ringed for review. When they settle a misread, like the circled −1 on hole 2 that OCR might read as 1, the scanner uses them to fix it.
 
-Run the live scan evaluator locally from the repository root.
+## Evaluation
 
-```bash
-source .venv/bin/activate
-python -m scripts.quick_scan_eval                # quick suite
-python -m scripts.quick_scan_eval --suite large  # larger suite
-```
+Every change to the scanner is measured against real scorecards with hand-checked answer keys.
 
-Both commands require `MISTRAL_API_KEY` and `GOOGLE_API_KEY`. The evaluator uses the app's OCR-prefetch and extraction flow and shares one OCR result across all target players on an image. The [quick manifest](tests/test_scorecards/quick_eval_cases.json) contains four cases across three images. The [large manifest](tests/test_scorecards/scan_eval_cases.json) contains 22 active cases across 14 images. Move an entry from `disabled_cases` back into `cases` to re-enable it. Each case's `user_context` holds only hints the app or parser understands. Remarks for people go in an optional `notes` field, which the scanner never sees. A layout the scanner doesn't support yet carries a `known_gap` explanation and is reported as a known gap, for example the two Lake Chabot cases, whose card has no final score row.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/scan-eval-dark.svg">
+  <img alt="Scan eval: 94.4% of graded cells read correctly, 1,053 of 1,116. Of 22 cases, 9 are 100% correct, 11 are 90–99% correct and 2 are below 80% (a known gap)." src="docs/assets/scan-eval-light.svg">
+</picture>
 
-The answer key grades final numeric values by field and hole number. To-par handwriting is compared against normalized raw strokes. Cards with recorded putts and shots-to-green grade those fields too. Results are cumulative: a 100% case also counts in the 90%+ and 80%+ totals. Cases below 80% are labeled failed and list every mismatch, but accuracy failures do not make the command exit unsuccessfully.
+The eval set is 22 player cases on 14 real cards, each from a different course. The layouts vary: split front and back nines, to-par handwriting, several players per card, and putts and shots-to-green rows in different orders. Grading is per cell: every hole's score, putts and shots to green is compared to the answer key, with to-par handwriting converted to strokes first.
 
-The report includes OCR/merge time per image, extraction and effective time per case, and total suite time, plus how many images had the Gemini table merge rejected. Under each case it lists the scan's internal diagnostics: what the OCR clean-up changed, whether the merge was accepted or why it was rejected, and each parser decision or refusal (which row was taken as the player, how the back nine was paired, why a name was not found). Provider latency and Gemini output vary across runs; the deterministic regression gate is the Mistral-capture scenario in `tests/integration/test_api_e2e.py`.
+**What still fails.** Both cases below 80% are one card, Lake Chabot, which has no total-score row. Strokes have to be added up from shots to green and putts, and the scanner doesn't do that yet. Two more cases are disabled because their par row splits shots to green from putts.
 
-### Run from a pull request
+**How it runs.** Adding the `run-scan-evals` label to a PR runs the suite live against Mistral and Gemini, and a bot posts the results on the PR. Every run is saved as JSON on the [`eval-results`](https://github.com/TuckerBrewer12/BirdieEyeView/tree/eval-results) branch. Separately, recorded Mistral responses for every case run through the full API in ordinary CI with no paid calls, so a parser regression fails the build before anyone pays for a live run.
 
-In GitHub, create the two labels below if they are missing and configure `MISTRAL_API_KEY` and `GOOGLE_API_KEY` as repository Actions secrets. On a mergeable PR from a branch in the same repository, add one label to start the matching suite.
+## Built with
 
-| PR label | Suite |
-|---|---|
-| `run-scan-evals` | Large |
-| `run-quick-scan-eval` | Quick |
+FastAPI, PostgreSQL (asyncpg) and Pydantic on the backend; React, TypeScript, Vite and Tailwind on the frontend, with D3 for the charts. Scanning uses Mistral OCR and Gemini 3.1 Flash-Lite, and course data comes from GolfCourseAPI.
 
-The [live eval workflow](.github/workflows/scan-evals.yml) evaluates the PR merge commit and posts accuracy, timing, a **Readable report** link to the Actions Summary, and the run ID on the PR. The raw text remains a downloadable artifact. A separate publishing job validates the structured report and appends it to the public `eval-results` branch. If the structured report can't be produced or is rejected, the eval still passes or fails on its own results and only that run is missing from the dashboard; a publishing failure does not block the PR comment. The check is optional for merging. Remove and re-add the label to request a new run after a push. A new request on the same PR supersedes a paid run already in progress.
+Each frontend page follows MVVM on a shared component kit, with custom ESLint rules for it. PRs get screenshot tests and four review bots (MVVM, brand kit, UI tests, frontend coverage); three of them push a fix branch for what they find.
 
-### Dashboard and saved results
-
-Open the static dashboard locally; no npm install or app server is needed:
-
-```bash
-cd eval-dashboard
-python3 -m http.server 8080
-```
-
-Visit [http://localhost:8080/](http://localhost:8080/). It reads published history from the public `eval-results` branch. Add `?data=./sample-data/` to explore three illustrative runs without contacting providers. The dashboard includes suite filters, known-gap exclusion, case diagnostics/history, and two-run comparisons. Comparisons flag changed fixtures, hints, or answer keys instead of calling those scanner improvements. The data URL is shown in the footer; GitHub's raw-content cache may delay new results.
-
-For a local live run, optionally export the same report formats:
-
-```bash
-python -m scripts.quick_scan_eval --suite large --results-json outputs/results.json --summary-markdown outputs/summary.md
-```
-
-Only public eval-fixture results belong on `eval-results`; never publish private user scans, photos, or raw OCR there. These changes do not use Railway storage or require GitHub Pages. See [dashboard setup, schema, and manual publication](eval-dashboard/README.md). Enabling optional Pages hosting later does not change the data source.
-
-For production hardening (HTTPS, secret handling, DB network restrictions, security logging), see:
-
-- `SECURITY_DEPLOYMENT.md`
-
-## Secret Safety Checks
-
-Run this before pushing:
-
-```bash
-
-bash scripts/security/scan_secrets.sh
-```
-
-This fails if common key/token formats are committed, if frontend code references secret env vars, or if frontend tries to call AI providers directly.
+Setup, architecture and coding conventions are in [docs/](docs/README.md).
