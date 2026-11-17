@@ -16,7 +16,7 @@ Golfers fill in paper cards differently, and the scanner reads the common ways. 
 
 **Scan a card.** Photograph any course's scorecard, handwritten. The scanner reads hole-by-hole scores (written as strokes or to par), putts and shots to green, and picks your rows out of a card with several players on it.
 
-**Review.** Scores the scanner is unsure of are ringed so you can take a second look. Fix anything, pick the tee box you played, and save. Try a scan out [on the site](https://www.birdie-eye-view.com/) with no account needed.
+**Review.** Scores the scanner is unsure of are ringed so you can take a second look. Fix anything, pick the tee box you played, and save. Try a scan out on the [site](https://www.birdie-eye-view.com/) with no account needed.
 
 **Rounds and courses.** Compare this round to your previous ones. Each course page shows your record there, your score trend, and your average and greens per hole.
 
