@@ -24,6 +24,8 @@ Models use explicit course layout, intended round holes, and played state. Uniqu
 
 Use resolved getters and validated correction methods such as `update_fields()`, `Round.update_hole_score()`, and tee yardage updates. Do not assume direct nested container mutations preserve validation or stored-summary freshness. Yardage mappings reject ordinary in-place edits.
 
+Partial stored-hole edits use `HoleScore.with_edits()`, which returns a validated replacement. Omitted fields keep their values and explicit null clears them, with two score-correction rules: supplying non-null strokes marks a previously unplayed hole played when `played` is omitted; if those strokes are below an omitted stored `shots_to_green`, that stale observation becomes unknown. Compatible observations survive. Explicitly supplied conflicting values remain invalid, and creating or assigning a hole directly still uses the strict model invariants.
+
 These contracts are integrated with persistence, requests, scan assembly, and analytics. Coordinate any model contract change with those consumers. Hole counts come from `HOLES_PER_NINE`, `HOLES_PER_ROUND`, `FRONT_NINE` and `BACK_NINE` in [hole.py](../../models/hole.py); [check_backend_conventions.py](../../scripts/ci/check_backend_conventions.py) rejects hole-count literals.
 
 ## Changing this domain

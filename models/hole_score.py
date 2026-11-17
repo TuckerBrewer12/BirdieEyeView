@@ -1,5 +1,5 @@
 from pydantic import Field, TypeAdapter, model_validator
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 
 from .base import BaseGolfModel
 from .scoring import classify_score
@@ -33,6 +33,16 @@ class HoleScore(BaseGolfModel):
             if self.shots_to_green > self.strokes:
                 raise ValueError('Shots to green cannot exceed strokes')
         return self
+
+    def with_edits(self, **changes: Any) -> "HoleScore":
+        values = self.model_dump()
+        strokes = changes.get("strokes")
+        if isinstance(strokes, int):
+            if "played" not in changes and self.played is False:
+                values["played"] = True
+            if "shots_to_green" not in changes and self.shots_to_green is not None and self.shots_to_green > strokes:
+                values["shots_to_green"] = None
+        return type(self)(**{**values, **changes})
 
     def calculate_net_score(self, handicap_strokes: Optional[int] = None) -> Optional[int]:
         allocation = _ALLOCATION.validate_python(handicap_strokes) if handicap_strokes is not None else None

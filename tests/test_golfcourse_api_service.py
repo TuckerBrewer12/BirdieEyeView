@@ -93,7 +93,7 @@ async def test_course_search_requires_api_key(monkeypatch):
     monkeypatch.delenv("GOLFCOURSE_API_KEY", raising=False)
     monkeypatch.delenv("golfcourse_api_key", raising=False)
 
-    with pytest.raises(EnvironmentError):
+    with pytest.raises(CourseProviderUnavailable):
         await GolfCourseAPIService(api_key=None).search_external_courses("Pebble")
 
 

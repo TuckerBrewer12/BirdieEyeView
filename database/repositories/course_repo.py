@@ -7,7 +7,20 @@ from models.course import CourseSummary
 from models.hole import HOLES_PER_NINE
 from database.connection import write_transaction
 from database.converters import course_from_rows, course_to_row, tee_yardages_to_rows, tee_to_row, tee_ratings_to_rows
-from database.exceptions import ConflictError, DuplicateError, IntegrityError, NotFoundError
+from database.exceptions import ConflictError, DuplicateError, DuplicateProviderIdError, IntegrityError, NotFoundError
+
+_PROVIDER_ID_INDEXES = {"idx_courses_external_master", "idx_courses_external_owner"}
+
+
+def _duplicate_error(error: asyncpg.UniqueViolationError, message: str) -> DuplicateError:
+    if error.constraint_name in _PROVIDER_ID_INDEXES:
+        return DuplicateProviderIdError("Course provider ID already in use")
+    return DuplicateError(message)
+
+
+def _like_pattern(query: str) -> str:
+    escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
 
 
 def _tee_yardage_similarity(
@@ -619,7 +632,7 @@ class CourseRepositoryDB:
 
                 return await self._assemble(conn, course_row)
         except asyncpg.UniqueViolationError as e:
-            raise DuplicateError(f"Course already exists: {e}") from e
+            raise _duplicate_error(e, f"Course already exists: {e}") from e
         except asyncpg.IntegrityConstraintViolationError as e:
             raise IntegrityError(str(e)) from e
 
@@ -638,10 +651,26 @@ class CourseRepositoryDB:
         try:
             return await self.create_course(source, user_id=user_id)
         except DuplicateError:
-            existing = await self.find_user_course_by_name(source.name, source.location, user_id=user_id)
-            if existing and existing.user_id == user_id:
-                return existing
-            raise
+            existing = await self._find_owned_copy(source, user_id)
+            if existing is None:
+                raise
+            return existing
+
+    async def _find_owned_copy(self, source: Course, user_id: str) -> Optional[Course]:
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """SELECT * FROM courses.courses
+                   WHERE user_id = $1
+                     AND ((external_course_id IS NOT NULL AND external_course_id = $2)
+                          OR (LOWER(name) = LOWER($3) AND COALESCE(LOWER(location), '') = COALESCE(LOWER($4::text), '')))
+                   ORDER BY (external_course_id IS NOT DISTINCT FROM $2) DESC, id
+                   LIMIT 1""",
+                UUID(user_id),
+                source.external_course_id,
+                source.name,
+                source.location,
+            )
+            return await self._assemble(conn, row) if row else None
 
     async def update_course(self, course_id: str, *, user_id: Optional[str] = None, **fields) -> Optional[Course]:
         allowed = {"name", "external_course_id", "location", "par", "total_holes", "metadata"}
@@ -683,7 +712,7 @@ class CourseRepositoryDB:
                 )
                 return await self._assemble(conn, row)
         except asyncpg.UniqueViolationError as error:
-            raise DuplicateError("Conflicting course identity") from error
+            raise _duplicate_error(error, "Conflicting course identity") from error
         except asyncpg.IntegrityConstraintViolationError as error:
             raise IntegrityError("Invalid course metadata or reference") from error
 
@@ -814,12 +843,12 @@ class CourseRepositoryDB:
                           ) AS tee_colors
                    FROM (
                        SELECT * FROM courses.courses
-                       WHERE (name ILIKE $1 OR location ILIKE $1)
+                       WHERE (name ILIKE $1 ESCAPE '\\' OR location ILIKE $1 ESCAPE '\\')
                          AND (user_id IS NULL OR user_id = $2)
-                       ORDER BY (user_id IS NULL), name LIMIT 20
+                       ORDER BY (user_id IS NULL), name, id LIMIT 20
                    ) c
-                   ORDER BY (c.user_id IS NULL), c.name""",
-                f"%{query}%", uid,
+                   ORDER BY (c.user_id IS NULL), c.name, c.id""",
+                _like_pattern(query), uid,
             )
             return [_summary_from_row(r) for r in rows]
 
@@ -846,11 +875,17 @@ class CourseRepositoryDB:
                                         WHERE y.tee_id = t.id) DESC, lower(t.color)
                           ) AS tee_colors
                    FROM (
-                       SELECT * FROM courses.courses
-                       WHERE user_id IS NULL OR user_id = $3
-                       ORDER BY (user_id IS NULL), name LIMIT $1 OFFSET $2
+                       SELECT courses.*, played.course_id IS NOT NULL AS played, played.last_played
+                       FROM courses.courses
+                       LEFT JOIN (
+                           SELECT r.course_id, MAX(r.round_date) AS last_played
+                           FROM users.rounds r WHERE r.user_id = $3 GROUP BY r.course_id
+                       ) played ON played.course_id = courses.id
+                       WHERE courses.user_id IS NULL OR courses.user_id = $3
                    ) c
-                   ORDER BY (c.user_id IS NULL), c.name""",
+                   ORDER BY (NOT c.played AND c.user_id IS NULL), (NOT c.played),
+                            c.last_played DESC NULLS LAST, c.name, c.id
+                   LIMIT $1 OFFSET $2""",
                 limit, offset, uid,
             )
             return [_summary_from_row(r) for r in rows]

@@ -68,8 +68,12 @@ class Course(BaseGolfModel):
         matches = [hole for hole in self.holes if hole.number == number]
         return matches[0] if len(matches) == 1 else None
 
+    @property
+    def par_from_holes(self) -> bool:
+        return any(h.par is not None for h in self.holes)
+
     def get_par(self) -> Optional[int]:
-        if any(h.par is not None for h in self.holes):
+        if self.par_from_holes:
             return self.calculated_par
         if self._par_source == self._par_fingerprint():
             return self.par

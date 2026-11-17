@@ -6,7 +6,7 @@ import pytest
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 ROOT = Path(__file__).resolve().parents[2]
 LEGACY = Path(__file__).parent / "fixtures" / "schema_012.sql"
-NEW_MIGRATIONS = sorted((ROOT / "database" / "migrations").glob("01[45]_*.sql"))
+NEW_MIGRATIONS = sorted((ROOT / "database" / "migrations").glob("01[4-6]_*.sql"))
 
 
 async def load_legacy(conn):

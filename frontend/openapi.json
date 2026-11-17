@@ -6654,31 +6654,15 @@
         "additionalProperties": false,
         "properties": {
           "addressee_friend_code": {
-            "anyOf": [
-              {
-                "maxLength": 24,
-                "minLength": 4,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Addressee Friend Code"
-          },
-          "addressee_user_id": {
-            "anyOf": [
-              {
-                "format": "uuid",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Addressee User Id"
+            "maxLength": 24,
+            "minLength": 4,
+            "title": "Addressee Friend Code",
+            "type": "string"
           }
         },
+        "required": [
+          "addressee_friend_code"
+        ],
         "title": "SendFriendRequest",
         "type": "object"
       },
@@ -8187,6 +8171,11 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Logout",
         "tags": [
           "auth"
@@ -9750,53 +9739,6 @@
         ]
       }
     },
-    "/api/users/by-email/{email}": {
-      "get": {
-        "operationId": "get_user_by_email_api_users_by_email__email__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "email",
-            "required": true,
-            "schema": {
-              "title": "Email",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Get User By Email",
-        "tags": [
-          "users"
-        ]
-      }
-    },
     "/api/users/me/friends": {
       "get": {
         "operationId": "list_friendships_api_users_me_friends_get",
@@ -9901,6 +9843,45 @@
       }
     },
     "/api/users/me/friends/{friendship_id}": {
+      "delete": {
+        "operationId": "remove_friendship_api_users_me_friends__friendship_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "friendship_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Friendship Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Remove Friendship",
+        "tags": [
+          "users"
+        ]
+      },
       "patch": {
         "operationId": "update_friendship_status_api_users_me_friends__friendship_id__patch",
         "parameters": [
@@ -10062,52 +10043,6 @@
         ]
       }
     },
-    "/api/users/{user_id}/handicap": {
-      "get": {
-        "operationId": "get_user_handicap_api_users__user_id__handicap_get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Get User Handicap",
-        "tags": [
-          "users"
-        ]
-      }
-    },
     "/api/users/{user_id}/tees": {
       "get": {
         "operationId": "get_user_tees_api_users__user_id__tees_get",
@@ -10239,21 +10174,21 @@
         "parameters": [
           {
             "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
             "name": "tee_id",
             "required": true,
             "schema": {
               "format": "uuid",
               "title": "Tee Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
               "type": "string"
             }
           }
@@ -10288,21 +10223,21 @@
         "parameters": [
           {
             "in": "path",
-            "name": "user_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "User Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
             "name": "tee_id",
             "required": true,
             "schema": {
               "format": "uuid",
               "title": "Tee Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
               "type": "string"
             }
           }
