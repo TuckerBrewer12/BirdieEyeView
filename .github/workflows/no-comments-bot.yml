@@ -57,6 +57,12 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.BOT_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
 
+      - name: Load the bot from the workflow's commit
+        run: |
+          git fetch -q origin "$GITHUB_SHA"
+          mkdir -p "$RUNNER_TEMP/bot"
+          git archive "$GITHUB_SHA" .github/review-bots | tar -x -C "$RUNNER_TEMP/bot"
+
       - name: Install TypeScript for the guard
         run: |
           version="$(node -p "require('./frontend/package.json').devDependencies.typescript")"
@@ -76,4 +82,4 @@ jobs:
           PR_NUMBER: ${{ steps.pr.outputs.number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-        run: bash .github/review-bots/run-no-comments.sh
+        run: bash "$RUNNER_TEMP/bot/.github/review-bots/run-no-comments.sh"

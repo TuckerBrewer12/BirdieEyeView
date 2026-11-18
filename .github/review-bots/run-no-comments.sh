@@ -11,7 +11,7 @@ source "$BOTS/cursor-run.sh"
 BOT_NAME="✂️ No Comments Bot"
 SUBJECT="Delete comments added in #${PR_NUMBER}"
 
-if [[ "$(git log -1 --format=%s "$HEAD_SHA")" == "$SUBJECT" ]]; then
+if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "$(git log -1 --format=%s "$HEAD_SHA")" == "$SUBJECT" ]]; then
   echo "The head commit is this bot's own."
   exit 0
 fi
