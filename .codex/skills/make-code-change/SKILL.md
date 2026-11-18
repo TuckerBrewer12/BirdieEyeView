@@ -73,6 +73,7 @@ The artifacts are named after the branch, so settle it first:
 - The change needs its own branch. If the current branch is `main`, an integration branch other work merges into (such as `backend-refactor` or a step's head branch), or a branch whose pull request has already merged, ask the user which base to branch from and what to name the branch, then create it. Bring the base up to date with its remote first (`git fetch`, then a fast-forward only).
 - Do not switch branches over uncommitted work without the user's direction.
 - Record the base branch and its commit at the top of the recon artifact.
+- Check whether a branch has merged with `gh pr list --state merged --head <branch>`, not commit ancestry: this repository squash-merges some PRs (`backend-refactor` into `main` as #544), which leaves no ancestry.
 
 ## Review Follow-Ups
 
