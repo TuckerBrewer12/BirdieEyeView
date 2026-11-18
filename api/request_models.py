@@ -14,6 +14,7 @@ from models import Course, Hole, Tee
 from models.hole_layout import FRONT_NINE, FULL_ROUND, rated_coverage
 from models.hole import HOLES_PER_ROUND
 from services.scan_normalization import normalize_decimal, normalize_whole_number
+from services.scan_service import ReviewedScan, ScannedHole, ScannedTee
 
 
 def whole_number_field(value, info):
@@ -141,7 +142,7 @@ class CourseHoleInput(BaseModel):
 class SaveRoundRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    user_id: str = ""
+    user_id: str = Field(default="", deprecated="Ignored: rounds are saved to the signed-in golfer.")
     course_id: Optional[str] = None
     external_course_id: Optional[ExternalCourseId] = Field(default=None, max_length=100)
     course_name: Optional[
@@ -191,6 +192,39 @@ class SaveRoundRequest(BaseModel):
             (h.hole_number for h in holes), (h.handicap for h in holes), (t.color for t in self.all_tees or [])
         )
         return self
+
+    def to_reviewed_scan(self, user_id: str, course: Optional[Course]) -> ReviewedScan:
+        return ReviewedScan(
+            user_id=user_id,
+            hole_scores=[score.model_dump() for score in self.hole_scores],
+            course=course,
+            external_course_id=self.external_course_id,
+            course_name=self.course_name,
+            tee_box=self.tee_box,
+            tees=self._scanned_tees(),
+            course_holes=[
+                ScannedHole(number=h.hole_number, par=h.par, handicap=h.handicap) for h in self.course_holes or []
+            ],
+            played_on=datetime.fromisoformat(self.date) if self.date else None,
+            notes=self.notes,
+        )
+
+    def _scanned_tees(self) -> List[ScannedTee]:
+        if self.all_tees:
+            tees = [(t.color, t.slope_rating, t.course_rating, t.hole_yardages) for t in self.all_tees if t.color]
+        elif self.tee_box:
+            tees = [(self.tee_box, self.tee_slope_rating, self.tee_course_rating, self.tee_yardages or {})]
+        else:
+            tees = []
+        return [
+            ScannedTee(
+                color=color,
+                slope_rating=slope,
+                course_rating=rating,
+                hole_yardages={int(hole): int(yards) for hole, yards in yardages.items() if yards is not None},
+            )
+            for color, slope, rating, yardages in tees
+        ]
 
 
 class HoleInput(BaseModel):

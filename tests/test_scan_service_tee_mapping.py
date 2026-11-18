@@ -1,6 +1,5 @@
-from api.request_models import TeeInput
 from models import Course, Tee
-from services.scan_service import ScanService
+from services.scan_service import ScannedTee, ScanService
 
 
 def _svc() -> ScanService:
@@ -27,14 +26,9 @@ def test_canonicalize_played_tee_box_prefers_existing_course_tee_label_on_yardag
         ],
     )
     scan_tees = [
-        TeeInput(
+        ScannedTee(
             color="White M: 69.1/123",
-            slope_rating=None,
-            course_rating=None,
-            hole_yardages={
-                "1": 361, "2": 296, "3": 120, "4": 447, "5": 406,
-                "6": 349, "7": 145, "8": 474, "9": 157,
-            },
+            hole_yardages={1: 361, 2: 296, 3: 120, 4: 447, 5: 406, 6: 349, 7: 145, 8: 474, 9: 157},
         )
     ]
 
@@ -48,7 +42,7 @@ def test_canonicalize_played_tee_box_never_invents_a_selection() -> None:
         name="Single Tee Course",
         tees=[Tee(color="Gold", hole_yardages={1: 300, 2: 320, 3: 150})],
     )
-    scan_tees = [TeeInput(color="Gold", hole_yardages={"1": 300, "2": 320, "3": 150})]
+    scan_tees = [ScannedTee(color="Gold", hole_yardages={1: 300, 2: 320, 3: 150})]
 
     assert service._canonicalize_played_tee_box(course, None, []) is None
     assert service._canonicalize_played_tee_box(course, None, scan_tees) is None

@@ -672,10 +672,17 @@ def test_scan_extract_and_save_refuse_another_users_course(api, scan_providers):
     scores = [{"hole_number": n, "strokes": p} for n, p in PARS.items()]
     save = api.client.post("/api/scan/save", headers=bob["headers"],
                            json={"course_id": private, "tee_box": "Blue", "hole_scores": scores})
-    assert save.status_code == 400, save.text
+    assert save.status_code == 403, save.text
+    missing_id = str(uuid.uuid4())
+    missing = api.client.post("/api/scan/save", headers=bob["headers"],
+                              json={"course_id": missing_id, "tee_box": "Blue", "hole_scores": scores})
+    assert (missing.status_code, missing.json()["detail"]) == (404, f"Course {missing_id} not found")
     assert api.client.get(f"/api/rounds/user/{bob['id']}", headers=bob["headers"]).json() == []
-    assert api.client.post("/api/scan/save", headers=alice["headers"],
-                           json={"course_id": private, "tee_box": "Blue", "hole_scores": scores}).status_code == 200
+
+    as_bob = {"user_id": bob["id"], "course_id": private, "tee_box": "Blue", "hole_scores": scores}
+    assert api.client.post("/api/scan/save", headers=alice["headers"], json=as_bob).status_code == 200
+    assert len(api.client.get(f"/api/rounds/user/{alice['id']}", headers=alice["headers"]).json()) == 1
+    assert api.client.get(f"/api/rounds/user/{bob['id']}", headers=bob["headers"]).json() == []
     assert scan_providers["ocr"] == []
 
 

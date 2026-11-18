@@ -13,6 +13,7 @@ from api.messages import (
     PLAYER_NAME_NOT_READ, SCAN_REVIEW_NOTES,
     UNCLEAR_PLAYER_NAME, UNREADABLE_SCORE_ROWS, UPLOAD_NOT_PROCESSED, USER_CONTEXT_INVALID,
 )
+from api.course_access import load_linkable_course
 from api.dependencies import get_current_user, get_optional_current_user, get_db
 from api.error_responses import EXTRACTION_FAILED, OCR_FAILED, ROUND_SAVE_FAILED, SCAN_FAILED, SCAN_SAVE_FAILED
 from api.input_validation import ensure_uuid_str, sanitize_ocr_text, sanitize_user_text
@@ -250,17 +251,23 @@ async def save_round(
     db: DatabaseManager = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        req.user_id = str(current_user.id)
-        logger.info(
-            "Scan save request received: user_id=%s course_id=%s external_course_id=%s course_name=%s",
-            req.user_id,
-            req.course_id,
-            req.external_course_id,
-            req.course_name,
+    user_id = str(current_user.id)
+    logger.info(
+        "Scan save request received: user_id=%s course_id=%s external_course_id=%s course_name=%s",
+        user_id,
+        req.course_id,
+        req.external_course_id,
+        req.course_name,
+    )
+    course = None
+    if req.course_id:
+        course = await load_linkable_course(
+            db, req.course_id, user_id,
+            missing_detail=COURSE_ID_NOT_FOUND.format(course_id=req.course_id), missing_status=404,
         )
+    try:
         service = ScanService(db)
-        saved = await service.save_reviewed_scan(req)
+        saved = await service.save_reviewed_scan(req.to_reviewed_scan(user_id, course))
         return {"id": saved.id, "total_score": saved.calculate_total_score()}
     except ScanSaveRejected as exc:
         raise HTTPException(422, " ".join(exc.reasons)) from None
