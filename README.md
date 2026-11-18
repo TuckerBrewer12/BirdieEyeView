@@ -60,7 +60,7 @@ Changes to the scanner are measured against a collection of scorecards.
 
 The eval set is 22 player cases on 14 cards, each from a different course. The layouts vary: split front and back nines, to-par handwriting, several players per card, and putts and shots-to-green rows in different orders. Grading is per cell: every hole's score, putts and shots to green is compared to the answer key.
 
-The Sonnet rows are the same eval with one change: a single Claude Sonnet 5.5 call reads the photo into the table that Mistral and Gemini produce now, and the same parsing, assembly and grading run after it. With thinking on, Sonnet gets the most cards fully right, but it is almost three times slower and about seven times the cost. With thinking off, it matches the current speed at about four times the cost, with slightly lower accuracy. Lake Chabot's two cases, the known gap, fail in every setup.
+The Sonnet rows are the same eval with one change: a single Claude Sonnet 5.5 call reads the photo into the table that Mistral and Gemini produce now, and the same parsing, assembly and grading run after it. With thinking on, Sonnet gets the most cards fully right, but it is almost **three times slower** and about **seven times the cost**. With thinking off, it matches the current speed at about **four times the cost**, with slightly lower accuracy.
 
 To run, add the `run-scan-evals` label to a PR. Each run is saved as JSON on the [`eval-results`](https://github.com/TuckerBrewer12/BirdieEyeView/tree/eval-results) branch.
 

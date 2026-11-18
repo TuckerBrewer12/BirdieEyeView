@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="352" viewBox="0 0 960 352" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="336" viewBox="0 0 960 336" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
 <title id="t">Scan eval: current pipeline compared with Claude Sonnet 5.5</title>
-<desc id="d">22 cases on 14 real scorecards, 1,116 graded cells. Mistral OCR + Gemini: 94.4% of cells correct, 9 cases 100% correct, about 7s and $0.006 per card. Claude Sonnet 5.5 with thinking on: 94.9%, 13 cases 100% correct, 19.5s and $0.042 per card. Claude Sonnet 5.5 with thinking off: 92.9%, 11 cases 100% correct, one read error, 7.0s and $0.023 per card.</desc>
-<rect x="0.5" y="0.5" width="959" height="351" rx="16" fill="#0d1117" stroke="#30363d"/>
+<desc id="d">22 cases on 14 scorecards, 1,116 graded cells. Mistral OCR + Gemini: 94.4% of cells correct, 9 cases 100% correct, about 7s and $0.006 per card. Claude Sonnet 5.5 with thinking on: 94.9%, 13 cases 100% correct, 19.5s and $0.042 per card. Claude Sonnet 5.5 with thinking off: 92.9%, 11 cases 100% correct, one read error, 7.0s and $0.023 per card.</desc>
+<rect x="0.5" y="0.5" width="959" height="335" rx="16" fill="#0d1117" stroke="#30363d"/>
 <text x="40" y="48" font-size="12" font-weight="600" fill="#5da56e" text-anchor="start" letter-spacing="1.2">SCAN EVAL</text>
-<text x="40" y="72" font-size="14" font-weight="500" fill="#e6edf3" text-anchor="start">22 cases on 14 real scorecards · 1,116 graded cells</text>
+<text x="40" y="72" font-size="14" font-weight="500" fill="#e6edf3" text-anchor="start">22 cases on 14 scorecards · 1,116 graded cells</text>
 <text x="40" y="108" font-size="12" font-weight="600" fill="#8b949e" text-anchor="start">Setup</text>
 <text x="290" y="108" font-size="12" font-weight="600" fill="#8b949e" text-anchor="start">Cells correct</text>
 <text x="420" y="108" font-size="12" font-weight="600" fill="#8b949e" text-anchor="start">Cases by accuracy</text>
@@ -56,5 +56,4 @@
 <text x="320" y="312" font-size="12" font-weight="400" fill="#b1bac4" text-anchor="start">Below 80% (known gap)</text>
 <rect x="489" y="302" width="12" height="12" rx="3" fill="#6e7681"/>
 <text x="507" y="312" font-size="12" font-weight="400" fill="#b1bac4" text-anchor="start">Read error</text>
-<text x="40" y="334" font-size="11" font-weight="400" fill="#8b949e" text-anchor="start">Sonnet runs on Nov 18, 2026, one run each. Current pipeline's time is from the 4-case quick suite; its cost is from list prices.</text>
 </svg>
