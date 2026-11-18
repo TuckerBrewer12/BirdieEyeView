@@ -16,7 +16,6 @@ Every comment the diff adds dies unless it fits one of these exceptions:
 - Non-obvious behaviour forced by an external dependency, platform, vendor or
   protocol we cannot reshape (an OCR quirk, a browser bug, a driver limit),
   stated in one line. Surprises in our own code are not this: delete them.
-- A doc comment that defines a public API contract other code relies on.
 - An issue or RFC link that explains a constraint the code cannot express.
 - A tool directive: `eslint-disable`, `@ts-expect-error`, `@ts-ignore`,
   `prettier-ignore`, `noqa`, `type: ignore`, `pyright:`, `nosec`, `fmt:`,
@@ -30,7 +29,8 @@ comment dies.
 Meat, all of it: narration of what the next line does, section banners,
 commented-out code, TODOs without an issue link, "IMPORTANT" or "do not
 remove" warnings whose claim the nearby code does not prove, justifications
-of a workaround, and Python docstrings that restate the function's name.
+of a workaround, JSDoc (`/** */`) and Python docstrings. Nothing in this repo
+is a public API, so no export or method needs a doc comment.
 `IMPORTANT`, `do not remove`, `too risky`, `fine for now` and long
 justifications are scent, not conviction: read the code they guard before you
 judge. A long justification without a proven exception is a confession.
@@ -61,17 +61,15 @@ touched.
 After editing, reply with one JSON object and nothing else. No prose, no code
 fence.
 
-- `must_kill` — code in the diff that a comment you deleted (or a directive you
-  kept) was excusing, and that should be reshaped so it needs no comment:
-  renamed, extracted, typed, or redesigned. Each has `path`, `line` (in the
-  diff's new file), `symbol` (the exact name) and `reason` (one line, true).
-- `kept` — each added comment you left because an exception applies. Each has
-  `path`, `line` and `reason` (which exception, in a few words). Leave tool
-  directives out of this list: they always stay.
+`must_kill` lists code in the diff that a deleted comment (or a kept directive)
+was excusing, and that should be reshaped so it needs no comment: renamed,
+extracted, typed, or redesigned. One entry per symbol, each with `path`,
+`line` (in the diff's new file), `symbol` (the exact name) and `reason` (what
+to change, in at most twelve words). Most comments excuse nothing; leave the
+list empty unless the code really is surprising.
 
-If the diff adds no comments, change nothing and reply
-`{"must_kill": [], "kept": []}`.
+If the diff adds no comments, change nothing and reply `{"must_kill": []}`.
 
 Example:
 
-{"must_kill": [{"path": "services/scan_assembly.py", "line": 88, "symbol": "_fix_sign", "reason": "The deleted comment explained a sign flip; name the rule in the function instead."}], "kept": [{"path": "services/mistral_ocr_service.py", "line": 41, "reason": "Mistral returns merged cells as colspan; vendor quirk."}]}
+{"must_kill": [{"path": "services/scan_assembly.py", "line": 88, "symbol": "_fix_sign", "reason": "Name the sign-flip rule in the function name."}]}

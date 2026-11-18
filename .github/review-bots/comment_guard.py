@@ -157,56 +157,40 @@ def cmd_check(args: argparse.Namespace) -> int:
     return 0
 
 
-def parse_reply(text: str) -> dict[str, list[dict]]:
+def parse_reply(text: str) -> list[dict]:
     try:
         data = json.loads(extract_object(text) or "{}")
     except json.JSONDecodeError:
         data = {}
-    if not isinstance(data, dict):
-        data = {}
-    return {key: [i for i in data.get(key) or [] if isinstance(i, dict) and i.get("path")] for key in ("must_kill", "kept")}
+    items = data.get("must_kill") if isinstance(data, dict) else None
+    return [i for i in items or [] if isinstance(i, dict) and i.get("path")]
 
 
-def where(item: dict, repo: str, sha: str) -> str:
-    path, line = item["path"], item.get("line")
-    label = f"{path}:{line}" if line else path
-    anchor = f"#L{line}" if line else ""
-    return f"[`{label}`](https://github.com/{repo}/blob/{sha}/{path}{anchor})"
-
-
-def render_comment(guard: dict, reply: dict[str, list[dict]], *, commit: str, repo: str, head: str) -> str:
-    accepted, rejected = guard.get("accepted") or [], guard.get("rejected") or []
-    lines = sum(item["lines"] for item in accepted)
-    files = len(accepted)
-    body = [MARKER, f"### {BOT_NAME}", ""]
-    if commit:
-        body.append(
-            f"Deleted comments on {lines} line{'s' * (lines != 1)} in {files} file{'s' * (files != 1)} "
-            f"in {commit[:7]}. Revert that commit to bring any back."
-        )
-    else:
-        body.append("No comments to delete in this PR.")
-    if reply["must_kill"]:
-        body += ["", "**Reshape so the code needs no comment**", ""]
-        body += [f"- {where(i, repo, head)} `{i.get('symbol')}`: {i.get('reason', '')}" for i in reply["must_kill"]]
-    if reply["kept"]:
-        body += ["", "**Kept**", ""]
-        body += [f"- {where(i, repo, head)}: {i.get('reason', '')}" for i in reply["kept"]]
-    if rejected:
-        body += ["", "**Left alone** (the edit changed more than comments, so it was reverted)", ""]
-        body += [f"- `{i['path']}`: {i['reason']}" for i in rejected]
+def render_comment(guard: dict, reshapes: list[dict], *, commit: str, repo: str, head: str) -> str:
+    lines = sum(item["lines"] for item in guard.get("accepted") or [])
+    skipped = len(guard.get("rejected") or [])
+    summary = f"**{BOT_NAME}** deleted {lines} comment line{'s' * (lines != 1)} in {commit[:7]}." if commit else (
+        f"**{BOT_NAME}**: nothing to delete."
+    )
+    if skipped:
+        summary += f" Skipped {skipped} file{'s' * (skipped != 1)} it couldn't edit without touching code."
+    body = [MARKER, summary]
+    if reshapes:
+        body += ["", "Reshape so these need no comment:"]
+        for item in reshapes:
+            path, line = item["path"], item.get("line")
+            link = f"https://github.com/{repo}/blob/{head}/{path}" + (f"#L{line}" if line else "")
+            body.append(f"- [`{Path(path).name}`]({link}) `{item.get('symbol')}`: {item.get('reason', '')}")
     return "\n".join(body) + "\n"
 
 
 def cmd_comment(args: argparse.Namespace) -> int:
     guard = json.loads(Path(args.guard).read_text()) if Path(args.guard).is_file() else {}
-    replies = [parse_reply(Path(p).read_text()) for p in args.reply if Path(p).is_file()]
-    reply = {key: [i for r in replies for i in r[key]] for key in ("must_kill", "kept")}
-    reply = {key: list({(i["path"], i.get("line")): i for i in items}.values()) for key, items in reply.items()}
+    items = [i for p in args.reply if Path(p).is_file() for i in parse_reply(Path(p).read_text())]
+    reshapes = list({(i["path"], i.get("symbol")): i for i in items}.values())
     repo = os.environ["GITHUB_REPOSITORY"]
-    body = render_comment(guard, reply, commit=args.commit, repo=repo, head=os.environ["HEAD_SHA"])
-    quiet = not (args.commit or reply["must_kill"] or reply["kept"] or guard.get("rejected"))
-    upsert_comment(body, MARKER, create=not quiet)
+    body = render_comment(guard, reshapes, commit=args.commit, repo=repo, head=os.environ["HEAD_SHA"])
+    upsert_comment(body, MARKER, create=bool(reshapes or guard.get("rejected")))
     return 0
 
 

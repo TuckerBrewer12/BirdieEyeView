@@ -10,9 +10,9 @@ The No Comments Bot does not comment: it deletes. On every non-draft PR that
 adds Python, TypeScript or JavaScript, it runs pstack's `no-comments` skill
 (Comment Sicko's rules, in `no-comments.md`) over the lines the PR adds,
 pushes one commit to the PR's branch (`Delete comments added in #<n>`), and
-keeps one sticky comment listing what it deleted, the comments it kept and
-why, and the code a deleted comment was excusing (reshape it so it needs no
-comment). Revert the commit to bring any comment back. `comment_guard.py`
+comments on the PR only when there is something to act on: code a deleted
+comment was excusing (reshape it so it needs no comment), or files it
+skipped. Revert the commit to bring any comment back. `comment_guard.py`
 checks the edit before it is committed and reverts any file where the model
 did more than delete comments the PR added: the code's syntax tree (Python)
 or tokens (TypeScript, through `code_tokens.cjs`) must match, no tool
