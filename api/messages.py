@@ -1,5 +1,6 @@
 FORBIDDEN = "Forbidden"
 NOT_AUTHENTICATED = "Not authenticated"
+CROSS_SITE_REQUEST_REFUSED = "This request came from another site and was refused."
 INVALID_OR_EXPIRED_TOKEN = "Invalid or expired token"
 INVALID_CREDENTIALS = "Invalid email or password"
 EMAIL_NOT_VERIFIED = "Email not verified. Please verify your email before signing in."
@@ -41,6 +42,7 @@ USER_TEE_NOT_FOUND = "User tee not found"
 USER_TEE_EXISTS = "User tee '{name}' already exists for this course"
 USER_TEE_NAME_TAKEN = "A user tee with that name already exists for this course"
 USER_TEE_IN_USE = "This tee is used by past rounds and cannot be deleted"
+USER_TEE_OUTSIDE_COURSE = "Tee yardages must be for the linked course's holes."
 USER_TEE_INVALID = "These tee details aren't valid. Check the linked course, ratings and yardages, then try again."
 LINKED_COURSE_NOT_FOUND = "Linked course was not found"
 
@@ -53,6 +55,8 @@ COURSE_CHANGES_INVALID = "These course changes are invalid."
 COURSE_NAME_TAKEN = "A course with that name already exists for this user"
 MASTER_COURSE_READ_ONLY = "Cannot edit a master course. Clone it first."
 COURSE_ALREADY_CLONED = "You already have a custom copy of this course"
+COURSE_PROVIDER_ID_TAKEN = "Another of your courses is already linked to that course."
+COURSE_PAR_FROM_HOLES = "This course's par comes from its holes, so it can't be set directly."
 
 ROUND_NOT_FOUND = "Round not found"
 ROUND_NOT_IN_HISTORY = "Round not found in user history"
@@ -90,13 +94,15 @@ REPORT_METADATA_INVALID = "Invalid report metadata."
 REPORT_FILE_TYPE_UNSUPPORTED = "Unsupported scorecard file type."
 REPORT_FILE_REJECTED = "This file cannot be reported. Use a supported scorecard up to 20 MB."
 
-INVALID_EMAIL_FORMAT = 'Invalid email format.'
 
 CANNOT_FRIEND_YOURSELF = 'Cannot friend yourself'
 
 USERS_ARE_ALREADY_FRIENDS = 'Users are already friends'
 
-FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR = 'Friend request blocked for this pair'
+FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR = "You can't send this golfer a request right now."
+FRIEND_REQUEST_ALREADY_SENT = 'You already sent this golfer a request.'
+FRIEND_REQUEST_AWAITING_YOU = 'This golfer already sent you a request.'
+FRIEND_UNBLOCK_FIRST = 'Unblock this golfer first.'
 
 INVALID_FRIENDSHIP_STATUS = 'Invalid friendship status'
 

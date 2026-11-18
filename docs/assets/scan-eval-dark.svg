@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="230" viewBox="0 0 960 230" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">Scan eval: 94.4% of 1,116 graded cells read correctly</title>
+<desc id="d">22 cases on 14 real scorecards: 9 are 100% correct, 11 are 90–99% correct, and 2 are below 80%, a known layout gap.</desc>
+<rect x="0.5" y="0.5" width="959" height="229" rx="16" fill="#0d1117" stroke="#30363d"/>
+<text x="40" y="52" font-size="12" font-weight="600" fill="#5da56e" text-anchor="start" letter-spacing="1.2">SCAN EVAL</text>
+<text x="37" y="128" font-size="64" font-weight="700" fill="#5da56e" text-anchor="start" letter-spacing="-1.5">94.4%</text>
+<text x="40" y="160" font-size="15" font-weight="500" fill="#e6edf3" text-anchor="start" >of graded cells read correctly</text>
+<text x="40" y="182" font-size="13" font-weight="400" fill="#8b949e" text-anchor="start" >1,053 of 1,116 cells</text>
+<line x1="300" y1="40" x2="300" y2="190" stroke="#30363d"/>
+<text x="330" y="52" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="start" >Cases by accuracy</text>
+<text x="330" y="105" font-size="14" font-weight="500" fill="#e6edf3" text-anchor="start" >22 cases</text>
+<text x="330" y="123" font-size="12" font-weight="400" fill="#8b949e" text-anchor="start" >on 14 real cards</text>
+<rect x="470.0" y="92" width="182.5" height="28" rx="4" fill="#27762f"><title>22 cases suite: 9 of 22 cases 100% correct</title></rect>
+<text x="480.0" y="111" font-size="13" font-weight="600" fill="#ffffff" text-anchor="start" >9</text>
+<rect x="654.5" y="92" width="223.0" height="28" rx="4" fill="#5da56e"><title>22 cases suite: 11 of 22 cases 90–99% correct</title></rect>
+<text x="664.5" y="111" font-size="13" font-weight="600" fill="#0d1117" text-anchor="start" >11</text>
+<rect x="879.5" y="92" width="40.5" height="28" rx="4" fill="#c8800d"><title>22 cases suite: 2 of 22 cases below 80% (known gap)</title></rect>
+<text x="889.5" y="111" font-size="13" font-weight="600" fill="#0d1117" text-anchor="start" >2</text>
+<rect x="470" y="146" width="12" height="12" rx="3" fill="#27762f"/>
+<text x="488" y="156" font-size="13" font-weight="400" fill="#b1bac4" text-anchor="start" >100% correct</text>
+<rect x="598.0" y="146" width="12" height="12" rx="3" fill="#5da56e"/>
+<text x="616.0" y="156" font-size="13" font-weight="400" fill="#b1bac4" text-anchor="start" >90–99% correct</text>
+<rect x="740.0" y="146" width="12" height="12" rx="3" fill="#c8800d"/>
+<text x="758.0" y="156" font-size="13" font-weight="400" fill="#b1bac4" text-anchor="start" >Below 80% (known gap)</text>
+</svg>

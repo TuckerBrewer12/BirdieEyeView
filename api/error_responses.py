@@ -1,7 +1,6 @@
 UNEXPECTED_ERROR = "Something went wrong. Please try again."
 SERVICE_UNAVAILABLE = "Service is temporarily unavailable. Please try again shortly."
 
-COURSE_SAVE_FAILED = "We couldn't save this course. Please try again."
 ROUND_SAVE_FAILED = "We couldn't save this round. Please try again."
 ROUND_UPDATE_FAILED = "Update failed. Please try again."
 ROUND_LINK_FAILED = "Link failed. Please try again."

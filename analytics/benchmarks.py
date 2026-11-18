@@ -1,6 +1,9 @@
 from typing import Any, Dict, List, Literal, Optional
 
-from analytics import stats as analytics
+from analytics import greens
+from analytics import handicap
+from analytics import putting
+from analytics import scoring
 from models import Round
 
 Against = Literal["handicap", "friend"]
@@ -60,18 +63,18 @@ def _par_averages(scoring_by_par: List[Dict[str, Any]]) -> Dict[int, Optional[fl
 def player_shape(rounds: List[Round]) -> Optional[Dict[str, Any]]:
     if not rounds:
         return None
-    par_averages = _par_averages(analytics.scoring_by_par(rounds))
+    par_averages = _par_averages(scoring.scoring_by_par(rounds))
     return {
-        "gir_percentage": _rounded(analytics.overall_gir_percentage(rounds)["gir_percentage"], 1),
-        "scrambling_percentage": _rounded(analytics.overall_scrambling(rounds)["percentage"], 1),
-        "putts_per_gir": _rounded(analytics.overall_putts_per_gir(rounds)["putts_per_gir"], 2),
+        "gir_percentage": _rounded(greens.overall_gir_percentage(rounds)["gir_percentage"], 1),
+        "scrambling_percentage": _rounded(greens.overall_scrambling(rounds)["percentage"], 1),
+        "putts_per_gir": _rounded(putting.overall_putts_per_gir(rounds)["putts_per_gir"], 2),
         **{f"par{par}_to_par": par_averages[par] for par in PARS},
     }
 
 
 def _gap(mine: float, theirs: float) -> float:
     gap = mine - theirs
-    rounded = analytics.round_half_up(abs(gap), 2)
+    rounded = handicap.round_half_up(abs(gap), 2)
     return -rounded if gap < 0 else rounded
 
 
@@ -114,7 +117,7 @@ def comparison(
     benchmark: Optional[Dict[str, Any]],
     handicap: Optional[int] = None,
 ) -> Dict[str, Any]:
-    par_types = par_type_comparison(analytics.scoring_by_par(rounds), benchmark)
+    par_types = par_type_comparison(scoring.scoring_by_par(rounds), benchmark)
     return {
         "against": against,
         "handicap": handicap,

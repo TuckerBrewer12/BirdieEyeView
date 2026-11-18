@@ -6,9 +6,10 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from analytics import best_rounds
 from analytics import goals, peak
 from analytics import handicap as hcap
-from analytics import stats
+from analytics.achievements import notable_achievements
 from analytics.handicap import course_handicap
 from api.player_handicap import player_handicap_index
 from api.routers import rounds as rounds_router
@@ -176,12 +177,12 @@ def _mixed_season():
 def test_best_is_the_lowest_complete_eighteen_hole_gross_score():
     season = _mixed_season()
     newest_first = list(reversed(season))
-    assert stats.best_round(newest_first).id == "74-at-70"
-    places = stats.best_round_ranks(newest_first)
+    assert best_rounds.best_round(newest_first).id == "74-at-70"
+    places = best_rounds.best_round_ranks(newest_first)
     assert newest_first[next(i for i, p in places.items() if p == 1)].id == "74-at-70"
-    assert stats.best_round([_round("nine-a", 2, holes=9), _round("nine-b", 1, holes=9)]) is None
-    assert stats.best_round([Round(id="blank")]) is None
-    assert stats.best_round([_round("newer", 3, day=5), _round("older", 3, day=1)]).id == "newer"
+    assert best_rounds.best_round([_round("nine-a", 2, holes=9), _round("nine-b", 1, holes=9)]) is None
+    assert best_rounds.best_round([Round(id="blank")]) is None
+    assert best_rounds.best_round([_round("newer", 3, day=5), _round("older", 3, day=1)]).id == "newer"
 
 
 @pytest.mark.asyncio
@@ -198,7 +199,7 @@ async def test_dashboard_analytics_and_course_page_name_the_same_best_round():
     assert (analytics.kpis.best_round, analytics.kpis.best_round_id, analytics.kpis.best_round_course) == (
         74, "74-at-70", "Seventy",
     )
-    listed = await rounds_router.get_rounds_for_user(user_id, 100, 0, db, user)
+    listed = await rounds_router.get_rounds_for_user(limit=100, offset=0, user=user, db=db)
     assert next(r.id for r in listed if r.best_rank == 1) == "74-at-70"
 
 
@@ -213,7 +214,7 @@ def test_the_course_page_best_round_is_never_a_nine():
 
 def test_records_and_milestones_set_by_a_rounds_total_count_full_rounds_only():
     season = _mixed_season()
-    achievements = stats.notable_achievements(season, reference_date=date(2026, 5, 1))
+    achievements = notable_achievements(season, reference_date=date(2026, 5, 1))
     records = achievements["scoring_records"]["lifetime"]
     assert records["lowest_round"] == 74
     assert achievements["scoring_records_events"]["lifetime"]["lowest_round"]["round_id"] == "74-at-70"

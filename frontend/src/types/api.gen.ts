@@ -468,23 +468,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/users/by-email/{email}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get User By Email */
-        get: operations["get_user_by_email_api_users_by_email__email__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/users/me/friends": {
         parameters: {
             query?: never;
@@ -513,7 +496,8 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /** Remove Friendship */
+        delete: operations["remove_friendship_api_users_me_friends__friendship_id__delete"];
         options?: never;
         head?: never;
         /** Update Friendship Status */
@@ -536,23 +520,6 @@ export interface paths {
         head?: never;
         /** Update User */
         patch: operations["update_user_api_users__user_id__patch"];
-        trace?: never;
-    };
-    "/api/users/{user_id}/handicap": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get User Handicap */
-        get: operations["get_user_handicap_api_users__user_id__handicap_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/users/{user_id}/tees": {
@@ -2366,9 +2333,7 @@ export interface components {
         /** SendFriendRequest */
         SendFriendRequest: {
             /** Addressee Friend Code */
-            addressee_friend_code?: string | null;
-            /** Addressee User Id */
-            addressee_user_id?: string | null;
+            addressee_friend_code: string;
         };
         /** TeeInput */
         TeeInput: {
@@ -3759,37 +3724,6 @@ export interface operations {
             };
         };
     };
-    get_user_by_email_api_users_by_email__email__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                email: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     list_friendships_api_users_me_friends_get: {
         parameters: {
             query?: {
@@ -3842,6 +3776,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["FriendshipResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_friendship_api_users_me_friends__friendship_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                friendship_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3955,37 +3918,6 @@ export interface operations {
             };
         };
     };
-    get_user_handicap_api_users__user_id__handicap_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                user_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_user_tees_api_users__user_id__tees_get: {
         parameters: {
             query?: {
@@ -4059,8 +3991,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                user_id: string;
                 tee_id: string;
+                user_id: string;
             };
             cookie?: never;
         };
@@ -4095,8 +4027,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                user_id: string;
                 tee_id: string;
+                user_id: string;
             };
             cookie?: never;
         };

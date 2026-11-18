@@ -1,5 +1,4 @@
-from analytics import stats
-from analytics.verdicts import change_verdict
+from analytics.verdicts import change_verdict, putts_verdict
 
 
 def test_change_verdict_reads_a_fall_as_good():
@@ -12,7 +11,7 @@ def test_change_verdict_reads_a_fall_as_good():
 
 
 def test_putts_read_against_two_a_hole_to_a_tenth():
-    assert stats.putts_verdict(1.6) == "good"
-    assert stats.putts_verdict(2.4) == "bad"
-    assert stats.putts_verdict(2.04) == "neutral"
-    assert stats.putts_verdict(None) is None
+    assert putts_verdict(1.6) == "good"
+    assert putts_verdict(2.4) == "bad"
+    assert putts_verdict(2.04) == "neutral"
+    assert putts_verdict(None) is None

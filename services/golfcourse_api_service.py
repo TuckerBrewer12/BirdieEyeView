@@ -81,9 +81,7 @@ class GolfCourseAPIService:
         if len(q) < 2:
             return []
         if not self._api_key:
-            raise EnvironmentError(
-                "GOLFCOURSE_API_KEY environment variable is not set"
-            )
+            raise CourseProviderUnavailable("GOLFCOURSE_API_KEY environment variable is not set")
 
         headers = {"Authorization": f"Key {self._api_key}"}
         path = self._search_path if self._search_path.startswith("/") else f"/{self._search_path}"

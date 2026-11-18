@@ -4,6 +4,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from models import UserTee
+from models.hole_layout import rated_coverage
 from database.converters import user_tee_from_row, user_tee_to_row, tee_ratings_to_rows
 from database.exceptions import ConflictError, DuplicateError, IntegrityError, NotFoundError
 
@@ -104,7 +105,9 @@ class UserTeeRepositoryDB:
         except asyncpg.IntegrityConstraintViolationError as error:
             raise IntegrityError("Invalid user tee reference or value") from error
 
-    async def update_user_tee(self, tee_id: str, *, user_id: Optional[str] = None, **fields) -> Optional[UserTee]:
+    async def update_user_tee(
+        self, tee_id: str, *, user_id: Optional[str] = None, rating_layout=None, rate_coverage: bool = False, **fields
+    ) -> Optional[UserTee]:
         allowed = {
             "name",
             "slope_rating",
@@ -132,6 +135,10 @@ class UserTeeRepositoryDB:
                     raise NotFoundError(f"UserTee {tee_id} not found")
                 tee = (await self._assemble_many(conn, [row]))[0]
                 error = tee.update_fields(**updates)
+                if error is None and rate_coverage:
+                    error = tee.update_fields(
+                        rating_holes=rated_coverage(rating_layout, tee.course_rating, tee.slope_rating)
+                    )
                 if error:
                     raise IntegrityError(error)
                 data = user_tee_to_row(tee)

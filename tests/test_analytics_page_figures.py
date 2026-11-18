@@ -1,7 +1,10 @@
 from datetime import datetime, timezone
 
 from analytics import benchmarks
-from analytics import stats as analytics
+from analytics import greens
+from analytics import putting
+from analytics import scoring
+from analytics import windows
 from analytics.headline import headline_figure
 from models import Course, Hole, HoleScore, Round
 
@@ -24,7 +27,7 @@ def test_a_headline_figure_skips_rounds_without_it_and_waits_for_five():
 
 def test_rolling_averages_skip_rounds_without_the_figure():
     rows = [{"total_putts": 30}, {"total_putts": None}, {"total_putts": 34}]
-    assert [row["rolling_average"] for row in analytics.with_rolling_average(rows, "total_putts")] == [30.0, None, 32.0]
+    assert [row["rolling_average"] for row in windows.with_rolling_average(rows, "total_putts")] == [30.0, None, 32.0]
 
 
 def _course(pars):
@@ -37,7 +40,7 @@ def test_the_three_hardest_holes_by_handicap_are_marked():
     round_ = Round(course=course, date=datetime(2026, 1, 1, tzinfo=timezone.utc), hole_scores=[
         HoleScore(hole_number=n, strokes=4 + over.get(n, 0)) for n in range(1, 19)
     ])
-    rows = analytics.scoring_vs_hole_handicap([round_])
+    rows = scoring.scoring_vs_hole_handicap([round_])
     assert [row["handicap"] for row in rows if row["hardest"]] == [5, 9, 12]
 
 
@@ -46,7 +49,7 @@ def test_a_round_with_three_three_putts_is_costly():
     round_ = Round(course=course, hole_scores=[
         HoleScore(hole_number=n, strokes=5, putts=3 if n <= 3 else 2) for n in range(1, 19)
     ])
-    assert analytics.three_putts_per_round([round_])[0]["costly"] is True
+    assert putting.three_putts_per_round([round_])[0]["costly"] is True
 
 
 def test_putts_per_hole_split_ones_twos_and_more():
@@ -55,7 +58,7 @@ def test_putts_per_hole_split_ones_twos_and_more():
         HoleScore(hole_number=1, strokes=3, putts=0), HoleScore(hole_number=2, strokes=4, putts=2),
         HoleScore(hole_number=3, strokes=5, putts=3), HoleScore(hole_number=4, strokes=4, putts=None),
     ])
-    assert analytics.putts_per_hole([round_]) == {
+    assert putting.putts_per_hole([round_]) == {
         "holes": 3, "one_or_fewer": 33.33, "two": 33.33, "three_or_more": 33.33,
     }
 
@@ -73,5 +76,5 @@ def test_greens_count_only_the_rounds_that_recorded_them():
         HoleScore(hole_number=n, strokes=4, par_played=4, green_in_regulation=n <= 9) for n in range(1, 19)
     ])
     unrecorded = Round(id="u", hole_scores=[HoleScore(hole_number=n, strokes=5, par_played=4) for n in range(1, 19)])
-    overall = analytics.overall_gir_percentage([hit_half, unrecorded])
+    overall = greens.overall_gir_percentage([hit_half, unrecorded])
     assert (overall["gir_percentage"], overall["rounds_with_data"], overall["holes_played"]) == (50.0, 1.0, 18.0)

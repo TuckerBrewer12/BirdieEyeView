@@ -2,12 +2,13 @@ from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from analytics import eligibility as el
-from analytics import stats as analytics
+from analytics import handicap
+from analytics import scoring
+from analytics.score_types import SCORE_KINDS
 from analytics.verdicts import change_verdict
 from models import Round
 
 RECENT_ROUNDS = 5
-SCORE_KINDS = analytics.SCORE_KINDS
 
 
 def scoring_average(rounds: List[Round], window: Optional[int] = None) -> Optional[float]:
@@ -22,7 +23,7 @@ def scoring_average_change(rounds: List[Round], window: int = RECENT_ROUNDS) -> 
     recent = scoring_average(rounds, window)
     if overall is None or recent is None:
         return None
-    return analytics.round_half_up(recent - overall, 1)
+    return handicap.round_half_up(recent - overall, 1)
 
 
 def score_mix(rounds: List[Round]) -> Dict[str, Any]:
@@ -76,7 +77,7 @@ def whs_breakdown(
     index_window: Dict[str, Any],
 ) -> Dict[str, Any]:
     by_index = {d["round_index"]: d for d in differentials}
-    score_rows = analytics.score_trend(rounds)
+    score_rows = scoring.score_trend(rounds)
     rows = []
     for i, score_row in enumerate(score_rows):
         trend = handicap_trend[i] if i < len(handicap_trend) else {}

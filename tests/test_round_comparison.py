@@ -1,5 +1,7 @@
 from analytics.round_comparison import round_vs_average
 from models import HoleScore, Round
+from models.hole_layout import FRONT_NINE
+from tests.analytics_builders import course, par_round, round_
 
 
 def _round(strokes, putts=2, gir=False):
@@ -66,3 +68,15 @@ def test_the_first_round_has_no_average():
     assert _figure(window, "score") == {
         "metric": "score", "value": 72.0, "average": None, "difference": None, "verdict": None,
     }
+
+
+def test_only_earlier_complete_rounds_of_the_same_format_count():
+    earlier = par_round(over=8, course_obj=course(18), round_id="earlier")
+    nine = par_round(FRONT_NINE, over=9, course_obj=course(9), round_id="nine")
+    unfinished = round_({n: {"strokes": 4} for n in range(1, 18)}, course_obj=course(18), round_id="unfinished")
+    selected = par_round(course_obj=course(18), round_id="selected")
+
+    window = _window(round_vs_average([earlier, nine, unfinished, selected], 3), "all")
+
+    assert window["rounds"] == 1
+    assert _figure(window, "score")["average"] == 80.0

@@ -21,9 +21,17 @@ from api import scan_uploads
 from api.routers import auth, scan, scan_reports
 from services import scan_ocr
 from database import DatabaseManager
+from database.exceptions import IntegrityError
+from database.repositories.round_repo import RoundRepositoryDB
 from models import Course, Hole, Tee
 from tests.integration.conftest import SCHEMA_PATH, _get_test_database_url
-from api.messages import PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME, UNREADABLE_SCORE_ROWS
+from api.messages import (
+    CROSS_SITE_REQUEST_REFUSED,
+    FRIEND_REQUEST_ALREADY_SENT, FRIEND_REQUEST_AWAITING_YOU, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR,
+    FRIEND_UNBLOCK_FIRST, USER_TEE_OUTSIDE_COURSE,
+    COURSE_NAME_TAKEN, COURSE_PAR_FROM_HOLES, COURSE_PROVIDER_ID_TAKEN, PLAYER_NAME_NOT_READ, UNCLEAR_PLAYER_NAME,
+    UNREADABLE_SCORE_ROWS,
+)
 from scripts.quick_scan_eval import SUITE_MANIFEST_PATHS, grade_case, load_cases
 from tests.scan_report_fixtures import pdf_card
 from tests.test_mistral_scorecard_parser import EAGLE_VINES_WITH_INITIALS, INCOMPLETE_FULL_ROW
@@ -31,6 +39,7 @@ from tests.test_mistral_scorecard_parser import EAGLE_VINES_WITH_INITIALS, INCOM
 pytestmark = pytest.mark.integration
 
 PASSWORD = "correct horse battery"
+APP_ORIGIN = {"Origin": "http://localhost:5173"}
 PARS = {n: 4 for n in range(1, 19)} | {3: 3, 7: 3, 12: 3, 16: 3, 5: 5, 9: 5, 13: 5, 18: 5}
 
 
@@ -53,6 +62,16 @@ async def _create_master_course(url: str) -> str:
             tees=[Tee(color="Blue", hole_yardages={n: 400 for n in PARS})],
         )
         return str((await DatabaseManager(pool).courses.create_course(course, user_id=None)).id)
+    finally:
+        await pool.close()
+
+
+
+async def _create_master_courses(url: str, courses: list[Course]) -> list[str]:
+    pool = await asyncpg.create_pool(url, min_size=1, max_size=1)
+    try:
+        db = DatabaseManager(pool)
+        return [str((await db.courses.create_course(course, user_id=None)).id) for course in courses]
     finally:
         await pool.close()
 
@@ -146,8 +165,78 @@ def test_register_verify_login_me_logout(api):
     me = api.client.get("/api/auth/me")
     assert (me.status_code, me.json()["email"], me.json()["name"]) == (200, "ada@example.com", "Ada")
 
-    assert api.client.post("/api/auth/logout").status_code == 200
+    assert api.client.post("/api/auth/logout", headers=APP_ORIGIN).status_code == 200
     assert api.client.get("/api/auth/me").status_code == 401
+
+
+
+def test_long_passwords_are_refused_clearly(api):
+    register = lambda email, password: api.client.post(
+        "/api/auth/register", json={"name": "Golfer", "email": email, "password": password})
+
+    assert register("ascii@example.com", "a" * 73).status_code == 422
+    assert register("accents@example.com", "é" * 40).status_code == 422
+    assert register("exact@example.com", "a" * 72).status_code == 201
+
+    api.user("dee@example.com")
+    api.client.post("/api/auth/forgot-password", json={"email": "dee@example.com"})
+    token = api.token_from("reset", "dee@example.com")
+    reset = lambda password: api.client.post(
+        "/api/auth/reset-password", json={"token": token, "new_password": password})
+    assert reset("a" * 73).status_code == 422
+    assert reset("a brand new password").status_code == 200
+
+
+def test_logout_and_reset_end_sessions(api):
+    api.user("dee@example.com")
+    me = lambda headers: api.client.get("/api/auth/me", headers=headers).status_code
+    device = lambda: {"Authorization": f"Bearer {api.login('dee@example.com').json()['access_token']}"}
+    phone, laptop = device(), device()
+    api.client.cookies.clear()
+
+    assert api.client.post("/api/auth/logout", headers=phone).status_code == 200
+    assert (me(phone), me(laptop)) == (401, 200)
+
+    api.login("dee@example.com")
+    assert api.client.get("/api/auth/me").status_code == 200
+    assert api.client.post("/api/auth/logout", headers=APP_ORIGIN).status_code == 200
+    assert api.client.get("/api/auth/me").status_code == 401
+
+    api.login("dee@example.com")
+    cookie_session = api.client.cookies.get("golf_access_token")
+    assert api.client.post("/api/auth/logout", headers=laptop).status_code == 200
+    assert me({"Authorization": f"Bearer {cookie_session}"}) == 401
+    laptop = device()
+    api.client.cookies.clear()
+
+    api.client.post("/api/auth/forgot-password", json={"email": "dee@example.com"})
+    token = api.token_from("reset", "dee@example.com")
+    assert api.client.post("/api/auth/reset-password",
+                           json={"token": token, "new_password": "a brand new password"}).status_code == 200
+    assert me(laptop) == 401
+    assert api.login("dee@example.com").status_code == 401
+    assert api.login("dee@example.com", "a brand new password").status_code == 200
+
+
+def test_cookie_requests_from_other_sites_are_refused(api, scan_providers):
+    alice = api.user("alice@example.com")
+    course = custom_course(api, alice)
+    api.login("alice@example.com")
+    evil = {"Origin": "https://evil.example"}
+    clone = lambda headers: api.client.post(f"/api/courses/{course}/clone", headers=headers)
+
+    refused = clone(evil)
+    assert (refused.status_code, refused.json()["detail"]) == (403, CROSS_SITE_REQUEST_REFUSED)
+    assert clone({}).status_code == 403
+    assert clone({"Referer": "https://evil.example/page"}).status_code == 403
+    assert clone({"Referer": "http://localhost:5173/courses"}).status_code == 201
+    assert clone(APP_ORIGIN).status_code == 201
+    assert clone({**evil, **alice["headers"]}).status_code == 201
+    assert api.client.get("/api/auth/me", headers=evil).status_code == 200
+
+    scan = api.client.post("/api/scan/extract", headers=evil, files=upload())
+    assert scan.status_code == 403
+    assert scan_providers["ocr"] == []
 
 
 def test_bad_credentials_and_tokens_are_rejected(api):
@@ -225,8 +314,7 @@ def test_profiles_tees_and_stats_belong_to_their_owner(api):
     assert api.client.get(f"/api/users/{alice['id']}/tees", headers=bob["headers"]).status_code == 403
     assert api.client.delete(f"/api/users/{alice['id']}/tees/{tee['id']}", headers=bob["headers"]).status_code == 403
     assert api.client.delete(f"/api/users/{bob['id']}/tees/{tee['id']}", headers=bob["headers"]).status_code == 404
-    for path in (f"/api/stats/dashboard/{alice['id']}",
-                 f"/api/users/{alice['id']}/handicap", f"/api/stats/analytics/{alice['id']}"):
+    for path in (f"/api/stats/dashboard/{alice['id']}", f"/api/stats/analytics/{alice['id']}"):
         assert api.client.get(path, headers=bob["headers"]).status_code == 403, path
 
 
@@ -283,6 +371,21 @@ def test_self_only_stats_refuse_everyone_else_even_an_accepted_friend(api):
     assert api.client.get(f"/api/stats/milestones/{alice['id']}", headers=alice["headers"]).status_code == 404
 
 
+def test_putts_split_counts_only_scored_holes(api):
+    alice = api.user("alice@example.com")
+    course = custom_course(api, alice)
+    scores = [{"hole_number": n, "strokes": p, "putts": 2} for n, p in PARS.items() if n != 2]
+    unread_strokes = {"hole_number": 2, "putts": 3}
+    saved = api.client.post("/api/scan/save", headers=alice["headers"], json={
+        "course_id": course, "tee_box": "Blue", "date": "2026-10-01", "hole_scores": [unread_strokes, *scores],
+    })
+    assert saved.status_code == 200, saved.text
+
+    analytics = api.client.get(f"/api/stats/analytics/{alice['id']}", headers=alice["headers"]).json()
+
+    assert analytics["putts_per_hole"] == {"holes": 17, "one_or_fewer": 0.0, "two": 100.0, "three_or_more": 0.0}
+
+
 def test_saved_round_is_listed_edited_and_deleted(api):
     alice = api.user("alice@example.com")
     round_id = save_round(api, alice, custom_course(api, alice), over=10)
@@ -301,6 +404,178 @@ def test_saved_round_is_listed_edited_and_deleted(api):
 
     assert api.client.delete(f"/api/rounds/{round_id}", headers=alice["headers"]).status_code == 204
     assert api.client.get(f"/api/rounds/user/{alice['id']}", headers=alice["headers"]).json() == []
+
+
+def _round_with_breakdown(api, owner, course):
+    scores = [{"hole_number": n, "strokes": p + 1, "putts": 2, "shots_to_green": p - 1} for n, p in PARS.items()]
+    response = api.client.post("/api/scan/save", headers=owner["headers"], json={
+        "course_id": course, "tee_box": "Blue", "date": "2026-10-01", "hole_scores": scores,
+    })
+    assert response.status_code == 200, response.text
+    return response.json()["id"]
+
+
+async def _mark_unplayed(url, round_id, hole_number):
+    conn = await asyncpg.connect(url)
+    try:
+        await conn.execute(
+            """UPDATE users.hole_scores SET played=false, strokes=NULL, putts=NULL, shots_to_green=NULL
+               WHERE round_id=$1 AND hole_number=$2""",
+            uuid.UUID(round_id), hole_number,
+        )
+    finally:
+        await conn.close()
+
+
+def editor_payload(detail, changes=None):
+    holes = []
+    for hole in detail["hole_scores"]:
+        edited = (changes or {}).get(hole["hole_number"], {})
+        holes.append({
+            "hole_number": hole["hole_number"],
+            "strokes": edited.get("strokes", hole["strokes"]),
+            "putts": edited.get("putts", hole["putts"]),
+            "fairway_hit": hole["fairway_hit"],
+            "green_in_regulation": hole["green_in_regulation"],
+        })
+    return {"hole_scores": holes, "tee_box": detail["tee_box"]}
+
+
+def test_saving_from_the_round_editor_keeps_what_it_does_not_send(api):
+    alice = api.user("alice@example.com")
+    round_id = _round_with_breakdown(api, alice, custom_course(api, alice))
+    asyncio.run(_mark_unplayed(api.url, round_id, 18))
+    assert api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"],
+                          json={"notes": "windy"}).status_code == 200
+    get = lambda: api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json()
+    before = get()
+
+    saved = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"],
+                           json=editor_payload(before, {1: {"strokes": 4}}))
+    assert saved.status_code == 200, saved.text
+    after = get()
+
+    holes = {h["hole_number"]: h for h in after["hole_scores"]}
+    assert holes[1]["strokes"] == 4
+    assert [holes[n]["shots_to_green"] for n in range(1, 18)] == [PARS[n] - 1 for n in range(1, 18)]
+    assert (holes[18]["played"], holes[18]["strokes"]) == (False, None)
+    assert [(h["par"], h["handicap"]) for h in after["hole_scores"]] == [(h["par"], h["handicap"]) for h in before["hole_scores"]]
+    assert (after["notes"], after["tee_box"]) == ("windy", "Blue")
+
+    completed = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"],
+                              json=editor_payload(after, {18: {"strokes": 5, "putts": 2}}))
+    assert completed.status_code == 200, completed.text
+    persisted = get()
+    last_hole = next(h for h in persisted["hole_scores"] if h["hole_number"] == 18)
+    assert (last_hole["played"], last_hole["strokes"], last_hole["putts"]) == (True, 5, 2)
+    assert persisted["holes_played"] == 18
+
+
+def test_round_editor_can_correct_strokes_below_the_stored_shots_to_green(api):
+    alice = api.user("alice@example.com")
+    round_id = _round_with_breakdown(api, alice, custom_course(api, alice))
+    get = lambda: api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json()
+    before = get()
+
+    corrected = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"],
+                              json=editor_payload(before, {1: {"strokes": 2, "putts": 1}}))
+    assert corrected.status_code == 200, corrected.text
+    holes = {h["hole_number"]: h for h in get()["hole_scores"]}
+    assert (holes[1]["strokes"], holes[1]["putts"], holes[1]["shots_to_green"]) == (2, 1, None)
+    assert holes[2]["shots_to_green"] == 3
+    assert (holes[1]["par"], holes[1]["handicap"]) == (before["hole_scores"][0]["par"], before["hole_scores"][0]["handicap"])
+
+    replacement = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"], json={
+        "hole_scores": [{"hole_number": 2, "strokes": 2, "putts": 1, "shots_to_green": 1}],
+    })
+    assert replacement.status_code == 200, replacement.text
+    second = next(h for h in get()["hole_scores"] if h["hole_number"] == 2)
+    assert (second["strokes"], second["shots_to_green"]) == (2, 1)
+
+    rejected = api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"], json={
+        "hole_scores": [{"hole_number": 2, "shots_to_green": 3}, {"hole_number": 3, "strokes": 7}],
+    })
+    assert rejected.status_code == 422, rejected.text
+    unchanged = {h["hole_number"]: h for h in get()["hole_scores"]}
+    assert unchanged[2]["shots_to_green"] == 1
+    assert unchanged[3]["strokes"] == 4
+
+
+def test_a_hole_edit_changes_only_the_fields_it_sends(api):
+    alice = api.user("alice@example.com")
+    round_id = _round_with_breakdown(api, alice, custom_course(api, alice))
+    edit = lambda body: api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"], json=body)
+    hole = lambda body: {h["hole_number"]: h for h in body["hole_scores"]}[1]
+
+    putts_only = edit({"hole_scores": [{"hole_number": 1, "putts": 1}]})
+    assert putts_only.status_code == 200, putts_only.text
+    assert (hole(putts_only.json())["strokes"], hole(putts_only.json())["putts"]) == (5, 1)
+    assert hole(putts_only.json())["shots_to_green"] == 3
+
+    cleared = edit({"hole_scores": [{"hole_number": 1, "strokes": None}]})
+    assert cleared.status_code == 200, cleared.text
+    assert (hole(cleared.json())["strokes"], hole(cleared.json())["putts"]) == (None, 1)
+    assert hole(cleared.json())["shots_to_green"] == 3
+
+    too_many = edit({"hole_scores": [{"hole_number": 2, "putts": 9}, {"hole_number": 3, "strokes": 7}]})
+    assert too_many.status_code == 422
+    unchanged = api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"]).json()
+    assert [(h["strokes"], h["putts"]) for h in unchanged["hole_scores"][1:3]] == [(5, 2), (4, 2)]
+
+
+def test_null_clears_round_fields_and_omitting_them_keeps_them(api):
+    alice = api.user("alice@example.com")
+    course = custom_course(api, alice)
+    round_id = _round_with_breakdown(api, alice, course)
+    edit = lambda body: api.client.put(f"/api/rounds/{round_id}", headers=alice["headers"], json=body).json()
+
+    named = edit({"notes": "windy", "course_name_played": "Typed Links"})
+    assert (named["notes"], named["tee_box"], named["course_name_played"]) == ("windy", "Blue", "Typed Links")
+    kept = edit({"weather_conditions": "rain"})
+    assert (kept["notes"], kept["tee_box"], kept["course_name_played"]) == ("windy", "Blue", "Typed Links")
+
+    cleared = edit({"notes": None, "tee_box": None, "course_name_played": None})
+    assert (cleared["notes"], cleared["tee_box"], cleared["course_name_played"]) == (None, None, None)
+    assert cleared["course"]["name"] == "Home Links"
+
+
+@pytest.mark.parametrize("failure", ["invalid_link", "deleted_round"])
+def test_a_failed_course_link_leaves_the_course_unfilled(api, monkeypatch, failure):
+    alice = api.user("alice@example.com")
+    round_id = _round_with_breakdown(api, alice, custom_course(api, alice))
+    bare = api.client.post("/api/courses", headers=alice["headers"], json={
+        "name": "Bare Links", "holes": [{"number": n, "par": p} for n, p in PARS.items()],
+        "tees": [{"color": "Blue"}],
+    })
+    assert bare.status_code == 201, bare.text
+    bare_id = bare.json()["id"]
+
+    original_link = RoundRepositoryDB.link_course_to_round
+
+    async def link_fails(self, *args, **kwargs):
+        if failure == "invalid_link":
+            raise IntegrityError("link rejected after the gap fill")
+        conn = await asyncpg.connect(api.url)
+        try:
+            await conn.execute("DELETE FROM users.rounds WHERE id=$1", uuid.UUID(round_id))
+        finally:
+            await conn.close()
+        return await original_link(self, *args, **kwargs)
+
+    monkeypatch.setattr(RoundRepositoryDB, "link_course_to_round", link_fails)
+    linked = api.client.post(f"/api/rounds/{round_id}/link-course", headers=alice["headers"],
+                             json={"course_id": bare_id})
+    assert linked.status_code == (422 if failure == "invalid_link" else 404), linked.text
+
+    course = api.client.get(f"/api/courses/{bare_id}", headers=alice["headers"]).json()
+    blue = next(t for t in course["tees"] if t["color"] == "Blue")
+    assert (blue["course_rating"], blue["slope_rating"], blue["hole_yardages"]) == (None, None, {})
+    assert [h["handicap"] for h in course["holes"]] == [None] * 18
+    remaining = api.client.get(f"/api/rounds/{round_id}", headers=alice["headers"])
+    if failure == "invalid_link":
+        assert remaining.json()["course"]["name"] == "Home Links"
+    else:
+        assert remaining.status_code == 404
 
 
 SCORECARD_DIR = Path(__file__).resolve().parents[1] / "test_scorecards"
@@ -644,8 +919,9 @@ def test_expired_and_forged_tokens_are_rejected(api):
     alice = api.user("alice@example.com")
     bearer = lambda token: {"Authorization": f"Bearer {token}"}
 
-    valid = mint_token(alice["id"], expires_in=timedelta(hours=1))
-    assert api.client.get("/api/auth/me", headers=bearer(valid)).status_code == 200
+    assert api.client.get("/api/auth/me", headers=alice["headers"]).status_code == 200
+    without_session = mint_token(alice["id"], expires_in=timedelta(hours=1))
+    assert api.client.get("/api/auth/me", headers=bearer(without_session)).status_code == 401
 
     expired = mint_token(alice["id"], expires_in=timedelta(hours=-1))
     assert api.client.get("/api/auth/me", headers=bearer(expired)).status_code == 401
@@ -741,6 +1017,82 @@ def test_user_tee_update_and_delete(api):
     assert api.client.delete(tee, headers=alice["headers"]).status_code == 404
 
 
+def test_user_tee_updates_clear_rate_and_respect_the_course_layout(api):
+    alice = api.user("alice@example.com")
+    headers = alice["headers"]
+    tees = f"/api/users/{alice['id']}/tees"
+    course = custom_course(api, alice)
+    nine = api.client.post("/api/courses", headers=headers, json={
+        "name": "Nine Links", "holes": [{"number": n, "par": 4} for n in range(1, 10)]}).json()["id"]
+    edit = lambda tee, body: api.client.put(f"{tees}/{tee}", headers=headers, json=body)
+
+    rated = api.client.post(tees, headers=headers, json={
+        "name": "Gold", "course_id": course, "slope_rating": 120, "course_rating": 70.0,
+        "hole_yardages": {str(n): 300 for n in range(1, 19)}}).json()
+    cleared = edit(rated["id"], {"slope_rating": None, "course_rating": None, "hole_yardages": None})
+    assert cleared.status_code == 200, cleared.text
+    assert (cleared.json()["slope_rating"], cleared.json()["course_rating"], cleared.json()["hole_yardages"]) == (
+        None, None, {})
+    assert edit(rated["id"], {"name": None}).status_code == 422
+    assert edit(rated["id"], {}).json()["name"] == "Gold"
+
+    later = api.client.post(tees, headers=headers, json={"name": "Silver", "course_id": course}).json()
+    rated_later = edit(later["id"], {"slope_rating": 125, "course_rating": 71.0}).json()
+    assert rated_later["rating_holes"] == rated["rating_holes"] == list(range(1, 19))
+
+    outside = {"name": "Short", "course_id": nine, "hole_yardages": {"9": 300, "15": 300}}
+    refused = api.client.post(tees, headers=headers, json=outside)
+    assert (refused.status_code, refused.json()["detail"]) == (422, USER_TEE_OUTSIDE_COURSE)
+    short = api.client.post(tees, headers=headers, json={**outside, "hole_yardages": {"9": 300}}).json()
+    assert edit(short["id"], {"hole_yardages": {"15": 300}}).status_code == 422
+    assert edit(short["id"], {"hole_yardages": {"8": 290}}).json()["hole_yardages"] == {"8": 290}
+
+
+def test_friendship_lifecycle_is_private_and_reversible(api):
+    alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
+    code = lambda user: api.client.get(f"/api/users/{user['id']}", headers=user["headers"]).json()["friend_code"]
+    send = lambda sender, to: api.client.post(
+        "/api/users/me/friends", headers=sender["headers"], json={"addressee_friend_code": code(to)})
+    answer = lambda user, friendship, status: api.client.patch(
+        f"/api/users/me/friends/{friendship}", headers=user["headers"], json={"status": status})
+    remove = lambda user, friendship: api.client.delete(f"/api/users/me/friends/{friendship}", headers=user["headers"])
+    listed = lambda user: api.client.get("/api/users/me/friends", headers=user["headers"]).json()
+    conflict = lambda response: (response.status_code, response.json()["detail"])
+
+    sent = send(alice, bob)
+    assert sent.status_code == 201, sent.text
+    friendship = sent.json()["id"]
+    rows = [sent.json(), *listed(alice), *listed(bob)]
+    assert all(row["requester_email"] is None and row["addressee_email"] is None for row in rows)
+    assert conflict(send(alice, bob)) == (409, FRIEND_REQUEST_ALREADY_SENT)
+    assert conflict(send(bob, alice)) == (409, FRIEND_REQUEST_AWAITING_YOU)
+
+    assert answer(bob, friendship, "declined").status_code == 200
+    assert conflict(send(alice, bob)) == (409, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR)
+    assert remove(alice, friendship).status_code == 404
+    assert answer(alice, friendship, "blocked").status_code == 404
+    assert remove(alice, friendship).status_code == 404
+    assert conflict(send(alice, bob)) == (409, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR)
+    from_bob = send(bob, alice)
+    assert (from_bob.status_code, from_bob.json()["status"], from_bob.json()["requester_id"]) == (
+        201, "pending", bob["id"])
+    assert answer(alice, friendship, "accepted").status_code == 200
+
+    assert remove(alice, friendship).status_code == 204
+    assert listed(alice) == listed(bob) == []
+    friendship = send(bob, alice).json()["id"]
+    assert answer(alice, friendship, "accepted").status_code == 200
+
+    assert answer(bob, friendship, "blocked").json()["requester_id"] == bob["id"]
+    assert listed(alice) == []
+    assert conflict(send(alice, bob)) == (409, FRIEND_REQUEST_BLOCKED_FOR_THIS_PAIR)
+    assert remove(alice, friendship).status_code == 404
+    assert answer(alice, friendship, "blocked").status_code == 404
+    assert conflict(send(bob, alice)) == (409, FRIEND_UNBLOCK_FIRST)
+    assert remove(bob, friendship).status_code == 204
+    assert send(alice, bob).status_code == 201
+
+
 def test_stats_endpoints_answer_from_seeded_rounds(api):
     alice = api.user("alice@example.com")
     course = custom_course(api, alice)
@@ -756,7 +1108,6 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
         "goal": f"/api/stats/{alice['id']}/goal-report",
         "compare": f"/api/stats/compare/{alice['id']}/{rounds[1]}",
         "course": f"/api/stats/course-analytics/{alice['id']}/{course}",
-        "handicap": f"/api/users/{alice['id']}/handicap",
     }
     responses = {name: get(path) for name, path in paths.items()}
     assert {name: r.status_code for name, r in responses.items()} == {name: 200 for name in paths}
@@ -830,19 +1181,6 @@ def test_stats_endpoints_answer_from_seeded_rounds(api):
     assert (saver["headline"], saver["detail"], saver["strokes_saved"]) == ("Cut out 3-putts", "0.3 a round", 0.33)
 
 
-def test_user_lookup_by_email_reveals_only_your_own_account(api):
-    alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
-    lookup = lambda email: api.client.get(f"/api/users/by-email/{email}", headers=bob["headers"])
-
-    own = lookup("bob@example.com")
-    assert (own.status_code, own.json()["id"]) == (200, bob["id"])
-    assert lookup("BOB@Example.COM").status_code == 200
-    assert lookup("alice@example.com").status_code == 403
-    assert lookup("ghost@example.com").status_code == 403
-    assert lookup("not-an-email").status_code == 422
-    assert alice["id"] not in lookup("alice@example.com").text
-
-
 def test_course_list_and_search_show_masters_and_only_your_own_courses(api):
     alice, bob = api.user("alice@example.com"), api.user("bob@example.com")
     asyncio.run(_create_master_course(api.url))
@@ -860,6 +1198,85 @@ def test_course_list_and_search_show_masters_and_only_your_own_courses(api):
     assert names(get("/api/courses/search?q=links")) == ["Master Links"]
     assert get(f"/api/courses/search?q=links&user_id={alice['id']}", bob).status_code == 403
     assert get("/api/courses/search?q=nowhere&include_external=true").status_code == 401
+
+    custom_course(api, bob, name="Bob_s Links")
+    assert names(get("/api/courses/search?q=_", bob)) == ["Bob_s Links"]
+    assert names(get("/api/courses/search?q=%25", bob)) == []
+
+
+def test_course_clone_edit_and_create_rules(api):
+    alice = api.user("alice@example.com")
+    headers = alice["headers"]
+    course = lambda course_id: api.client.get(f"/api/courses/{course_id}", headers=headers).json()
+    edit = lambda course_id, body: api.client.put(f"/api/courses/{course_id}", headers=headers, json=body)
+    (master,) = asyncio.run(_create_master_courses(api.url, [Course(
+        name="Provider Links", external_course_id="ext-1", total_holes=18,
+        holes=[Hole(number=n, par=p, handicap=n) for n, p in PARS.items()],
+        tees=[Tee(color="Blue", hole_yardages={n: 400 for n in PARS})],
+    )]))
+    lookalike = custom_course(api, alice, name="Provider Links North")
+
+    clone = api.client.post(f"/api/courses/{master}/clone", headers=headers).json()["id"]
+    assert edit(clone, {"name": "My Links"}).status_code == 200
+    again = api.client.post(f"/api/courses/{master}/clone", headers=headers)
+    assert (again.status_code, again.json()["id"]) == (201, clone)
+
+    other = custom_course(api, alice, name="Other Links")
+    provider_taken = edit(other, {"external_course_id": "ext-1"})
+    assert (provider_taken.status_code, provider_taken.json()["detail"]) == (409, COURSE_PROVIDER_ID_TAKEN)
+    name_taken = edit(other, {"name": "my links"})
+    assert (name_taken.status_code, name_taken.json()["detail"]) == (409, COURSE_NAME_TAKEN)
+
+    par_from_holes = edit(lookalike, {"par": 70})
+    assert (par_from_holes.status_code, par_from_holes.json()["detail"]) == (422, COURSE_PAR_FROM_HOLES)
+    assert course(lookalike)["par"] == 72
+    bare = api.client.post("/api/courses", headers=headers, json={"name": "Bare Links"}).json()["id"]
+    assert edit(bare, {"par": 70}).status_code == 200
+    assert course(bare)["par"] == 70
+
+    nine = lambda yardages: api.client.post("/api/courses", headers=headers, json={
+        "name": "Nine Links", "holes": [{"number": n, "par": 4} for n in range(1, 10)],
+        "tees": [{"color": "White", "hole_yardages": yardages}],
+    })
+    assert nine({"9": 380, "15": 400}).status_code == 422
+    created = nine({"9": 380})
+    assert created.status_code == 201, created.text
+    assert course(created.json()["id"])["tees"][0]["hole_yardages"] == {"9": 380}
+
+
+def test_courses_page_lists_your_played_courses_first_and_pages_stably(api):
+    alice = api.user("alice@example.com")
+    headers = alice["headers"]
+    full = lambda name: Course(
+        name=name, total_holes=18,
+        holes=[Hole(number=n, par=p, handicap=n) for n, p in PARS.items()],
+        tees=[Tee(color="Blue", hole_yardages={n: 400 for n in PARS})],
+    )
+    ids = asyncio.run(_create_master_courses(
+        api.url,
+        [Course(name=f"Course {i:02d}", location="CA") for i in range(55)]
+        + [Course(name="Twin Oaks", location=f"City {i}") for i in range(4)]
+        + [full("Zinfandel Links"), full("Yarrow Links")],
+    ))
+    zinfandel, yarrow = ids[-2], ids[-1]
+    save_round(api, alice, yarrow, date="2026-09-01")
+    save_round(api, alice, zinfandel, date="2026-10-01")
+    own = custom_course(api, alice, name="Alice Links")
+    listed = lambda **params: api.client.get(
+        "/api/courses", headers=headers, params={"user_id": alice["id"], **params}).json()
+
+    first_page = [c["id"] for c in listed()]
+    assert len(first_page) == 50
+    assert first_page[:2] == [zinfandel, yarrow]
+    assert first_page[2] == own
+    assert first_page[3] == ids[0]
+
+    every = [c["id"] for c in listed(limit=100)]
+    assert len(set(every)) == len(every) == 62
+    twin_oaks = every[56:62]
+    assert {c["name"] for c in listed(limit=4, offset=58)} == {"Twin Oaks"}
+    walked = [c["id"] for offset in range(56, 62, 2) for c in listed(limit=2, offset=offset)]
+    assert walked == twin_oaks
 
 
 def test_friends_list_shows_only_your_own_friendships(api):

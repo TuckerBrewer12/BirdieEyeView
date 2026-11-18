@@ -26,8 +26,8 @@ def test_access_token_includes_expected_claims(monkeypatch):
     monkeypatch.setenv("JWT_AUDIENCE", "test-aud")
     monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 
-    token = create_access_token("user-123")
-    payload = decode_access_token(token)
+    issued = create_access_token("user-123")
+    payload = decode_access_token(issued.token)
 
     assert payload is not None
     assert payload["sub"] == "user-123"
@@ -35,7 +35,7 @@ def test_access_token_includes_expected_claims(monkeypatch):
     assert payload["aud"] == "test-aud"
     assert "exp" in payload
     assert "iat" in payload
-    assert "jti" in payload
+    assert payload["jti"] == issued.jti
 
 
 def test_one_time_token_hashing():

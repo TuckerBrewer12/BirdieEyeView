@@ -4,8 +4,10 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from analytics import eligibility as el
+from analytics import greens
 from analytics import handicap as hcap
-from analytics import stats as analytics
+from analytics import putting
+from analytics import scoring
 from api.schemas import AIComparisonItem, AIInsightItem, AIStrengthItem, AISuggestionsResponse
 from database.db_manager import DatabaseManager
 
@@ -163,23 +165,23 @@ class AIService:
     def _compute_raw(self, rounds: list) -> Dict[str, Any]:
         eighteen = el.complete_rounds(rounds, el.EIGHTEEN)
 
-        gir_pct = analytics.overall_gir_percentage(rounds)["gir_percentage"]
-        putts_per_gir = analytics.overall_putts_per_gir(rounds)["putts_per_gir"]
-        scrambling = analytics.overall_scrambling(rounds)
+        gir_pct = greens.overall_gir_percentage(rounds)["gir_percentage"]
+        putts_per_gir = putting.overall_putts_per_gir(rounds)["putts_per_gir"]
+        scrambling = greens.overall_scrambling(rounds)
 
         putting_rounds = [r for r in eighteen if r.get_total_putts() is not None]
-        three_putt_counts = [row["three_putt_count"] for row in analytics.three_putts_per_round(putting_rounds)]
+        three_putt_counts = [row["three_putt_count"] for row in putting.three_putts_per_round(putting_rounds)]
         putts_vals = [r.get_total_putts() for r in putting_rounds]
         to_par_vals = [r.total_to_par() for r in eighteen if r.total_to_par() is not None]
 
-        par_rows = {row["par"]: row for row in analytics.scoring_by_par(rounds)}
+        par_rows = {row["par"]: row for row in scoring.scoring_by_par(rounds)}
         par_trend: Dict[int, List[Optional[float]]] = {3: [], 4: [], 5: []}
         for round_obj in rounds:
-            by_par = {row["par"]: row["average_to_par"] for row in analytics.scoring_by_par([round_obj])}
+            by_par = {row["par"]: row["average_to_par"] for row in scoring.scoring_by_par([round_obj])}
             for par in par_trend:
                 par_trend[par].append(by_par.get(par))
 
-        gir_holes = [row["gir_with_putt_data"] for row in analytics.putts_per_gir(rounds)]
+        gir_holes = [row["gir_with_putt_data"] for row in putting.putts_per_gir(rounds)]
         rounds_with_gir_putts = [count for count in gir_holes if count]
 
         return {
@@ -192,16 +194,16 @@ class AIService:
             "par_avgs": {par: row["average_to_par"] for par, row in par_rows.items()},
             "par_counts": {par: row["sample_size"] for par, row in par_rows.items()},
             "par_avgs_trend": par_trend,
-            "gir_values": [row["gir_percentage"] for row in analytics.gir_per_round(rounds)],
+            "gir_values": [row["gir_percentage"] for row in greens.gir_per_round(rounds)],
             "three_putt_trend": three_putt_counts,
-            "putts_per_gir_trend": [row["putts_per_gir"] for row in analytics.putts_per_gir(rounds)],
+            "putts_per_gir_trend": [row["putts_per_gir"] for row in putting.putts_per_gir(rounds)],
             "gir_holes_per_round": el.average(rounds_with_gir_putts),
             "scrambling_rounds_with_data": sum(
-                1 for r in rounds if analytics.overall_scrambling([r])["opportunities"]
+                1 for r in rounds if greens.overall_scrambling([r])["opportunities"]
             ),
             "num_rounds": len(rounds),
             "rounds_by_par": {
-                par: sum(1 for r in rounds if any(row["par"] == par for row in analytics.scoring_by_par([r])))
+                par: sum(1 for r in rounds if any(row["par"] == par for row in scoring.scoring_by_par([r])))
                 for par in (3, 4, 5)
             },
         }

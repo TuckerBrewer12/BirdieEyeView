@@ -7,6 +7,16 @@ from api.input_validation import (
     sanitize_user_text,
 )
 
+BCRYPT_MAX_BYTES = 72
+
+
+def within_bcrypt_limit(password: str) -> str:
+    if len(password.encode("utf-8")) > BCRYPT_MAX_BYTES:
+        raise ValueError(
+            "Password is too long: use at most 72 bytes; accented letters and symbols count as more than one."
+        )
+    return password
+
 
 class RegisterRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -16,6 +26,8 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., min_length=8, max_length=128)
     handicap: float | None = Field(default=None, ge=-10, le=54)
     home_course_id: str | None = None
+
+    _password_limit = field_validator("password")(within_bcrypt_limit)
 
     @field_validator("name")
     @classmethod
@@ -98,6 +110,8 @@ class ResetPasswordRequest(BaseModel):
 
     token: str = Field(..., min_length=20, max_length=512)
     new_password: str = Field(..., min_length=8, max_length=128)
+
+    _password_limit = field_validator("new_password")(within_bcrypt_limit)
 
 
 class MessageResponse(BaseModel):
