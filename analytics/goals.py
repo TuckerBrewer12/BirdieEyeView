@@ -7,7 +7,7 @@ from analytics import eligibility as el
 from analytics.greens import overall_gir_percentage, overall_scrambling
 from analytics.putting import three_putts_per_round
 from analytics.scoring import score_type_distribution_per_round, scoring_by_par, scoring_by_yardage_buckets
-from analytics.stats import course_difficulty_profile_by_hole
+from analytics.holes import course_difficulty_profile_by_hole
 from analytics.peak import peak_gap, peak_meets_goal
 from models.round import Round
 

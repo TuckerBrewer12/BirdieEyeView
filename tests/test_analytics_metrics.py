@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from analytics import greens
+from analytics import holes
 from analytics import putting
 from analytics import recent_comparisons
 from analytics import scoring
@@ -49,7 +50,7 @@ def test_comparison_reports_window_size_and_observations():
 def test_average_putts_by_hole_keeps_observed_holes():
     r = round_({1: {"strokes": 4, "putts": 2}, 2: {"strokes": 4}}, course_obj=course(18))
 
-    assert [(row["hole_number"], row["average_putts"]) for row in stats.average_putts_by_hole([r])] == [(1, 2.0)]
+    assert [(row["hole_number"], row["average_putts"]) for row in holes.average_putts_by_hole([r])] == [(1, 2.0)]
 
 
 def test_distributions_without_observations_are_unknown():
@@ -96,7 +97,7 @@ def test_hole_consistency_ranks_only_holes_with_three_scores():
               for i, s in enumerate([3, 5, 7])]
     rounds.append(round_({3: {"strokes": 9, "par_played": 4}}, round_id="once"))
 
-    rows = {row["hole_number"]: row for row in stats.score_variance_by_hole(rounds)}
+    rows = {row["hole_number"]: row for row in holes.score_variance_by_hole(rounds)}
 
     assert (rows[1]["variance_rank"], rows[2]["variance_rank"], rows[3]["variance_rank"]) == (1, 2, None)
 
@@ -122,7 +123,7 @@ def test_hole_handicap_scoring_survives_a_course_missing_a_hole():
 def test_per_hole_stats_use_the_par_played_without_a_course():
     r = round_({1: {"strokes": 5, "par_played": 4}})
 
-    assert stats.average_score_relative_to_par_by_hole([r])[0]["average_to_par"] == 1
+    assert holes.average_score_relative_to_par_by_hole([r])[0]["average_to_par"] == 1
     assert greens.average_score_when_gir_vs_missed([round_({1: {"strokes": 5, "par_played": 4,
                                                              "green_in_regulation": False}})])[1]["holes_counted"] == 1
 
@@ -296,8 +297,8 @@ def test_round_records_need_the_observations_they_count():
 def test_per_hole_gir_and_putts_do_not_need_par():
     r = round_({1: {"strokes": 4, "green_in_regulation": True, "putts": 2}})
 
-    gir = stats.gir_percentage_by_hole([r])
-    putts = stats.average_putts_by_hole([r])
+    gir = holes.gir_percentage_by_hole([r])
+    putts = holes.average_putts_by_hole([r])
 
     assert [(row["hole_number"], row["gir_percentage"], row["par"]) for row in gir] == [(1, 100.0, None)]
     assert [(row["hole_number"], row["average_putts"]) for row in putts] == [(1, 2.0)]

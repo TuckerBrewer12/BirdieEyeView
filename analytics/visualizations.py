@@ -34,13 +34,13 @@ from .scoring import (
     scoring_by_par,
     scoring_vs_hole_handicap,
 )
-from .stats import (
-    course_difficulty_profile_by_hole,
-    score_variance_by_hole,
-    average_score_relative_to_par_by_hole,
+from .holes import (
     average_putts_by_hole,
+    average_score_relative_to_par_by_hole,
+    course_difficulty_profile_by_hole,
     gir_percentage_by_hole,
     score_type_distribution_by_hole,
+    score_variance_by_hole,
 )
 
 

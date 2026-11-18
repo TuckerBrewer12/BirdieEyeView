@@ -33,15 +33,15 @@ from analytics.scoring import (
     scoring_by_yardage_buckets,
     scoring_vs_hole_handicap,
 )
-from analytics.stats import (
-    average_score_relative_to_par_by_hole,
+from analytics.holes import (
     average_putts_by_hole,
+    average_score_relative_to_par_by_hole,
     course_difficulty_profile_by_hole,
     gir_percentage_by_hole,
-    notable_achievements,
-    score_variance_by_hole,
     score_type_distribution_by_hole,
+    score_variance_by_hole,
 )
+from analytics.stats import notable_achievements
 from analytics.windows import rolling_average
 from models.course import Course
 from models.hole import Hole

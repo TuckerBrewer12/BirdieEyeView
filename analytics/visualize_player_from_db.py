@@ -10,9 +10,9 @@ from typing import Callable, List, Optional
 
 from analytics import eligibility as el
 from analytics import greens
+from analytics import holes
 from analytics import putting
 from analytics import scoring
-from analytics import stats
 from analytics.visualizations import (
     plot_average_putts_by_hole,
     plot_average_score_relative_to_par_by_hole,
@@ -103,19 +103,19 @@ CHARTS = [
     Chart("round_trends", "scrambling_per_round", plot_scrambling_per_round, _has_scrambling),
     Chart("round_comparison", "scrambling_comparison", plot_scrambling_comparison, _has_scrambling),
     Chart("course_player", "average_score_relative_to_par_by_hole", plot_average_score_relative_to_par_by_hole,
-          lambda r: bool(stats.average_score_relative_to_par_by_hole(r)), course=True),
+          lambda r: bool(holes.average_score_relative_to_par_by_hole(r)), course=True),
     Chart("course_player", "gir_percentage_by_hole", plot_gir_percentage_by_hole,
-          lambda r: bool(stats.gir_percentage_by_hole(r)), course=True),
+          lambda r: bool(holes.gir_percentage_by_hole(r)), course=True),
     Chart("course_player", "average_putts_by_hole", plot_average_putts_by_hole,
-          lambda r: bool(stats.average_putts_by_hole(r)), course=True),
+          lambda r: bool(holes.average_putts_by_hole(r)), course=True),
     Chart("course_player", "score_type_distribution_by_hole", plot_score_type_distribution_by_hole,
-          lambda r: bool(stats.score_type_distribution_by_hole(r)), course=True),
+          lambda r: bool(holes.score_type_distribution_by_hole(r)), course=True),
     Chart("course_player", "course_difficulty_profile_by_hole", plot_course_difficulty_profile_by_hole,
-          lambda r: bool(stats.course_difficulty_profile_by_hole(r)), course=True),
+          lambda r: bool(holes.course_difficulty_profile_by_hole(r)), course=True),
     Chart("course_player", "average_score_when_gir_vs_missed", plot_average_score_when_gir_vs_missed,
           lambda r: any(row["holes_counted"] for row in greens.average_score_when_gir_vs_missed(r)), course=True),
     Chart("course_player", "score_variance_by_hole", plot_score_variance_by_hole,
-          lambda r: bool(stats.score_variance_by_hole(r)), course=True),
+          lambda r: bool(holes.score_variance_by_hole(r)), course=True),
     Chart("course_player", "score_trend_on_this_course", plot_score_trend_on_this_course, _any_complete, course=True),
 ]
 
