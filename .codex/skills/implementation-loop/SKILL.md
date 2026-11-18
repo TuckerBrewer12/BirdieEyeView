@@ -49,6 +49,7 @@ Run these once the planned edits are done, and again after the last fix from the
 - lint, the OpenAPI check and the `scripts/ci/check_*.py` convention checks
 - when the OpenAPI schema changed: regenerate `frontend/openapi.json` and `api.gen.ts`, and run the frontend type check
 - `git status --short` shows only the planned files: no probe, scratch or generated leftovers
+- `git diff --check` is clean (scripted edits leave trailing spaces and extra blank lines)
 
 Live scan evaluation calls paid providers. Run it only when the plan names it and the user has agreed to the cost.
 
