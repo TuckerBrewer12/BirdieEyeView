@@ -55,12 +55,12 @@ Changes to the scanner are measured against a collection of scorecards.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/scan-eval-dark.svg">
-  <img alt="Scan eval on 22 cases and 1,116 graded cells. Mistral OCR + Gemini, the current pipeline: 94.4% of cells correct, 9 cases 100% correct, about 7 seconds and $0.006 per card. Claude Sonnet 5.5 with thinking on: 94.9%, 13 cases 100% correct, 19.5 seconds and $0.042 per card. Claude Sonnet 5.5 with thinking off: 92.9%, 11 cases 100% correct, one read error, 7.0 seconds and $0.023 per card." src="docs/assets/scan-eval-light.svg">
+  <img alt="Scan eval on 22 cases and 1,116 graded cells. Mistral OCR + Gemini, the current pipeline: 94.4% of cells correct, 9 cases 100% correct, about 7 seconds and $0.006 per scan. Claude Sonnet 5.5 with thinking on: 99.2%, 16 cases 100% correct, 16.4 seconds and $0.034 per scan. Claude Sonnet 5.5 with effort low: 93.5%, 13 cases 100% correct, 9.1 seconds and $0.024 per scan." src="docs/assets/scan-eval-light.svg">
 </picture>
 
 The eval set is 22 player cases on 14 cards, each from a different course. The layouts vary: split front and back nines, to-par handwriting, several players per card, and putts and shots-to-green rows in different orders. Grading is per cell: every hole's score, putts and shots to green is compared to the answer key.
 
-The Sonnet rows are the same eval with one change: a single Claude Sonnet 5.5 call reads the photo into the table that Mistral and Gemini produce now, and the same parsing, assembly and grading run after it. With thinking on, Sonnet gets the most cards fully right, but it is almost **three times slower** and about **seven times the cost**. With thinking off, it matches the current speed at about **four times the cost**, with slightly lower accuracy.
+The Sonnet rows are the same eval with Sonnet doing the whole scan: one Claude Sonnet 5.5 call gets the photo and the golfer's notes and returns the course, tees and the golfer's scores as JSON, graded against the same answer key. With thinking on, Sonnet reads 99.2% of cells correctly, but it is about **2.3 times slower** and about **6 times the cost**. With effort set to low, it is about **1.3 times slower** at about **4 times the cost**, and less accurate than the current pipeline.
 
 To run, add the `run-scan-evals` label to a PR. Each run is saved as JSON on the [`eval-results`](https://github.com/TuckerBrewer12/BirdieEyeView/tree/eval-results) branch.
 
