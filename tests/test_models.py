@@ -4,7 +4,7 @@ from pydantic import ValidationError
 
 from models import Course, Hole, Tee, HoleScore, Round, User, UserTee
 from models.hole_layout import FRONT_NINE, BACK_NINE, FULL_ROUND
-from models.tee import TeeRating
+from models.tee import TeeRating, best_yardage_match, yardage_similarity
 
 
 def test_hole_validation():
@@ -739,3 +739,36 @@ def test_hole_edits_keep_omitted_fields_and_repair_only_stale_observations(store
 def test_hole_edits_still_reject_supplied_shots_or_strokes_below_stored_putts(change):
     with pytest.raises(ValueError):
         HoleScore(hole_number=1, strokes=5, putts=2, shots_to_green=3).with_edits(**change)
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        ({}, {1: 400}, (0.0, 0)),
+        ({1: 400}, {2: 400}, (0.0, 0)),
+        ({1: 400}, {1: 420}, (1.0, 1)),
+        ({1: 400, 2: 200}, {1: 410, 2: 250}, (0.5, 2)),
+    ],
+)
+def test_yardage_similarity_is_the_share_of_shared_holes_within_25_yards(left, right, expected):
+    assert yardage_similarity(left, right) == expected
+
+
+def _yards(holes, offset=0):
+    return {n: 300 + n + offset for n in holes}
+
+
+@pytest.mark.parametrize(
+    ("incoming", "candidates", "expected"),
+    [
+        (_yards(range(1, 7)), [("six", _yards(range(1, 7), 25))], "six"),
+        (_yards(range(1, 6)), [("five", _yards(range(1, 6)))], None),
+        (_yards(range(1, 7)), [("off", _yards(range(1, 7), 26))], None),
+        (_yards(range(1, 11)), [("seventy", {**_yards(range(1, 8)), **_yards(range(8, 11), 30)})], "seventy"),
+        (_yards(range(1, 11)), [("sixty", {**_yards(range(1, 7)), **_yards(range(7, 11), 30)})], None),
+        (_yards(range(1, 10)), [("short", _yards(range(1, 7))), ("long", _yards(range(1, 10)))], "long"),
+        ({}, [("any", _yards(range(1, 10)))], None),
+    ],
+)
+def test_a_scanned_tee_matches_the_closest_course_tee_on_six_holes_at_seventy_percent(incoming, candidates, expected):
+    assert best_yardage_match(incoming, candidates) == expected

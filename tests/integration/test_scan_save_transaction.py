@@ -5,7 +5,7 @@ import pytest
 
 from api.request_models import SaveRoundRequest
 from services.golfcourse_api_service import ProviderTee
-from services.scan_service import ScanService
+from services.scan_service import ReviewedScan, ScanService
 from tests.integration.helpers import create_user
 
 
@@ -15,9 +15,8 @@ PARS = [4, 3, 5, 4, 4, 3, 5, 4, 4]
 BLUE = [400, 180, 520, 410, 390, 170, 540, 380, 420]
 
 
-def make_request(user_id: str, **overrides) -> SaveRoundRequest:
+async def make_scan(database_manager, user_id: str, **overrides) -> ReviewedScan:
     payload = {
-        "user_id": user_id,
         "course_name": "Transaction Links",
         "course_location": "Scanned City, CA",
         "tee_box": "Blue",
@@ -27,7 +26,9 @@ def make_request(user_id: str, **overrides) -> SaveRoundRequest:
         "hole_scores": [{"hole_number": n, "strokes": par, "putts": 2} for n, par in enumerate(PARS, start=1)],
     }
     payload.update(overrides)
-    return SaveRoundRequest.model_validate(payload)
+    request = SaveRoundRequest.model_validate(payload)
+    course = await database_manager.courses.get_course(str(request.course_id)) if request.course_id else None
+    return request.to_reviewed_scan(str(user_id), course)
 
 
 def make_service(database_manager, *, blue=BLUE):
@@ -60,7 +61,7 @@ async def test_failed_round_write_rolls_back_the_new_course(database_manager):
     database_manager.rounds.create_round = create_round_then_fail
 
     with pytest.raises(RuntimeError, match="simulated failure"):
-        await service.save_reviewed_scan(make_request(user.id))
+        await service.save_reviewed_scan(await make_scan(database_manager, user.id))
 
     assert await count(database_manager, "SELECT COUNT(*) FROM courses.courses") == 0
     assert await count(database_manager, "SELECT COUNT(*) FROM courses.tees") == 0
@@ -72,8 +73,8 @@ async def test_verified_pick_creates_one_master_and_later_saves_link_to_it(datab
     second = await create_user(database_manager, email="second@example.com")
     service, provider = make_service(database_manager)
 
-    saved_first = await service.save_reviewed_scan(make_request(first.id, external_course_id="ext-tx"))
-    saved_second = await service.save_reviewed_scan(make_request(second.id, external_course_id="ext-tx"))
+    saved_first = await service.save_reviewed_scan(await make_scan(database_manager, first.id, external_course_id="ext-tx"))
+    saved_second = await service.save_reviewed_scan(await make_scan(database_manager, second.id, external_course_id="ext-tx"))
 
     master = saved_first.course
     assert (master.user_id, master.external_course_id, master.location) == (None, "ext-tx", None)
@@ -87,7 +88,7 @@ async def test_unverified_pick_creates_user_course_without_provider_id(database_
     user = await create_user(database_manager, email="unverified@example.com")
     service, _ = make_service(database_manager, blue=[y + 1 for y in BLUE])
 
-    saved = await service.save_reviewed_scan(make_request(user.id, external_course_id="ext-off"))
+    saved = await service.save_reviewed_scan(await make_scan(database_manager, user.id, external_course_id="ext-off"))
 
     assert (saved.course.user_id, saved.course.external_course_id) == (user.id, None)
 
@@ -97,14 +98,14 @@ async def test_verified_scan_updates_stale_master_and_reorders_handicaps(databas
     service, _ = make_service(database_manager)
     stale = [y - 10 for y in BLUE]
     seed, _ = make_service(database_manager, blue=stale)
-    seeded = await seed.save_reviewed_scan(make_request(
+    seeded = await seed.save_reviewed_scan(await make_scan(database_manager,
         user.id,
         external_course_id="ext-stale",
         all_tees=[{"color": "Blue", "hole_yardages": {str(n): y for n, y in enumerate(stale, start=1)}}],
     ))
     reordered = [{"hole_number": n, "par": par, "handicap": 10 - n} for n, par in enumerate(PARS, start=1)]
 
-    await service.save_reviewed_scan(make_request(user.id, course_id=seeded.course.id, course_holes=reordered))
+    await service.save_reviewed_scan(await make_scan(database_manager, user.id, course_id=seeded.course.id, course_holes=reordered))
 
     master = await database_manager.courses.get_course(seeded.course.id)
     assert dict(master.get_tee("Blue").hole_yardages) == dict(enumerate(BLUE, start=1))

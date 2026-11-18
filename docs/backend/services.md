@@ -6,7 +6,7 @@
 
 | Files | Responsibility |
 |---|---|
-| [scan_service.py](../../services/scan_service.py) | `ScanService.save_reviewed_scan()`: plan and validate the course and round, verify a provider-picked course, then write course and round in one transaction. |
+| [scan_service.py](../../services/scan_service.py) | `ScanService.save_reviewed_scan()`: takes a `ReviewedScan`, plans and validates the course and round, verifies a provider-picked course, then writes course and round in one transaction. |
 | [scan_image.py](../../services/scan_image.py) | `prepare_for_ocr()`: the image OCR receives (pass-through for a browser-ready JPEG or a PDF, otherwise a 2,000 px quality-80 JPEG without metadata); a failed re-encode falls back to the original. It writes into a file the caller created (opened with `open_existing()`, which fails rather than create a file) and never creates or deletes files itself; `new_temp_path()` and `remove_quietly()` (logs instead of raising) are the shared temporary-file helpers. Upload checks live in [api/scan_uploads.py](../../api/scan_uploads.py). |
 | [scan_ocr.py](../../services/scan_ocr.py) | OCR/merge orchestration and text-size limits before and after merging. |
 | [scan_assembly.py](../../services/scan_assembly.py) | Parsed rows to round payloads, structured per-hole review notes and confidence; no API dependency. |
@@ -20,7 +20,7 @@
 
 ## How the layers interact
 
-The scan router hands reviewed data to ScanService. The service never guesses the course; it uses the user's choice:
+The scan router checks the selected course's access with `load_linkable_course` (unknown 404, another golfer's 403), then hands the service a `ReviewedScan` built by `SaveRoundRequest.to_reviewed_scan(user_id, course)`: the signed-in golfer's id, the access-checked course, and the scanned tees, holes, scores and date in domain form. The service imports nothing from `api`. It never guesses the course; it uses the user's choice:
 
 - **Existing course (`course_id`):** saved against as-is. A user-owned course has missing holes/tees filled from the scan. A master course is overwritten from the scan only when the scan covers every hole the master has data for (a front-nine scan never rewrites an 18-hole master, even a legacy one without `total_holes`), the scan differs, the master has a provider ID, and the provider verifies the scan; otherwise it is unchanged. A picked course is checked under its own name when the request has no `course_name`. When it is overwritten, the round's `par_played`/`handicap_played` come from the verified scan. A scanned rating that differs from the master counts as a change, but is written only when the provider confirms it; a rating missing from the scan is not a change, and the master keeps its ratings for that tee.
 - **Provider pick (`external_course_id`):** links to an existing course with that ID. Otherwise a new course must pass the completeness check (`Course.has_required_course_data()`); if the provider verifies it, the scanned data becomes one master course, else a user-owned course without the provider ID.
@@ -29,7 +29,7 @@ The scan router hands reviewed data to ScanService. The service never guesses th
 
 Verification is an exact match: every scanned tee must equal some provider tee's per-hole yardages (names ignored), the scanned pars must equal that tee's pars. Ratings are hard to read from a card, so they never block verification: a scanned course/slope rating is stored only when the matching provider tee has the same rating, and is otherwise dropped (the master keeps its existing rating for that tee; a new master has none). Provider data is compared in memory and never stored; location is never taken from the scan or the provider. All reads, provider calls and validation happen before the first write; rejected saves raise `ScanSaveRejected` (HTTP 422) and write nothing. Course and round writes share one transaction through `DatabaseManager.transaction()`.
 
-The save service still imports API request types. Extraction orchestration and assembly live in `scan_ocr.py` and `scan_assembly.py`, which import nothing from the API; the router owns catalog wording and HTTP translation. The intended boundary is a readable orchestration function with focused steps, not a generic service framework.
+The save service, extraction orchestration and assembly (`scan_service.py`, `scan_ocr.py`, `scan_assembly.py`) import nothing from the API; the router owns request mapping (`SaveRoundRequest.to_reviewed_scan`), course access, catalog wording and HTTP translation. The intended boundary is a readable orchestration function with focused steps, not a generic service framework.
 
 Report submission is independent of round saving and PostgreSQL. Developer retrieval is through the report CLI described in [failed-scan reports](../failed-scan-reports.md). Do not infer live storage configuration from a checked-in guide or local file.
 
