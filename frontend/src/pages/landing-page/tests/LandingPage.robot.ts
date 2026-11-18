@@ -5,8 +5,7 @@ import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend } from "../../../testing/fakes/FakeBackend";
 import { SCANNED_COURSE_NAME, scannedCard } from "../../../testing/fixtures/scan";
 import { expectTheme, switchToDark } from "../../../testing/theme";
-import { fontsLoaded } from "../../../testing/fontsLoaded";
-import { captureOptions } from "../../../testing/fullPageCapture";
+import { captureOptions, readyForCapture } from "../../../testing/fullPageCapture";
 
 const CARD_PHOTO = fileURLToPath(new URL("../../../../public/hero/physical-card.jpg", import.meta.url));
 const CARD_NAME = "physical-card.jpg";
@@ -147,7 +146,7 @@ export class LandingRobot {
 
   async capture(name: string): Promise<this> {
     await this.page.evaluate(() => window.scrollTo(0, 0));
-    await fontsLoaded(this.page);
+    await readyForCapture(this.page);
     await expect(this.page).toHaveScreenshot(name, captureOptions());
     return this;
   }

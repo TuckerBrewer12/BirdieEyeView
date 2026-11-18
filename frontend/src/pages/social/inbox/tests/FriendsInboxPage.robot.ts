@@ -3,9 +3,8 @@ import { test as base, expect } from "../../../../testing/playwright";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { SocialRobot } from "../../tests/SocialPage.robot";
-import { fontsLoaded } from "../../../../testing/fontsLoaded";
 import { switchToDark } from "../../../../testing/theme";
-import { captureOptions } from "../../../../testing/fullPageCapture";
+import { captureOptions, readyForCapture } from "../../../../testing/fullPageCapture";
 
 export class FriendsInboxRobot {
   private readonly page: Page;
@@ -109,7 +108,7 @@ export class FriendsInboxRobot {
   }
 
   async capture(name: string): Promise<this> {
-    await fontsLoaded(this.page);
+    await readyForCapture(this.page);
     await expect(this.page).toHaveScreenshot(name, captureOptions());
     return this;
   }
