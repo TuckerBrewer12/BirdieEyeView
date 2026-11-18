@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SplashScreen } from '@capacitor/splash-screen'
+import { MotionGlobalConfig } from 'framer-motion'
 import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from './context/ThemeProvider'
@@ -31,6 +32,8 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+MotionGlobalConfig.skipAnimations = navigator.webdriver
 
 void SplashScreen.hide()
 
