@@ -2,6 +2,8 @@ import { defineConfig, devices, type ReporterDescription } from "@playwright/tes
 
 const collectCoverage = process.env.VITE_COVERAGE === "true";
 
+const sameRasterOnEveryRunner = { args: ["--disable-skia-runtime-opts", "--font-render-hinting=none"] };
+
 const reporter: ReporterDescription[] = [process.env.CI ? ["github"] : ["list"]];
 if (collectCoverage) {
   reporter.push([
@@ -54,6 +56,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },
+        launchOptions: sameRasterOnEveryRunner,
       },
     },
     {
@@ -64,6 +67,7 @@ export default defineConfig({
       use: {
         ...devices["iPhone 14"],
         browserName: "chromium",
+        launchOptions: sameRasterOnEveryRunner,
       },
     },
     {
