@@ -236,7 +236,11 @@ Key files:
 
 Implemented. Exposes per-player analytics via `api/routers/stats.py`.
 
-- `analytics/stats.py` — the per-player stat functions not yet split out (GIR, putting, scrambling, yardage buckets, score type distribution, course difficulty profile, achievements, and the Matplotlib export's round comparisons); step 5 of the backend refactor is moving them into one module per metric family
+- `analytics/stats.py` — the per-hole figures (course difficulty profile, hole consistency, GIR and putts by hole) and achievements, not yet split out; step 5 of the backend refactor is moving them into one module per metric family
+- `analytics/scoring.py` — score and net-score trends, scoring by par, yardage buckets and hole handicap, score type distribution
+- `analytics/putting.py` — putts per round, three-putts, putts a hole, putts per GIR
+- `analytics/greens.py` — GIR, scores on and off the green, scrambling and up-and-down
+- `analytics/recent_comparisons.py` — the Matplotlib export's round comparisons (last 5, 10 and 20); the app's "vs your average" is `analytics/round_comparison.py`
 - `analytics/best_rounds.py` — the best and worst round, their ranks, full rounds and a course's record
 - `analytics/score_types.py` — the chart score buckets (`SCORE_TYPE_ORDER`, eagle-or-better to quad-or-worse) and `SCORE_KINDS`
 - `analytics/windows.py` — five-round rolling averages and the one-year records window (`in_window`)

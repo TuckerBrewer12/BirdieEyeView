@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from analytics import eligibility as el
 from analytics import handicap
-from analytics import stats as analytics
+from analytics import scoring
 from analytics.score_types import SCORE_KINDS
 from analytics.verdicts import change_verdict
 from models import Round
@@ -77,7 +77,7 @@ def whs_breakdown(
     index_window: Dict[str, Any],
 ) -> Dict[str, Any]:
     by_index = {d["round_index"]: d for d in differentials}
-    score_rows = analytics.score_trend(rounds)
+    score_rows = scoring.score_trend(rounds)
     rows = []
     for i, score_row in enumerate(score_rows):
         trend = handicap_trend[i] if i < len(handicap_trend) else {}

@@ -9,6 +9,9 @@ from pathlib import Path
 from typing import Callable, List, Optional
 
 from analytics import eligibility as el
+from analytics import greens
+from analytics import putting
+from analytics import scoring
 from analytics import stats
 from analytics.visualizations import (
     plot_average_putts_by_hole,
@@ -48,23 +51,23 @@ def _any_complete(rounds: List[Round]) -> bool:
 
 
 def _has_putts(rounds: List[Round]) -> bool:
-    return any(row["three_putt_count"] is not None for row in stats.three_putts_per_round(rounds))
+    return any(row["three_putt_count"] is not None for row in putting.three_putts_per_round(rounds))
 
 
 def _has_round_putt_totals(rounds: List[Round]) -> bool:
-    return any(row["total_putts"] is not None for row in stats.putts_per_round(rounds))
+    return any(row["total_putts"] is not None for row in putting.putts_per_round(rounds))
 
 
 def _has_putts_per_gir(rounds: List[Round]) -> bool:
-    return stats.overall_putts_per_gir(rounds)["putts_per_gir"] is not None
+    return putting.overall_putts_per_gir(rounds)["putts_per_gir"] is not None
 
 
 def _has_gir(rounds: List[Round]) -> bool:
-    return stats.overall_gir_percentage(rounds)["gir_percentage"] is not None
+    return greens.overall_gir_percentage(rounds)["gir_percentage"] is not None
 
 
 def _has_scrambling(rounds: List[Round]) -> bool:
-    return stats.overall_scrambling(rounds)["opportunities"] > 0
+    return greens.overall_scrambling(rounds)["opportunities"] > 0
 
 
 @dataclass(frozen=True)
@@ -80,10 +83,10 @@ CHARTS = [
     Chart("round_trends", "score_trend", plot_score_trend, _any_complete),
     Chart("round_comparison", "score_comparison", plot_score_comparison, _any_complete),
     Chart("overall_player", "scoring_vs_handicap", plot_scoring_vs_handicap,
-          lambda r: bool(stats.scoring_vs_hole_handicap(r))),
-    Chart("overall_player", "scoring_by_par", plot_scoring_by_par, lambda r: bool(stats.scoring_by_par(r))),
+          lambda r: bool(scoring.scoring_vs_hole_handicap(r))),
+    Chart("overall_player", "scoring_by_par", plot_scoring_by_par, lambda r: bool(scoring.scoring_by_par(r))),
     Chart("round_trends", "score_type_distribution_per_round", plot_score_type_distribution_per_round,
-          lambda r: any(row["holes_counted"] for row in stats.score_type_distribution_per_round(r))),
+          lambda r: any(row["holes_counted"] for row in scoring.score_type_distribution_per_round(r))),
     Chart("round_trends", "putts_per_round", plot_putts_per_round, _has_round_putt_totals),
     Chart("round_comparison", "putts_comparison", plot_putts_comparison, _has_round_putt_totals),
     Chart("round_trends", "three_putts_per_round", plot_three_putts_per_round, _has_putts),
@@ -110,7 +113,7 @@ CHARTS = [
     Chart("course_player", "course_difficulty_profile_by_hole", plot_course_difficulty_profile_by_hole,
           lambda r: bool(stats.course_difficulty_profile_by_hole(r)), course=True),
     Chart("course_player", "average_score_when_gir_vs_missed", plot_average_score_when_gir_vs_missed,
-          lambda r: any(row["holes_counted"] for row in stats.average_score_when_gir_vs_missed(r)), course=True),
+          lambda r: any(row["holes_counted"] for row in greens.average_score_when_gir_vs_missed(r)), course=True),
     Chart("course_player", "score_variance_by_hole", plot_score_variance_by_hole,
           lambda r: bool(stats.score_variance_by_hole(r)), course=True),
     Chart("course_player", "score_trend_on_this_course", plot_score_trend_on_this_course, _any_complete, course=True),

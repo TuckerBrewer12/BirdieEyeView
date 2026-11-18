@@ -7,7 +7,10 @@ import pytest
 from fastapi.encoders import jsonable_encoder
 
 from analytics.verdicts import change_verdict
+from analytics import greens
 from analytics import handicap as hcap
+from analytics import putting
+from analytics import scoring
 from analytics import stats as analytics
 from analytics import windows
 from api.analytics_responses import _handicap_trend, analytics_response
@@ -116,17 +119,17 @@ async def test_analytics_response_validates_for_a_season(season):
 async def test_analytics_sections_drop_nothing_the_stats_functions_return(season):
     rounds, _, user = season
     sent = (await _analytics(season)).model_dump()
-    assert sent["score_trend"] == analytics.score_trend_with_rolling_average(rounds)
+    assert sent["score_trend"] == scoring.score_trend_with_rolling_average(rounds)
     assert sent["net_score_trend"] == windows.with_rolling_average(
-        analytics.net_score_trend(rounds, sent["kpis"]["handicap_index"]), "net_score"
+        scoring.net_score_trend(rounds, sent["kpis"]["handicap_index"]), "net_score"
     )
-    assert sent["gir_trend"] == windows.with_rolling_average(analytics.gir_per_round(rounds), "gir_percentage")
-    assert sent["putts_trend"] == windows.with_rolling_average(analytics.putts_per_round(rounds), "total_putts")
-    assert sent["three_putts_trend"] == analytics.three_putts_per_round(rounds)
-    assert sent["scoring_by_par"] == analytics.scoring_by_par(rounds)
-    assert sent["scoring_by_yardage"] == analytics.scoring_by_yardage_buckets(rounds)
-    assert sent["scoring_by_handicap"] == analytics.scoring_vs_hole_handicap(rounds)
-    assert sent["gir_vs_non_gir"] == analytics.gir_vs_non_gir_score_distribution(rounds)
+    assert sent["gir_trend"] == windows.with_rolling_average(greens.gir_per_round(rounds), "gir_percentage")
+    assert sent["putts_trend"] == windows.with_rolling_average(putting.putts_per_round(rounds), "total_putts")
+    assert sent["three_putts_trend"] == putting.three_putts_per_round(rounds)
+    assert sent["scoring_by_par"] == scoring.scoring_by_par(rounds)
+    assert sent["scoring_by_yardage"] == scoring.scoring_by_yardage_buckets(rounds)
+    assert sent["scoring_by_handicap"] == scoring.scoring_vs_hole_handicap(rounds)
+    assert sent["gir_vs_non_gir"] == greens.gir_vs_non_gir_score_distribution(rounds)
     assert [{k: v for k, v in row.items() if k != "in_window"} for row in sent["handicap_trend"]] == (
         hcap.player_handicap_trend(user, rounds)
     )
