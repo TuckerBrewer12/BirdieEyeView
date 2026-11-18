@@ -90,7 +90,7 @@ def overall_putts_per_gir(rounds: Iterable[Round]) -> Dict[str, Optional[float]]
 
 
 def putts_per_hole(rounds: Iterable[Round]) -> Dict[str, Any]:
-    putts = [score.putts for r in rounds for score in _valid_hole_scores(r) if score.putts is not None]
+    putts = [score.putts for r in rounds for score in el.scored_holes(r) if score.putts is not None]
     if not putts:
         return {"holes": 0, "one_or_fewer": 0.0, "two": 0.0, "three_or_more": 0.0}
 
@@ -115,7 +115,3 @@ def three_putt_averages(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
         "per_round": round_half_up(sum(counts) / len(counts), 1) if counts else None,
         "rate": round_half_up(sum(row["three_putt_count"] for row in recorded) / holes * 100, 1) if holes else None,
     }
-
-
-def _valid_hole_scores(round_obj: Round):
-    return [score for score in round_obj.hole_scores if score.hole_number is not None]
