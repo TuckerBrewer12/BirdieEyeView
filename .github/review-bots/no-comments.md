@@ -66,7 +66,8 @@ fence.
   renamed, extracted, typed, or redesigned. Each has `path`, `line` (in the
   diff's new file), `symbol` (the exact name) and `reason` (one line, true).
 - `kept` — each added comment you left because an exception applies. Each has
-  `path`, `line` and `reason` (which exception, in a few words).
+  `path`, `line` and `reason` (which exception, in a few words). Leave tool
+  directives out of this list: they always stay.
 
 If the diff adds no comments, change nothing and reply
 `{"must_kill": [], "kept": []}`.
