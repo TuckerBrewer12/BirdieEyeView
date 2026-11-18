@@ -12,13 +12,13 @@ npm run build
 
 ## Tests
 
-Three layers, borrowed from Android. Playwright is this repo's Espresso;
-Vitest is for view-model logic.
+Three layers. Playwright runs the UI tests and screenshots; Vitest is for
+view-model logic.
 
 | Layer | Files | Command | What it proves |
 |---|---|---|---|
 | View model | `tests/use<Page>ViewModelTest.tsx` | `npm test` | Filter, sort, search, pagination, error mapping |
-| Espresso | `tests/<Page>.espresso.spec.ts` | `npm run test:espresso` | Behavior: tapping, typing, navigating, persisting |
+| UI test | `tests/<Page>.ui.spec.ts` | `npm run test:ui` | Behavior: tapping, typing, navigating, persisting |
 | Screenshot | `tests/<Page>.screenshot.spec.ts` | `npm run test:screenshots` | Look: empty vs populated vs dark, panels open |
 
 `src/pages/rounds/tests/` is the reference layout.
@@ -34,7 +34,7 @@ are always named `Fake…`. This is enforced in review by
 `page.getBy…` belongs on the robot.
 
 **Naming.** Never a bare `*.spec.ts`; Vitest would pick it up. Vitest matches
-`*.test.*` and `*Test.*`, Playwright matches `*.espresso.spec.ts` and
+`*.test.*` and `*Test.*`, Playwright matches `*.ui.spec.ts` and
 `*.screenshot.spec.ts`.
 
 ### Screenshot baselines
@@ -56,9 +56,9 @@ The check itself never regenerates baselines, so it can always fail.
 
 | Check | Workflow | Gates |
 |---|---|---|
-| `Frontend (test \| lint \| types \| build \| espresso)` | `tests.yml` | Unit tests, ESLint, tsc, production build, behavior |
+| `Frontend (test \| lint \| types \| build \| ui)` | `tests.yml` | Unit tests, ESLint, tsc, production build, behavior |
 | `Frontend visual regression` | `screenshots.yml` | Rendered output against committed baselines |
-| `Frontend coverage comment` | `frontend-coverage-bot.yml` | PR comment: Vitest changed-line % plus AI screenshot/espresso counts |
+| `Frontend coverage comment` | `frontend-coverage-bot.yml` | PR comment: Vitest changed-line % plus AI screenshot/UI test counts |
 | `Repo invariants` | `tests.yml` | Includes the no-baseline-regeneration rule |
 
 On a backend-only PR the frontend steps skip (via the `changes` job) but the
@@ -69,6 +69,6 @@ the trace and the actual/diff images land.
 ## Before pushing
 
 ```bash
-npm test && npm run test:espresso
+npm test && npm run test:ui
 npm run lint -- --max-warnings=0 && npm run typecheck && npm run build
 ```

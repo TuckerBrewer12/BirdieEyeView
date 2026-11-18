@@ -21,7 +21,7 @@ SKIP_SUFFIXES = (
     "Test.ts",
     "Test.tsx",
     ".screenshot.spec.ts",
-    ".espresso.spec.ts",
+    ".ui.spec.ts",
     ".spec.ts",
     ".spec.tsx",
 )
@@ -155,7 +155,7 @@ def compute_lines(coverage_path: Path | None, diff: str, repo: Path) -> dict:
 def inventory_markdown(src_root: Path) -> str:
     sections = [
         ("Screenshot specs (`*.screenshot.spec.ts`)", list(src_root.rglob("*.screenshot.spec.ts"))),
-        ("Espresso specs (`*.espresso.spec.ts`)", list(src_root.rglob("*.espresso.spec.ts"))),
+        ("UI tests (`*.ui.spec.ts`)", list(src_root.rglob("*.ui.spec.ts"))),
     ]
     parts: list[str] = []
     for heading, paths in sections:
@@ -237,14 +237,14 @@ def parse_layer(raw: object, key: str) -> dict:
 def parse_ai(text: str) -> dict:
     blob = extract_object(text)
     if not blob:
-        return {"screenshots": parse_layer({}, "screenshots"), "espresso": parse_layer({}, "espresso")}
+        return {"screenshots": parse_layer({}, "screenshots"), "ui": parse_layer({}, "ui")}
     try:
         data = json.loads(blob)
     except json.JSONDecodeError:
         data = {}
     return {
         "screenshots": parse_layer(data, "screenshots"),
-        "espresso": parse_layer(data, "espresso"),
+        "ui": parse_layer(data, "ui"),
     }
 
 
@@ -274,17 +274,17 @@ def fmt_layer(title: str, layer: dict, noun: str) -> list[str]:
     return lines
 
 
-def render_comment(lines: dict, ai: dict, espresso: dict | None = None) -> str:
+def render_comment(lines: dict, ai: dict, ui_coverage: dict | None = None) -> str:
     unit = format_line_coverage(lines, "unavailable (Vitest coverage did not run).")
-    ui_lines = espresso or {"coverage_available": False}
-    ui = format_line_coverage(ui_lines, "unavailable (Espresso coverage did not run).")
+    ui_lines = ui_coverage or {"coverage_available": False}
+    ui = format_line_coverage(ui_lines, "unavailable (UI test coverage did not run).")
     run_url = os.environ.get("RUN_URL", "").strip()
     report_line = ""
     if ui_lines.get("coverage_available"):
         if run_url:
-            report_line = f"Espresso HTML report: {run_url} (artifact `espresso-coverage`)."
+            report_line = f"UI test HTML report: {run_url} (artifact `ui-coverage`)."
         else:
-            report_line = "Espresso HTML report is the `espresso-coverage` artifact on this workflow run."
+            report_line = "UI test HTML report is the `ui-coverage` artifact on this workflow run."
 
     body = [
         MARKER,
@@ -293,12 +293,12 @@ def render_comment(lines: dict, ai: dict, espresso: dict | None = None) -> str:
         "Report for this PR's frontend diff. Not a merge gate.",
         "",
         f"**Unit (Vitest):** {unit}",
-        f"**UI (Espresso):** {ui}",
+        f"**UI tests:** {ui}",
         *([report_line] if report_line else []),
         "",
         *fmt_layer("Screenshots", ai["screenshots"], "screens"),
         "",
-        *fmt_layer("Espresso flows", ai["espresso"], "flows"),
+        *fmt_layer("UI test flows", ai["ui"], "flows"),
     ]
     return "\n".join(body) + "\n"
 
@@ -369,14 +369,14 @@ def cmd_inventory(args: argparse.Namespace) -> int:
 
 def cmd_comment(args: argparse.Namespace) -> int:
     lines = json.loads(Path(args.lines).read_text())
-    espresso = None
-    if args.espresso and Path(args.espresso).is_file() and Path(args.espresso).stat().st_size:
-        espresso = json.loads(Path(args.espresso).read_text())
+    ui_coverage = None
+    if args.ui and Path(args.ui).is_file() and Path(args.ui).stat().st_size:
+        ui_coverage = json.loads(Path(args.ui).read_text())
     if args.ai and Path(args.ai).is_file() and Path(args.ai).stat().st_size:
         ai = parse_ai(Path(args.ai).read_text())
     else:
         ai = parse_ai("")
-    upsert_comment(render_comment(lines, ai, espresso))
+    upsert_comment(render_comment(lines, ai, ui_coverage))
     return 0
 
 
@@ -396,7 +396,7 @@ def main() -> int:
 
     comment = sub.add_parser("comment")
     comment.add_argument("--lines", required=True)
-    comment.add_argument("--espresso")
+    comment.add_argument("--ui")
     comment.add_argument("--ai")
     comment.set_defaults(func=cmd_comment)
 

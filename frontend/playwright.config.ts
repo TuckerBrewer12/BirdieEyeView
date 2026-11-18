@@ -9,10 +9,10 @@ if (collectCoverage) {
   reporter.push([
     "monocart-reporter",
     {
-      name: "Espresso coverage",
-      outputFile: "coverage/espresso/index.html",
+      name: "UI test coverage",
+      outputFile: "coverage/ui/index.html",
       coverage: {
-        outputDir: "coverage/espresso",
+        outputDir: "coverage/ui",
         reports: [["json", { file: "coverage-final.json" }], ["html", { subdir: "html" }], "console-summary"],
       },
     },
@@ -77,8 +77,8 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     {
-      name: "espresso",
-      testMatch: "**/*.espresso.spec.ts",
+      name: "ui",
+      testMatch: "**/*.ui.spec.ts",
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },

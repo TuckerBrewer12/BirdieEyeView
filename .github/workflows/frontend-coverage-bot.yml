@@ -67,16 +67,16 @@ jobs:
         if: steps.gate.outputs.skip != 'true'
         run: npx playwright install --with-deps chromium
 
-      - name: Espresso with coverage
+      - name: UI tests with coverage
         if: steps.gate.outputs.skip != 'true'
-        run: npm run test:espresso:coverage
+        run: npm run test:ui:coverage
 
-      - name: Upload Espresso coverage report
+      - name: Upload UI test coverage report
         if: always() && steps.gate.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: espresso-coverage
-          path: frontend/coverage/espresso
+          name: ui-coverage
+          path: frontend/coverage/ui
           if-no-files-found: ignore
           retention-days: 7
 

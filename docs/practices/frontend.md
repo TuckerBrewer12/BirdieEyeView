@@ -14,7 +14,7 @@ frontend/src/pages/rounds/
   components/
   tests/
     RoundsPage.robot.ts
-    RoundsPage.espresso.spec.ts
+    RoundsPage.ui.spec.ts
     RoundsPage.screenshot.spec.ts
     useRoundsPageViewModelTest.tsx
 ```
@@ -35,4 +35,4 @@ Colours, type, measures and motion come from `src/brand/theme/tokens.ts`; no raw
 
 ## Validation
 
-View models are tested with `Fake*` repositories (no `vi.fn`/`vi.mock`). Pages have a Playwright robot, espresso specs for flows and screenshot specs for looks, all against `FakeBackend`. `scripts/ci/check_frontend_conventions.py` checks each kit component has a preview and screenshot spec, each page a robot with screenshot and espresso specs, and each view model a test. See [testing practices](testing.md). Update the [page guide](../frontend/README.md) when a page's data flow changes.
+View models are tested with `Fake*` repositories (no `vi.fn`/`vi.mock`). Pages have a Playwright robot, UI tests for flows and screenshot specs for looks, all against `FakeBackend`. `scripts/ci/check_frontend_conventions.py` checks each kit component has a preview and screenshot spec, each page a robot with screenshot specs and UI tests, and each view model a test. See [testing practices](testing.md). Update the [page guide](../frontend/README.md) when a page's data flow changes.
