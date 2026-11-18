@@ -1,6 +1,7 @@
 from typing import List
 
 from analytics import best_rounds
+from analytics import scoring
 from analytics import stats as analytics
 from api.round_responses import round_summary
 from api.schemas import CourseAnalyticsResponse
@@ -25,7 +26,7 @@ def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResp
         best_round_id=str(best.id) if best and best.id else None,
         worst_round_id=str(worst.id) if worst and worst.id else None,
         rounds=[round_summary(r) for r in newest_first],
-        score_trend=analytics.score_trend_with_rolling_average(trended),
+        score_trend=scoring.score_trend_with_rolling_average(trended),
         holes=analytics.course_hole_stats(rounds),
         hole_to_par_front_nine=to_par["front_nine"],
         hole_to_par_back_nine=to_par["back_nine"],

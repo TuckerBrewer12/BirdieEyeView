@@ -29,6 +29,14 @@ def hole_handicap(round_obj: Round, hole_number: int) -> Optional[int]:
     return None
 
 
+def observed_holes(rounds: Iterable[Round]):
+    for round_obj in rounds:
+        for score in scored_holes(round_obj):
+            par = hole_par(round_obj, score.hole_number)
+            if par is not None:
+                yield round_obj, score, par
+
+
 def round_format(round_obj: Round) -> Optional[int]:
     intended = round_obj.get_intended_holes()
     if intended is None:

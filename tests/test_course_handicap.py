@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from analytics import scoring
 from analytics import stats
 from analytics.handicap import (
     course_handicap,
@@ -78,7 +79,7 @@ def test_a_nine_has_no_course_handicap_or_net_score():
 
 def test_the_round_page_and_the_net_score_trend_give_a_round_the_same_net_score():
     played = [_round(_course(), over=n) for n in (8, 14, 11)]
-    trend = stats.net_score_trend(played, 10.4)
+    trend = scoring.net_score_trend(played, 10.4)
     for round_, row in zip(played, trend):
         detail = round_detail(round_, 10.4)
         assert detail.net_score is not None

@@ -1,6 +1,7 @@
 from analytics import best_rounds
 from analytics import goals, peak
 from analytics.headline import headline
+from analytics import putting
 from analytics import stats as analytics
 from models import HoleScore, Round
 
@@ -62,8 +63,8 @@ def test_three_putt_averages_skip_rounds_without_putts():
         _round([4] * 18, putts=2),
         _round([4] * 18, putts=None),
     ]
-    assert analytics.three_putt_averages(rounds) == {"per_round": 9.0, "rate": 50.0}
-    assert analytics.three_putt_averages([_round([4] * 18, putts=None)]) == {"per_round": None, "rate": None}
+    assert putting.three_putt_averages(rounds) == {"per_round": 9.0, "rate": 50.0}
+    assert putting.three_putt_averages([_round([4] * 18, putts=None)]) == {"per_round": None, "rate": None}
 
 
 def test_scoring_move_waits_for_five_scored_rounds():

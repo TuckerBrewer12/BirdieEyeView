@@ -7,7 +7,11 @@
 | File | Responsibility |
 |---|---|
 | [eligibility.py](../../analytics/eligibility.py) | Which holes, rounds and observations each metric may use; par/handicap resolution; unknown-aware rates. |
-| [stats.py](../../analytics/stats.py) | Player/round/hole metrics, trends, distributions and achievements not yet split out, and the Matplotlib export's round comparisons. |
+| [stats.py](../../analytics/stats.py) | Per-hole figures and achievements, not yet split out. |
+| [scoring.py](../../analytics/scoring.py) | Score and net-score trends, scoring by par, yardage and hole handicap, and score-type distributions. |
+| [putting.py](../../analytics/putting.py) | Putts per round, three-putts, putts a hole, and putts per green in regulation. |
+| [greens.py](../../analytics/greens.py) | Greens in regulation, scores on and off the green, scrambling and up-and-down. |
+| [recent_comparisons.py](../../analytics/recent_comparisons.py) | The Matplotlib export's round comparisons (the selected round against its last 5, 10 and 20). The app's "vs your average" is [round_comparison.py](../../analytics/round_comparison.py). |
 | [best_rounds.py](../../analytics/best_rounds.py) | The best and worst round and their ranks (complete 18-hole rounds by gross score), full rounds, and a course's record. |
 | [score_types.py](../../analytics/score_types.py) | The chart score buckets (eagle-or-better to quad-or-worse) and their order. |
 | [windows.py](../../analytics/windows.py) | Five-round rolling averages and the one-year records window. |
@@ -47,6 +51,6 @@ Best/worst rounds and their ranks use gross scores from complete 18-hole rounds 
 
 ### Charts and export
 
-[visualizations.py](../../analytics/visualizations.py) draws unknown values as gaps and says when a summary chart has no data. [visualize_player_from_db.py](../../analytics/visualize_player_from_db.py) writes each run to `<outdir>/<player>/<timestamp>/`, exports a chart only when its metric has data, and closes every figure.
+[visualizations.py](../../analytics/visualizations.py) draws unknown values as gaps and says when a summary chart has no data; its round-comparison charts come from [recent_comparisons.py](../../analytics/recent_comparisons.py). [visualize_player_from_db.py](../../analytics/visualize_player_from_db.py) writes each run to `<outdir>/<player>/<timestamp>/`, exports a chart only when its metric has data, and closes every figure.
 
 Meaningful tests use real round/hole models and include missing observations, zero values, sparse history, mixed round formats, and exact boundaries: `test_analytics_eligibility.py`, `test_analytics_metrics.py`, `test_analytics.py`, `test_handicap.py`, `test_handicap_contracts.py`, `test_goals.py`, `test_stats_contracts.py`, `test_visualizations.py`.

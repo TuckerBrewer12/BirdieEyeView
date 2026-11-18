@@ -2,6 +2,10 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from analytics import greens
+from analytics import putting
+from analytics import recent_comparisons
+from analytics import scoring
 from analytics import stats
 from analytics.handicap import course_handicap, round_half_up, round_rating
 from models import Tee
@@ -13,23 +17,23 @@ def test_unknown_gir_is_neither_a_hit_nor_a_miss():
     r = round_({1: {"strokes": 4, "green_in_regulation": True}, 2: {"strokes": 4}, 3: {"strokes": 4}},
                course_obj=course(18))
 
-    result = stats.overall_gir_percentage([r])
+    result = greens.overall_gir_percentage([r])
 
     assert (result["holes_played"], result["total_gir"], result["total_missed_gir"]) == (1, 1, 0)
     assert result["gir_percentage"] == 100.0
-    assert stats.overall_gir_percentage([round_({1: {"strokes": 4}})])["gir_percentage"] is None
+    assert greens.overall_gir_percentage([round_({1: {"strokes": 4}})])["gir_percentage"] is None
 
 
 def test_putts_per_gir_uses_the_same_denominator_per_round_and_overall():
     r = round_({1: {"strokes": 4, "green_in_regulation": True, "putts": 2},
                 2: {"strokes": 4, "green_in_regulation": True}}, course_obj=course(18))
 
-    assert stats.putts_per_gir([r])[0]["putts_per_gir"] == 2.0
-    assert stats.overall_putts_per_gir([r])["putts_per_gir"] == 2.0
+    assert putting.putts_per_gir([r])[0]["putts_per_gir"] == 2.0
+    assert putting.overall_putts_per_gir([r])["putts_per_gir"] == 2.0
 
 
 def test_three_putts_are_unknown_without_putt_observations():
-    row = stats.three_putts_per_round([round_({1: {"strokes": 4}})])[0]
+    row = putting.three_putts_per_round([round_({1: {"strokes": 4}})])[0]
 
     assert (row["three_putt_count"], row["three_putt_percentage"], row["holes_with_putt_data"]) == (None, None, 0)
 
@@ -37,7 +41,7 @@ def test_three_putts_are_unknown_without_putt_observations():
 def test_comparison_reports_window_size_and_observations():
     rows = [{"round_id": "a", "v": 1.0}, {"round_id": "b", "v": None}]
 
-    window = stats.metric_comparison_snapshot(rows, primary_key="v", windows=(5,))[1]
+    window = recent_comparisons.metric_comparison_snapshot(rows, primary_key="v", windows=(5,))[1]
 
     assert (window["sample_size"], window["observations"], window["primary_value"]) == (2, 1, 1.0)
 
@@ -49,7 +53,7 @@ def test_average_putts_by_hole_keeps_observed_holes():
 
 
 def test_distributions_without_observations_are_unknown():
-    row = stats.score_type_distribution_per_round([round_({1: {"strokes": 4}})])[0]
+    row = scoring.score_type_distribution_per_round([round_({1: {"strokes": 4}})])[0]
 
     assert row["holes_counted"] == 0 and row["par"] is None
 
@@ -58,7 +62,7 @@ def test_scrambling_counts_par_or_better_and_works_without_a_linked_course():
     r = round_({1: {"strokes": 3, "par_played": 4, "green_in_regulation": False},
                 2: {"strokes": 5, "par_played": 4, "green_in_regulation": False}})
 
-    row = stats.scrambling_per_round([r])[0]
+    row = greens.scrambling_per_round([r])[0]
 
     assert (row["scramble_opportunities"], row["scramble_successes"]) == (2, 1)
 
@@ -70,7 +74,7 @@ def test_up_and_down_needs_one_putt_and_par_or_better():
         3: {"strokes": 4, "par_played": 4, "putts": 2, "green_in_regulation": False},
     })
 
-    overall = stats.overall_up_and_down([r])
+    overall = greens.overall_up_and_down([r])
 
     assert (overall["opportunities"], overall["successes"]) == (3, 1)
 
@@ -80,11 +84,11 @@ def test_overall_rates_weight_every_opportunity_equally():
     zero_of_nine = round_({n: {"strokes": 6, "par_played": 4, "green_in_regulation": False} for n in range(1, 10)},
                           round_id="b")
 
-    result = stats.overall_scrambling([one_of_one, zero_of_nine])
+    result = greens.overall_scrambling([one_of_one, zero_of_nine])
 
     assert (result["successes"], result["opportunities"]) == (1, 10)
     assert result["percentage"] == pytest.approx(10.0)
-    assert stats.overall_scrambling([round_({1: {"strokes": 4}})])["percentage"] is None
+    assert greens.overall_scrambling([round_({1: {"strokes": 4}})])["percentage"] is None
 
 
 def test_hole_consistency_ranks_only_holes_with_three_scores():
@@ -102,15 +106,15 @@ def test_selected_tee_missing_from_course_has_unknown_yardage():
     red = par_round(course_obj=c, tee_box="Red")
     unselected = par_round(course_obj=c)
 
-    assert stats.scoring_by_yardage_buckets([red]) == []
-    assert stats.scoring_by_yardage_buckets([unselected]) != []
+    assert scoring.scoring_by_yardage_buckets([red]) == []
+    assert scoring.scoring_by_yardage_buckets([unselected]) != []
 
 
 def test_hole_handicap_scoring_survives_a_course_missing_a_hole():
     c = course(18).model_copy(update={"holes": [h for h in course(18).holes if h.number != 1]})
     r = round_({1: {"strokes": 5, "par_played": 4}, 2: {"strokes": 4}}, course_obj=c)
 
-    rows = stats.scoring_vs_hole_handicap([r])
+    rows = scoring.scoring_vs_hole_handicap([r])
 
     assert [row["handicap"] for row in rows] == [2]
 
@@ -119,7 +123,7 @@ def test_per_hole_stats_use_the_par_played_without_a_course():
     r = round_({1: {"strokes": 5, "par_played": 4}})
 
     assert stats.average_score_relative_to_par_by_hole([r])[0]["average_to_par"] == 1
-    assert stats.average_score_when_gir_vs_missed([round_({1: {"strokes": 5, "par_played": 4,
+    assert greens.average_score_when_gir_vs_missed([round_({1: {"strokes": 5, "par_played": 4,
                                                              "green_in_regulation": False}})])[1]["holes_counted"] == 1
 
 
@@ -127,7 +131,7 @@ def test_nine_and_eighteen_hole_rounds_combine_in_hole_level_stats():
     nine = round_({n: {"strokes": 4, "green_in_regulation": True} for n in FRONT_NINE}, course_obj=course(9))
     eighteen = round_({n: {"strokes": 4, "green_in_regulation": False} for n in FULL_ROUND}, course_obj=course(18))
 
-    result = stats.overall_gir_percentage([nine, eighteen])
+    result = greens.overall_gir_percentage([nine, eighteen])
 
     assert (result["holes_played"], result["total_gir"]) == (27, 9)
 
@@ -136,7 +140,7 @@ def test_score_trend_totals_only_complete_rounds_and_marks_format():
     partial = par_round(holes=[1, 2], course_obj=course(18), round_id="partial")
     nine = par_round(holes=FRONT_NINE, course_obj=course(9), round_id="nine")
 
-    rows = stats.score_trend([partial, nine])
+    rows = scoring.score_trend([partial, nine])
 
     assert (rows[0]["total_score"], rows[0]["holes"]) == (None, 18)
     assert (rows[1]["total_score"], rows[1]["to_par"], rows[1]["holes"]) == (36, 0, 9)
@@ -147,7 +151,7 @@ def test_net_score_trend_follows_completeness_and_score_trend_to_par():
     partial = par_round(holes=FRONT_NINE, course_obj=rated, tee_box="Blue", round_id="partial")
     full = par_round(over=9, course_obj=rated, tee_box="Blue", round_id="full")
 
-    rows = stats.net_score_trend([partial, full], 10.0)
+    rows = scoring.net_score_trend([partial, full], 10.0)
 
     assert (rows[0]["net_score"], rows[0]["to_par"]) == (None, None)
     assert (rows[1]["course_handicap"], rows[1]["net_score"], rows[1]["to_par"]) == (10, 71, 9)
@@ -242,7 +246,7 @@ def test_comparisons_only_average_complete_rounds_of_the_same_format():
     nine = par_round(holes=FRONT_NINE, course_obj=course(9), over=9, round_id="nine", date=datetime(2026, 1, 1, tzinfo=timezone.utc))
     eighteen = par_round(over=18, round_id="eighteen", date=datetime(2026, 1, 2, tzinfo=timezone.utc))
 
-    window = stats.score_comparison([nine, eighteen])[1]
+    window = recent_comparisons.score_comparison([nine, eighteen])[1]
 
     assert (window["primary_value"], window["observations"]) == (90, 1)
 
@@ -251,7 +255,7 @@ def test_putt_comparisons_skip_incomplete_rounds():
     full = round_({n: {"strokes": 4, "putts": 2} for n in FULL_ROUND}, course_obj=course(18), round_id="full")
     one_hole = round_({1: {"strokes": 4, "putts": 2}}, course_obj=course(18), round_id="partial")
 
-    window = stats.putts_comparison([one_hole, full])[1]
+    window = recent_comparisons.putts_comparison([one_hole, full])[1]
 
     assert window["primary_value"] == 36
 
@@ -260,7 +264,7 @@ def test_course_trend_handles_mixed_timezone_awareness():
     aware = par_round(round_id="aware", date=datetime(2026, 1, 2, tzinfo=timezone.utc))
     naive = par_round(round_id="naive", date=datetime(2026, 1, 1, tzinfo=timezone.utc).replace(tzinfo=None))
 
-    rows = stats.score_trend_on_this_course([aware, naive])
+    rows = scoring.score_trend_on_this_course([aware, naive])
 
     assert [row["round_id"] for row in rows] == ["naive", "aware"]
 
@@ -270,8 +274,8 @@ def test_a_combo_tee_never_borrows_a_prefix_match():
     combo = par_round(course_obj=c, tee_box="Blue/White")
     label_variant = par_round(course_obj=c, tee_box="Blue tees")
 
-    assert stats.scoring_by_yardage_buckets([combo]) == []
-    assert stats.scoring_by_yardage_buckets([label_variant]) != []
+    assert scoring.scoring_by_yardage_buckets([combo]) == []
+    assert scoring.scoring_by_yardage_buckets([label_variant]) != []
 
 
 def test_round_records_need_the_observations_they_count():

@@ -6,33 +6,41 @@ from typing import Iterable, Optional, Sequence
 
 from models.round import Round
 
-from .stats import (
+from .greens import (
     average_score_when_gir_vs_missed,
+    gir_per_round,
+    gir_vs_non_gir_score_distribution,
+    overall_gir_percentage,
+    scrambling_per_round,
+)
+from .putting import (
+    overall_putts_per_gir,
+    putts_per_gir,
+    putts_per_round,
+    three_putts_per_round,
+)
+from .recent_comparisons import (
+    gir_comparison,
+    putts_comparison,
+    putts_per_gir_comparison,
+    score_comparison,
+    scrambling_comparison,
+    three_putts_comparison,
+)
+from .scoring import (
+    score_trend,
+    score_trend_on_this_course,
+    score_type_distribution_per_round,
+    scoring_by_par,
+    scoring_vs_hole_handicap,
+)
+from .stats import (
     course_difficulty_profile_by_hole,
     score_variance_by_hole,
     average_score_relative_to_par_by_hole,
     average_putts_by_hole,
     gir_percentage_by_hole,
-    gir_per_round,
-    overall_gir_percentage,
-    overall_putts_per_gir,
-    gir_vs_non_gir_score_distribution,
-    gir_comparison,
-    putts_per_gir, 
-    putts_per_gir_comparison,
-    putts_per_round,
-    putts_comparison,
-    scrambling_per_round,
-    scrambling_comparison,
-    score_comparison,
-    score_trend_on_this_course,
-    score_trend,
     score_type_distribution_by_hole,
-    score_type_distribution_per_round,
-    scoring_by_par,
-    scoring_vs_hole_handicap,
-    three_putts_comparison,
-    three_putts_per_round,
 )
 
 

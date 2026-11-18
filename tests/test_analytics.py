@@ -3,36 +3,44 @@ from datetime import date, datetime, timezone
 import pytest
 
 from analytics.handicap import round_half_up
-from analytics.stats import (
-    average_score_relative_to_par_by_hole,
+from analytics.greens import (
     average_score_when_gir_vs_missed,
-    average_putts_by_hole,
-    course_difficulty_profile_by_hole,
-    gir_comparison,
     gir_per_round,
-    gir_percentage_by_hole,
     gir_vs_non_gir_score_distribution,
     overall_gir_percentage,
-    overall_putts_per_gir,
-    notable_achievements,
-    putts_comparison,
-    putts_per_gir,
-    putts_per_gir_comparison,
-    putts_per_round,
-    score_mix_from_to_par,
-    scrambling_comparison,
-    score_comparison,
-    score_variance_by_hole,
-    score_trend_on_this_course,
     scrambling_per_round,
+)
+from analytics.putting import (
+    overall_putts_per_gir,
+    putts_per_gir,
+    putts_per_round,
+    three_putts_per_round,
+)
+from analytics.recent_comparisons import (
+    gir_comparison,
+    putts_comparison,
+    putts_per_gir_comparison,
+    score_comparison,
+    scrambling_comparison,
+    three_putts_comparison,
+)
+from analytics.scoring import (
+    score_mix_from_to_par,
     score_trend,
-    score_type_distribution_by_hole,
+    score_trend_on_this_course,
     score_type_distribution_per_round,
     scoring_by_par,
     scoring_by_yardage_buckets,
     scoring_vs_hole_handicap,
-    three_putts_comparison,
-    three_putts_per_round,
+)
+from analytics.stats import (
+    average_score_relative_to_par_by_hole,
+    average_putts_by_hole,
+    course_difficulty_profile_by_hole,
+    gir_percentage_by_hole,
+    notable_achievements,
+    score_variance_by_hole,
+    score_type_distribution_by_hole,
 )
 from analytics.windows import rolling_average
 from models.course import Course

@@ -1,8 +1,10 @@
 from typing import Any, Callable, Dict, List, Literal, Optional
 
 from analytics import eligibility as el
+from analytics import greens
 from analytics import handicap
-from analytics import stats
+from analytics import putting
+from analytics import scoring
 from analytics.verdicts import change_verdict
 from models import Round
 
@@ -13,12 +15,12 @@ WINDOWS: List[tuple[ComparisonWindow, Optional[int]]] = [("l5", 5), ("l20", 20),
 
 _Rows = Callable[[List[Round]], List[Dict[str, Any]]]
 METRICS: List[tuple[ComparisonMetric, _Rows, str, bool, int]] = [
-    ("score", stats.score_trend, "total_score", True, 1),
-    ("putts", stats.putts_per_round, "total_putts", True, 1),
-    ("greens", stats.gir_per_round, "total_gir", False, 1),
-    ("three_putts", stats.three_putts_per_round, "three_putt_count", True, 1),
-    ("putts_per_gir", stats.putts_per_gir, "putts_per_gir", True, 2),
-    ("scrambling", stats.scrambling_per_round, "scramble_successes", False, 1),
+    ("score", scoring.score_trend, "total_score", True, 1),
+    ("putts", putting.putts_per_round, "total_putts", True, 1),
+    ("greens", greens.gir_per_round, "total_gir", False, 1),
+    ("three_putts", putting.three_putts_per_round, "three_putt_count", True, 1),
+    ("putts_per_gir", putting.putts_per_gir, "putts_per_gir", True, 2),
+    ("scrambling", greens.scrambling_per_round, "scramble_successes", False, 1),
 ]
 
 

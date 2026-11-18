@@ -5,7 +5,7 @@ from analytics import best_rounds
 from analytics import dashboard
 from analytics import eligibility as el
 from analytics import handicap as hcap
-from analytics import stats as analytics
+from analytics import scoring
 from analytics import verdicts
 from analytics import windows
 from api.round_responses import round_summary
@@ -52,7 +52,7 @@ def dashboard_response(user: User, summaries: List[Round], history: List[Round],
         whs=dashboard.whs_breakdown(
             whs_rounds, whs_trend, hcap.score_differentials_per_round(whs_rounds), index_window
         ),
-        score_trend=analytics.score_trend_with_rolling_average(last_20),
+        score_trend=scoring.score_trend_with_rolling_average(last_20),
         handicap_trend=[
             {**row, "in_window": windows.in_window(r, reference_date=today)}
             for r, row in zip(last_20, handicap_trend)
