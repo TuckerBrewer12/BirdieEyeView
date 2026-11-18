@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from analytics import handicap as hcap
 from api.main import app
 from api.round_responses import round_summary
-from api.routers import ai_insights, courses, rounds, stats, users
+from api.routers import courses, rounds, stats, users
 from database.exceptions import DuplicateError, IntegrityError, NotFoundError
 from tests.helpers import make_course, make_mock_database, make_user
 

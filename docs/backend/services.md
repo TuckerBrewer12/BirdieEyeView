@@ -15,7 +15,6 @@
 | [user_tee_service.py](../../services/user_tee_service.py) | User-tee create and update: the linked course's layout check and the rating coverage, recomputed when a rating changes. |
 | [golfcourse_api_service.py](../../services/golfcourse_api_service.py) | External course search and per-tee course details used only for verification. Every provider failure, including a missing API key, raises `CourseProviderUnavailable`. |
 | `mistral_ocr_service.py`, `mistral_scorecard_parser.py`, `gemini_table_merger.py` | OCR, parsed observations, and optional table merging; see [extraction](extraction.md). |
-| [ai_service.py](../../services/ai_service.py) | Rule-based recommendations, strengths, and peer comparisons from Analytics. No LLM call. |
 | `scan_report_service.py`, `scan_report_sanitizer.py`, `scan_report_crypto.py`, `scan_report_storage.py` | Anonymous report validation, metadata removal, authenticated encryption, and private S3-compatible persistence. |
 
 ## How the layers interact
@@ -35,7 +34,7 @@ Report submission is independent of round saving and PostgreSQL. Developer retri
 
 ## Refactor considerations
 
-Verified course resolution and the atomic course/round save are part of `backend-refactor`; this does not certify deployment. Parser/OCR/merger review findings and the frontend's handling of the new save rejections remain open. AI suggestions now take their metrics from `analytics/scoring.py`, `putting.py` and `greens.py` (shared eligibility, par and missing-data rules) and the handicap from `user_handicap_index`; benchmark values, priority weights and trend thresholds are unchanged policy assumptions documented in the module. Coordinate calculation changes with Analytics rather than changing rules in the service.
+Verified course resolution and the atomic course/round save are part of `backend-refactor`; this does not certify deployment. Parser/OCR/merger review findings and the frontend's handling of the new save rejections remain open.
 
 ## Changing this domain
 

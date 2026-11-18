@@ -59,8 +59,6 @@ Rate limiting is enforced in three places:
 - Account creation (`/api/auth/register`) with IP + email-fingerprint limits.
 - Global API middleware limits (including stricter unauthenticated and scrape-heavy GET limits).
 
-Optional AI throttles are also enforced on `GET /api/ai-insights/{user_id}`.
-
 Key environment controls:
 - `API_RATE_LIMIT_*`
 - `API_SCRAPE_LIMIT_*`
@@ -68,7 +66,6 @@ Key environment controls:
 - `LOGIN_RATE_LIMIT_*`
 - `REGISTER_RATE_LIMIT_*`
 - `FORGOT_PASSWORD_RATE_LIMIT_*`
-- `AI_RATE_LIMIT_*`
 
 ## 6) Baseline Production Environment
 

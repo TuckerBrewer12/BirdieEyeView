@@ -355,7 +355,7 @@ def create_app() -> FastAPI:
     async def scan_failure_response(_request: Request, exc: ScanExtractionError):
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail, "failure": exc.failure})
 
-    from api.routers import auth, courses, users, rounds, stats, scan, scan_reports, ai_insights
+    from api.routers import auth, courses, users, rounds, stats, scan, scan_reports
     from api.scan_report_logging import protect_report_access_logs
     from services.scan_report_storage import configured_scan_report_store
 
@@ -370,7 +370,6 @@ def create_app() -> FastAPI:
     app.include_router(stats.router, prefix="/api/stats", tags=["stats"])
     app.include_router(scan.router, prefix="/api/scan", tags=["scan"])
     app.include_router(scan_reports.router, prefix="/api/scan", tags=["scan"])
-    app.include_router(ai_insights.router, prefix="/api/ai-insights", tags=["ai-insights"])
 
     @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
     async def root_status(request: Request):

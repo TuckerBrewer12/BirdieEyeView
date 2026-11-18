@@ -17,7 +17,6 @@ ScanScorecards/
 │   ├── schemas.py
 │   └── routers/
 │       ├── __init__.py
-│       ├── ai_insights.py
 │       ├── auth.py
 │       ├── courses.py
 │       ├── rounds.py
@@ -60,7 +59,6 @@ ScanScorecards/
 ├── services/
 │   ├── __init__.py
 │   ├── _archived_html_stitching.py
-│   ├── ai_service.py
 │   ├── gemini_table_merger.py
 │   ├── golfcourse_api_service.py
 │   ├── mistral_ocr_service.py
