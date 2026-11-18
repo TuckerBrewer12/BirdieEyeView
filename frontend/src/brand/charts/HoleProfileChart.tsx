@@ -18,6 +18,7 @@ interface HoleProfileChartProps {
   ranked?: boolean;
 }
 
+
 export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProps) {
   const { width, minWidth, height: H, pad: PAD, bar, corner, whisker, cap, labelGap, numberDrop, level } =
     tokens.chart.holes;
