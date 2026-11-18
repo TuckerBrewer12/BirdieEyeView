@@ -20,7 +20,7 @@ Keep the `docs/` guides and the agent guides (`CLAUDE.md`, `AGENTS.md`) accurate
 ## Steps
 
 1. Map each changed source area to its guide using the table in `docs/practices/documentation.md`: `docs/architecture.md` for cross-domain flow, `docs/backend/<domain>.md` for a domain, `docs/practices/` for agreed conventions, and the operational guide (such as `docs/failed-scan-reports.md`) for setup and operations.
-2. For each affected guide, read the guide and the changed source together. Update only what the change made inaccurate: responsibilities, important files and their links, data flow, contracts, and known integration limits.
+2. For each affected guide, read the guide and the changed source together. Update only what the change made inaccurate: responsibilities, important files and their links, data flow, contracts, and known integration limits. When the change closes a gap a guide describes (a dependency removed, a limitation fixed), search the guides for that statement as well as for the changed names: wording like "still imports API request types" does not mention the file it describes.
 3. Keep implemented behavior separate from proposals. A local branch is not production, and a review finding is not a fix; say which one a statement describes.
 4. Link to the owner of a rule instead of copying its values, and do not paste source code into prose.
 5. Check that every repository-relative link in the edited guides resolves to an existing file or heading.
