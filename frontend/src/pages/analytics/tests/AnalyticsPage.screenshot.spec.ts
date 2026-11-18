@@ -10,6 +10,7 @@ test("scoring, light and dark", async ({ analytics }) => {
 
 test("scoring with birdies and doubles counted each round", async ({ analytics }) => {
   await analytics.open();
+  await analytics.seesScoreTrend("Score each round");
   await analytics.toggleLine("Birdies");
   await analytics.toggleLine("Doubles");
   await analytics.seesCountLines(2);
@@ -18,6 +19,7 @@ test("scoring with birdies and doubles counted each round", async ({ analytics }
 
 test("scoring with the score off, doubles alone", async ({ analytics }) => {
   await analytics.open();
+  await analytics.seesScoreTrend("Score each round");
   await analytics.toggleLine("Score");
   await analytics.toggleLine("Doubles");
   await analytics.seesScoreLine(false);

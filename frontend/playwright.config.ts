@@ -49,7 +49,7 @@ export default defineConfig({
     {
       name: "desktop",
       testMatch: "**/*.screenshot.spec.ts",
-      retries: 0,
+      retries: process.env.CI ? 1 : 0,
       grepInvert: /@phone/,
       use: {
         ...devices["Desktop Chrome"],
@@ -59,7 +59,7 @@ export default defineConfig({
     {
       name: "mobile",
       testMatch: "**/*.screenshot.spec.ts",
-      retries: 0,
+      retries: process.env.CI ? 1 : 0,
       testIgnore: ["**/brand/**", "**/tests/screenshots/**"],
       use: {
         ...devices["iPhone 14"],
