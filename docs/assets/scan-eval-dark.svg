@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="336" viewBox="0 0 960 336" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
 <title id="t">Scan eval: current pipeline compared with Claude Sonnet 5.5</title>
-<desc id="d">22 cases on 14 scorecards, 1,116 graded cells. Mistral OCR + Gemini: 94.4% of cells correct, 9 cases 100% correct, about 7s and $0.006 per card. Claude Sonnet 5.5 with thinking on: 94.9%, 13 cases 100% correct, 19.5s and $0.042 per card. Claude Sonnet 5.5 with thinking off: 92.9%, 11 cases 100% correct, one read error, 7.0s and $0.023 per card.</desc>
+<desc id="d">22 cases on 14 scorecards, 1,116 graded cells. Mistral OCR + Gemini: 94.4% of cells correct, 9 cases 100% correct, about 7s and $0.006 per scan. Claude Sonnet 5.5 with thinking on: 99.2%, 16 cases 100% correct, 16.4s and $0.034 per scan. Claude Sonnet 5.5 with effort low: 93.5%, 13 cases 100% correct, 9.1s and $0.024 per scan.</desc>
 <rect x="0.5" y="0.5" width="959" height="335" rx="16" fill="#0d1117" stroke="#30363d"/>
 <text x="40" y="48" font-size="12" font-weight="600" fill="#5da56e" text-anchor="start" letter-spacing="1.2">SCAN EVAL</text>
 <text x="40" y="72" font-size="14" font-weight="500" fill="#e6edf3" text-anchor="start">22 cases on 14 scorecards · 1,116 graded cells</text>
 <text x="40" y="108" font-size="12" font-weight="600" fill="#8b949e" text-anchor="start">Setup</text>
 <text x="290" y="108" font-size="12" font-weight="600" fill="#8b949e" text-anchor="start">Cells correct</text>
 <text x="420" y="108" font-size="12" font-weight="600" fill="#8b949e" text-anchor="start">Cases by accuracy</text>
-<text x="800" y="108" font-size="12" font-weight="600" fill="#8b949e" text-anchor="end">Time / card</text>
-<text x="920" y="108" font-size="12" font-weight="600" fill="#8b949e" text-anchor="end">Cost / card</text>
+<text x="800" y="108" font-size="12" font-weight="600" fill="#8b949e" text-anchor="end">Time / scan</text>
+<text x="920" y="108" font-size="12" font-weight="600" fill="#8b949e" text-anchor="end">Cost / scan</text>
 <line x1="40" y1="118" x2="920" y2="118" stroke="#30363d"/>
 <text x="40" y="150" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="start">Mistral OCR + Gemini</text>
 <text x="40" y="168" font-size="12" font-weight="400" fill="#8b949e" text-anchor="start">current pipeline</text>
@@ -18,42 +18,40 @@
 <text x="480.4" y="154" font-size="12" font-weight="600" fill="#ffffff" text-anchor="middle">9</text>
 <rect x="542.7" y="136" width="148.0" height="26" rx="4" fill="#5da56e"><title>Mistral OCR + Gemini, current pipeline: 11 of 22 cases 90–99% correct</title></rect>
 <text x="616.7" y="154" font-size="12" font-weight="600" fill="#0d1117" text-anchor="middle">11</text>
-<rect x="692.7" y="136" width="25.3" height="26" rx="4" fill="#c8800d"><title>Mistral OCR + Gemini, current pipeline: 2 of 22 cases below 80% (known gap)</title></rect>
+<rect x="692.7" y="136" width="25.3" height="26" rx="4" fill="#c8800d"><title>Mistral OCR + Gemini, current pipeline: 2 of 22 cases below 80%</title></rect>
 <text x="705.4" y="154" font-size="12" font-weight="600" fill="#0d1117" text-anchor="middle">2</text>
 <text x="800" y="154" font-size="15" font-weight="600" fill="#e6edf3" text-anchor="end">~7s</text>
 <text x="920" y="154" font-size="15" font-weight="600" fill="#e6edf3" text-anchor="end">~$0.006</text>
 <text x="40" y="202" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="start">Claude Sonnet 5.5</text>
 <text x="40" y="220" font-size="12" font-weight="400" fill="#8b949e" text-anchor="start">thinking on</text>
-<text x="290" y="206" font-size="22" font-weight="700" fill="#e6edf3" text-anchor="start">94.9%</text>
-<text x="290" y="222" font-size="11" font-weight="400" fill="#8b949e" text-anchor="start">1,059 cells</text>
-<rect x="420.0" y="188" width="175.3" height="26" rx="4" fill="#27762f"><title>Claude Sonnet 5.5, thinking on: 13 of 22 cases 100% correct</title></rect>
-<text x="507.6" y="206" font-size="12" font-weight="600" fill="#ffffff" text-anchor="middle">13</text>
-<rect x="597.3" y="188" width="93.5" height="26" rx="4" fill="#5da56e"><title>Claude Sonnet 5.5, thinking on: 7 of 22 cases 90–99% correct</title></rect>
-<text x="644.0" y="206" font-size="12" font-weight="600" fill="#0d1117" text-anchor="middle">7</text>
-<rect x="692.7" y="188" width="25.3" height="26" rx="4" fill="#c8800d"><title>Claude Sonnet 5.5, thinking on: 2 of 22 cases below 80% (known gap)</title></rect>
-<text x="705.4" y="206" font-size="12" font-weight="600" fill="#0d1117" text-anchor="middle">2</text>
-<text x="800" y="206" font-size="15" font-weight="600" fill="#e6edf3" text-anchor="end">19.5s</text>
-<text x="920" y="206" font-size="15" font-weight="600" fill="#e6edf3" text-anchor="end">$0.042</text>
+<text x="290" y="206" font-size="22" font-weight="700" fill="#e6edf3" text-anchor="start">99.2%</text>
+<text x="290" y="222" font-size="11" font-weight="400" fill="#8b949e" text-anchor="start">1,107 cells</text>
+<rect x="420.0" y="188" width="216.2" height="26" rx="4" fill="#27762f"><title>Claude Sonnet 5.5, thinking on: 16 of 22 cases 100% correct</title></rect>
+<text x="528.1" y="206" font-size="12" font-weight="600" fill="#ffffff" text-anchor="middle">16</text>
+<rect x="638.2" y="188" width="79.8" height="26" rx="4" fill="#5da56e"><title>Claude Sonnet 5.5, thinking on: 6 of 22 cases 90–99% correct</title></rect>
+<text x="678.1" y="206" font-size="12" font-weight="600" fill="#0d1117" text-anchor="middle">6</text>
+<text x="800" y="206" font-size="15" font-weight="600" fill="#e6edf3" text-anchor="end">16.4s</text>
+<text x="920" y="206" font-size="15" font-weight="600" fill="#e6edf3" text-anchor="end">$0.034</text>
 <text x="40" y="254" font-size="14" font-weight="600" fill="#e6edf3" text-anchor="start">Claude Sonnet 5.5</text>
-<text x="40" y="272" font-size="12" font-weight="400" fill="#8b949e" text-anchor="start">thinking off</text>
-<text x="290" y="258" font-size="22" font-weight="700" fill="#e6edf3" text-anchor="start">92.9%</text>
-<text x="290" y="274" font-size="11" font-weight="400" fill="#8b949e" text-anchor="start">1,037 cells</text>
-<rect x="420.0" y="240" width="148.0" height="26" rx="4" fill="#27762f"><title>Claude Sonnet 5.5, thinking off: 11 of 22 cases 100% correct</title></rect>
-<text x="494.0" y="258" font-size="12" font-weight="600" fill="#ffffff" text-anchor="middle">11</text>
-<rect x="570.0" y="240" width="107.1" height="26" rx="4" fill="#5da56e"><title>Claude Sonnet 5.5, thinking off: 8 of 22 cases 90–99% correct</title></rect>
-<text x="623.5" y="258" font-size="12" font-weight="600" fill="#0d1117" text-anchor="middle">8</text>
-<rect x="679.1" y="240" width="25.3" height="26" rx="4" fill="#c8800d"><title>Claude Sonnet 5.5, thinking off: 2 of 22 cases below 80% (known gap)</title></rect>
-<text x="691.7" y="258" font-size="12" font-weight="600" fill="#0d1117" text-anchor="middle">2</text>
-<rect x="706.4" y="240" width="11.6" height="26" rx="4" fill="#6e7681"><title>Claude Sonnet 5.5, thinking off: 1 of 22 cases read error</title></rect>
-<text x="712.2" y="258" font-size="12" font-weight="600" fill="#0d1117" text-anchor="middle">1</text>
-<text x="800" y="258" font-size="15" font-weight="600" fill="#e6edf3" text-anchor="end">7.0s</text>
-<text x="920" y="258" font-size="15" font-weight="600" fill="#e6edf3" text-anchor="end">$0.023</text>
+<text x="40" y="272" font-size="12" font-weight="400" fill="#8b949e" text-anchor="start">effort low</text>
+<text x="290" y="258" font-size="22" font-weight="700" fill="#e6edf3" text-anchor="start">93.5%</text>
+<text x="290" y="274" font-size="11" font-weight="400" fill="#8b949e" text-anchor="start">1,044 cells</text>
+<rect x="420.0" y="240" width="175.3" height="26" rx="4" fill="#27762f"><title>Claude Sonnet 5.5, effort low: 13 of 22 cases 100% correct</title></rect>
+<text x="507.6" y="258" font-size="12" font-weight="600" fill="#ffffff" text-anchor="middle">13</text>
+<rect x="597.3" y="240" width="66.2" height="26" rx="4" fill="#5da56e"><title>Claude Sonnet 5.5, effort low: 5 of 22 cases 90–99% correct</title></rect>
+<text x="630.4" y="258" font-size="12" font-weight="600" fill="#0d1117" text-anchor="middle">5</text>
+<rect x="665.5" y="240" width="11.6" height="26" rx="4" fill="#b3a33a"><title>Claude Sonnet 5.5, effort low: 1 of 22 cases 80–89% correct</title></rect>
+<text x="671.3" y="258" font-size="12" font-weight="600" fill="#0d1117" text-anchor="middle">1</text>
+<rect x="679.1" y="240" width="38.9" height="26" rx="4" fill="#c8800d"><title>Claude Sonnet 5.5, effort low: 3 of 22 cases below 80%</title></rect>
+<text x="698.5" y="258" font-size="12" font-weight="600" fill="#0d1117" text-anchor="middle">3</text>
+<text x="800" y="258" font-size="15" font-weight="600" fill="#e6edf3" text-anchor="end">9.1s</text>
+<text x="920" y="258" font-size="15" font-weight="600" fill="#e6edf3" text-anchor="end">$0.024</text>
 <rect x="40" y="302" width="12" height="12" rx="3" fill="#27762f"/>
 <text x="58" y="312" font-size="12" font-weight="400" fill="#b1bac4" text-anchor="start">100% correct</text>
 <rect x="164" y="302" width="12" height="12" rx="3" fill="#5da56e"/>
 <text x="182" y="312" font-size="12" font-weight="400" fill="#b1bac4" text-anchor="start">90–99% correct</text>
-<rect x="302" y="302" width="12" height="12" rx="3" fill="#c8800d"/>
-<text x="320" y="312" font-size="12" font-weight="400" fill="#b1bac4" text-anchor="start">Below 80% (known gap)</text>
-<rect x="489" y="302" width="12" height="12" rx="3" fill="#6e7681"/>
-<text x="507" y="312" font-size="12" font-weight="400" fill="#b1bac4" text-anchor="start">Read error</text>
+<rect x="302" y="302" width="12" height="12" rx="3" fill="#b3a33a"/>
+<text x="320" y="312" font-size="12" font-weight="400" fill="#b1bac4" text-anchor="start">80–89% correct</text>
+<rect x="440" y="302" width="12" height="12" rx="3" fill="#c8800d"/>
+<text x="458" y="312" font-size="12" font-weight="400" fill="#b1bac4" text-anchor="start">Below 80%</text>
 </svg>
