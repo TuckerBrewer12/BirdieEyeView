@@ -11,7 +11,7 @@
 | [round.py](../../models/round.py) | Round coverage, hole scores, resolved summaries, par, and tee context. |
 | [hole_score.py](../../models/hole_score.py) | One hole's observed scores and statistics. |
 | [course.py](../../models/course.py), [hole.py](../../models/hole.py) | Course layout and per-hole metadata. |
-| [tee.py](../../models/tee.py), [user_tee.py](../../models/user_tee.py) | Tee yardages, rating coverage, and user tee configuration. |
+| [tee.py](../../models/tee.py), [user_tee.py](../../models/user_tee.py) | Tee yardages, rating coverage, user tee configuration, and when a scanned tee is a course's tee (`best_yardage_match`: at least 6 shared holes, 70% within 25 yards). |
 | [hole_layout.py](../../models/hole_layout.py), [scoring.py](../../models/scoring.py) | Shared coverage/yardage rules and exact score classification. |
 
 ## How objects connect

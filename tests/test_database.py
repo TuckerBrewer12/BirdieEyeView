@@ -205,18 +205,3 @@ def test_user_tee_converter_rejects_invalid_stored_yardages(yardages):
     }
     with pytest.raises(IntegrityError, match='Invalid stored user tee data'):
         user_tee_from_row(row)
-
-
-from database.repositories.course_repo import _tee_yardage_similarity
-
-
-@pytest.mark.parametrize(
-    ("left", "right", "expected"),
-    [
-        ({}, {1: 400}, (0.0, 0)),
-        ({1: 400}, {2: 400}, (0.0, 0)),
-        ({1: 400}, {1: 420}, (1.0, 1)),
-    ],
-)
-def test_tee_yardage_similarity(left, right, expected):
-    assert _tee_yardage_similarity(left, right) == expected

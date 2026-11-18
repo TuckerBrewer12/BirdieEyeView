@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Dict, Optional
+from typing import Annotated, Any, Dict, Iterable, Optional, Tuple, TypeVar
 
 from pydantic import Field, PrivateAttr, field_validator, model_serializer, model_validator
 
@@ -142,3 +142,41 @@ class Tee(TeeData):
         if any(y is None for y in yards):
             return None
         return sum(yards)
+
+
+MIN_MATCHING_HOLES = 6
+MIN_MATCHING_SHARE = 0.7
+MATCHING_TOLERANCE_YARDS = 25
+
+Candidate = TypeVar("Candidate")
+
+
+def yardage_similarity(
+    incoming: Dict[int, int],
+    existing: Dict[int, int],
+    *,
+    tolerance_yards: int = MATCHING_TOLERANCE_YARDS,
+) -> Tuple[float, int]:
+    if not incoming or not existing:
+        return 0.0, 0
+    overlap = sorted(set(incoming.keys()) & set(existing.keys()))
+    if not overlap:
+        return 0.0, 0
+    similar = sum(1 for h in overlap if abs(int(incoming[h]) - int(existing[h])) <= tolerance_yards)
+    return similar / len(overlap), len(overlap)
+
+
+def best_yardage_match(
+    incoming: Dict[int, int],
+    candidates: Iterable[Tuple[Candidate, Dict[int, int]]],
+) -> Optional[Candidate]:
+    best: Optional[Candidate] = None
+    best_ratio = 0.0
+    best_overlap = 0
+    for candidate, yardages in candidates:
+        ratio, overlap = yardage_similarity(incoming, yardages)
+        if ratio > best_ratio or (ratio == best_ratio and overlap > best_overlap):
+            best, best_ratio, best_overlap = candidate, ratio, overlap
+    if best is not None and best_overlap >= MIN_MATCHING_HOLES and best_ratio >= MIN_MATCHING_SHARE:
+        return best
+    return None

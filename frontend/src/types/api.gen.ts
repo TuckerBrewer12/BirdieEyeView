@@ -2062,6 +2062,7 @@ export interface components {
             } | null;
             /**
              * User Id
+             * @deprecated
              * @default
              */
             user_id: string;

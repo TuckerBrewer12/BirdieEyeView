@@ -1,10 +1,11 @@
 import asyncpg
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from models import Course, Hole, Tee
 from models.course import CourseSummary
 from models.hole import HOLES_PER_NINE
+from models.tee import best_yardage_match
 from database.connection import write_transaction
 from database.converters import course_from_rows, course_to_row, tee_yardages_to_rows, tee_to_row, tee_ratings_to_rows
 from database.exceptions import ConflictError, DuplicateError, DuplicateProviderIdError, IntegrityError, NotFoundError
@@ -21,21 +22,6 @@ def _duplicate_error(error: asyncpg.UniqueViolationError, message: str) -> Dupli
 def _like_pattern(query: str) -> str:
     escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     return f"%{escaped}%"
-
-
-def _tee_yardage_similarity(
-    incoming: Dict[int, int],
-    existing: Dict[int, int],
-    *,
-    tolerance_yards: int = 25,
-) -> Tuple[float, int]:
-    if not incoming or not existing:
-        return 0.0, 0
-    overlap = sorted(set(incoming.keys()) & set(existing.keys()))
-    if not overlap:
-        return 0.0, 0
-    similar = sum(1 for h in overlap if abs(int(incoming[h]) - int(existing[h])) <= tolerance_yards)
-    return similar / len(overlap), len(overlap)
 
 
 class CourseRepositoryDB:
@@ -479,20 +465,12 @@ class CourseRepositoryDB:
                             tee_id = row["tee_id"]
                             yards_by_tee.setdefault(tee_id, {})[int(row["hole_number"])] = int(row["yardage"])
 
-                        best_match = None
-                        best_ratio = 0.0
-                        best_overlap = 0
-                        for candidate in candidate_rows:
-                            ratio, overlap = _tee_yardage_similarity(
-                                normalized_yardages,
-                                yards_by_tee.get(candidate["id"], {}),
-                            )
-                            if ratio > best_ratio or (ratio == best_ratio and overlap > best_overlap):
-                                best_match = candidate
-                                best_ratio = ratio
-                                best_overlap = overlap
-                        if best_match and best_overlap >= 6 and best_ratio >= 0.7:
-                            existing_tee = best_match
+                        matched = best_yardage_match(
+                            normalized_yardages,
+                            ((candidate, yards_by_tee.get(candidate["id"], {})) for candidate in candidate_rows),
+                        )
+                        if matched is not None:
+                            existing_tee = matched
 
                 if existing_tee:
                     tee_id = existing_tee["id"]

@@ -5862,6 +5862,7 @@
           },
           "user_id": {
             "default": "",
+            "deprecated": true,
             "title": "User Id",
             "type": "string"
           }

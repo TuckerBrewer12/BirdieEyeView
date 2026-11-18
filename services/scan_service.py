@@ -1,15 +1,15 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import ValidationError
 
-from api.request_models import SaveRoundRequest, TeeInput
 from database.db_manager import DatabaseManager
 from database.exceptions import DuplicateError
 from models import Course, Hole, HoleScore, Round, Tee
 from models.hole_layout import FRONT_NINE, FULL_ROUND, rated_coverage
+from models.tee import best_yardage_match
 from services.golfcourse_api_service import (
     CourseProviderNotFound,
     CourseProviderUnavailable,
@@ -30,6 +30,35 @@ class ScanSaveRejected(ValueError):
         self.reasons = reasons
 
 
+@dataclass(frozen=True)
+class ScannedTee:
+    color: str
+    slope_rating: Optional[float] = None
+    course_rating: Optional[float] = None
+    hole_yardages: Dict[int, int] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ScannedHole:
+    number: int
+    par: Optional[int] = None
+    handicap: Optional[int] = None
+
+
+@dataclass(frozen=True)
+class ReviewedScan:
+    user_id: str
+    hole_scores: List[Dict[str, Any]]
+    course: Optional[Course] = None
+    external_course_id: Optional[str] = None
+    course_name: Optional[str] = None
+    tee_box: Optional[str] = None
+    tees: List[ScannedTee] = field(default_factory=list)
+    course_holes: List[ScannedHole] = field(default_factory=list)
+    played_on: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
 @dataclass
 class _CoursePlan:
     course: Course
@@ -44,66 +73,56 @@ class ScanService:
         self._db = db
         self._course_api = course_api or GolfCourseAPIService()
 
-    async def save_reviewed_scan(self, req: SaveRoundRequest) -> Round:
-        scan_tees = self._build_tees(req)
-        scanned = self._build_scanned_course(req, scan_tees)
-        plan = await self._plan_course(req, scanned)
+    async def save_reviewed_scan(self, scan: ReviewedScan) -> Round:
+        scanned = self._build_scanned_course(scan)
+        plan = await self._plan_course(scan, scanned)
 
-        tee_box = self._canonicalize_played_tee_box(plan.course, req.tee_box, scan_tees)
-        par_by_hole, handicap_by_hole = self._build_par_lookup(req, plan.verified_update or plan.course)
-        hole_scores = self._build_hole_scores(req, par_by_hole, handicap_by_hole)
-        played_on = self._parse_date(req.date)
-        self._make_round(req, plan.course, tee_box, hole_scores, played_on)
+        tee_box = self._canonicalize_played_tee_box(plan.course, scan.tee_box, scan.tees)
+        par_by_hole, handicap_by_hole = self._build_par_lookup(scan, plan.verified_update or plan.course)
+        hole_scores = self._build_hole_scores(scan, par_by_hole, handicap_by_hole)
+        self._make_round(scan, plan.course, tee_box, hole_scores)
 
         async with self._db.transaction() as conn:
-            course = await self._write_course(plan, req, scan_tees, conn)
-            round_ = self._make_round(req, course, tee_box, hole_scores, played_on)
+            course = await self._write_course(plan, scan, conn)
+            round_ = self._make_round(scan, course, tee_box, hole_scores)
             return await self._db.rounds.create_round(
-                round_, req.user_id, course_id=str(course.id), connection=conn
+                round_, scan.user_id, course_id=str(course.id), connection=conn
             )
 
-    async def _plan_course(self, req: SaveRoundRequest, scanned: Course) -> _CoursePlan:
-        if req.course_id:
-            try:
-                course = await self._db.courses.get_course(req.course_id)
-            except Exception as exc:
-                raise ValueError("Selected course_id is invalid.") from exc
-            if not course:
-                raise ValueError(f"Selected course not found: {req.course_id}")
-            if course.user_id and str(course.user_id) != str(req.user_id):
-                raise ValueError("Selected course is not accessible for this user.")
-            return await self._plan_existing(course, req, scanned)
+    async def _plan_course(self, scan: ReviewedScan, scanned: Course) -> _CoursePlan:
+        if scan.course is not None:
+            return await self._plan_existing(scan.course, scan, scanned)
 
-        if req.external_course_id:
+        if scan.external_course_id:
             existing = await self._db.courses.find_course_by_external_id(
-                req.external_course_id, user_id=req.user_id
+                scan.external_course_id, user_id=scan.user_id
             )
             if existing:
-                return await self._plan_existing(existing, req, scanned)
-            self._require_complete(scanned, req.tee_box)
-            verified = await self._verify_with_provider(req.external_course_id, scanned)
+                return await self._plan_existing(existing, scan, scanned)
+            self._require_complete(scanned, scan.tee_box)
+            verified = await self._verify_with_provider(scan.external_course_id, scanned)
             if verified is not None:
-                master = verified.model_copy(update={"external_course_id": req.external_course_id})
+                master = verified.model_copy(update={"external_course_id": scan.external_course_id})
                 return _CoursePlan(course=master, create=True, create_owner_id=None)
-            return await self._plan_user_course(req, scanned)
+            return await self._plan_user_course(scan, scanned)
 
-        if req.course_name:
-            return await self._plan_user_course(req, scanned)
+        if scan.course_name:
+            return await self._plan_user_course(scan, scanned)
 
         raise ScanSaveRejected(["Select or enter the course for this round."])
 
-    async def _plan_user_course(self, req: SaveRoundRequest, scanned: Course) -> _CoursePlan:
+    async def _plan_user_course(self, scan: ReviewedScan, scanned: Course) -> _CoursePlan:
         if not scanned.name:
             raise ScanSaveRejected(["Enter the course name."])
-        own = await self._db.courses.find_owned_course_by_exact_name(scanned.name, req.user_id)
+        own = await self._db.courses.find_owned_course_by_exact_name(scanned.name, scan.user_id)
         if own:
-            return await self._plan_existing(own, req, scanned)
-        self._require_complete(scanned, req.tee_box)
-        return _CoursePlan(course=scanned, create=True, create_owner_id=req.user_id)
+            return await self._plan_existing(own, scan, scanned)
+        self._require_complete(scanned, scan.tee_box)
+        return _CoursePlan(course=scanned, create=True, create_owner_id=scan.user_id)
 
-    async def _plan_existing(self, course: Course, req: SaveRoundRequest, scanned: Course) -> _CoursePlan:
+    async def _plan_existing(self, course: Course, scan: ReviewedScan, scanned: Course) -> _CoursePlan:
         if course.user_id is not None:
-            return _CoursePlan(course=course, fill_gaps=str(course.user_id) == str(req.user_id))
+            return _CoursePlan(course=course, fill_gaps=str(course.user_id) == str(scan.user_id))
         if not scanned.name:
             scanned = scanned.model_copy(update={"name": course.name})
         if (
@@ -240,46 +259,34 @@ class ScanService:
         if reasons:
             raise ScanSaveRejected(["Course data is incomplete.", *reasons])
 
-    def _build_scanned_course(self, req: SaveRoundRequest, scan_tees: List[TeeInput]) -> Course:
-        holes = [h for h in (req.course_holes or []) if h.hole_number is not None]
-        numbers = tuple(sorted(h.hole_number for h in holes))
+    def _build_scanned_course(self, scan: ReviewedScan) -> Course:
+        holes = scan.course_holes
+        numbers = tuple(sorted(h.number for h in holes))
         layout = 18 if numbers == FULL_ROUND else 9 if numbers == FRONT_NINE else None
-        colors = [t.color.casefold() for t in scan_tees]
+        colors = [t.color.casefold() for t in scan.tees]
         if len(colors) != len(set(colors)):
             raise ScanSaveRejected(["Each tee on the scorecard needs a different name."])
         try:
             return Course(
-                name=req.course_name,
+                name=scan.course_name,
                 total_holes=layout,
-                holes=[Hole(number=h.hole_number, par=h.par, handicap=h.handicap) for h in holes],
+                holes=[Hole(number=h.number, par=h.par, handicap=h.handicap) for h in holes],
                 tees=[
                     Tee(
                         color=t.color,
                         slope_rating=t.slope_rating,
                         course_rating=t.course_rating,
                         rating_holes=rated_coverage(numbers, t.course_rating, t.slope_rating),
-                        hole_yardages=self._tee_input_yardages(t),
+                        hole_yardages=dict(t.hole_yardages),
                     )
-                    for t in scan_tees
+                    for t in scan.tees
                 ],
             )
         except ValidationError as exc:
             raise ScanSaveRejected(["Course data on the scorecard is invalid.", *_messages(exc)]) from exc
 
-    def _build_tees(self, req: SaveRoundRequest) -> List[TeeInput]:
-        if req.all_tees:
-            return [t for t in req.all_tees if t.color]
-        if req.tee_box:
-            return [TeeInput(
-                color=req.tee_box,
-                slope_rating=req.tee_slope_rating,
-                course_rating=req.tee_course_rating,
-                hole_yardages=req.tee_yardages or {},
-            )]
-        return []
-
     def _build_par_lookup(
-        self, req: SaveRoundRequest, course: Optional[Course]
+        self, scan: ReviewedScan, course: Optional[Course]
     ) -> Tuple[dict, dict]:
         par_by_hole: dict = {}
         handicap_by_hole: dict = {}
@@ -290,24 +297,23 @@ class ScanService:
                         par_by_hole[hole.number] = hole.par
                     if hole.handicap is not None:
                         handicap_by_hole[hole.number] = hole.handicap
-        for h in req.course_holes or []:
-            if h.hole_number is not None:
-                if h.par is not None and h.hole_number not in par_by_hole:
-                    par_by_hole[h.hole_number] = h.par
-                if h.handicap is not None and h.hole_number not in handicap_by_hole:
-                    handicap_by_hole[h.hole_number] = h.handicap
+        for h in scan.course_holes:
+            if h.par is not None and h.number not in par_by_hole:
+                par_by_hole[h.number] = h.par
+            if h.handicap is not None and h.number not in handicap_by_hole:
+                handicap_by_hole[h.number] = h.handicap
         return par_by_hole, handicap_by_hole
 
     def _build_hole_scores(
         self,
-        req: SaveRoundRequest,
+        scan: ReviewedScan,
         par_by_hole: dict,
         handicap_by_hole: dict,
     ) -> List[HoleScore]:
         hole_scores = []
         reasons: List[str] = []
-        for hs in req.hole_scores:
-            hs_dict = hs.model_dump()
+        for entered in scan.hole_scores:
+            hs_dict = dict(entered)
             hole_num = hs_dict.get("hole_number")
             if hole_num is not None:
                 if hs_dict.get("par_played") is None:
@@ -323,30 +329,18 @@ class ScanService:
         return hole_scores
 
     @staticmethod
-    def _parse_date(value: Optional[str]) -> Optional[datetime]:
-        if not value:
-            return None
-        try:
-            return datetime.fromisoformat(value)
-        except ValueError as exc:
-            raise ScanSaveRejected(["The round date is not a valid date."]) from exc
-
-    @staticmethod
     def _make_round(
-        req: SaveRoundRequest,
+        scan: ReviewedScan,
         course: Course,
         tee_box: Optional[str],
         hole_scores: List[HoleScore],
-        played_on: Optional[datetime],
     ) -> Round:
         try:
-            return Round(course=course, tee_box=tee_box, date=played_on, hole_scores=hole_scores, notes=req.notes)
+            return Round(course=course, tee_box=tee_box, date=scan.played_on, hole_scores=hole_scores, notes=scan.notes)
         except ValidationError as exc:
             raise ScanSaveRejected(["The round does not fit this course.", *_messages(exc)]) from exc
 
-    async def _write_course(
-        self, plan: _CoursePlan, req: SaveRoundRequest, scan_tees: List[TeeInput], conn
-    ) -> Course:
+    async def _write_course(self, plan: _CoursePlan, scan: ReviewedScan, conn) -> Course:
         if plan.create:
             try:
                 return await self._db.courses.create_course(
@@ -369,12 +363,11 @@ class ScanService:
                 course_id, scan.holes, scan.tees, total_holes=scan.total_holes, connection=conn
             )
         elif plan.fill_gaps:
-            holes = [Hole(number=h.hole_number, par=h.par, handicap=h.handicap)
-                                       for h in (req.course_holes or [])]
-            if scan_tees:
-                for t in scan_tees:
+            holes = [Hole(number=h.number, par=h.par, handicap=h.handicap) for h in scan.course_holes]
+            if scan.tees:
+                for t in scan.tees:
                     await self._db.courses.fill_course_gaps(
-                        course_id, holes, t.color, t.slope_rating, t.course_rating, t.hole_yardages,
+                        course_id, holes, t.color, t.slope_rating, t.course_rating, dict(t.hole_yardages),
                         connection=conn,
                     )
             elif holes:
@@ -396,64 +389,21 @@ class ScanService:
         return None
 
     @staticmethod
-    def _tee_input_yardages(tee: TeeInput) -> Dict[int, int]:
-        out: Dict[int, int] = {}
-        for k, v in (tee.hole_yardages or {}).items():
-            if v is None:
-                continue
-            try:
-                hole_num = int(k)
-            except Exception:  # noqa: BLE001
-                continue
-            out[hole_num] = int(v)
-        return out
-
-    @staticmethod
-    def _tee_yardage_similarity(
-        incoming: Dict[int, int],
-        existing: Dict[int, int],
-        *,
-        tolerance_yards: int = 25,
-    ) -> Tuple[float, int]:
-        if not incoming or not existing:
-            return 0.0, 0
-        overlap = sorted(set(incoming.keys()) & set(existing.keys()))
-        if not overlap:
-            return 0.0, 0
-        similar = sum(1 for h in overlap if abs(int(incoming[h]) - int(existing[h])) <= tolerance_yards)
-        return similar / len(overlap), len(overlap)
-
-    def _best_matching_course_tee_color(
-        self,
-        course: Course,
-        tee: TeeInput,
-    ) -> Optional[str]:
-        incoming = self._tee_input_yardages(tee)
-        if not incoming:
-            return None
-        best_color: Optional[str] = None
-        best_ratio = 0.0
-        best_overlap = 0
-        for course_tee in course.tees or []:
-            if not course_tee.color:
-                continue
-            ratio, overlap = self._tee_yardage_similarity(
-                incoming,
-                {int(h): int(y) for h, y in (course_tee.hole_yardages or {}).items()},
-            )
-            if ratio > best_ratio or (ratio == best_ratio and overlap > best_overlap):
-                best_ratio = ratio
-                best_overlap = overlap
-                best_color = course_tee.color
-        if best_color and best_overlap >= 6 and best_ratio >= 0.7:
-            return best_color
-        return None
+    def _best_matching_course_tee_color(course: Course, tee: ScannedTee) -> Optional[str]:
+        return best_yardage_match(
+            tee.hole_yardages,
+            (
+                (course_tee.color, {int(h): int(y) for h, y in (course_tee.hole_yardages or {}).items()})
+                for course_tee in course.tees or []
+                if course_tee.color
+            ),
+        )
 
     def _canonicalize_played_tee_box(
         self,
         course: Optional[Course],
         tee_box: Optional[str],
-        scan_tees: List[TeeInput],
+        scan_tees: List[ScannedTee],
     ) -> Optional[str]:
         if not tee_box or not course or not (course.tees or []):
             return tee_box
