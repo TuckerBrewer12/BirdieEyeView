@@ -55,10 +55,12 @@ Changes to the scanner are measured against a collection of scorecards.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/scan-eval-dark.svg">
-  <img alt="Scan eval: 94.4% of graded cells read correctly, 1,053 of 1,116. Of 22 cases, 9 are 100% correct, 11 are 90–99% correct and 2 are below 80% (a known gap)." src="docs/assets/scan-eval-light.svg">
+  <img alt="Scan eval on 22 cases and 1,116 graded cells. Mistral OCR + Gemini, the current pipeline: 94.4% of cells correct, 9 cases 100% correct, about 7 seconds and $0.006 per card. Claude Sonnet 5.5 with thinking on: 94.9%, 13 cases 100% correct, 19.5 seconds and $0.042 per card. Claude Sonnet 5.5 with thinking off: 92.9%, 11 cases 100% correct, one read error, 7.0 seconds and $0.023 per card." src="docs/assets/scan-eval-light.svg">
 </picture>
 
 The eval set is 22 player cases on 14 cards, each from a different course. The layouts vary: split front and back nines, to-par handwriting, several players per card, and putts and shots-to-green rows in different orders. Grading is per cell: every hole's score, putts and shots to green is compared to the answer key.
+
+The Sonnet rows are the same eval with one change: a single Claude Sonnet 5.5 call reads the photo into the table that Mistral and Gemini produce now, and the same parsing, assembly and grading run after it. With thinking on, Sonnet gets the most cards fully right, but it is almost **three times slower** and about **seven times the cost**. With thinking off, it matches the current speed at about **four times the cost**, with slightly lower accuracy.
 
 To run, add the `run-scan-evals` label to a PR. Each run is saved as JSON on the [`eval-results`](https://github.com/TuckerBrewer12/BirdieEyeView/tree/eval-results) branch.
 
