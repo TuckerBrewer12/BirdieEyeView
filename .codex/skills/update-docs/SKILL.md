@@ -1,13 +1,13 @@
 ---
 name: update-docs
-description: Project-specific documentation skill for the Golf ScoreCard app. Use after make-code-change implements a backend change, or when the user asks to bring the docs/ guides up to date with code changes, to update the affected architecture, backend domain, practices, and operations guides, plus CLAUDE.md and AGENTS.md, without touching application code.
+description: Project-specific documentation skill for the Golf ScoreCard app. Use after make-code-change implements a backend change, or when the user asks to bring the docs/ guides up to date with code changes, to update the affected architecture, backend domain, practices, and operations guides, plus AGENTS.md, without touching application code.
 ---
 
 # Update Docs
 
 ## Purpose
 
-Keep the `docs/` guides and the agent guides (`CLAUDE.md`, `AGENTS.md`) accurate after backend behavior, responsibilities, contracts, or source file locations change. Edit documentation only; do not modify application or test code.
+Keep the `docs/` guides and the agent guide (`AGENTS.md`; `CLAUDE.md` is a symlink to it) accurate after backend behavior, responsibilities, contracts, or source file locations change. Edit documentation only; do not modify application or test code.
 
 ## Inputs
 
@@ -26,19 +26,19 @@ Keep the `docs/` guides and the agent guides (`CLAUDE.md`, `AGENTS.md`) accurate
 5. Check that every repository-relative link in the edited guides resolves to an existing file or heading.
 6. Do not edit guides under `docs/frontend/` or frontend practice guides; the frontend owner maintains them. If the change appears to affect one, list it in the final response instead.
 7. Keep local review notes, planning drafts, handoff files, and `.codex/change-artifacts/` out of `docs/` unless the user explicitly asks to include them.
-8. Update the `CLAUDE.md` bullets that describe the changed files, then make the same edit in `AGENTS.md`: the two must stay identical below their headers (`tests/test_agent_docs.py` checks it; run that test).
+8. Update the `AGENTS.md` rules or pointers the change made inaccurate. It holds rules and pointers, not module walkthroughs; those belong in `docs/`. Edit `AGENTS.md` only: `CLAUDE.md` is a symlink to it.
 9. If `handoff.md` exists, update the status of the work this change completes or defers. It is an untracked local note: edit it, and never stage it.
 
-Documentation-only edits need accurate links and source references. Apart from `tests/test_agent_docs.py`, they do not require running tests, paid providers, or database resets.
+Documentation-only edits need accurate links and source references. They do not require running tests, paid providers, or database resets.
 
 ## Final Response
 
 Finish with:
 
-- guides updated (including `CLAUDE.md`/`AGENTS.md` and `handoff.md`), with a one-line summary of each change
+- guides updated (including `AGENTS.md` and `handoff.md`), with a one-line summary of each change
 - guides checked and left unchanged
 - frontend guides that may need the frontend owner's attention
-- link check result and the `tests/test_agent_docs.py` result
+- link check result
 
 Do not commit.
 

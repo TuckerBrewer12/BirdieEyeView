@@ -112,7 +112,7 @@ Finish with:
 - tests added by layer (E2E, integration, unit with its necessity reason) and the checks run with their results
 - completion review outcome, including gaps fixed and anything unresolved or unverified
 - plan amendments and small deviations, if any
-- `docs/` guides and `CLAUDE.md`/`AGENTS.md` bullets the change made inaccurate
+- `docs/` guides and `AGENTS.md` rules the change made inaccurate
 - what the frontend owner needs to know, if anything
 - recon and implementation artifact paths
 - residual risks or review notes

@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: "Project-specific documentation skill for the Golf ScoreCard app. Use after make-code-change implements a backend change, or when the user asks to bring the docs/ guides up to date with code changes, to update the affected architecture, backend domain, practices, and operations guides, plus CLAUDE.md and AGENTS.md, without touching application code."
+description: "Project-specific documentation skill for the Golf ScoreCard app. Use after make-code-change implements a backend change, or when the user asks to bring the docs/ guides up to date with code changes, to update the affected architecture, backend domain, practices, and operations guides, plus AGENTS.md, without touching application code."
 ---
 
 # Update Docs (Claude Code wrapper)

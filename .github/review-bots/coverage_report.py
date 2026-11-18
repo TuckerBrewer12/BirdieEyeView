@@ -317,13 +317,15 @@ def gh_api(args: list[str], *, input_text: str | None = None) -> str:
     return result.stdout
 
 
-def upsert_comment(body: str) -> None:
+def upsert_comment(body: str, marker: str = MARKER, *, create: bool = True) -> None:
     repo = os.environ["GITHUB_REPOSITORY"]
     pr = os.environ["PR_NUMBER"]
     raw = gh_api(["--paginate", f"repos/{repo}/issues/{pr}/comments"])
     comments = json.loads(raw) if raw.strip() else []
-    existing = next((c for c in comments if MARKER in (c.get("body") or "")), None)
+    existing = next((c for c in comments if marker in (c.get("body") or "")), None)
 
+    if not existing and not create:
+        return
     payload = json.dumps({"body": body})
     if existing:
         gh_api(
@@ -348,7 +350,7 @@ def upsert_comment(body: str) -> None:
             ],
             input_text=payload,
         )
-        print("Posted coverage comment.")
+        print("Posted comment.")
 
 
 def cmd_lines(args: argparse.Namespace) -> int:
