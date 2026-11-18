@@ -25,6 +25,17 @@ rerun on the bot's commit. Add a `BOT_PUSH_TOKEN` secret (a fine-grained token
 with contents write on this repo) and the bot pushes with it instead, which
 reruns CI.
 
+A bot runs again on a push only when that push changes what the bot looks
+at. A workflow's `paths` filter matches the whole PR, so once a PR touches
+`frontend/src/pages` every push would start every bot. `gate.py` stops that.
+On a push it finds the bot's last successful run on the branch and compares
+the PR's diff under the bot's paths at that commit with the diff at the new
+head. If they match, the job skips the model and passes. This covers a
+backend-only commit, a merge from `main` that leaves the bot's files alone,
+and a rebase. A failed or cancelled run doesn't count, so a quick second push
+can't hide the first one. Opening, reopening or marking the PR ready always
+runs the bots.
+
 A later commit does not re-open the same finding. The bot that left the
 comment rechecks it: ✅ if the latest commit fixed it, ❌ if it is still
 there. New issues introduced by that commit are still reported and still
@@ -69,6 +80,7 @@ nothing.
 | File | What it is |
 | --- | --- |
 | `brand-kit.md`, `mvvm.md`, `ui-test-checker.md` | Review prompts |
+| `gate.py` | Skip a push that leaves the bot's part of the PR unchanged since its last successful run |
 | `run-bot.sh` | Shared reviewer: diff → model → GitHub review |
 | `cursor-run.sh` | Cursor CLI invocation shared by the review, coverage, and fix runners |
 | `previous.py` | Match earlier comments, ✅/❌ recheck, skip duplicate fix PRs |
