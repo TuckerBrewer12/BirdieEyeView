@@ -74,13 +74,15 @@ Small mechanical deviations inside the planned surface, such as an extra import,
 
 ## Completion Review Loop
 
-Review the implementation as a reviewer looking for omissions, rather than assuming that completing the plan proves correctness:
+Review the implementation as a reviewer looking for omissions, rather than assuming that completing the plan proves correctness. This is the "review your own work" pass: do it before reporting the work as done, so the user never has to ask for it.
 
-1. Compare the full task diff, including added files, with the user's original request, every approved acceptance criterion, and any approved plan amendments. Check for missing behavior and unintended changes.
+1. Read the full task diff against the base branch file by file (`git diff <base>` plus new and deleted files, generated files included), not a summary, a name sweep or passing gates. Compare it with the user's original request, every approved acceptance criterion, and any approved plan amendments. Check for missing behavior and unintended changes.
 2. Read the affected surrounding code and trace changed behavior through relevant callers and layer boundaries. Look for regressions, inconsistent contracts, and relevant boundary or failure cases that the existing tests could miss.
-3. Investigate suspected gaps with code evidence and focused checks at the appropriate testing layer. Add or update regression tests when they protect meaningful behavior, at the E2E layer unless the Testing Priority's unit-test reasons apply; do not add tests merely to mirror the implementation or raise coverage. Re-check that every unit test added in this change still meets a necessity reason, and remove any that an E2E test now covers.
-4. Fix confirmed findings within the approved scope, rerun the affected checks, and repeat this review against the revised implementation. Broaden validation when the finding shows a wider impact; do not rerun unrelated checks without a reason.
-5. Finish only when the review finds no remaining actionable gaps within the approved scope and the Completion Standard is met. If a finding needs a plan amendment, follow When The Plan Is Wrong before editing that area. If a finding cannot be resolved or verified, report it explicitly and do not describe that area as complete or verified.
+3. For every deletion or move, find what it left orphaned: imports (`pyproject.toml` ignores F401 under `tests/**`, so compare `ruff check --isolated --select F401` on the touched test files against the base branch), helpers or constants only the removed code used, configuration and environment settings, docs and file lists.
+4. For every doc or comment line you edited, check the whole sentence against the code, not only the part you changed: an edit can leave a stale claim standing beside it.
+5. Investigate suspected gaps with code evidence and focused checks at the appropriate testing layer. Add or update regression tests when they protect meaningful behavior, at the E2E layer unless the Testing Priority's unit-test reasons apply; do not add tests merely to mirror the implementation or raise coverage. Re-check that every unit test added in this change still meets a necessity reason, and remove any that an E2E test now covers.
+6. Fix confirmed findings within the approved scope, rerun the affected checks, and repeat this review against the revised implementation. Broaden validation when the finding shows a wider impact; do not rerun unrelated checks without a reason.
+7. Finish only when the review finds no remaining actionable gaps within the approved scope and the Completion Standard is met. If a finding needs a plan amendment, follow When The Plan Is Wrong before editing that area. If a finding cannot be resolved or verified, report it explicitly and do not describe that area as complete or verified.
 
 This review checks the delivered change. The separate Continuous Skill Improvement step checks the workflow itself and does not replace this review.
 
