@@ -49,7 +49,6 @@ export default defineConfig({
     {
       name: "desktop",
       testMatch: "**/*.screenshot.spec.ts",
-      // A pixel diff fails the same way every time; retrying it only delays the red.
       retries: 0,
       grepInvert: /@phone/,
       use: {
