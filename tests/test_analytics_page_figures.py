@@ -4,7 +4,6 @@ from analytics import benchmarks
 from analytics import greens
 from analytics import putting
 from analytics import scoring
-from analytics import stats as analytics
 from analytics import windows
 from analytics.headline import headline_figure
 from models import Course, Hole, HoleScore, Round

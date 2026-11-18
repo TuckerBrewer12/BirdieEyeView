@@ -9,7 +9,7 @@ import pytest
 from analytics import best_rounds
 from analytics import goals, peak
 from analytics import handicap as hcap
-from analytics import stats
+from analytics.achievements import notable_achievements
 from analytics.handicap import course_handicap
 from api.player_handicap import player_handicap_index
 from api.routers import rounds as rounds_router
@@ -214,7 +214,7 @@ def test_the_course_page_best_round_is_never_a_nine():
 
 def test_records_and_milestones_set_by_a_rounds_total_count_full_rounds_only():
     season = _mixed_season()
-    achievements = stats.notable_achievements(season, reference_date=date(2026, 5, 1))
+    achievements = notable_achievements(season, reference_date=date(2026, 5, 1))
     records = achievements["scoring_records"]["lifetime"]
     assert records["lowest_round"] == 74
     assert achievements["scoring_records_events"]["lifetime"]["lowest_round"]["round_id"] == "74-at-70"

@@ -11,7 +11,7 @@ from analytics import greens
 from analytics import handicap as hcap
 from analytics import putting
 from analytics import scoring
-from analytics import stats as analytics
+from analytics import achievements
 from analytics import windows
 from api.analytics_responses import _handicap_trend, analytics_response
 from api.routers import stats
@@ -134,7 +134,7 @@ async def test_analytics_sections_drop_nothing_the_stats_functions_return(season
         hcap.player_handicap_trend(user, rounds)
     )
     assert [row["in_window"] for row in sent["handicap_trend"]] == [windows.in_window(r) for r in rounds]
-    assert sent["notable_achievements"] == analytics.notable_achievements(
+    assert sent["notable_achievements"] == achievements.notable_achievements(
         rounds, home_course_id=user.home_course_id
     )
 

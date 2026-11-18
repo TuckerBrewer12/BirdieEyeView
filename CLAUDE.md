@@ -236,7 +236,7 @@ Key files:
 
 Implemented. Exposes per-player analytics via `api/routers/stats.py`.
 
-- `analytics/stats.py` — achievements and milestones (`notable_achievements`), not yet split out; step 5 of the backend refactor moves them to their own module next
+- `analytics/achievements.py` — achievements and milestones (`notable_achievements`): records, career totals, streaks, the home course, firsts and score/putt/GIR breaks, over the last year and lifetime
 - `analytics/holes.py` — per-hole figures: average and to par by hole, difficulty rank, consistency, GIR and putts by hole, score mix by hole, `course_hole_stats` and the Out/In/Tot sums
 - `analytics/scoring.py` — score and net-score trends, scoring by par, yardage buckets and hole handicap, score type distribution
 - `analytics/putting.py` — putts per round, three-putts, putts a hole, putts per GIR
