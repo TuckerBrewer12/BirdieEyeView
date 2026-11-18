@@ -42,7 +42,7 @@ for c in scripts/ci/check_*.py; do .venv/bin/python "$c"; done
 cd frontend
 npm test                      # Vitest
 npm run lint && npm run typecheck
-npm run test:espresso         # Playwright flows
+npm run test:ui         # Playwright flows
 npm run test:screenshots      # Playwright looks
 ```
 
@@ -79,9 +79,9 @@ CI fails when either is stale.
 - **Build from the kit** in `src/brand/` (`components/`, `charts/`, `theme/`). A generic piece another page will want goes in the kit, with a preview and a screenshot spec. Kit components take domain types, never DTOs.
 - **Every design value is a token** in `src/brand/theme/tokens.ts`, used through its Tailwind utility (`bg-card`, `text-muted-foreground`, `text-score-birdie`) or `tokens.*` for SVG paint and motion. No hex, `rgb()`, raw palette classes (`text-gray-500`), arbitrary values (`text-[11px]`) or raw animation numbers. Dark mode comes from the tokens and `dark:` variants; `useTheme()` only reads and sets the preference.
 - **Formatting lives in `src/domain/`** (`format.ts`, `date.ts`, `score.ts`, `course.ts`). A date-only string is a calendar day, never UTC midnight.
-- **No mocks.** Tests use `Fake*` doubles from `src/testing/`, never `vi.fn` or `vi.mock`. Pages are tested through a Playwright robot against `FakeBackend`: espresso specs for behaviour, screenshot specs for looks.
+- **No mocks.** Tests use `Fake*` doubles from `src/testing/`, never `vi.fn` or `vi.mock`. Pages are tested through a Playwright robot against `FakeBackend`: UI tests for behaviour, screenshot specs for looks.
 - **The repo's lint rules** (`frontend/eslint/`: `golf/*`, `kit/*`, `specs/*`) name the kit piece, token or helper to use instead. A new rule lands with the fixes for everything it flags: no exemption lists, and no `eslint-disable` without a reason.
-- `scripts/ci/check_frontend_conventions.py` checks that every kit component has a preview and a screenshot spec, every page a robot with screenshot and espresso specs, and every view model a test.
+- `scripts/ci/check_frontend_conventions.py` checks that every kit component has a preview and a screenshot spec, every page a robot with screenshot specs and UI tests, and every view model a test.
 
 ## Comments
 
