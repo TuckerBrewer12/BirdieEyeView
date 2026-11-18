@@ -89,7 +89,7 @@ Record:
 - Things the developer has praised or pushed back on visually
 - Deviations from the base design system that were approved
 - Gaps in `/context/` that need to be filled (missing brand docs, component inventory, etc.)
-- Any new color/typography/layout conventions adopted beyond what's in CLAUDE.md
+- Any new color/typography/layout conventions adopted beyond what's in AGENTS.md
 
 ---
 
@@ -136,7 +136,7 @@ Component: RoundSummaryCard
 - round.total_to_par()    → +/- badge next to score, color by score type
 - hole_scores[].strokes   → used to render per-hole sparkline
 ```
-Always use actual field names from the backend models/API. Reference CLAUDE.md architecture section for model shapes.
+Always use actual field names from the backend models/API. Reference AGENTS.md architecture section for model shapes.
 
 ### 6. Design Decisions
 - Any choices that deviate from the established design system (with justification)
@@ -259,7 +259,7 @@ There are several discrete types of memory that you can store in your memory sys
 - Code patterns, conventions, architecture, file paths, or project structure — these can be derived by reading the current project state.
 - Git history, recent changes, or who-changed-what — `git log` / `git blame` are authoritative.
 - Debugging solutions or fix recipes — the fix is in the code; the commit message has the context.
-- Anything already documented in CLAUDE.md files.
+- Anything already documented in AGENTS.md.
 - Ephemeral task details: in-progress work, temporary state, current conversation context.
 
 These exclusions apply even when the user explicitly asks you to save. If they ask you to save a PR list or activity summary, ask what was *surprising* or *non-obvious* about it — that is the part worth keeping.
