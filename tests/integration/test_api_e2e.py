@@ -371,6 +371,21 @@ def test_self_only_stats_refuse_everyone_else_even_an_accepted_friend(api):
     assert api.client.get(f"/api/stats/milestones/{alice['id']}", headers=alice["headers"]).status_code == 404
 
 
+def test_putts_split_counts_only_scored_holes(api):
+    alice = api.user("alice@example.com")
+    course = custom_course(api, alice)
+    scores = [{"hole_number": n, "strokes": p, "putts": 2} for n, p in PARS.items() if n != 2]
+    unread_strokes = {"hole_number": 2, "putts": 3}
+    saved = api.client.post("/api/scan/save", headers=alice["headers"], json={
+        "course_id": course, "tee_box": "Blue", "date": "2026-10-01", "hole_scores": [unread_strokes, *scores],
+    })
+    assert saved.status_code == 200, saved.text
+
+    analytics = api.client.get(f"/api/stats/analytics/{alice['id']}", headers=alice["headers"]).json()
+
+    assert analytics["putts_per_hole"] == {"holes": 17, "one_or_fewer": 0.0, "two": 100.0, "three_or_more": 0.0}
+
+
 def test_saved_round_is_listed_edited_and_deleted(api):
     alice = api.user("alice@example.com")
     round_id = save_round(api, alice, custom_course(api, alice), over=10)
