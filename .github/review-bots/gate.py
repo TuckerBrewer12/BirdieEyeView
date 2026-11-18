@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# Usage: gate.py PATHSPEC...
-# Env: GITHUB_REPOSITORY GITHUB_WORKFLOW_REF GITHUB_OUTPUT GH_TOKEN BASE_SHA HEAD_SHA HEAD_REF
 from __future__ import annotations
 
 import os
