@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.encoders import jsonable_encoder
 
-from analytics.stats import best_round
+from analytics.best_rounds import best_round
 from api.analytics_responses import analytics_response
 from api.player_handicap import player_handicap_index
 from api.round_responses import round_detail

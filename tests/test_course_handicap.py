@@ -4,7 +4,8 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from analytics import stats
+from analytics import scoring
+from analytics import achievements
 from analytics.handicap import (
     course_handicap,
     player_handicap_index,
@@ -78,7 +79,7 @@ def test_a_nine_has_no_course_handicap_or_net_score():
 
 def test_the_round_page_and_the_net_score_trend_give_a_round_the_same_net_score():
     played = [_round(_course(), over=n) for n in (8, 14, 11)]
-    trend = stats.net_score_trend(played, 10.4)
+    trend = scoring.net_score_trend(played, 10.4)
     for round_, row in zip(played, trend):
         detail = round_detail(round_, 10.4)
         assert detail.net_score is not None
@@ -184,10 +185,10 @@ def test_ranks_use_complete_eighteen_hole_gross_scores():
 
 def test_a_round_under_par_reads_after_the_score_breaks_above_the_golfers_usual_par():
     thresholds = [120, 110, 100, 95, 90, 85, 80, 75, 70, 65, 60]
-    assert stats.under_par_position(thresholds, 72) == 8
-    assert stats.under_par_position(thresholds, 70) == 9
-    assert stats.under_par_position(thresholds, 64) == 10
+    assert achievements.under_par_position(thresholds, 72) == 8
+    assert achievements.under_par_position(thresholds, 70) == 9
+    assert achievements.under_par_position(thresholds, 64) == 10
 
-    assert stats.usual_par([]) == 72
+    assert achievements.usual_par([]) == 72
     par_72 = _course()
-    assert stats.usual_par([_round(par_72, 5), _round(par_72, 2), _round(par_72, 0, holes=9)]) == 72
+    assert achievements.usual_par([_round(par_72, 5), _round(par_72, 2), _round(par_72, 0, holes=9)]) == 72

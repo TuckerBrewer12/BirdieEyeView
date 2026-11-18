@@ -1,11 +1,16 @@
 from datetime import date
 from typing import Any, Dict, List, Optional
 
+from analytics import best_rounds
 from analytics import eligibility as el
 from analytics import dashboard
+from analytics import greens
 from analytics import handicap as hcap
-from analytics import stats as analytics
+from analytics import putting
+from analytics import scoring
 from analytics import benchmarks
+from analytics import windows
+from analytics.achievements import notable_achievements
 from analytics.benchmarks import player_shape
 from analytics.headline import headline
 from analytics.peak import peak_game
@@ -27,7 +32,7 @@ def _handicap_trend(
     history: List[Round],
     rounds: List[Round],
     today: Optional[date] = None,
-    days: int = analytics.RECORDS_WINDOW_DAYS,
+    days: int = windows.RECORDS_WINDOW_DAYS,
 ) -> List[Dict[str, Any]]:
     history = el.chronological(history)
     trend = hcap.player_handicap_trend(user, history)
@@ -38,7 +43,7 @@ def _handicap_trend(
                 "round_index": 0, "round_id": r.id, "handicap_index": None, "differential": None,
                 "used_in_hi": None, "hi_threshold": None, "differential_status": "unrated",
             }),
-            "in_window": analytics.in_window(r, reference_date=today, days=days),
+            "in_window": windows.in_window(r, reference_date=today, days=days),
         }
         for r in rounds
     ]
@@ -54,17 +59,17 @@ def analytics_response(
     eighteen = el.complete_rounds(rounds, el.EIGHTEEN)
     nine = el.complete_rounds(rounds, el.NINE)
     scores = [s for s in (r.calculate_total_score() for r in eighteen) if s is not None]
-    score_rows = analytics.score_trend_with_rolling_average(rounds)
-    gir_rows = analytics.gir_per_round(rounds)
-    putts_rows = analytics.putts_per_round(rounds)
-    scoring_by_par = analytics.scoring_by_par(rounds)
+    score_rows = scoring.score_trend_with_rolling_average(rounds)
+    gir_rows = greens.gir_per_round(rounds)
+    putts_rows = putting.putts_per_round(rounds)
+    scoring_by_par = scoring.scoring_by_par(rounds)
     player_index = hcap.player_handicap_index(user, history)
-    best_round = analytics.best_round(list(reversed(rounds)))
+    best_round = best_rounds.best_round(list(reversed(rounds)))
     best = round_summary(best_round) if best_round else None
     average_putts = _average([r.get_total_putts() for r in eighteen if r.get_total_putts() is not None])
-    three_putts = analytics.three_putt_averages(rounds)
+    three_putts = putting.three_putt_averages(rounds)
     shape = player_shape(rounds) or {}
-    achievements = analytics.notable_achievements(history, reference_date=today, home_course_id=home_course_id)
+    achievements = notable_achievements(history, reference_date=today, home_course_id=home_course_id)
 
     next_level = benchmarks.next_level_handicap(player_index)
 
@@ -77,13 +82,13 @@ def analytics_response(
         gir_percentage=shape.get("gir_percentage"),
         putts_per_gir=shape.get("putts_per_gir"),
         scrambling_percentage=shape.get("scrambling_percentage"),
-        up_and_down_percentage=_rounded(analytics.overall_up_and_down(rounds)["percentage"], 1),
+        up_and_down_percentage=_rounded(greens.overall_up_and_down(rounds)["percentage"], 1),
         handicap_index=player_index,
         total_rounds=len(rounds),
         best_round=best.total_score if best else None,
         best_round_id=best.id if best else None,
         best_round_course=best.course_name if best else None,
-        average_putts=analytics.round_half_up(average_putts, 1) if average_putts is not None else None,
+        average_putts=hcap.round_half_up(average_putts, 1) if average_putts is not None else None,
         three_putts_per_round=three_putts["per_round"],
         three_putt_rate=three_putts["rate"],
     )
@@ -91,22 +96,22 @@ def analytics_response(
     return AnalyticsResponse(
         kpis=kpis,
         score_trend=score_rows,
-        net_score_trend=analytics.with_rolling_average(analytics.net_score_trend(rounds, player_index), "net_score"),
-        gir_trend=analytics.with_rolling_average(gir_rows, "gir_percentage"),
-        putts_trend=analytics.with_rolling_average(putts_rows, "total_putts"),
-        three_putts_trend=analytics.three_putts_per_round(rounds),
+        net_score_trend=windows.with_rolling_average(scoring.net_score_trend(rounds, player_index), "net_score"),
+        gir_trend=windows.with_rolling_average(gir_rows, "gir_percentage"),
+        putts_trend=windows.with_rolling_average(putts_rows, "total_putts"),
+        three_putts_trend=putting.three_putts_per_round(rounds),
         scoring_by_par=scoring_by_par,
-        scoring_by_yardage=analytics.scoring_by_yardage_buckets(rounds),
-        scoring_by_handicap=analytics.scoring_vs_hole_handicap(rounds),
-        gir_vs_non_gir=analytics.gir_vs_non_gir_score_distribution(rounds),
+        scoring_by_yardage=scoring.scoring_by_yardage_buckets(rounds),
+        scoring_by_handicap=scoring.scoring_vs_hole_handicap(rounds),
+        gir_vs_non_gir=greens.gir_vs_non_gir_score_distribution(rounds),
         handicap_trend=_handicap_trend(user, history, rounds, today, days=achievements["window_days"]),
         notable_achievements=achievements,
         score_mix={
-            kind: analytics.round_half_up(share, 2) for kind, share in dashboard.score_mix(rounds)["percentages"].items()
+            kind: hcap.round_half_up(share, 2) for kind, share in dashboard.score_mix(rounds)["percentages"].items()
         },
         peak_game=peak_game(rounds),
         headline=headline(rounds, kpis.model_dump()),
-        putts_per_hole=analytics.putts_per_hole(rounds),
+        putts_per_hole=putting.putts_per_hole(rounds),
         tour_short_game=benchmarks.TOUR_SHORT_GAME,
         next_level_handicap=next_level,
         par_types=benchmarks.par_type_comparison(

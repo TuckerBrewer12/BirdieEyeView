@@ -1,6 +1,9 @@
 from typing import Any, Dict, List, Optional
 
-from analytics import stats as analytics
+from analytics import greens
+from analytics import handicap
+from analytics import putting
+from analytics import windows
 from analytics.verdicts import change_verdict
 from models import Round
 
@@ -25,25 +28,25 @@ def headline_figure(
     recorded = [v for v in series if v is not None]
     change: Optional[float] = None
     if len(recorded) >= RECENT_ROUNDS:
-        change = analytics.round_half_up(_average(recorded[-RECENT_ROUNDS:]) - _average(recorded), digits)
+        change = handicap.round_half_up(_average(recorded[-RECENT_ROUNDS:]) - _average(recorded), digits)
     return {
         "metric": metric,
         "value": value,
         "change": change,
         "verdict": change_verdict(change, lower_is_better),
-        "trend": analytics.rolling_average(recorded, RECENT_ROUNDS),
+        "trend": windows.rolling_average(recorded, RECENT_ROUNDS),
     }
 
 
 def headline(rounds: List[Round], kpis: Dict[str, Optional[float]]) -> List[Dict[str, Any]]:
     series: Dict[str, List[Optional[float]]] = {
         "scoring_average": [r.calculate_total_score() for r in rounds],
-        "gir_percentage": [row["gir_percentage"] for row in analytics.gir_per_round(rounds)],
-        "average_putts": [row["total_putts"] for row in analytics.putts_per_round(rounds)],
-        "scrambling_percentage": [row["scrambling_percentage"] for row in analytics.scrambling_per_round(rounds)],
+        "gir_percentage": [row["gir_percentage"] for row in greens.gir_per_round(rounds)],
+        "average_putts": [row["total_putts"] for row in putting.putts_per_round(rounds)],
+        "scrambling_percentage": [row["scrambling_percentage"] for row in greens.scrambling_per_round(rounds)],
         "three_putt_rate": [
             row["three_putt_percentage"] if row["holes_with_putt_data"] else None
-            for row in analytics.three_putts_per_round(rounds)
+            for row in putting.three_putts_per_round(rounds)
         ],
     }
     return [
