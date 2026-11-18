@@ -48,7 +48,7 @@ npm run test:screenshots      # Playwright looks
 
 - `tests/integration` needs `TEST_DATABASE_URL` pointing at a disposable database; it drops the schemas.
 - Run Playwright locally with `--workers=1` and only the specs you changed; CI runs the full suite.
-- Screenshot baselines are the macOS renders. Refresh them with `npm run test:screenshots:update` (it passes `--update-snapshots=all`) only after looking at the change, and commit them.
+- Screenshot baselines are the Linux renders of CI's Playwright image, so a Mac's screenshot run doesn't match them; CI checks looks. To refresh them, look at the failing run's diffs, then add the `update-screenshots` label to the PR: CI regenerates the baselines, commits them to the branch and checks them again.
 - The live scan eval costs provider credits. Run it with the `run-scan-evals` or `run-quick-scan-eval` label on a PR.
 
 Generated files are never edited by hand:

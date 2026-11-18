@@ -6,9 +6,8 @@ import { withoutRounds } from "../../../testing/fakes/analyticsResponses";
 import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
 import { avery, friendshipsOf } from "../../../testing/fixtures/friendships";
 import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
-import { fontsLoaded } from "../../../testing/fontsLoaded";
 import { switchToDark } from "../../../testing/theme";
-import { captureOptions } from "../../../testing/fullPageCapture";
+import { captureOptions, readyForCapture } from "../../../testing/fullPageCapture";
 
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
 
@@ -315,7 +314,7 @@ export class AnalyticsRobot {
   }
 
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
-    await fontsLoaded(this.page);
+    await readyForCapture(this.page, options.fullPage);
     await expect(this.page).toHaveScreenshot(name, captureOptions(options.fullPage));
     return this;
   }

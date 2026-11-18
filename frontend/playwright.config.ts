@@ -2,6 +2,8 @@ import { defineConfig, devices, type ReporterDescription } from "@playwright/tes
 
 const collectCoverage = process.env.VITE_COVERAGE === "true";
 
+const sameRasterOnEveryRunner = { args: ["--disable-skia-runtime-opts", "--font-render-hinting=none"] };
+
 const reporter: ReporterDescription[] = [process.env.CI ? ["github"] : ["list"]];
 if (collectCoverage) {
   reporter.push([
@@ -19,6 +21,7 @@ if (collectCoverage) {
 
 export default defineConfig({
   testDir: "./src",
+  snapshotPathTemplate: "{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{ext}",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -53,6 +56,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },
+        launchOptions: sameRasterOnEveryRunner,
       },
     },
     {
@@ -63,6 +67,7 @@ export default defineConfig({
       use: {
         ...devices["iPhone 14"],
         browserName: "chromium",
+        launchOptions: sameRasterOnEveryRunner,
       },
     },
     {

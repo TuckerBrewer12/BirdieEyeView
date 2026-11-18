@@ -5,9 +5,8 @@ import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { scannedCard } from "../../../testing/fixtures/scan";
-import { fontsLoaded } from "../../../testing/fontsLoaded";
 import { switchToDark } from "../../../testing/theme";
-import { captureOptions } from "../../../testing/fullPageCapture";
+import { captureOptions, readyForCapture } from "../../../testing/fullPageCapture";
 
 const CARD_PHOTO = fileURLToPath(new URL("../../../../public/hero/physical-card.jpg", import.meta.url));
 const CARD_NAME = "physical-card.jpg";
@@ -504,7 +503,7 @@ export class ScanRobot {
   async capture(name: string, { maskScanAnimation = false } = {}): Promise<this> {
     const animation = this.page.locator("[data-slot=scan-progress] > div").first();
     const mask = maskScanAnimation ? [animation, animation.locator(":scope > div")] : [];
-    await fontsLoaded(this.page);
+    await readyForCapture(this.page);
     await expect(this.page).toHaveScreenshot(name, { ...captureOptions(), mask });
     return this;
   }
