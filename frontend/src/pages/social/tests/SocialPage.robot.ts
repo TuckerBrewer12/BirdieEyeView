@@ -26,7 +26,6 @@ export class SocialRobot {
     return this;
   }
 
-  /** Turns the open page dark in place, so one load gives both themes' captures. */
   async switchToDark(): Promise<this> {
     await switchToDark(this.page);
     return this;

@@ -7,7 +7,6 @@ export async function capturePreview(page: Page, name: string, file: string) {
   await kit.capture(file);
 }
 
-/** Captures `<file>.png`, then turns the same page dark for `<file>-dark.png`: one load, both themes. */
 export async function capturePreviewLightAndDark(page: Page, name: string, file: string) {
   const kit = new BrandKitRobot(page);
   await kit.open(name);

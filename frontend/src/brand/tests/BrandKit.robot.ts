@@ -35,7 +35,6 @@ export class BrandKitRobot {
     return this;
   }
 
-  /** Turns the open preview dark in place, so one load gives both themes' captures. */
   async switchToDark(): Promise<this> {
     await switchToDark(this.page);
     return this;
