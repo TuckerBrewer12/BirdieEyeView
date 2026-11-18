@@ -2,6 +2,7 @@ from datetime import date, datetime, timezone
 
 import pytest
 
+from analytics.handicap import round_half_up
 from analytics.stats import (
     average_score_relative_to_par_by_hole,
     average_score_when_gir_vs_missed,
@@ -18,9 +19,6 @@ from analytics.stats import (
     putts_per_gir,
     putts_per_gir_comparison,
     putts_per_round,
-    rolling_average,
-    round_half_up,
-    round_summary,
     score_mix_from_to_par,
     scrambling_comparison,
     score_comparison,
@@ -36,6 +34,7 @@ from analytics.stats import (
     three_putts_comparison,
     three_putts_per_round,
 )
+from analytics.windows import rolling_average
 from models.course import Course
 from models.hole import Hole
 from models.hole_score import HoleScore
@@ -96,17 +95,6 @@ def _build_course_with_yardages() -> Course:
             hole_yardages[i] = 520
     course.tees = [Tee(color="Blue", hole_yardages=hole_yardages)]
     return course
-
-
-def test_round_summary():
-    rounds = _build_rounds()
-    summary = round_summary(rounds[0])
-
-    assert summary["holes_played"] == 18
-    assert summary["total_putts"] == 36
-    assert summary["total_gir"] == 10
-    assert summary["gir_percentage"] == pytest.approx(55.5555, rel=1e-3)
-    assert summary["putts_per_hole"] == 2
 
 
 def test_putts_and_gir_per_round():

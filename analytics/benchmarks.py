@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Literal, Optional
 
+from analytics import handicap
 from analytics import stats as analytics
 from models import Round
 
@@ -71,7 +72,7 @@ def player_shape(rounds: List[Round]) -> Optional[Dict[str, Any]]:
 
 def _gap(mine: float, theirs: float) -> float:
     gap = mine - theirs
-    rounded = analytics.round_half_up(abs(gap), 2)
+    rounded = handicap.round_half_up(abs(gap), 2)
     return -rounded if gap < 0 else rounded
 
 

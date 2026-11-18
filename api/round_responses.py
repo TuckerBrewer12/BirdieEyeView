@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 
 from analytics.handicap import round_course_handicap, round_net_score
-from analytics.stats import best_round_ranks, worst_round_ranks
+from analytics.best_rounds import best_round_ranks, worst_round_ranks
 from api.course_responses import course_detail
 from api.schemas import (
     HoleScoreResponse,
