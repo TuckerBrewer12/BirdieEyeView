@@ -1,15 +1,10 @@
 import { test } from "./RegisterPage.robot";
 
-test("create account", async ({ register }) => {
+test("create account, light and dark", async ({ register }) => {
   await register.open();
   await register.seesHeading("Create account");
   await register.capture("register.png");
-});
-
-test("create account in dark mode", async ({ register }) => {
-  await register.dark();
-  await register.open();
-  await register.seesHeading("Create account");
+  await register.switchToDark();
   await register.capture("register-dark.png");
 });
 

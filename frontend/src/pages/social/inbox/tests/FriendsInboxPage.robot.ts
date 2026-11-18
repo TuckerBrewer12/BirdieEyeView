@@ -4,6 +4,7 @@ import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { SocialRobot } from "../../tests/SocialPage.robot";
 import { fontsLoaded } from "../../../../testing/fontsLoaded";
+import { switchToDark } from "../../../../testing/theme";
 import { captureOptions } from "../../../../testing/fullPageCapture";
 
 export class FriendsInboxRobot {
@@ -21,6 +22,11 @@ export class FriendsInboxRobot {
     await this.page.addInitScript(() => {
       localStorage.setItem("theme", "dark");
     });
+    return this;
+  }
+
+  async switchToDark(): Promise<this> {
+    await switchToDark(this.page);
     return this;
   }
 

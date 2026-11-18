@@ -1,15 +1,10 @@
 import { test } from "./CareerPage.robot";
 
-test("populated career", async ({ career }) => {
+test("populated career, light and dark", async ({ career }) => {
   await career.open();
   await career.seesCareer();
   await career.capture("career-populated.png");
-});
-
-test("populated career in dark mode", async ({ career }) => {
-  await career.dark();
-  await career.open();
-  await career.seesCareer();
+  await career.switchToDark();
   await career.capture("career-populated-dark.png");
 });
 
@@ -39,18 +34,12 @@ const PHONE_TABS = [
 
 test.describe("phone milestones", { tag: "@phone" }, () => {
   for (const { tab, milestone, file } of PHONE_TABS) {
-    test(`${tab} milestones`, async ({ career }) => {
+    test(`${tab} milestones, light and dark`, async ({ career }) => {
       await career.open();
       await career.tapMilestoneTab(tab);
       await career.seesMilestone("Milestones", milestone, true);
       await career.capture(`career-milestones-${file}.png`);
-    });
-
-    test(`${tab} milestones in dark mode`, async ({ career }) => {
-      await career.dark();
-      await career.open();
-      await career.tapMilestoneTab(tab);
-      await career.seesMilestone("Milestones", milestone, true);
+      await career.switchToDark();
       await career.capture(`career-milestones-${file}-dark.png`);
     });
   }

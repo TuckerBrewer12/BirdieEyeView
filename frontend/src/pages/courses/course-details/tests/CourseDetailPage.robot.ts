@@ -4,6 +4,7 @@ import type { CourseDto } from "../../../../types/api";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { fontsLoaded } from "../../../../testing/fontsLoaded";
+import { switchToDark } from "../../../../testing/theme";
 import { captureOptions } from "../../../../testing/fullPageCapture";
 
 export class CourseDetailRobot {
@@ -18,6 +19,11 @@ export class CourseDetailRobot {
     await this.page.addInitScript(() => {
       localStorage.setItem("theme", "dark");
     });
+    return this;
+  }
+
+  async switchToDark(): Promise<this> {
+    await switchToDark(this.page);
     return this;
   }
 

@@ -4,7 +4,7 @@ import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend } from "../../../testing/fakes/FakeBackend";
 import { SCANNED_COURSE_NAME, scannedCard } from "../../../testing/fixtures/scan";
-import { expectTheme } from "../../../testing/theme";
+import { expectTheme, switchToDark } from "../../../testing/theme";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
 import { captureOptions } from "../../../testing/fullPageCapture";
 
@@ -24,6 +24,11 @@ export class LandingRobot {
     await this.page.addInitScript(() => {
       localStorage.setItem("theme", "dark");
     });
+    return this;
+  }
+
+  async switchToDark(): Promise<this> {
+    await switchToDark(this.page);
     return this;
   }
 
