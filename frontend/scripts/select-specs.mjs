@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-// Usage: node scripts/select-specs.mjs --kind screenshot|ui [--base <ref>] [--changed <a,b>] [--all <why>]
-//                                      [--summary <file>] [--github-output <file>]
-// Env:   SPEC_SELECTION=off runs every spec; PR_NUMBER, GITHUB_REPOSITORY and GITHUB_TOKEN let a
-//        pull request's full-suite label do the same.
 import { execFileSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
 import path from "node:path";
