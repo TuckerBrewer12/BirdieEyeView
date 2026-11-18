@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
-from analytics.stats import best_round_ranks, full_rounds, round_half_up
+from analytics.best_rounds import best_round_ranks, full_rounds
+from analytics.handicap import round_half_up
 from models import Round
 
 PEAK_ROUNDS = 3

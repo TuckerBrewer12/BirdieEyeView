@@ -70,9 +70,9 @@ def test_up_and_down_needs_one_putt_and_par_or_better():
         3: {"strokes": 4, "par_played": 4, "putts": 2, "green_in_regulation": False},
     })
 
-    row = stats.up_and_down_trend([r])[0]
+    overall = stats.overall_up_and_down([r])
 
-    assert (row["opportunities"], row["successes"]) == (3, 1)
+    assert (overall["opportunities"], overall["successes"]) == (3, 1)
 
 
 def test_overall_rates_weight_every_opportunity_equally():

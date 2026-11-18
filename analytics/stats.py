@@ -3,30 +3,18 @@ from __future__ import annotations
 import math
 import threading
 from collections import Counter
-from datetime import date, datetime, timedelta, timezone
-from typing import Any, Dict, Iterable, List, Optional, get_args
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Iterable, List, Optional
 
 from analytics import eligibility as el
 from analytics.handicap import round_course_handicap, round_half_up
-from analytics.verdicts import ChangeVerdict, change_verdict
+from analytics.score_types import SCORE_KINDS, SCORE_TYPE_ORDER, score_type_from_to_par
+from analytics.verdicts import putts_verdict
+from analytics.windows import rolling_average
 from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
 from models.hole_layout import FRONT_NINE, BACK_NINE
-from models.hole_score import ScoreKind, score_kind
+from models.hole_score import score_kind
 from models.round import Round
-
-TWO_PUTTS = 2
-RECORDS_WINDOW_DAYS = 365
-SCORE_KINDS = list(get_args(ScoreKind))
-
-SCORE_TYPE_ORDER = [
-    "eagle",
-    "birdie",
-    "par",
-    "bogey",
-    "double_bogey",
-    "triple_bogey",
-    "quad_bogey",
-]
 
 
 def _normalize_tee_label(value: Optional[str]) -> str:
@@ -82,22 +70,6 @@ def _average_non_null(values: List[Optional[float]]) -> Optional[float]:
     if not filtered:
         return None
     return sum(filtered) / len(filtered)
-
-
-def _score_type_from_to_par(to_par: int) -> str:
-    if to_par <= -2:
-        return "eagle"
-    if to_par == -1:
-        return "birdie"
-    if to_par == 0:
-        return "par"
-    if to_par == 1:
-        return "bogey"
-    if to_par == 2:
-        return "double_bogey"
-    if to_par == 3:
-        return "triple_bogey"
-    return "quad_bogey"
 
 
 def _format_date_short(dt: datetime) -> str:
@@ -511,28 +483,6 @@ def _notable_achievements(rounds_list, now, cutoff, days, home_course_id) -> Dic
     }
 
 
-def round_summary(round_obj: Round) -> Dict[str, Optional[float]]:
-    holes_played = len(el.scored_holes(round_obj))
-    total_putts = round_obj.get_total_putts()
-    total_gir = round_obj.get_total_gir()
-    total_strokes = round_obj.calculate_total_score()
-
-    gir_percentage: Optional[float] = None
-    putts_per_hole: Optional[float] = None
-    if holes_played:
-        gir_percentage = (total_gir / holes_played) * 100 if total_gir is not None else None
-        putts_per_hole = total_putts / holes_played if total_putts is not None else None
-
-    return {
-        "holes_played": float(holes_played),
-        "total_strokes": float(total_strokes) if total_strokes is not None else None,
-        "total_putts": float(total_putts) if total_putts is not None else None,
-        "total_gir": float(total_gir) if total_gir is not None else None,
-        "gir_percentage": gir_percentage,
-        "putts_per_hole": putts_per_hole,
-    }
-
-
 def metric_comparison_snapshot(
     rows: List[Dict[str, Any]],
     *,
@@ -687,21 +637,6 @@ def scrambling_per_round(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
                 "scrambling_percentage": rate.percentage,
             }
         )
-    return results
-
-
-def up_and_down_trend(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
-    results: List[Dict[str, Any]] = []
-    for index, round_obj in enumerate(rounds, start=1):
-        rate = _up_and_down_rate(round_obj)
-        percentage = rate.percentage
-        results.append({
-            "round_index": index,
-            "round_id": round_obj.id,
-            "opportunities": rate.opportunities,
-            "successes": rate.successes,
-            "percentage": round(percentage, 1) if percentage is not None else None,
-        })
     return results
 
 
@@ -901,7 +836,7 @@ def gir_vs_non_gir_score_distribution(rounds: Iterable[Round]) -> List[Dict[str,
                 continue
 
             bucket = "GIR" if hole_score.green_in_regulation else "No GIR"
-            score_type = _score_type_from_to_par(hole_score.strokes - par)
+            score_type = score_type_from_to_par(hole_score.strokes - par)
             buckets[bucket][score_type] += 1
             totals[bucket] += 1
 
@@ -1234,7 +1169,7 @@ def score_type_distribution_per_round(rounds: Iterable[Round]) -> List[Dict[str,
         total = 0
 
         for _, hole_score, par in _observed_holes([round_obj]):
-            counts[_score_type_from_to_par(hole_score.strokes - par)] += 1
+            counts[score_type_from_to_par(hole_score.strokes - par)] += 1
             total += 1
 
         row: Dict[str, Any] = {
@@ -1262,7 +1197,7 @@ def score_type_distribution_by_hole(rounds: Iterable[Round]) -> List[Dict[str, A
                 "sample_size": 0,
             },
         )
-        entry["counts"][_score_type_from_to_par(hole_score.strokes - par)] += 1
+        entry["counts"][score_type_from_to_par(hole_score.strokes - par)] += 1
         entry["sample_size"] += 1
 
     results: List[Dict[str, Any]] = []
@@ -1316,12 +1251,6 @@ def course_hole_stats(rounds: Iterable[Round]) -> List[Dict[str, Any]]:
     return rows
 
 
-def putts_verdict(average_putts: Optional[float]) -> Optional[ChangeVerdict]:
-    if average_putts is None:
-        return None
-    return change_verdict(round_half_up(average_putts - TWO_PUTTS, 1))
-
-
 def gir_percentage_nines(by_hole: List[Dict[str, Any]]) -> Dict[str, Optional[float]]:
     def share(holes: range) -> Optional[float]:
         rows = [row for row in by_hole if row["hole_number"] in holes]
@@ -1344,54 +1273,6 @@ def score_trend_with_rolling_average(rounds: Iterable[Round], window: int = 5) -
     for row, average in zip(rows, rolling_average([row["total_score"] for row in rows], window)):
         row["rolling_average"] = average
     return rows
-
-
-def course_record(rounds: List[Round]) -> Dict[str, Any]:
-    full = full_rounds(rounds)
-    counted = full
-    scores = [s for s in (r.calculate_total_score() for r in counted) if s is not None]
-    to_pars = [t for t in (r.total_to_par() for r in counted) if t is not None]
-    dates = [r.date for r in rounds if r.date is not None]
-    return {
-        "rounds_played": len(rounds),
-        "last_played": max(dates) if dates else None,
-        "scoring_average": sum(scores) / len(scores) if scores else None,
-        "scoring_average_to_par": sum(to_pars) / len(to_pars) if to_pars else None,
-        "best_round": best_round(rounds),
-        "worst_round": worst_round(rounds),
-    }
-
-
-def worst_round(rounds: List[Round]) -> Optional[Round]:
-    ranks = worst_round_ranks(rounds)
-    return next((rounds[i] for i, place in ranks.items() if place == 1), None)
-
-
-def full_rounds(rounds: Iterable[Round]) -> List[Round]:
-    return el.complete_rounds(rounds, el.EIGHTEEN)
-
-
-def best_round(rounds: List[Round]) -> Optional[Round]:
-    ranks = best_round_ranks(rounds)
-    return next((rounds[i] for i, place in ranks.items() if place == 1), None)
-
-
-def worst_round_ranks(rounds: List[Round]) -> Dict[int, int]:
-    ranked = sorted((i for i,r in enumerate(rounds) if r.is_complete() and el.round_format(r) == el.EIGHTEEN),
-                    key=lambda i: -rounds[i].calculate_total_score())
-    return {i: place for place,i in enumerate(ranked, start=1)}
-
-
-def best_round_ranks(rounds: List[Round]) -> Dict[int, int]:
-    ranked = sorted((i for i,r in enumerate(rounds) if r.is_complete() and el.round_format(r) == el.EIGHTEEN),
-                    key=lambda i: rounds[i].calculate_total_score())
-    return {i: place for place,i in enumerate(ranked, start=1)}
-
-
-def with_rolling_average(rows: List[Dict[str, Any]], key: str, window: int = 5) -> List[Dict[str, Any]]:
-    recorded = [row[key] for row in rows if row[key] is not None]
-    averages = iter(rolling_average(recorded, window))
-    return [{**row, "rolling_average": next(averages) if row[key] is not None else None} for row in rows]
 
 
 def putts_per_hole(rounds: Iterable[Round]) -> Dict[str, Any]:
@@ -1422,155 +1303,6 @@ def three_putt_averages(rounds: Iterable[Round]) -> Dict[str, Optional[float]]:
     }
 
 
-def in_window(
-    round_obj: Round,
-    *,
-    reference_date: Optional[date] = None,
-    days: int = RECORDS_WINDOW_DAYS,
-) -> bool:
-    today = reference_date or datetime.now(timezone.utc).date()
-    if round_obj.date is None:
-        return False
-    return today - timedelta(days=days) <= round_obj.date.date() <= today
-
-
-def _first_round_reaching_gir(round_set: List[Round], threshold: int) -> Optional[Dict[str, str]]:
-    for round_obj in _oldest_first(round_set):
-        total_gir = round_obj.get_total_gir()
-        if total_gir is not None and total_gir >= threshold:
-            return _milestone_event(round_obj)
-    return None
-
-
-def _first_round_with_putts_below(round_set: List[Round], threshold: int) -> Optional[Dict[str, str]]:
-    for round_obj in _oldest_first(round_set):
-        total_putts = round_obj.get_total_putts()
-        if total_putts is not None and total_putts < threshold:
-            return _milestone_event(round_obj)
-    return None
-
-
-def _home_course_metrics_for_rounds(round_set: List[Round], home_course_id: Optional[str]) -> Dict[str, Any]:
-    if not home_course_id:
-        return {"home_course_name": None, "most_rounds_played": 0, "lowest_score": None, "lowest_score_event": None}
-
-    matched = [
-        round_obj
-        for round_obj in round_set
-        if round_obj.course and str(round_obj.course.id) == str(home_course_id)
-    ]
-    if not matched:
-        return {"home_course_name": None, "most_rounds_played": 0, "lowest_score": None, "lowest_score_event": None}
-
-    label = matched[0].course.name if matched[0].course and matched[0].course.name else "Home Course"
-    best_score: Optional[int] = None
-    best_round: Optional[Round] = None
-    for round_obj in _oldest_first(full_rounds(matched)):
-        total_score = round_obj.calculate_total_score()
-        if total_score is None:
-            continue
-        if best_score is None or total_score < best_score:
-            best_score = total_score
-            best_round = round_obj
-    return {
-        "home_course_name": label,
-        "most_rounds_played": len(matched),
-        "lowest_score": best_score,
-        "lowest_score_event": _milestone_event(best_round) if best_round else None,
-    }
-
-
-def _best_round_event(round_set: List[Round], metric_fn, *, prefer_lower: bool = False) -> Optional[Dict[str, str]]:
-    best_metric: Optional[float] = None
-    best_round: Optional[Round] = None
-    for round_obj in _oldest_first(round_set):
-        metric = metric_fn(round_obj)
-        if metric is None:
-            continue
-        if best_metric is None:
-            best_metric = float(metric)
-            best_round = round_obj
-            continue
-        if prefer_lower and metric < best_metric:
-            best_metric = float(metric)
-            best_round = round_obj
-        if not prefer_lower and metric > best_metric:
-            best_metric = float(metric)
-            best_round = round_obj
-    if best_round is None:
-        return None
-    return _milestone_event(best_round)
-
-
-def _lowest_9_with_event(round_set: List[Round]) -> tuple[Optional[int], Optional[Dict[str, str]]]:
-    best: Optional[int] = None
-    best_event: Optional[Dict[str, str]] = None
-    for round_obj in round_set:
-        by_hole = {score.hole_number: score for score in _valid_hole_scores(round_obj) if score.hole_number is not None}
-        front_vals = [by_hole.get(i).strokes for i in FRONT_NINE if by_hole.get(i) and by_hole.get(i).strokes is not None]
-        back_vals = [by_hole.get(i).strokes for i in BACK_NINE if by_hole.get(i) and by_hole.get(i).strokes is not None]
-        if len(front_vals) == HOLES_PER_NINE:
-            score = sum(front_vals)
-            if best is None or score < best:
-                best = score
-                best_event = _milestone_event(round_obj)
-        if len(back_vals) == HOLES_PER_NINE:
-            score = sum(back_vals)
-            if best is None or score < best:
-                best = score
-                best_event = _milestone_event(round_obj)
-    return best, best_event
-
-
-def _streak_with_event(rows: List[Dict[str, Any]], predicate) -> tuple[int, Optional[Dict[str, str]]]:
-    best = 0
-    best_event: Optional[Dict[str, str]] = None
-    current = 0
-    for row in rows:
-        if predicate(row):
-            current += 1
-            if current > best:
-                best = current
-                if row["date"] is not None:
-                    best_event = {
-                        "date": _format_date_short(row["date"]),
-                        "course": row["course"],
-                        "round_id": str(row["round_id"]) if row["round_id"] else None,
-                    }
-        else:
-            current = 0
-    return best, best_event
-
-
-def _first_round_below(round_set: List[Round], threshold: int, *, inclusive: bool = False) -> Optional[Dict[str, str]]:
-    for round_obj in _oldest_first(round_set):
-        total = round_obj.calculate_total_score()
-        if total is None:
-            continue
-        if (inclusive and total <= threshold) or (not inclusive and total < threshold):
-            return _milestone_event(round_obj)
-    return None
-
-
-def _first_round_under_par_event(round_set: List[Round]) -> Optional[Dict[str, Any]]:
-    for round_obj in _oldest_first(round_set):
-        total = round_obj.calculate_total_score()
-        round_par = _round_total_par(round_obj)
-        if total is None or round_par is None:
-            continue
-        if total < round_par:
-            event = _milestone_event(round_obj)
-            if event is None:
-                continue
-            return {
-                "score": total,
-                "date": event["date"],
-                "course": event["course"],
-                "round_id": event["round_id"],
-            }
-    return None
-
-
 def under_par_position(thresholds: List[int], par: int) -> int:
     return sum(1 for threshold in thresholds if threshold >= par)
 
@@ -1580,105 +1312,11 @@ def usual_par(rounds: Iterable[Round]) -> int:
     return Counter(pars).most_common(1)[0][0] if pars else 72
 
 
-def _round_total_par(round_obj: Round) -> Optional[int]:
-    if round_obj.course and round_obj.course.par is not None:
-        return round_obj.course.par
-    pars: List[int] = []
-    for hole_score in _valid_hole_scores(round_obj):
-        if hole_score.hole_number is None:
-            continue
-        par = round_obj.get_hole_par(hole_score.hole_number)
-        if par is not None:
-            pars.append(par)
-    if not pars:
-        return None
-    return sum(pars)
-
-
-def _first_event_in_rounds(round_set: List[Round], predicate) -> Optional[Dict[str, str]]:
-    for round_obj in _oldest_first(round_set):
-        for row in _achievement_hole_rows([round_obj]):
-            if predicate(row):
-                return _milestone_event(round_obj)
-    return None
-
-
-def _achievement_hole_rows(round_set: List[Round]) -> List[Dict[str, Any]]:
-    rows: List[Dict[str, Any]] = []
-    for round_obj in round_set:
-        for hole_score in sorted(_valid_hole_scores(round_obj), key=lambda hs: hs.hole_number or 0):
-            if hole_score.hole_number is None:
-                continue
-            par = round_obj.get_hole_par(hole_score.hole_number)
-            score_type = (
-                _score_type_from_to_par(hole_score.strokes - par)
-                if (hole_score.strokes is not None and par is not None)
-                else None
-            )
-            rows.append(
-                {
-                    "round_id": round_obj.id,
-                    "date": round_obj.date,
-                    "course": (
-                        round_obj.course.name
-                        if round_obj.course and round_obj.course.name
-                        else (round_obj.course_name_played or "Unknown Course")
-                    ),
-                    "strokes": hole_score.strokes,
-                    "putts": hole_score.putts,
-                    "gir": hole_score.green_in_regulation is True,
-                    "score_type": score_type,
-                    "is_hio": hole_score.strokes == 1 if hole_score.strokes is not None else False,
-                }
-            )
-    return rows
-
-
-def _best_round_metric(
-    round_set: List[Round], fn
-) -> Optional[int]:
-    vals = [fn(round_obj) for round_obj in round_set]
-    vals = [value for value in vals if value is not None]
-    return max(vals) if vals else None
-
-
-def _count_three_putts(rows: List[Dict[str, Any]]) -> int:
-    return sum(1 for row in rows if row["putts"] is not None and row["putts"] >= 3)
-
-
-def _count_score_type(rows: List[Dict[str, Any]], score_type: str) -> int:
-    return sum(1 for row in rows if row["score_type"] == score_type)
-
-
-def _mark_in_window(event: Optional[Dict[str, Any]], cutoff: date) -> bool:
-    if not event:
-        return False
-    event["in_window"] = parse_date_short(event["date"]) >= cutoff
-    return event["in_window"]
-
-
-def _oldest_first(round_set: Iterable[Round]) -> List[Round]:
-    return sorted(round_set, key=lambda r: (r.date is None, r.date))
-
-
-def parse_date_short(text: str) -> date:
-    year, month, day = (int(part) for part in text.split("/"))
-    return date(year, month, day)
-
-
 def score_mix_from_to_par(to_pars: List[int]) -> Dict[str, float]:
     counts = {kind: 0 for kind in SCORE_KINDS}
     for kind in filter(None, map(score_kind, to_pars)):
         counts[kind] += 1
     return {kind: round_half_up(count / len(to_pars) * 100, 2) if to_pars else 0.0 for kind, count in counts.items()}
-
-
-def rolling_average(values: List[Optional[float]], window: int = 5) -> List[Optional[float]]:
-    averages: List[Optional[float]] = []
-    for i in range(len(values)):
-        recent = [v for v in values[max(0, i - window + 1):i + 1] if v is not None]
-        averages.append(round_half_up(sum(recent) / len(recent), 1) if recent else None)
-    return averages
 
 
 def _valid_hole_scores(round_obj: Round):

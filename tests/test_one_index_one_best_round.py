@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from analytics import best_rounds
 from analytics import goals, peak
 from analytics import handicap as hcap
 from analytics import stats
@@ -176,12 +177,12 @@ def _mixed_season():
 def test_best_is_the_lowest_complete_eighteen_hole_gross_score():
     season = _mixed_season()
     newest_first = list(reversed(season))
-    assert stats.best_round(newest_first).id == "74-at-70"
-    places = stats.best_round_ranks(newest_first)
+    assert best_rounds.best_round(newest_first).id == "74-at-70"
+    places = best_rounds.best_round_ranks(newest_first)
     assert newest_first[next(i for i, p in places.items() if p == 1)].id == "74-at-70"
-    assert stats.best_round([_round("nine-a", 2, holes=9), _round("nine-b", 1, holes=9)]) is None
-    assert stats.best_round([Round(id="blank")]) is None
-    assert stats.best_round([_round("newer", 3, day=5), _round("older", 3, day=1)]).id == "newer"
+    assert best_rounds.best_round([_round("nine-a", 2, holes=9), _round("nine-b", 1, holes=9)]) is None
+    assert best_rounds.best_round([Round(id="blank")]) is None
+    assert best_rounds.best_round([_round("newer", 3, day=5), _round("older", 3, day=1)]).id == "newer"
 
 
 @pytest.mark.asyncio

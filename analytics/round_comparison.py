@@ -1,6 +1,7 @@
 from typing import Any, Callable, Dict, List, Literal, Optional
 
 from analytics import eligibility as el
+from analytics import handicap
 from analytics import stats
 from analytics.verdicts import change_verdict
 from models import Round
@@ -35,10 +36,10 @@ def _metric(
     value = values[round_index]
     known = [v for v in earlier if v is not None]
     average = sum(known) / len(known) if known else None
-    shown_value = stats.round_half_up(value, digits) if value is not None else None
-    shown_average = stats.round_half_up(average, digits) if average is not None else None
+    shown_value = handicap.round_half_up(value, digits) if value is not None else None
+    shown_average = handicap.round_half_up(average, digits) if average is not None else None
     difference = (
-        stats.round_half_up(shown_value - shown_average, digits)
+        handicap.round_half_up(shown_value - shown_average, digits)
         if shown_value is not None and shown_average is not None
         else None
     )

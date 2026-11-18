@@ -1,6 +1,8 @@
 from typing import Any, Dict, List, Optional
 
+from analytics import handicap
 from analytics import stats as analytics
+from analytics import windows
 from analytics.verdicts import change_verdict
 from models import Round
 
@@ -25,13 +27,13 @@ def headline_figure(
     recorded = [v for v in series if v is not None]
     change: Optional[float] = None
     if len(recorded) >= RECENT_ROUNDS:
-        change = analytics.round_half_up(_average(recorded[-RECENT_ROUNDS:]) - _average(recorded), digits)
+        change = handicap.round_half_up(_average(recorded[-RECENT_ROUNDS:]) - _average(recorded), digits)
     return {
         "metric": metric,
         "value": value,
         "change": change,
         "verdict": change_verdict(change, lower_is_better),
-        "trend": analytics.rolling_average(recorded, RECENT_ROUNDS),
+        "trend": windows.rolling_average(recorded, RECENT_ROUNDS),
     }
 
 

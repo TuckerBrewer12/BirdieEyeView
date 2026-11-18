@@ -7,7 +7,11 @@
 | File | Responsibility |
 |---|---|
 | [eligibility.py](../../analytics/eligibility.py) | Which holes, rounds and observations each metric may use; par/handicap resolution; unknown-aware rates. |
-| [stats.py](../../analytics/stats.py) | Player/round/hole metrics, trends, distributions, comparisons, and achievements. |
+| [stats.py](../../analytics/stats.py) | Player/round/hole metrics, trends, distributions and achievements not yet split out, and the Matplotlib export's round comparisons. |
+| [best_rounds.py](../../analytics/best_rounds.py) | The best and worst round and their ranks (complete 18-hole rounds by gross score), full rounds, and a course's record. |
+| [score_types.py](../../analytics/score_types.py) | The chart score buckets (eagle-or-better to quad-or-worse) and their order. |
+| [windows.py](../../analytics/windows.py) | Five-round rolling averages and the one-year records window. |
+| [verdicts.py](../../analytics/verdicts.py) | The one good/bad/neutral call, and a hole's putts against two. |
 | [handicap.py](../../analytics/handicap.py) | WHS-based index estimate: differentials, rating coverage, course handicap, trend and used rounds. |
 | [goals.py](../../analytics/goals.py) | Gap to the 18- and nine-hole scoring goals and ranked improvement estimates (one function per saver). |
 | [visualizations.py](../../analytics/visualizations.py) | Matplotlib figure builders for Python exports. |

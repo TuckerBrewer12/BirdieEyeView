@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from analytics import benchmarks
 from analytics import stats as analytics
+from analytics import windows
 from analytics.headline import headline_figure
 from models import Course, Hole, HoleScore, Round
 
@@ -24,7 +25,7 @@ def test_a_headline_figure_skips_rounds_without_it_and_waits_for_five():
 
 def test_rolling_averages_skip_rounds_without_the_figure():
     rows = [{"total_putts": 30}, {"total_putts": None}, {"total_putts": 34}]
-    assert [row["rolling_average"] for row in analytics.with_rolling_average(rows, "total_putts")] == [30.0, None, 32.0]
+    assert [row["rolling_average"] for row in windows.with_rolling_average(rows, "total_putts")] == [30.0, None, 32.0]
 
 
 def _course(pars):

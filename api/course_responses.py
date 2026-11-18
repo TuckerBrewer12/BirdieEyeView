@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 
 from analytics.handicap import tee_course_handicap
-from analytics.stats import course_record
+from analytics.best_rounds import course_record
 from api.schemas import CourseResponse, CourseSummaryResponse, TeeResponse
 from database.db_manager import DatabaseManager
 from models import Course, Round, Tee, User

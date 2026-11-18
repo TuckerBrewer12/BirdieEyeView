@@ -1,11 +1,13 @@
 from datetime import date
 from typing import List
 
+from analytics import best_rounds
 from analytics import dashboard
 from analytics import eligibility as el
 from analytics import handicap as hcap
 from analytics import stats as analytics
 from analytics import verdicts
+from analytics import windows
 from api.round_responses import round_summary
 from api.schemas import DashboardResponse
 from models import Round, User
@@ -16,11 +18,11 @@ def dashboard_response(user: User, summaries: List[Round], history: List[Round],
     eighteen = dashboard.format_totals(summaries, HOLES_PER_ROUND)
     nine = dashboard.format_totals(summaries, HOLES_PER_NINE)
 
-    best = analytics.best_round(summaries)
+    best = best_rounds.best_round(summaries)
     best_summary = round_summary(best) if best else None
 
     hi_rounds = el.chronological(history)
-    last_20 = analytics.full_rounds(hi_rounds)[-20:]
+    last_20 = best_rounds.full_rounds(hi_rounds)[-20:]
     index_window = hcap.player_index_window(user, hi_rounds)
     full_trend = hcap.player_handicap_trend(user, hi_rounds)
     by_identity = {id(r): entry for r, entry in zip(hi_rounds, full_trend)}
@@ -52,7 +54,7 @@ def dashboard_response(user: User, summaries: List[Round], history: List[Round],
         ),
         score_trend=analytics.score_trend_with_rolling_average(last_20),
         handicap_trend=[
-            {**row, "in_window": analytics.in_window(r, reference_date=today)}
+            {**row, "in_window": windows.in_window(r, reference_date=today)}
             for r, row in zip(last_20, handicap_trend)
         ],
         rounds_this_year=dashboard.rounds_this_year(summaries, today),
