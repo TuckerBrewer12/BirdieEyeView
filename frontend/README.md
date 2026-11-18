@@ -61,6 +61,11 @@ The check itself never regenerates baselines, so it can always fail.
 | `Frontend coverage comment` | `frontend-coverage-bot.yml` | PR comment: Vitest changed-line % plus AI screenshot/UI test counts |
 | `Repo invariants` | `tests.yml` | Includes the no-baseline-regeneration rule |
 
+On a pull request both Playwright checks run only the specs the change reaches
+(`scripts/select-specs.mjs`; the run summary says why each one ran), and `main`
+runs all of them. The `full-suite` label (then a re-run) or the `SPEC_SELECTION=off`
+repository variable runs everything.
+
 On a backend-only PR the frontend steps skip (via the `changes` job) but the
 checks still report green, so they stay safe to mark required. Both Playwright
 jobs upload `playwright-report/` and `test-results/` on failure, which is where

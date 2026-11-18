@@ -11,6 +11,8 @@ concurrency:
 
 permissions:
   contents: read
+  issues: read
+  pull-requests: read
 
 jobs:
   # Which parts of the tree this PR touches. The frontend steps below are
@@ -198,6 +200,8 @@ jobs:
         check: [test, lint, types, build, ui]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - uses: actions/setup-node@v4
         if: needs.changes.outputs.frontend == 'true'
@@ -242,9 +246,27 @@ jobs:
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'ui'
         run: npx playwright install --with-deps chromium
 
-      - name: UI tests
+      - name: Pick UI tests
+        id: pick
+        shell: bash
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'ui'
-        run: npm run test:ui
+        env:
+          EVENT: ${{ github.event_name }}
+          SPEC_SELECTION: ${{ vars.SPEC_SELECTION }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          args=(--kind ui --github-output "$GITHUB_OUTPUT")
+          args+=(--summary "$GITHUB_STEP_SUMMARY")
+          if [[ "$EVENT" == pull_request ]]; then args+=(--base HEAD^1); else args+=(--all "a $EVENT run"); fi
+          node scripts/select-specs.mjs "${args[@]}"
+
+      - name: UI tests
+        if: needs.changes.outputs.frontend == 'true' && matrix.check == 'ui' && steps.pick.outputs.mode != 'none'
+        env:
+          FILES: ${{ steps.pick.outputs.files }}
+        run: npm run test:ui -- --pass-with-no-tests $FILES
 
       # Without this the trace that `trace: "on-first-retry"` records dies
       # with the runner, and a flaky UI test failure is undebuggable.
