@@ -15,6 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: read
   contents: read
   pull-requests: write
 
@@ -36,26 +37,42 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Skip if unchanged since the last run
+        id: gate
+        if: github.event.action == 'synchronize'
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: python3 .github/review-bots/gate.py frontend .github/review-bots/frontend-coverage.md .github/review-bots/run-coverage.sh .github/review-bots/coverage_report.py .github/workflows/frontend-coverage-bot.yml
+
       - uses: actions/setup-node@v4
+        if: steps.gate.outputs.skip != 'true'
         with:
           node-version: "20"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
+        if: steps.gate.outputs.skip != 'true'
         run: npm ci
 
       - name: Vitest with coverage
+        if: steps.gate.outputs.skip != 'true'
         run: npm run test:coverage
 
       - name: Install Playwright Chromium
+        if: steps.gate.outputs.skip != 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Espresso with coverage
+        if: steps.gate.outputs.skip != 'true'
         run: npm run test:espresso:coverage
 
       - name: Upload Espresso coverage report
-        if: always()
+        if: always() && steps.gate.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: espresso-coverage
@@ -64,12 +81,14 @@ jobs:
           retention-days: 7
 
       - name: Install Cursor CLI
+        if: steps.gate.outputs.skip != 'true'
         working-directory: .
         run: |
           curl https://cursor.com/install -fsS | bash
           echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
 
       - name: Report coverage
+        if: steps.gate.outputs.skip != 'true'
         working-directory: .
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

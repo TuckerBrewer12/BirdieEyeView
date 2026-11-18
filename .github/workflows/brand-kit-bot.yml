@@ -26,8 +26,11 @@ jobs:
     name: Brand Kit Bot
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: read
       pull-requests: write
+    env:
+      BOT_PATHSPEC: "frontend/src/pages frontend/src/brand"
     outputs:
       has_fixes: ${{ steps.review.outputs.has_fixes }}
       findings: ${{ steps.review.outputs.findings }}
@@ -74,17 +77,28 @@ jobs:
           PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: git fetch origin "pull/${PR_NUMBER}/head"
 
+      - name: Skip if unchanged since the last run
+        id: gate
+        if: github.event.action == 'synchronize'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA: ${{ steps.pr.outputs.base }}
+          HEAD_SHA: ${{ steps.pr.outputs.head }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: python3 .github/review-bots/gate.py $BOT_PATHSPEC
+
       - name: Install Cursor CLI
+        if: steps.gate.outputs.skip != 'true'
         run: |
           curl https://cursor.com/install -fsS | bash
           echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
 
       - name: Review
         id: review
+        if: steps.gate.outputs.skip != 'true'
         env:
           BOT_NAME: "🎨 Brand Kit Bot"
           BOT_PROMPT: .github/review-bots/brand-kit.md
-          BOT_PATHSPEC: "frontend/src/pages frontend/src/brand"
           BOT_CLEAN: "Nothing to flag against the brand kit in this PR."
           BOT_LEAD: "against the brand kit"
           BASE_SHA: ${{ steps.pr.outputs.base }}
