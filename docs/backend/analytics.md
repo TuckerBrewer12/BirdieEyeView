@@ -25,7 +25,7 @@
 
 ## How results reach the app
 
-`api/routers/stats.py` loads player history, chooses filters/windows, calls Analytics, and assembles response data. Frontend view-model hooks shape that data for charts. Python Matplotlib exports are a separate path; React charts do not render those generated PNGs. `AIService` also consumes Stats, while frontend Analytics has local narrative-card generation.
+`api/routers/stats.py` loads player history, chooses filters/windows, calls Analytics, and assembles response data. Frontend view-model hooks shape that data for charts. Python Matplotlib exports are a separate path; React charts do not render those generated PNGs.
 
 ## Metric contracts
 
@@ -40,7 +40,7 @@
 
 ### Handicap
 
-[handicap.py](../../analytics/handicap.py) is a WHS-based **estimate**, not an official index. It uses complete 18-hole rounds with the Course/Slope Rating covering the holes played; a rating saved without coverage covers the course's whole layout, and new saves record that coverage. Differentials are rounded to the tenth with .5 up, and the same values drive selection, the index and the used-round flags (computed from the full calculation, then shown for the displayed rounds). When there is no tee rating, a differential falls back to total minus par. The entry points are `player_handicap_index`, `player_index_window` and `player_handicap_trend` in [handicap.py](../../analytics/handicap.py); [api/player_handicap.py](../../api/player_handicap.py) loads the full history and supplies the user's seed/reset. The index selects the best of the latest 20 eligible differentials, and the trend reports the index after each round with its `differential_status`. [AIService](../../services/ai_service.py) still calls `user_handicap_index`, which uses the same calculation.
+[handicap.py](../../analytics/handicap.py) is a WHS-based **estimate**, not an official index. It uses complete 18-hole rounds with the Course/Slope Rating covering the holes played; a rating saved without coverage covers the course's whole layout, and new saves record that coverage. Differentials are rounded to the tenth with .5 up, and the same values drive selection, the index and the used-round flags (computed from the full calculation, then shown for the displayed rounds). When there is no tee rating, a differential falls back to total minus par. The entry points are `player_handicap_index`, `player_index_window` and `player_handicap_trend` in [handicap.py](../../analytics/handicap.py); [api/player_handicap.py](../../api/player_handicap.py) loads the full history and supplies the user's seed/reset. The index selects the best of the latest 20 eligible differentials, and the trend reports the index after each round with its `differential_status`.
 
 A complete nine-hole round can have a course handicap and net score from half the index and a rating explicitly covering those nine holes. Nine-hole rounds do not yet contribute to the index: that needs the WHS expected-score method. Adjusted gross score, playing conditions and caps are also not implemented.
 

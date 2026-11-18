@@ -801,50 +801,6 @@ class CourseSummaryResponse(ResponseModel):
     best_score: Optional[int] = None
 
 
-class AIComparisonItem(ResponseModel):
-    metric: str
-    category: str
-    player_value: Optional[float] = None
-    benchmark_value: float
-    unit: str
-    lower_is_better: bool
-    has_data: bool
-
-
-class AIInsightItem(ResponseModel):
-    category: str
-    category_group: str
-    title: str
-    description: str
-    priority_score: float
-    key_metric: Optional[float] = None
-    metric_label: str
-    benchmark: Optional[float] = None
-    trend_direction: str
-    drill_tips: List[str]
-    what_if: Optional[str] = None
-
-
-class AIStrengthItem(ResponseModel):
-    category: str
-    title: str
-    metric_label: str
-    player_value: float
-    benchmark_value: float
-    margin_description: str
-
-
-class AISuggestionsResponse(ResponseModel):
-    user_id: str
-    handicap_index: Optional[float] = None
-    handicap_range_label: str
-    insights: List[AIInsightItem]
-    strengths: List[AIStrengthItem]
-    comparisons: List[AIComparisonItem]
-    rounds_analyzed: int
-    generated_at: str
-
-
 class UserResponse(ResponseModel):
     email_verified: bool = False
     email_verified_at: Optional[datetime] = None

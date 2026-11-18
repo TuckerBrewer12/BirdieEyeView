@@ -369,6 +369,7 @@ def test_self_only_stats_refuse_everyone_else_even_an_accepted_friend(api):
     assert api.client.get(f"/api/stats/analytics/{alice['id']}", headers=bob["headers"]).status_code == 200
     assert api.client.get(f"/api/stats/analytics/{alice['id']}", headers=carol["headers"]).status_code == 403
     assert api.client.get(f"/api/stats/milestones/{alice['id']}", headers=alice["headers"]).status_code == 404
+    assert api.client.get(f"/api/ai-insights/{alice['id']}", headers=alice["headers"]).status_code == 404
 
 
 def test_putts_split_counts_only_scored_holes(api):
