@@ -5,6 +5,7 @@ import { TEST_USER } from "../../../testing/fakes/FakeBackend";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { FriendsInboxRobot } from "../inbox/tests/FriendsInboxPage.robot";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
+import { switchToDark } from "../../../testing/theme";
 import { captureOptions } from "../../../testing/fullPageCapture";
 
 export class SocialRobot {
@@ -22,6 +23,12 @@ export class SocialRobot {
     await this.page.addInitScript(() => {
       localStorage.setItem("theme", "dark");
     });
+    return this;
+  }
+
+  /** Turns the open page dark in place, so one load gives both themes' captures. */
+  async switchToDark(): Promise<this> {
+    await switchToDark(this.page);
     return this;
   }
 

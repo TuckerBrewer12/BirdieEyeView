@@ -1,15 +1,10 @@
 import { test } from "./LandingPage.robot";
 
-test("landing page", async ({ landing }) => {
+test("landing page, light and dark", async ({ landing }) => {
   await landing.open();
   await landing.seesHeadline("Scan your scorecard.");
   await landing.capture("landing.png");
-});
-
-test("landing page in dark mode", async ({ landing }) => {
-  await landing.dark();
-  await landing.open();
-  await landing.seesHeadline("Scan your scorecard.");
+  await landing.switchToDark();
   await landing.capture("landing-dark.png");
 });
 

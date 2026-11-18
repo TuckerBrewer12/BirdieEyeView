@@ -1,16 +1,11 @@
 import { AUTH_MESSAGES } from "../../../../testing/fakes/FakeAuth";
 import { test } from "./ResetPasswordPage.robot";
 
-test("reset password", async ({ reset }) => {
+test("reset password, light and dark", async ({ reset }) => {
   await reset.open();
   await reset.seesHeading("New password");
   await reset.capture("reset-password.png");
-});
-
-test("reset password in dark mode", async ({ reset }) => {
-  await reset.dark();
-  await reset.open();
-  await reset.seesHeading("New password");
+  await reset.switchToDark();
   await reset.capture("reset-password-dark.png");
 });
 

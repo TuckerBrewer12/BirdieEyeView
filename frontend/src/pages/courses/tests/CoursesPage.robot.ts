@@ -4,6 +4,7 @@ import type { CourseSummaryDto } from "../../../types/api";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
+import { switchToDark } from "../../../testing/theme";
 import { captureOptions } from "../../../testing/fullPageCapture";
 
 export class CoursesRobot {
@@ -17,6 +18,12 @@ export class CoursesRobot {
     await this.page.addInitScript(() => {
       localStorage.setItem("theme", "dark");
     });
+    return this;
+  }
+
+  /** Turns the open page dark in place, so one load gives both themes' captures. */
+  async switchToDark(): Promise<this> {
+    await switchToDark(this.page);
     return this;
   }
 

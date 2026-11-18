@@ -1,15 +1,10 @@
 import { test } from "@playwright/test";
+import { capturePreviewLightAndDark } from "../../previewScreenshot";
 import { BrandKitRobot } from "../../BrandKit.robot";
-import { capturePreview, enableDark } from "../../previewScreenshot";
 
 test.describe("PhotoSourceSheet", () => {
-  test("light", async ({ page }) => {
-    await capturePreview(page, "PhotoSourceSheet", "photo-source-sheet.png");
-  });
-
-  test("dark", async ({ page }) => {
-    await enableDark(page);
-    await capturePreview(page, "PhotoSourceSheet", "photo-source-sheet-dark.png");
+  test("light and dark", async ({ page }) => {
+    await capturePreviewLightAndDark(page, "PhotoSourceSheet", "photo-source-sheet");
   });
 
   test("open on a phone", async ({ page }) => {

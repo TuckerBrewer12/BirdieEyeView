@@ -1,15 +1,10 @@
 import { LINKS, UNSEEDED_COURSE, test } from "./AnalyticsPage.robot";
 
-test("scoring", async ({ analytics }) => {
+test("scoring, light and dark", async ({ analytics }) => {
   await analytics.open();
   await analytics.seesTabOpen("Scoring", "Score trend");
   await analytics.capture("analytics-scoring.png");
-});
-
-test("scoring in dark mode", async ({ analytics }) => {
-  await analytics.dark();
-  await analytics.open();
-  await analytics.seesTabOpen("Scoring", "Score trend");
+  await analytics.switchToDark();
   await analytics.capture("analytics-scoring-dark.png");
 });
 
@@ -71,18 +66,12 @@ const SECTIONS = [
 ] as const;
 
 for (const { tab, showing, file } of SECTIONS) {
-  test(`${tab} section`, async ({ analytics }) => {
+  test(`${tab} section, light and dark`, async ({ analytics }) => {
     await analytics.open();
     await analytics.openTab(tab);
     await analytics.seesTabOpen(tab, showing);
     await analytics.capture(`analytics-${file}.png`);
-  });
-
-  test(`${tab} section in dark mode`, async ({ analytics }) => {
-    await analytics.dark();
-    await analytics.open();
-    await analytics.openTab(tab);
-    await analytics.seesTabOpen(tab, showing);
+    await analytics.switchToDark();
     await analytics.capture(`analytics-${file}-dark.png`);
   });
 }

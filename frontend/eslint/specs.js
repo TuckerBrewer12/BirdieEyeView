@@ -1,4 +1,5 @@
-const WAIT_METHOD = /^(?:sees|doesNotSee)/;
+// switchToDark() waits for the page to turn dark, so the dark capture after a light one has its wait.
+const WAIT_METHOD = /^(?:sees|doesNotSee|switchToDark$)/;
 
 function enclosingStatement(node) {
   let current = node;

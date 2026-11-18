@@ -22,6 +22,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
+  // CI's macOS runner has 3 cores, so Playwright's default of half of them ran one test at a time.
+  workers: process.env.CI ? 3 : undefined,
   reporter,
   timeout: 30_000,
   expect: {
@@ -47,6 +49,8 @@ export default defineConfig({
     {
       name: "desktop",
       testMatch: "**/*.screenshot.spec.ts",
+      // A pixel diff fails the same way every time; retrying it only delays the red.
+      retries: 0,
       grepInvert: /@phone/,
       use: {
         ...devices["Desktop Chrome"],
@@ -56,6 +60,7 @@ export default defineConfig({
     {
       name: "mobile",
       testMatch: "**/*.screenshot.spec.ts",
+      retries: 0,
       testIgnore: ["**/brand/**", "**/tests/screenshots/**"],
       use: {
         ...devices["iPhone 14"],

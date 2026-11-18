@@ -7,6 +7,7 @@ import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
 import { avery, friendshipsOf } from "../../../testing/fixtures/friendships";
 import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
 import { fontsLoaded } from "../../../testing/fontsLoaded";
+import { switchToDark } from "../../../testing/theme";
 import { captureOptions } from "../../../testing/fullPageCapture";
 
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
@@ -33,6 +34,12 @@ export class AnalyticsRobot {
     await this.page.addInitScript(() => {
       localStorage.setItem("theme", "dark");
     });
+    return this;
+  }
+
+  /** Turns the open page dark in place, so one load gives both themes' captures. */
+  async switchToDark(): Promise<this> {
+    await switchToDark(this.page);
     return this;
   }
 

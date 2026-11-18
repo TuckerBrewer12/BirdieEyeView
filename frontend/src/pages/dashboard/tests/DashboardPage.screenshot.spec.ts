@@ -1,15 +1,10 @@
 import { test } from "./DashboardPage.robot";
 
-test("populated dashboard", async ({ dashboard }) => {
+test("populated dashboard, light and dark", async ({ dashboard }) => {
   await dashboard.open();
   await dashboard.seesLastRound("Half Moon Bay", "78");
   await dashboard.capture("dashboard-populated.png");
-});
-
-test("populated dashboard in dark mode", async ({ dashboard }) => {
-  await dashboard.dark();
-  await dashboard.open();
-  await dashboard.seesLastRound("Half Moon Bay", "78");
+  await dashboard.switchToDark();
   await dashboard.capture("dashboard-populated-dark.png");
 });
 
