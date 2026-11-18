@@ -1,4 +1,3 @@
-from analytics import stats
 from analytics.verdicts import change_verdict, putts_verdict
 
 

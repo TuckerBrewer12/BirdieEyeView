@@ -8,9 +8,9 @@ from analytics import greens
 from analytics import handicap as hcap
 from analytics import putting
 from analytics import scoring
-from analytics import stats as analytics
 from analytics import benchmarks
 from analytics import windows
+from analytics.achievements import notable_achievements
 from analytics.benchmarks import player_shape
 from analytics.headline import headline
 from analytics.peak import peak_game
@@ -69,7 +69,7 @@ def analytics_response(
     average_putts = _average([r.get_total_putts() for r in eighteen if r.get_total_putts() is not None])
     three_putts = putting.three_putt_averages(rounds)
     shape = player_shape(rounds) or {}
-    achievements = analytics.notable_achievements(history, reference_date=today, home_course_id=home_course_id)
+    achievements = notable_achievements(history, reference_date=today, home_course_id=home_course_id)
 
     next_level = benchmarks.next_level_handicap(player_index)
 

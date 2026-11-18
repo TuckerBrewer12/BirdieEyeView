@@ -2,7 +2,6 @@ from analytics import best_rounds
 from analytics import goals, peak
 from analytics.headline import headline
 from analytics import putting
-from analytics import stats as analytics
 from models import HoleScore, Round
 
 

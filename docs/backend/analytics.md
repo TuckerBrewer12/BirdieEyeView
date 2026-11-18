@@ -7,7 +7,7 @@
 | File | Responsibility |
 |---|---|
 | [eligibility.py](../../analytics/eligibility.py) | Which holes, rounds and observations each metric may use; par/handicap resolution; unknown-aware rates. |
-| [stats.py](../../analytics/stats.py) | Achievements and milestones, not yet split out. |
+| [achievements.py](../../analytics/achievements.py) | Achievements and milestones: records, career totals, streaks, the home course, firsts and score/putt/GIR breaks, over the last year and lifetime. |
 | [holes.py](../../analytics/holes.py) | Per-hole figures: average and to par by hole, difficulty rank, consistency, GIR and putts by hole, score mix by hole, and the Out/In/Tot sums. |
 | [scoring.py](../../analytics/scoring.py) | Score and net-score trends, scoring by par, yardage and hole handicap, and score-type distributions. |
 | [putting.py](../../analytics/putting.py) | Putts per round, three-putts, putts a hole, and putts per green in regulation. |

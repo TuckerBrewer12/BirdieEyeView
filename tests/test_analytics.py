@@ -41,7 +41,7 @@ from analytics.holes import (
     score_type_distribution_by_hole,
     score_variance_by_hole,
 )
-from analytics.stats import notable_achievements
+from analytics.achievements import notable_achievements
 from analytics.windows import rolling_average
 from models.course import Course
 from models.hole import Hole
