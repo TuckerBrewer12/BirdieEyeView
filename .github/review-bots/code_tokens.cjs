@@ -16,6 +16,7 @@ function codeTokens(path, text) {
   if (source.parseDiagnostics.length > 0) return null;
   const tokens = [];
   const walk = (node) => {
+    if (node.kind >= ts.SyntaxKind.FirstJSDocNode && node.kind <= ts.SyntaxKind.LastJSDocNode) return;
     if (ts.isJsxExpression(node) && !node.expression) return;
     if (node.kind === ts.SyntaxKind.JsxText) {
       const words = node.text.trim().replace(/\s+/g, " ");

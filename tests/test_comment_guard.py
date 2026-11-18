@@ -95,10 +95,10 @@ def test_other_languages_are_left_alone():
 def test_typescript_tokens_ignore_comments_but_not_code(monkeypatch):
     monkeypatch.setenv("TYPESCRIPT_MODULE", TYPESCRIPT)
     before = (
-        "// Banner\nexport function Card() {\n  const tone = '#fff' // the colour\n"
+        "// Banner\n/** The card. */\nexport function Card() {\n  const tone = '#fff' // the colour\n"
         "  return (\n    <div>\n      {/* the body */}\n      <b>{tone}</b>\n    </div>\n  )\n}\n"
     )
-    clean = before.replace("// Banner\n", "").replace(" // the colour", "").replace("      {/* the body */}\n", "")
+    clean = before.replace("// Banner\n/** The card. */\n", "").replace(" // the colour", "").replace("      {/* the body */}\n", "")
     broken = before.replace("'#fff' // the colour", "'")
     changed = clean.replace("'#fff'", "'#000'")
     problems = comment_guard.script_problems(
@@ -146,24 +146,27 @@ def test_check_keeps_good_edits_and_reverts_the_rest(tmp_path, monkeypatch):
     assert not (tmp_path / "extra.py").exists()
 
 
-def test_comment_lists_reshapes_keeps_and_reverts():
+def test_comment_is_one_line_and_the_reshapes():
     guard = {
         "accepted": [{"path": "a.py", "lines": 3}, {"path": "b.ts", "lines": 1}],
         "rejected": [{"path": "c.py", "reason": "code changed, not only comments"}],
     }
-    reply = comment_guard.parse_reply(
-        'Done.\n{"must_kill": [{"path": "a.py", "line": 4, "symbol": "fix_sign", "reason": "Name the rule."}],'
-        ' "kept": [{"path": "b.ts", "line": 9, "reason": "Safari quirk."}, {"bad": 1}]}'
+    reshapes = comment_guard.parse_reply(
+        'Done.\n{"must_kill": [{"path": "src/a.py", "line": 4, "symbol": "fix_sign", "reason": "Name the rule."},'
+        ' {"bad": 1}]}'
     )
-    body = comment_guard.render_comment(guard, reply, commit="abcdef1234", repo="o/r", head="h")
+    body = comment_guard.render_comment(guard, reshapes, commit="abcdef1234", repo="o/r", head="h")
 
-    assert body.startswith(comment_guard.MARKER)
-    assert "Deleted comments on 4 lines in 2 files in abcdef1." in body
-    assert "- [`a.py:4`](https://github.com/o/r/blob/h/a.py#L4) `fix_sign`: Name the rule." in body
-    assert "- [`b.ts:9`](https://github.com/o/r/blob/h/b.ts#L9): Safari quirk." in body
-    assert "- `c.py`: code changed, not only comments" in body
+    assert body == (
+        f"{comment_guard.MARKER}\n"
+        f"**{comment_guard.BOT_NAME}** deleted 4 comment lines in abcdef1."
+        " Skipped 1 file it couldn't edit without touching code.\n"
+        "\n"
+        "Reshape so these need no comment:\n"
+        "- [`a.py`](https://github.com/o/r/blob/h/src/a.py#L4) `fix_sign`: Name the rule.\n"
+    )
 
 
 def test_nothing_to_delete_says_so():
     body = comment_guard.render_comment({}, comment_guard.parse_reply("garbage"), commit="", repo="o/r", head="h")
-    assert "No comments to delete in this PR." in body
+    assert body == f"{comment_guard.MARKER}\n**{comment_guard.BOT_NAME}**: nothing to delete.\n"

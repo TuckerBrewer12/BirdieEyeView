@@ -91,11 +91,10 @@ A comment may stay only if it is:
 
 - a legal or license header;
 - a gotcha forced by something we cannot change (a vendor, browser, driver or protocol quirk), stated in one line;
-- a doc comment that defines a public API contract;
 - an issue or RFC link for a constraint the code cannot express;
 - a tool directive (`noqa`, `type: ignore`, `eslint-disable` with its reason, `@ts-expect-error`, `prettier-ignore`), or a script's usage and env lines.
 
-Everything else goes: narration of what the next line does, section banners, commented-out code, TODOs without an issue, Python docstrings that restate the name, and `IMPORTANT` / `do not remove` warnings the code does not prove. If code in our own repo is surprising enough to need a comment, rename, extract, type or redesign it until it isn't. Don't explain it. A long justification for a workaround means the workaround should go. Never shorten a bad comment; delete it.
+Everything else goes, including `/** */` doc comments: nothing here is a public API, so a method or export never needs one. Also gone: narration of what the next line does, section banners, commented-out code, TODOs without an issue, Python docstrings, and `IMPORTANT` / `do not remove` warnings the code does not prove. If code in our own repo is surprising enough to need a comment, rename, extract, type or redesign it until it isn't. Don't explain it. A long justification for a workaround means the workaround should go. Never shorten a bad comment; delete it.
 
 ## Pull requests
 
