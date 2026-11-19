@@ -125,7 +125,7 @@ Two DB schemas: `courses` (courses, holes, tees, tee_yardages) and `users` (user
 - `sync_adapter.py` — `SyncCourseRepositoryAdapter` wraps async repo for sync `CourseRepository` protocol (uses `run_coroutine_threadsafe`; `loop` must be obtained BEFORE constructing the adapter)
 - `repositories/course_repo.py` — course reads, creation and edits, `clone_course`, scan gap fill (`fill_course_gaps`, which keeps each rating's hole coverage) and verified updates, and the course list/search summaries; the fuzzy `find_course_by_name` (pg_trgm) is kept only for the `data/load_player_data.py` seeding script
 - `repositories/user_repo.py` — CRUD for users
-- `repositories/round_repo.py` — CRUD for rounds, hole_scores, scorecard_scans; includes `update_hole_scores`
+- `repositories/round_repo.py` — rounds and hole scores: create, full reads and the light summaries lists use, partial edits (`edit_round`), course linking and delete; nothing writes `users.scorecard_scans` any more (the table goes in step 10)
 - `repositories/user_tee_repo.py` — CRUD for `users.user_tees`
 
 **Schema source of truth:** `database/schema.sql`

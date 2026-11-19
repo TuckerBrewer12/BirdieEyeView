@@ -1,5 +1,4 @@
 import asyncpg
-import json
 from collections import defaultdict
 from datetime import date
 from typing import List, Optional
@@ -10,7 +9,7 @@ from pydantic import ValidationError
 from models import HoleScore, Round
 from database.converters import round_from_summary_row, round_from_rows, round_to_row, hole_score_to_row, user_tee_from_row, course_from_rows
 from database.connection import write_transaction
-from database.exceptions import DuplicateError, IntegrityError, NotFoundError
+from database.exceptions import DuplicateError, IntegrityError
 from database.repositories.course_repo import CourseRepositoryDB
 
 
@@ -30,8 +29,6 @@ ROUND_FIELDS = frozenset(ROUND_FIELD_MAP) | {
     "total_score",
     "holes_played",
     "is_complete",
-    "adjusted_gross_score",
-    "score_differential",
 }
 
 
@@ -215,7 +212,7 @@ class RoundRepositoryDB:
                    FROM users.rounds r
                    JOIN courses.courses c ON r.course_id = c.id
                    WHERE r.user_id = $1
-                   ORDER BY c.name""",
+                   ORDER BY c.name, c.id""",
                 UUID(user_id),
             )
         return [{"id": str(r["id"]), "name": r["name"], "location": r["location"]} for r in rows]
@@ -428,7 +425,6 @@ class RoundRepositoryDB:
                                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)""",
                             score_tuples,
                         )
-            # Return the stored state; inside a caller's transaction it is only visible on that connection.
             return await self.get_round(str(new_round_id), connection=connection)
         except asyncpg.UniqueViolationError as e:
             raise DuplicateError(str(e)) from e
@@ -498,25 +494,6 @@ class RoundRepositoryDB:
             [hole_score_to_row(by_number[number], row["id"], hole_ids.get(number)) for number in numbers],
         )
 
-    async def update_round(self, round_id: str, *, user_id=None, **fields) -> Optional[Round]:
-        updates = {name: value for name, value in fields.items() if name in ROUND_FIELDS}
-        if not updates:
-            return await self.get_round(round_id, user_id=user_id)
-        try:
-            async with self._pool.acquire() as conn, conn.transaction():
-                row = await self._lock_round(conn, round_id, user_id)
-                if not row:
-                    return None
-                round_ = await self._assemble_round(conn, row)
-                await self._apply_round_fields(conn, row, round_, updates)
-                await self._persist_derived_state(conn, row["id"], round_, row["user_id"])
-                fresh = await conn.fetchrow("SELECT * FROM users.rounds WHERE id = $1", row["id"])
-                return await self._assemble_round(conn, fresh)
-        except asyncpg.UniqueViolationError as error:
-            raise DuplicateError("Conflicting round identity") from error
-        except asyncpg.IntegrityConstraintViolationError as error:
-            raise IntegrityError("Invalid round metadata or reference") from error
-
     async def edit_round(
         self, round_id: str, *, user_id=None, hole_changes: dict, fields: dict
     ) -> Optional[Round]:
@@ -559,36 +536,6 @@ class RoundRepositoryDB:
             data["supplied_total_putts"],
             data["supplied_total_gir"],
         )
-
-    async def upsert_hole_score(self, round_id: str, hole_score: HoleScore, *, user_id=None) -> None:
-        await self.update_hole_scores(round_id, [hole_score], user_id=user_id)
-
-    async def update_hole_scores(self, round_id: str, hole_scores: list, *, user_id=None) -> Optional[Round]:
-        numbers = [score.hole_number for score in hole_scores]
-        if None in numbers or len(numbers) != len(set(numbers)):
-            raise IntegrityError("Hole updates require unique numbered observations")
-        try:
-            async with self._pool.acquire() as conn, conn.transaction():
-                row = await self._lock_round(conn, round_id, user_id)
-                if not row:
-                    raise NotFoundError("Round not found")
-                round_ = await self._assemble_round(conn, row)
-                by_number = {score.hole_number: score for score in round_.hole_scores}
-                for score in hole_scores:
-                    old_score = by_number.get(score.hole_number)
-                    payload = score.model_dump()
-                    if old_score is not None:
-                        for snapshot in ("par_played", "handicap_played"):
-                            if payload[snapshot] is None:
-                                payload[snapshot] = getattr(old_score, snapshot)
-                    by_number[score.hole_number] = HoleScore(**payload)
-                await self._write_hole_scores(conn, row, round_, by_number, numbers)
-                await self._persist_derived_state(conn, row["id"], round_, row["user_id"])
-                return round_
-        except asyncpg.UniqueViolationError as error:
-            raise DuplicateError("Duplicate hole identity") from error
-        except asyncpg.IntegrityConstraintViolationError as error:
-            raise IntegrityError("Invalid hole score or reference") from error
 
     async def link_course_to_round(
         self, round_id: str, course_id: str, *, user_id=None, connection=None
@@ -658,32 +605,3 @@ class RoundRepositoryDB:
             else:
                 result = await conn.execute("DELETE FROM users.rounds WHERE id = $1", UUID(round_id))
             return result == "DELETE 1"
-
-    async def save_scan(
-        self,
-        *,
-        round_id: Optional[str] = None,
-        image_path: str,
-        llm_model: str,
-        llm_raw_json: dict,
-    ) -> str:
-        async with self._pool.acquire() as conn:
-            row = await conn.fetchrow(
-                """INSERT INTO users.scorecard_scans
-                   (round_id, image_path, llm_model, llm_raw_json)
-                   VALUES ($1, $2, $3, $4) RETURNING id""",
-                UUID(round_id) if round_id else None,
-                image_path,
-                llm_model,
-                json.dumps(llm_raw_json),
-            )
-            return str(row["id"])
-
-    async def get_scans_for_round(self, round_id: str) -> list:
-        async with self._pool.acquire() as conn:
-            rows = await conn.fetch(
-                """SELECT * FROM users.scorecard_scans
-                   WHERE round_id = $1 ORDER BY created_at""",
-                UUID(round_id),
-            )
-            return [dict(r) for r in rows]
