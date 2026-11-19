@@ -50,6 +50,20 @@ python -m unittest tests.test_llm.TestScorecardExtraction.test_smart_with_null_r
 - To find code's users, or every import to rewrite after a move, search every tracked file (`git ls-files`), `data/` and `scripts/` included, and every import form (`from x import y`, `import x.y as z`, `import x`).
 - After a mutation check (breaking code to prove a test catches it), delete `__pycache__` folders before rerunning: a stale `.pyc` survives when the restored file has the same size and modification second.
 
+## Skills
+
+Workflow skills live in `.codex/skills/<name>/SKILL.md`, plain Markdown any agent can follow. Codex discovers them there and Claude Code through the pointers in `.claude/skills/`; any other agent reads the `SKILL.md` before starting the task it covers.
+
+| Skill | Use it to |
+|---|---|
+| `make-code-change` | implement a backend feature, fix or refactor end to end: recon, plan, user approval, implementation, docs. It follows the next four in order. |
+| `codebase-recon` | map the files, callers, tests and risks of a change before planning it |
+| `implementation-plan` | turn the recon into a written plan for the user to approve |
+| `implementation-loop` | implement an approved plan, test it and review the result before reporting |
+| `update-docs` | bring `docs/` and this file up to date after a change |
+| `ship-pr` | commit, push or write the PR text, only when the user asks |
+| `skill-retro` | turn corrections and misses into fixes in the right place after a pull request |
+
 ## Architecture
 
 ### `models/` — Pydantic v2 domain models

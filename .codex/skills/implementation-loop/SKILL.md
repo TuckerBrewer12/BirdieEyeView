@@ -39,6 +39,8 @@ Repeat until the change meets the user's request and the acceptance criteria:
 
 Once the planned edits and validation are complete, run the Completion Review Loop below before declaring the implementation finished. Passing tests alone does not complete the change.
 
+When the plan splits the change into commits, implement them in the plan's order and save the first commit's changes as a patch before starting the next commit's edits: `git diff -- <commit 1 paths> > <scratch>/commit1.patch`, naming paths so no binary file such as `.DS_Store` is in it. `$ship-pr` stages it with `git apply --cached`.
+
 Do not commit. Do not revert unrelated dirty work.
 
 ## Final Gates

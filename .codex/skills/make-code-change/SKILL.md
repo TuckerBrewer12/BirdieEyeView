@@ -61,7 +61,7 @@ Whenever recon or planning creates or updates an artifact, present the actual Ma
 7. Stop and ask the user to confirm the completed plan. Do not edit application or test code before explicit approval.
 8. After approval, read and run `$implementation-loop`. If it stops for a plan amendment, get the user's approval before it continues.
 9. When the change altered behavior, responsibilities, contracts, or source file locations described in `docs/`, `CLAUDE.md` or `AGENTS.md`, read and run `$update-docs` for the guides the plan and implementation named.
-10. End with a concise summary of changed files, tests run, docs updated, residual risks, and both artifact paths. Offer to draft the pull request description (see Pull Request Text). Do not commit.
+10. End with a concise summary of changed files, tests run, docs updated, residual risks, and both artifact paths. Offer to write the pull request description (see Pull Request Text). Do not commit unless the user asks.
 
 Do not silently turn an unresolved recon or planning question into a decision. A recommended option may accompany the question, but the user's answer must be recorded before advancing to the next phase.
 
@@ -85,7 +85,7 @@ When a review (the user's, another agent's, or a pull request's) finds gaps afte
 
 ## Pull Request Text
 
-When the user asks for it, write the description to a file outside the repository (the session's scratch directory) and present the path. Cover what changed and why, any contract or behavior change for API clients, what changes for the frontend owner (regenerated types, new error cases, nothing), the checks run, and follow-ups left out of scope. Do not open the pull request unless asked.
+When the user asks for it, write it with `$ship-pr` (its PR Text section): the text goes in the reply for the user to paste. Do not open the pull request.
 
 ## Confirmation Gate
 
@@ -129,7 +129,7 @@ New coverage for a change is end-to-end first:
 
 Coverage gates: CI's total and changed-line coverage gates (`.github/workflows/tests.yml`) currently measure the unit suite only. If a change proven by E2E fails the changed-line gate, report it to the user and propose revising the gate. Never add filler unit tests to pass it.
 
-Do not make commits. Leave final review and commit decisions to the user.
+Do not make commits unless the user asks; then run `$ship-pr`.
 
 ## Continuous Skill Improvement
 
@@ -141,11 +141,11 @@ At the end of every invocation, check whether this run exposed a reusable gap in
 - The artifact naming or reuse rule produced a duplicate or the wrong file.
 - A confirmation gate was skipped, asked twice, or asked in the wrong place.
 
-Gaps inside a single phase belong to that phase's skill. When the evidence is concrete:
+Gaps inside a single phase belong to that phase's skill. Misses outside any single phase (PR text, commits, tool behavior), fixes that belong in `AGENTS.md`, a check or memory, and the deliberate pass at the end of a pull request or after a user correction go through `$skill-retro`. When the evidence is concrete:
 
 - Make the smallest correction to the responsible `SKILL.md` that would have prevented the problem. Fix a stale file path or landmark as soon as you confirm it.
 - Keep the skill change separate from the user's task: make it as its own edit and list it under a separate "Skill changes" heading in the final response, with the evidence, so the user can review and commit it apart from the feature work.
-- Do not add rules for application bugs, one-off tool or environment failures, speculative edge cases, or preferences that apply only to the current task.
+- Do not add rules for application bugs, one-off tool or environment failures (a tool behavior that will recur, such as BSD `grep` lacking `\b`, is a fact for `AGENTS.md`), speculative edge cases, or preferences that apply only to the current task.
 - Do not weaken confirmation gates, expand mutation authority, or materially change workflow scope without explicit user approval. Propose those changes instead.
 - Preserve user-authored guidance and avoid duplicating rules already enforced elsewhere.
 - Validate the modified skill with the skill-creator `quick_validate.py` script when available.
