@@ -1,0 +1,4 @@
+interface:
+  display_name: "Trace Impact"
+  short_description: "Find every user before changing code"
+  default_prompt: "Use $trace-impact to find everything that depends on this and trace its reach end to end."
