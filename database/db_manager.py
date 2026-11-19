@@ -1,8 +1,7 @@
 import asyncpg
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, Optional
+from typing import AsyncIterator
 
-from models import Round, User
 from database.repositories.course_repo import CourseRepositoryDB
 from database.repositories.user_repo import UserRepositoryDB
 from database.repositories.round_repo import RoundRepositoryDB
@@ -23,18 +22,3 @@ class DatabaseManager:
     async def transaction(self) -> AsyncIterator:
         async with self._pool.acquire() as conn, conn.transaction():
             yield conn
-
-    async def get_user(self, user_id: str) -> Optional[User]:
-        return await self.users.get_user(user_id)
-
-    async def create_user(self, user: User) -> User:
-        return await self.users.create_user(user)
-
-    async def get_round(self, round_id: str) -> Optional[Round]:
-        return await self.rounds.get_round(round_id)
-
-    async def create_round(self, round_: Round, user_id: str, **kwargs) -> Round:
-        return await self.rounds.create_round(round_, user_id, **kwargs)
-
-    async def save_scan(self, **kwargs) -> str:
-        return await self.rounds.save_scan(**kwargs)
