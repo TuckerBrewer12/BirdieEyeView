@@ -28,13 +28,13 @@ async def _fill_course_from_round(db: DatabaseManager, round_: Round, course_id:
     source = None
     if round_.user_tee:
         tee = round_.user_tee
-        source = (tee.name, tee.slope_rating, tee.course_rating, tee.hole_yardages)
+        source = (tee.name, tee.slope_rating, tee.course_rating, tee.hole_yardages, tee.rating_holes)
     elif round_.course and round_.tee_box:
         tee = round_.course.get_tee(round_.tee_box)
         if tee:
-            source = (tee.color, tee.slope_rating, tee.course_rating, tee.hole_yardages)
+            source = (tee.color, tee.slope_rating, tee.course_rating, tee.hole_yardages, tee.rating_holes)
     if source and source[0]:
-        name, slope, rating, yardages = source
+        name, slope, rating, yardages, coverage = source
         await db.courses.fill_course_gaps(
             course_id,
             [],
@@ -42,5 +42,6 @@ async def _fill_course_from_round(db: DatabaseManager, round_: Round, course_id:
             slope,
             rating,
             {str(k): v for k, v in (yardages or {}).items() if v is not None},
+            rating_holes=coverage,
             connection=conn,
         )
