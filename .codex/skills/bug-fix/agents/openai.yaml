@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bug Fix"
+  short_description: "Reproduce, fix and prove a small bug"
+  default_prompt: "Use $bug-fix to reproduce this bug with a failing test, fix it, and prove the test guards the fix."
