@@ -1,6 +1,6 @@
 ---
 name: make-code-change
-description: "Project-specific backend orchestration workflow for the Golf ScoreCard app. Use when the user asks Codex to implement a complete backend feature, bug fix, refactor, or test change in this repository through a structured flow: codebase recon, written implementation plan, mandatory user confirmation, implementation loop, E2E-first test validation, and docs update."
+description: "Project-specific backend orchestration workflow for the Golf ScoreCard app. Use when the user asks Codex to implement a complete backend feature, bug fix, refactor, or test change in this repository through a structured flow: codebase recon, written implementation plan, mandatory user confirmation, implementation loop, E2E-first test validation, and docs update. A small, clear bug goes through bug-fix instead."
 ---
 
 # Make Code Change
@@ -13,6 +13,8 @@ Use this parent skill to run a full, confirmation-gated backend code change in t
 - `.codex/skills/implementation-plan/SKILL.md`
 - `.codex/skills/implementation-loop/SKILL.md`
 - `.codex/skills/update-docs/SKILL.md`
+
+Supporting skills, read when a phase needs them: `$trace-impact` (who uses code before it changes or is called dead), `$api-contract-change` (a request or response model change), `$schema-migration` (a schema change) and `$parser-eval` (a change that can affect scan output).
 
 Skills do not execute each other automatically. As the agent, explicitly read the sibling skill file before starting each phase and follow its instructions.
 
@@ -51,6 +53,8 @@ If the branch is missing or unusable, use a short slug from the user request and
 Whenever recon or planning creates or updates an artifact, present the actual Markdown file to the user. In the Codex app, open it as a file with `open_in_codex` using the artifact's absolute path. Do not open or attach a review, diff, or changes view for an artifact. Also provide a direct clickable local-file link in the confirmation message. If the file-opening tool is unavailable, provide the direct file link without substituting a review link.
 
 ## Workflow
+
+For one clear bug whose fix needs no contract, schema or product decision, use `$bug-fix` (`.codex/skills/bug-fix/SKILL.md`) instead. When `bug-fix` escalates here, its reproduction test and output are recon's first `### Reproduced` entry.
 
 1. Clarify only if the requested change cannot be understood well enough to begin recon. Otherwise proceed.
 2. Confirm the working branch before anything is named after it (see Working Branch).
@@ -106,9 +110,10 @@ Respect this repository's backend architecture, described in `docs/architecture.
 
 - Backend: FastAPI, asyncpg, PostgreSQL schemas `courses` and `users`, Pydantic v2 models.
 - Scan extraction: `services/mistral_ocr_service.py`, `services/gemini_table_merger.py`, and `services/mistral_scorecard_parser.py`, orchestrated by `services/scan_ocr.py` and assembled in `services/scan_assembly.py`; `api/routers/scan.py` owns the HTTP side. The old `llm/` package is gone; do not follow references to it.
+- Scan accuracy: a change in `$parser-eval`'s scope takes its baseline before the first edit and passes its comparison before it is done.
 - Business logic: `services/scan_service.py` and the other `services/` workflows.
 - API request models: `api/request_models.py` and `api/schemas.py`.
-- Frontend contract: `frontend/openapi.json` and `frontend/src/types/api.gen.ts` are generated from the backend's response models, and CI fails when either is stale. The frontend owner maintains everything else under `frontend/`.
+- Frontend contract: `frontend/openapi.json` and `frontend/src/types/api.gen.ts` are generated from the backend's response models, and CI fails when either is stale. The frontend owner maintains everything else under `frontend/`. `$api-contract-change` carries a model change through to them; contract-keeping frontend edits (types, mapping, fakes, fixtures) are part of the change, and using a new field in a page is the frontend owner's unless the user asks.
 - Tests: Python pytest under `tests/`, including marked PostgreSQL integration tests under `tests/integration/`. Commands live in `docs/practices/testing.md`.
 
 ## Testing Priority

@@ -32,9 +32,9 @@ Create the parent directory when needed. Preserve existing user-authored notes i
 - Prefer the repository's existing patterns over new abstractions. `docs/practices/backend.md` records the intended layer responsibilities.
 - Keep the blast radius narrow and name any intentional tradeoffs.
 - Include tests as part of the plan, not as an afterthought.
-- Include database migrations only when schema changes are required.
+- Include database migrations only when schema changes are required, and plan them with `$schema-migration`: the plan records its classification, deploy order and reverse SQL, and for a destructive change the production check results, before approval.
 - Name the `docs/` guides the change will make inaccurate, and the `CLAUDE.md`/`AGENTS.md` bullets, so `$update-docs` can update them after implementation.
-- When a response or request model changes, plan the regeneration of `frontend/openapi.json` and `api.gen.ts` and say what the frontend owner needs to know.
+- When a response or request model, status code or error body changes, read `$api-contract-change` and use its steps 1 and 4: classify the change for API clients (a breaking change needs the user's approval and a migration), and list in Frontend Impact the regenerated files and every frontend file it must touch, fakes and fixtures included.
 - Resolve material implementation preferences with the user before finishing the plan (see Clarification Checkpoint). A recommended approach is not user confirmation.
 - Do not repeat a question already answered in the request or recon artifact.
 - Avoid committing changes; final review and commits belong to the user.
@@ -69,7 +69,7 @@ If clarification is needed, preserve the useful planning work already completed,
 
 Take test commands from `docs/practices/testing.md`, which is the maintained source; do not copy commands from memory or older notes. Choose layers by the Testing Priority in `.codex/skills/make-code-change/SKILL.md`: E2E first, PostgreSQL integration for what the API cannot observe, and unit tests only when absolutely necessary. Plan the smallest meaningful test set, and list the final gates the loop will run (the full unit and integration suites and the checks in `docs/practices/testing.md`).
 
-In the Test Plan, name each new test and its layer. For every new unit test, state which necessity reason from the Testing Priority applies; a unit test without one does not belong in the plan. Live scan evaluation calls paid providers; plan it only when the task needs it.
+In the Test Plan, name each new test and its layer. For every new unit test, state which necessity reason from the Testing Priority applies; a unit test without one does not belong in the plan. When the change is in `$parser-eval`'s scope, the Test Plan names its free checks and each paid run with its suite and provider calls; the user approves each paid run separately when it is due.
 
 ## Output Format
 

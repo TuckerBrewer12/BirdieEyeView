@@ -29,10 +29,12 @@ Do not create or modify the implementation artifact.
 5. Identify the likely implementation surface:
    - API routers, request/response schemas, and dependencies
    - services, including the scan extraction pipeline and provider adapters
-   - domain models, analytics, repositories, converters, schema, or migrations
-6. Find who calls the touched endpoints: `frontend/src/lib/api.ts` and its callers under `frontend/src/`, plus scripts and tests. Record which routes the frontend uses and what it sends, whether the change needs a frontend change, and whether it alters the OpenAPI schema (`frontend/openapi.json` and `api.gen.ts` would be regenerated).
+   - domain models, analytics, repositories, converters, schema, or migrations; for a schema change, run step 2 of `$schema-migration` (every user, including the branch production deploys)
+6. Find who calls the touched endpoints: `frontend/src/lib/api.ts` and its callers under `frontend/src/`, plus scripts and tests. Record which routes the frontend uses and what it sends, whether the change needs a frontend change, and whether it alters the OpenAPI schema (`frontend/openapi.json` and `api.gen.ts` would be regenerated). When the change alters a request or response model, run step 4 of `$api-contract-change` to list the frontend uses.
+   For each finding that moves, renames or deletes code, calls something unused, or states who a change affects, run `$trace-impact` and put its Impact table in the artifact under the section it supports.
 7. Reproduce suspected defects instead of inferring them from reading (see Reproducing Behavior).
 8. Identify the likely test surface, following the Testing Priority in `.codex/skills/make-code-change/SKILL.md`:
+   - whether the change is in `$parser-eval`'s scope, and which scan stages it touches
    - existing E2E scenarios in `tests/integration/test_api_e2e.py` the change touches or can extend
    - existing `tests/test_*.py` targets for the affected domains
    - DB-dependent areas: distinguish Python-only branching/conversion that can use unit fakes from SQL, constraint, ownership, transaction, and PostgreSQL-specific behavior that needs integration coverage
@@ -50,7 +52,7 @@ A finding that the code misbehaves needs evidence. Prefer a throwaway probe agai
 - Name it so it cannot be mistaken for a real test (`tests/integration/test_zz_probe_<slug>.py`) and delete it before recon ends. `git status --short` must show no probe file when you finish.
 - Never call paid providers or a non-test database from a probe.
 - Record each result in the artifact's `### Reproduced` table. A suspicion you could not reproduce is listed as unverified, not as a finding.
-- Before stating who a finding affects or what a client sees, trace it end to end. Find the response model's fields and the builder that fills them: a model method returning `None` is not a response value until a response uses it. Check what the frontend really sends (`frontend/src`, such as `pages/scan/scanModel.ts`) whenever the probe used a hand-written request. State only the reach you traced; anything not traced is unverified.
+- Before stating who a finding affects or what a client sees, trace it end to end. Find the response model's fields and the builder that fills them: a model method returning `None` is not a response value until a response uses it. Check what the frontend really sends (`frontend/src`, such as `pages/scan/scanModel.ts`) whenever the probe used a hand-written request. State only the reach you traced; anything not traced is unverified. `$trace-impact` holds the full method (response chain, what the frontend sends, DB and env reach).
 
 ## Golf ScoreCard Map
 

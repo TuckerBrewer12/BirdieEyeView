@@ -24,7 +24,7 @@ Treat the recon artifact as read-only. Treat the implementation artifact as read
 
 ## Implementation Loop
 
-Before the first edit, run the unit suite and the integration tests for the affected domain, and record any failure that already exists so it is not attributed to the change.
+Before the first edit, run the unit suite and the integration tests for the affected domain, and record any failure that already exists so it is not attributed to the change. For a change in `$parser-eval`'s scope, also take its baseline (its steps 1 to 3) now.
 
 Repeat until the change meets the user's request and the acceptance criteria:
 
@@ -49,12 +49,12 @@ Run these once the planned edits are done, and again after the last fix from the
 
 - the full unit suite and the full PostgreSQL integration suite
 - lint, the OpenAPI check and the `scripts/ci/check_*.py` convention checks
-- when the OpenAPI schema changed: regenerate `frontend/openapi.json` and `api.gen.ts`, and run the frontend type check
+- when the OpenAPI schema changed: follow `$api-contract-change` (regenerate both generated files, update the frontend uses it lists, and run its frontend checks)
 - `git status --short` shows only the planned files: no probe, scratch or generated leftovers
 - `git diff --check` is clean (scripted edits leave trailing spaces and extra blank lines)
 - when the change deletes or moves code, no import it orphaned in a touched test file: `pyproject.toml` ignores F401 under `tests/**`, so compare `ruff check --isolated --select F401` on those files against the base branch
 
-Live scan evaluation calls paid providers. Run it only when the plan names it and the user has agreed to the cost.
+When the change is in `$parser-eval`'s scope (its When It Applies), run its steps 3 to 7: the change is not done while any eval card got worse. Each paid run needs the user's go-ahead when it is due; plan approval is not one.
 
 ## When The Plan Is Wrong
 
@@ -80,7 +80,7 @@ Review the implementation as a reviewer looking for omissions, rather than assum
 
 1. Read the full task diff against the base branch file by file (`git diff <base>` plus new and deleted files, generated files included), not a summary, a name sweep or passing gates. Compare it with the user's original request, every approved acceptance criterion, and any approved plan amendments. Check for missing behavior and unintended changes.
 2. Read the affected surrounding code and trace changed behavior through relevant callers and layer boundaries. Look for regressions, inconsistent contracts, and relevant boundary or failure cases that the existing tests could miss.
-3. For every deletion or move, find what it left orphaned: imports (`pyproject.toml` ignores F401 under `tests/**`, so compare `ruff check --isolated --select F401` on the touched test files against the base branch), helpers or constants only the removed code used, configuration and environment settings, docs and file lists.
+3. For every deletion or move, find what it left orphaned: imports (`pyproject.toml` ignores F401 under `tests/**`, so compare `ruff check --isolated --select F401` on the touched test files against the base branch), helpers or constants only the removed code used, configuration and environment settings, docs and file lists. Use `$trace-impact` to find every user of the moved or deleted code, including aliased imports, re-exports and `data/`/`scripts/` callers.
 4. For every doc or comment line you edited, check the whole sentence against the code, not only the part you changed: an edit can leave a stale claim standing beside it.
 5. Investigate suspected gaps with code evidence and focused checks at the appropriate testing layer. Add or update regression tests when they protect meaningful behavior, at the E2E layer unless the Testing Priority's unit-test reasons apply; do not add tests merely to mirror the implementation or raise coverage. Re-check that every unit test added in this change still meets a necessity reason, and remove any that an E2E test now covers.
 6. Fix confirmed findings within the approved scope, rerun the affected checks, and repeat this review against the revised implementation. Broaden validation when the finding shows a wider impact; do not rerun unrelated checks without a reason.

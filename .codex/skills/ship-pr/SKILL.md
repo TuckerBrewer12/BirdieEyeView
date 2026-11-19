@@ -26,7 +26,7 @@ Run this only when the user explicitly asks to commit, push, or write the PR tex
 
 Build the list of paths from `git status --short`, not `git diff --stat`: new files only show as `??` in status.
 
-- **Stage:** the files the implementation plan (`.codex/change-artifacts/implementation/<branch-slug>.md`) and its amendments name, plus the files the change generated (`frontend/openapi.json`, `frontend/src/types/api.gen.ts`, screenshot baselines), including new untracked files.
+- **Stage:** the files the implementation plan (`.codex/change-artifacts/implementation/<branch-slug>.md`) and its amendments name (for a `$bug-fix` change, the files its approved confirmation message names), plus the files the change generated (`frontend/openapi.json`, `frontend/src/types/api.gen.ts`, screenshot baselines), including new untracked files.
 - **Leave out:** everything else. Never stage these, even when the plan lists them under docs to update:
   - `handoff.md`, `1. Fix backend consistency issues*.md`, `outputs/`, and any other local notes at the repository root;
   - any `.DS_Store`. The root one is tracked; leave its modification unstaged;
@@ -88,6 +88,7 @@ Write the description; never run `gh pr create`.
 - Write for a reader who was not in the session: no artifact names, plan option codes (1A, 3B), or session shorthand. Name the roadmap step when there is one.
 - Keep each section self-contained, with a clear end. Short paragraphs or bullets, one idea each. What lists files, behavior, contract changes, the frontend impact (or "no frontend change"), and tests by layer; Why gives the problem and the reason. Nothing from What continues into Why.
 - When the PR has several commits, say what each commit holds so the reviewer can read them apart.
+- For a change in `$parser-eval`'s scope, What gives the eval result per suite (baseline → after) and any regression the user accepted, with the reason.
 - End the body with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 
 PRs #719 and #720 (`gh pr view <n> --json body`) show the style.

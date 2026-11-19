@@ -48,6 +48,7 @@ python -m unittest tests.test_llm.TestScorecardExtraction.test_smart_with_null_r
 - macOS BSD `grep -E`, `git grep -E` and `sed` don't support `\b`: a search using it silently returns nothing. Use a short Python script (or `git grep -w`).
 - `-w` never matches a name with a leading `.`; to find method calls search `[.]name\(`.
 - To find code's users, or every import to rewrite after a move, search every tracked file (`git ls-files`), `data/` and `scripts/` included, and every import form (`from x import y`, `import x.y as z`, `import x`).
+- `rg` and Claude Code's Grep skip hidden folders (`.github/`, `.codex/`) by default; `git grep -n --untracked` searches every file git knows.
 - After a mutation check (breaking code to prove a test catches it), delete `__pycache__` folders before rerunning: a stale `.pyc` survives when the restored file has the same size and modification second.
 
 ## Skills
@@ -56,11 +57,16 @@ Workflow skills live in `.codex/skills/<name>/SKILL.md`, plain Markdown any agen
 
 | Skill | Use it to |
 |---|---|
-| `make-code-change` | implement a backend feature, fix or refactor end to end: recon, plan, user approval, implementation, docs. It follows the next four in order. |
+| `make-code-change` | implement a backend feature, larger fix or refactor end to end: recon, plan, user approval, implementation, docs. It follows the next four in order. |
 | `codebase-recon` | map the files, callers, tests and risks of a change before planning it |
 | `implementation-plan` | turn the recon into a written plan for the user to approve |
 | `implementation-loop` | implement an approved plan, test it and review the result before reporting |
 | `update-docs` | bring `docs/` and this file up to date after a change |
+| `bug-fix` | fix one small, clear bug: reproduce it with a failing test, fix it, prove the test guards the fix; escalates to `make-code-change` for a contract, schema or product decision |
+| `trace-impact` | find everything that uses code, a column, an endpoint or a field before changing, deleting or making a claim about it |
+| `api-contract-change` | carry an API request or response change through the generated types, the frontend and both sides' checks |
+| `schema-migration` | add, change or drop a table, column or index: find its users, check production before a drop, write and test the migration and `schema.sql`, order it with the code |
+| `parser-eval` | measure scan accuracy per card before and after a change that can affect scan output; paid runs only with the user's go-ahead |
 | `ship-pr` | commit, push or write the PR text, only when the user asks |
 | `skill-retro` | turn corrections and misses into fixes in the right place after a pull request |
 
@@ -151,7 +157,7 @@ Two DB schemas: `courses` (courses, holes, tees, tee_yardages) and `users` (user
 
 **Schema source of truth:** `database/schema.sql`
 **Migrations:** `database/migrations/` (incremental SQL files, 001–016; applied by hand, with no tracking table)
-- 013: `main`'s course-name and location trigram indexes
+- 013: `main`'s course-name and location trigram indexes (they serve course search's `ILIKE`)
 - 014: explicit domain context, coverage, ratings and golf bounds
 - 015: scoped identities and stable history order
 - 016: `users.sessions` (apply before deploying session checks)
