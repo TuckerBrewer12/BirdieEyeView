@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ship PR"
+  short_description: "Commit, push and write PR text"
+  default_prompt: "Use $ship-pr to commit and push this change and write the PR description."
