@@ -4,7 +4,8 @@ from uuid import UUID
 
 from models import Course, Hole, Tee
 from models.course import CourseSummary
-from models.hole import HOLES_PER_NINE
+from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
+from models.hole_layout import FRONT_NINE, FULL_ROUND
 from models.tee import best_yardage_match
 from database.connection import write_transaction
 from database.converters import course_from_rows, course_to_row, tee_yardages_to_rows, tee_to_row, tee_ratings_to_rows
@@ -22,6 +23,17 @@ def _duplicate_error(error: asyncpg.UniqueViolationError, message: str) -> Dupli
 def _like_pattern(query: str) -> str:
     escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     return f"%{escaped}%"
+
+
+async def _course_layout(conn, course_id: UUID, total_holes: Optional[int]) -> Optional[tuple]:
+    if total_holes == HOLES_PER_NINE:
+        return FRONT_NINE
+    if total_holes == HOLES_PER_ROUND:
+        return FULL_ROUND
+    numbers = await conn.fetch("SELECT hole_number FROM courses.holes WHERE course_id = $1", course_id)
+    if len(numbers) == HOLES_PER_ROUND and {row["hole_number"] for row in numbers} == set(FULL_ROUND):
+        return FULL_ROUND
+    return None
 
 
 class CourseRepositoryDB:
@@ -382,6 +394,7 @@ class CourseRepositoryDB:
         course_rating: Optional[float] = None,
         yardages: Optional[dict] = None,
         *,
+        rating_holes: Optional[tuple] = None,
         connection=None,
     ) -> None:
         cid = UUID(course_id)
@@ -442,6 +455,14 @@ class CourseRepositoryDB:
                 await conn.execute("UPDATE courses.courses SET par=NULL WHERE id=$1", cid)
 
             if tee_color:
+                coverage = tuple(rating_holes) if rating_holes is not None else None
+                layout = await _course_layout(conn, cid, parent["total_holes"])
+                partial = (
+                    (slope_rating is not None or course_rating is not None)
+                    and coverage is not None and layout is not None and coverage != layout
+                )
+                main_slope, main_rating = (None, None) if partial else (slope_rating, course_rating)
+                main_coverage = coverage if not partial and (main_slope is not None or main_rating is not None) else None
                 existing_tee = await conn.fetchrow(
                     "SELECT id, slope_rating, course_rating FROM courses.tees "
                     "WHERE course_id = $1 AND LOWER(color) = LOWER($2)",
@@ -475,10 +496,13 @@ class CourseRepositoryDB:
                 if existing_tee:
                     tee_id = existing_tee["id"]
                     updates = {}
-                    if slope_rating is not None and existing_tee["slope_rating"] is None:
-                        updates["slope_rating"] = slope_rating
-                    if course_rating is not None and existing_tee["course_rating"] is None:
-                        updates["course_rating"] = course_rating
+                    if main_slope is not None and existing_tee["slope_rating"] is None:
+                        updates["slope_rating"] = main_slope
+                    if main_rating is not None and existing_tee["course_rating"] is None:
+                        updates["course_rating"] = main_rating
+                    unrated = existing_tee["slope_rating"] is None and existing_tee["course_rating"] is None
+                    if updates and unrated and main_coverage is not None:
+                        updates["rating_holes"] = list(main_coverage)
                     if updates:
                         set_clause = ", ".join(f"{k} = ${i + 2}" for i, k in enumerate(updates))
                         await conn.execute(
@@ -488,18 +512,33 @@ class CourseRepositoryDB:
                         )
                 else:
                     tee_row = await conn.fetchrow(
-                        """INSERT INTO courses.tees (course_id, color, slope_rating, course_rating)
-                           VALUES ($1, $2, $3, $4)
+                        """INSERT INTO courses.tees (course_id, color, slope_rating, course_rating, rating_holes)
+                           VALUES ($1, $2, $3, $4, $5)
                            ON CONFLICT (course_id, LOWER(color)) DO UPDATE SET
+                               rating_holes=CASE
+                                   WHEN courses.tees.slope_rating IS NULL AND courses.tees.course_rating IS NULL
+                                   THEN EXCLUDED.rating_holes ELSE courses.tees.rating_holes END,
                                slope_rating=COALESCE(courses.tees.slope_rating,EXCLUDED.slope_rating),
                                course_rating=COALESCE(courses.tees.course_rating,EXCLUDED.course_rating)
                            RETURNING id""",
                         cid,
                         tee_color,
-                        slope_rating,
-                        course_rating,
+                        main_slope,
+                        main_rating,
+                        list(main_coverage) if main_coverage is not None else None,
                     )
                     tee_id = tee_row["id"]
+
+                if partial:
+                    await conn.execute(
+                        """INSERT INTO courses.tee_ratings (tee_id, hole_numbers, course_rating, slope_rating)
+                           VALUES ($1, $2, $3, $4)
+                           ON CONFLICT (tee_id, hole_numbers) DO NOTHING""",
+                        tee_id,
+                        list(coverage),
+                        course_rating,
+                        slope_rating,
+                    )
 
                 if normalized_yardages:
                     await conn.execute("UPDATE courses.tees SET total_yardage=NULL WHERE id=$1", tee_id)

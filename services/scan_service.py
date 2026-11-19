@@ -364,10 +364,12 @@ class ScanService:
             )
         elif plan.fill_gaps:
             holes = [Hole(number=h.number, par=h.par, handicap=h.handicap) for h in scan.course_holes]
+            numbers = tuple(sorted(h.number for h in scan.course_holes))
             if scan.tees:
                 for t in scan.tees:
                     await self._db.courses.fill_course_gaps(
                         course_id, holes, t.color, t.slope_rating, t.course_rating, dict(t.hole_yardages),
+                        rating_holes=rated_coverage(numbers, t.course_rating, t.slope_rating),
                         connection=conn,
                     )
             elif holes:

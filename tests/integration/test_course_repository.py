@@ -1,7 +1,8 @@
 import pytest
 
 from database.exceptions import DuplicateError
-from models import Hole, Tee
+from models import Course, Hole, Tee
+from models.hole_layout import FRONT_NINE, FULL_ROUND
 from tests.integration.helpers import create_course, create_user
 
 
@@ -162,3 +163,80 @@ async def test_delete_course_is_owner_scoped(database_manager):
 
     assert deleted_by_other is False
     assert deleted_by_owner is True
+
+
+async def _unrated_course(database_manager):
+    user = await create_user(database_manager, email="gaps@example.com")
+    return await database_manager.courses.create_course(
+        Course(
+            name="Gap Links",
+            total_holes=18,
+            holes=[Hole(number=n, par=4, handicap=n) for n in FULL_ROUND],
+            tees=[Tee(color="Blue", hole_yardages={n: 400 for n in FULL_ROUND})],
+        ),
+        user_id=user.id,
+    )
+
+
+async def _blue(database_manager, course):
+    return (await database_manager.courses.get_course(course.id)).get_tee("Blue")
+
+
+async def test_gap_fill_puts_a_course_layout_rating_on_the_tee_with_its_coverage(database_manager):
+    course = await _unrated_course(database_manager)
+
+    await database_manager.courses.fill_course_gaps(course.id, [], "Blue", 125, 71.2, rating_holes=FULL_ROUND)
+
+    blue = await _blue(database_manager, course)
+    assert (blue.course_rating, blue.slope_rating, blue.rating_holes, blue.ratings) == (71.2, 125.0, FULL_ROUND, [])
+
+
+async def test_gap_fill_keeps_a_nine_hole_rating_beside_the_tee_and_never_overwrites(database_manager):
+    course = await _unrated_course(database_manager)
+    fill = database_manager.courses.fill_course_gaps
+
+    await fill(course.id, [], "Blue", 118, 35.2, rating_holes=FRONT_NINE)
+    await fill(course.id, [], "Blue", 120, 36.0, rating_holes=FRONT_NINE)
+    blue = await _blue(database_manager, course)
+    assert (blue.course_rating, blue.slope_rating, blue.rating_holes) == (None, None, None)
+
+    await fill(course.id, [], "Blue", 125, 71.2, rating_holes=FULL_ROUND)
+    await fill(course.id, [], "Blue", 130, 73.0, rating_holes=FULL_ROUND)
+    blue = await _blue(database_manager, course)
+    assert (blue.course_rating, blue.slope_rating, blue.rating_holes) == (71.2, 125.0, FULL_ROUND)
+    assert [(r.hole_numbers, r.course_rating, r.slope_rating) for r in blue.ratings] == [(FRONT_NINE, 35.2, 118.0)]
+
+
+async def test_gap_fill_without_coverage_keeps_the_whole_layout_reading(database_manager):
+    course = await _unrated_course(database_manager)
+
+    await database_manager.courses.fill_course_gaps(course.id, [], "Blue", 125, 71.2)
+
+    blue = await _blue(database_manager, course)
+    assert (blue.course_rating, blue.slope_rating, blue.rating_holes, blue.ratings) == (71.2, 125.0, None, [])
+
+
+async def test_gap_fill_creates_a_new_tee_with_only_its_nine_hole_rating(database_manager):
+    course = await _unrated_course(database_manager)
+
+    await database_manager.courses.fill_course_gaps(course.id, [], "Gold", 118, 35.2, rating_holes=FRONT_NINE)
+
+    gold = (await database_manager.courses.get_course(course.id)).get_tee("Gold")
+    assert (gold.course_rating, gold.slope_rating, gold.rating_holes) == (None, None, None)
+    assert [(r.hole_numbers, r.course_rating, r.slope_rating) for r in gold.ratings] == [(FRONT_NINE, 35.2, 118.0)]
+
+
+async def test_gap_fill_on_a_course_without_a_known_layout_records_the_coverage(database_manager):
+    user = await create_user(database_manager, email="no-layout@example.com")
+    course = await database_manager.courses.create_course(
+        Course(name="Twelve Holes", holes=[Hole(number=n, par=4) for n in range(1, 13)],
+               tees=[Tee(color="Blue", hole_yardages={n: 400 for n in range(1, 13)})]),
+        user_id=user.id,
+    )
+
+    await database_manager.courses.fill_course_gaps(course.id, [], "Blue", 118, 35.2, rating_holes=FRONT_NINE)
+
+    blue = await _blue(database_manager, course)
+    assert (course.total_holes, blue.course_rating, blue.slope_rating, blue.rating_holes, blue.ratings) == (
+        None, 35.2, 118.0, FRONT_NINE, []
+    )
