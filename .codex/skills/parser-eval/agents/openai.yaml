@@ -1,0 +1,4 @@
+interface:
+  display_name: "Parser Eval"
+  short_description: "Gate scan accuracy per card"
+  default_prompt: "Use $parser-eval to compare scan accuracy per card against the baseline before calling this change done."
