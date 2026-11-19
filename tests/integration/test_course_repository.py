@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 
 from database.exceptions import DuplicateError
@@ -45,30 +47,6 @@ async def test_search_courses_matches_location(database_manager):
     assert [result.id for result in results] == [course.id]
 
 
-async def test_user_course_lookup_is_owner_scoped(database_manager):
-    owner = await create_user(database_manager, email="course-owner@example.com")
-    other_user = await create_user(database_manager, email="other-owner@example.com")
-    custom_course = await create_course(
-        database_manager,
-        name="Owned Integration",
-        user_id=owner.id,
-    )
-
-    owner_result = await database_manager.courses.find_user_course_by_name(
-        "owned integration",
-        "TESTVILLE, CA",
-        owner.id,
-    )
-    other_result = await database_manager.courses.find_user_course_by_name(
-        "Owned Integration",
-        "Testville, CA",
-        other_user.id,
-    )
-
-    assert owner_result == custom_course
-    assert other_result is None
-
-
 async def test_list_courses_includes_master_and_owned_courses(database_manager):
     owner = await create_user(database_manager, email="course-owner@example.com")
     other_user = await create_user(database_manager, email="other-owner@example.com")
@@ -85,36 +63,6 @@ async def test_list_courses_includes_master_and_owned_courses(database_manager):
 
     assert {course.id for course in owner_courses} == {master_course.id, custom_course.id}
     assert {course.id for course in other_courses} == {master_course.id}
-
-
-async def test_upsert_hole_replaces_existing_hole(database_manager):
-    course = await create_course(database_manager)
-
-    await database_manager.courses.upsert_hole(
-        course.id,
-        Hole(number=1, par=5, handicap=1),
-    )
-
-    updated_course = await database_manager.courses.get_course(course.id)
-    assert updated_course.get_hole(1).par == 5
-
-
-async def test_upsert_tee_replaces_tee_and_yardages(database_manager):
-    course = await create_course(database_manager)
-
-    await database_manager.courses.upsert_tee(
-        course.id,
-        Tee(
-            color="blue",
-            slope_rating=130,
-            course_rating=73.0,
-            hole_yardages={1: 500, 2: 410},
-        ),
-    )
-
-    updated_tee = (await database_manager.courses.get_course(course.id)).get_tee("Blue")
-    assert updated_tee.slope_rating == 130.0
-    assert updated_tee.hole_yardages == {1: 500, 2: 410}
 
 
 async def test_clone_course_copies_children_for_owner(database_manager):
@@ -141,28 +89,6 @@ async def test_duplicate_master_course_raises_duplicate_error(database_manager):
             location="monterey, ca",
             external_course_id="duplicate-master",
         )
-
-
-async def test_delete_course_is_owner_scoped(database_manager):
-    owner = await create_user(database_manager, email="course-owner@example.com")
-    other_user = await create_user(database_manager, email="other-owner@example.com")
-    custom_course = await create_course(
-        database_manager,
-        name="Owned Integration",
-        user_id=owner.id,
-    )
-
-    deleted_by_other = await database_manager.courses.delete_course(
-        custom_course.id,
-        user_id=other_user.id,
-    )
-    deleted_by_owner = await database_manager.courses.delete_course(
-        custom_course.id,
-        user_id=owner.id,
-    )
-
-    assert deleted_by_other is False
-    assert deleted_by_owner is True
 
 
 async def _unrated_course(database_manager):
@@ -240,3 +166,55 @@ async def test_gap_fill_on_a_course_without_a_known_layout_records_the_coverage(
     assert (course.total_holes, blue.course_rating, blue.slope_rating, blue.rating_holes, blue.ratings) == (
         None, 35.2, 118.0, FRONT_NINE, []
     )
+
+
+async def test_provider_lookup_prefers_the_master_and_never_another_golfers_copy(database_manager):
+    owner = await create_user(database_manager, email="provider-owner@example.com")
+    other = await create_user(database_manager, email="provider-other@example.com")
+    master = await create_course(database_manager, name="Provider Links", external_course_id="ext-lookup")
+    own = await create_course(database_manager, name="Provider Links", external_course_id="ext-lookup", user_id=owner.id)
+    foreign = await create_course(
+        database_manager, name="Only Theirs", external_course_id="ext-theirs", user_id=other.id
+    )
+    find = database_manager.courses.find_course_by_external_id
+
+    assert (await find("ext-lookup", user_id=owner.id)).id == master.id
+    assert (await find("ext-lookup")).id == master.id
+    assert await find("ext-theirs", user_id=owner.id) is None
+    assert (await find("ext-theirs", user_id=other.id)).id == foreign.id
+    assert own.id != master.id
+
+
+async def test_owned_name_lookup_is_case_blind_owner_scoped_and_oldest_first(database_manager):
+    owner = await create_user(database_manager, email="named-owner@example.com")
+    other = await create_user(database_manager, email="named-other@example.com")
+    first = await create_course(database_manager, name="Home Links", location="North", external_course_id=None, user_id=owner.id)
+    await create_course(database_manager, name="HOME LINKS", location="South", external_course_id=None, user_id=owner.id)
+    await create_course(database_manager, name="Away Links", external_course_id=None, user_id=other.id)
+    find = database_manager.courses.find_owned_course_by_exact_name
+
+    assert (await find("home links", owner.id)).id == first.id
+    assert await find("Away Links", owner.id) is None
+    assert await find("Home", owner.id) is None
+
+
+async def test_gap_fill_matches_a_differently_named_tee_by_yardage(database_manager):
+    course = await _unrated_course(database_manager)
+
+    await database_manager.courses.fill_course_gaps(
+        course.id, [], "BLUE M 71/125", 125, 71.2, {n: 410 for n in FULL_ROUND}, rating_holes=FULL_ROUND
+    )
+
+    loaded = await database_manager.courses.get_course(course.id)
+    assert [(t.color, t.course_rating, t.hole_yardages[1]) for t in loaded.tees] == [("Blue", 71.2, 400)]
+
+
+async def test_gap_fill_drops_a_handicap_another_hole_already_has(database_manager):
+    course = await _unrated_course(database_manager)
+    async with database_manager._pool.acquire() as conn:
+        await conn.execute("UPDATE courses.holes SET handicap = NULL WHERE course_id = $1 AND hole_number = 2", UUID(course.id))
+
+    await database_manager.courses.fill_course_gaps(course.id, [Hole(number=2, par=4, handicap=1)])
+
+    loaded = await database_manager.courses.get_course(course.id)
+    assert (loaded.get_hole(1).handicap, loaded.get_hole(2).handicap) == (1, None)

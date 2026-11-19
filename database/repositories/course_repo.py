@@ -9,7 +9,7 @@ from models.hole_layout import FRONT_NINE, FULL_ROUND
 from models.tee import best_yardage_match
 from database.connection import write_transaction
 from database.converters import course_from_rows, course_to_row, tee_yardages_to_rows, tee_to_row, tee_ratings_to_rows
-from database.exceptions import ConflictError, DuplicateError, DuplicateProviderIdError, IntegrityError, NotFoundError
+from database.exceptions import DuplicateError, DuplicateProviderIdError, IntegrityError, NotFoundError
 
 _PROVIDER_ID_INDEXES = {"idx_courses_external_master", "idx_courses_external_owner"}
 
@@ -34,6 +34,14 @@ async def _course_layout(conn, course_id: UUID, total_holes: Optional[int]) -> O
     if len(numbers) == HOLES_PER_ROUND and {row["hole_number"] for row in numbers} == set(FULL_ROUND):
         return FULL_ROUND
     return None
+
+
+async def _release_handicaps_before_reordering(conn, course_id: UUID, hole_numbers: List[int]) -> None:
+    await conn.execute(
+        "UPDATE courses.holes SET handicap=NULL WHERE course_id=$1 AND hole_number = ANY($2::int[])",
+        course_id,
+        hole_numbers,
+    )
 
 
 class CourseRepositoryDB:
@@ -280,115 +288,10 @@ class CourseRepositoryDB:
         async with self._pool.acquire() as conn:
             return await lookup(conn)
 
-    async def find_user_course_by_name(
-        self,
-        name: str,
-        location: Optional[str] = None,
-        user_id: str | None = None,
-    ) -> Optional[Course]:
-        uid = UUID(user_id)
-        async with self._pool.acquire() as conn:
-            if location:
-                row = await conn.fetchrow(
-                    """SELECT * FROM courses.courses
-                       WHERE LOWER(name) = LOWER($1) AND LOWER(location) = LOWER($2)
-                         AND user_id = $3""",
-                    name,
-                    location,
-                    uid,
-                )
-            else:
-                row = await conn.fetchrow(
-                    """SELECT * FROM courses.courses
-                       WHERE LOWER(name) = LOWER($1) AND user_id = $2""",
-                    name,
-                    uid,
-                )
-            if not row:
-                if location:
-                    row = await conn.fetchrow(
-                        """SELECT * FROM courses.courses
-                           WHERE name ILIKE $1 AND location ILIKE $2
-                             AND user_id = $3 LIMIT 1""",
-                        f"%{name}%",
-                        f"%{location}%",
-                        uid,
-                    )
-                else:
-                    row = await conn.fetchrow(
-                        """SELECT * FROM courses.courses
-                           WHERE name ILIKE $1 AND user_id = $2 LIMIT 1""",
-                        f"%{name}%",
-                        uid,
-                    )
-            if not row:
-                row = await conn.fetchrow(
-                    """SELECT *, similarity(name, $1) AS sim
-                       FROM courses.courses
-                       WHERE similarity(name, $1) > 0.4 AND user_id = $2
-                         AND ($3::text IS NULL OR location ILIKE $3)
-                       ORDER BY sim DESC LIMIT 1""",
-                    name,
-                    uid,
-                    f"%{location}%" if location else None,
-                )
-            if not row:
-                return None
-            return await self._assemble(conn, row)
-
-    async def find_any_user_course_by_name(
-        self,
-        name: str,
-        location: Optional[str] = None,
-    ) -> Optional[Course]:
-        async with self._pool.acquire() as conn:
-            if location:
-                row = await conn.fetchrow(
-                    """SELECT * FROM courses.courses
-                       WHERE LOWER(name) = LOWER($1) AND LOWER(location) = LOWER($2)
-                         AND user_id IS NOT NULL LIMIT 1""",
-                    name,
-                    location,
-                )
-            else:
-                row = await conn.fetchrow(
-                    """SELECT * FROM courses.courses
-                       WHERE LOWER(name) = LOWER($1) AND user_id IS NOT NULL LIMIT 1""",
-                    name,
-                )
-            if not row:
-                if location:
-                    row = await conn.fetchrow(
-                        """SELECT * FROM courses.courses
-                           WHERE name ILIKE $1 AND location ILIKE $2
-                             AND user_id IS NOT NULL LIMIT 1""",
-                        f"%{name}%",
-                        f"%{location}%",
-                    )
-                else:
-                    row = await conn.fetchrow(
-                        """SELECT * FROM courses.courses
-                           WHERE name ILIKE $1 AND user_id IS NOT NULL LIMIT 1""",
-                        f"%{name}%",
-                    )
-            if not row:
-                row = await conn.fetchrow(
-                    """SELECT *, similarity(name, $1) AS sim
-                       FROM courses.courses
-                       WHERE similarity(name, $1) > 0.4 AND user_id IS NOT NULL
-                         AND ($2::text IS NULL OR location ILIKE $2)
-                       ORDER BY sim DESC LIMIT 1""",
-                    name,
-                    f"%{location}%" if location else None,
-                )
-            if not row:
-                return None
-            return await self._assemble(conn, row)
-
     async def fill_course_gaps(
         self,
         course_id: str,
-        holes: list,
+        holes: List[Hole],
         tee_color: Optional[str] = None,
         slope_rating: Optional[float] = None,
         course_rating: Optional[float] = None,
@@ -398,18 +301,6 @@ class CourseRepositoryDB:
         connection=None,
     ) -> None:
         cid = UUID(course_id)
-        normalized_holes = []
-        for hole in holes:
-            if isinstance(hole, Hole):
-                normalized_holes.append(hole)
-            else:
-                normalized_holes.append(
-                    Hole(
-                        number=hole.get("hole_number", hole.get("number")),
-                        par=hole.get("par"),
-                        handicap=hole.get("handicap"),
-                    )
-                )
         normalized_yardages = Tee(
             slope_rating=slope_rating,
             course_rating=course_rating,
@@ -421,9 +312,9 @@ class CourseRepositoryDB:
             )
             if not parent:
                 raise NotFoundError("Course not found")
-            if parent["total_holes"] == HOLES_PER_NINE and any(hole.number and hole.number > HOLES_PER_NINE for hole in normalized_holes):
+            if parent["total_holes"] == HOLES_PER_NINE and any(hole.number and hole.number > HOLES_PER_NINE for hole in holes):
                 raise IntegrityError("Hole is outside the declared course layout")
-            for hole in normalized_holes:
+            for hole in holes:
                 hole_num, par, handicap = hole.number, hole.par, hole.handicap
                 if hole_num is None:
                     continue
@@ -451,7 +342,7 @@ class CourseRepositoryDB:
                     par,
                     handicap,
                 )
-            if any(hole.number is not None and hole.par is not None for hole in normalized_holes):
+            if any(hole.number is not None and hole.par is not None for hole in holes):
                 await conn.execute("UPDATE courses.courses SET par=NULL WHERE id=$1", cid)
 
             if tee_color:
@@ -551,69 +442,6 @@ class CourseRepositoryDB:
                             yds,
                         )
 
-    async def promote_to_master(self, course_id: str) -> Course:
-        cid = UUID(course_id)
-        async with self._pool.acquire() as conn:
-            try:
-                row = await conn.fetchrow(
-                    "UPDATE courses.courses SET user_id = NULL WHERE id = $1 RETURNING *",
-                    cid,
-                )
-                if not row:
-                    raise NotFoundError(f"Course {course_id} not found")
-                return await self._assemble(conn, row)
-            except asyncpg.UniqueViolationError:
-                # Race condition: another master with this name now exists
-                row = await conn.fetchrow("SELECT * FROM courses.courses WHERE id = $1", cid)
-                return await self._assemble(conn, row)
-
-    async def list_courses(
-        self,
-        *,
-        limit: int = 50,
-        offset: int = 0,
-        user_id: Optional[str] = None,
-    ) -> List[Course]:
-        async with self._pool.acquire() as conn:
-            if user_id:
-                rows = await conn.fetch(
-                    """SELECT * FROM courses.courses
-                       WHERE user_id IS NULL OR user_id = $3
-                       ORDER BY (user_id IS NULL), name LIMIT $1 OFFSET $2""",
-                    limit,
-                    offset,
-                    UUID(user_id),
-                )
-            else:
-                rows = await conn.fetch(
-                    """SELECT * FROM courses.courses WHERE user_id IS NULL
-                       ORDER BY (user_id IS NULL), name LIMIT $1 OFFSET $2""",
-                    limit,
-                    offset,
-                )
-            return [await self._assemble(conn, r) for r in rows]
-
-    async def search_courses(self, query: str, *, user_id: Optional[str] = None) -> List[Course]:
-        async with self._pool.acquire() as conn:
-            if user_id:
-                rows = await conn.fetch(
-                    """SELECT * FROM courses.courses
-                       WHERE (name ILIKE $1 OR location ILIKE $1)
-                         AND (user_id IS NULL OR user_id = $2)
-                       ORDER BY (user_id IS NULL), name LIMIT 20""",
-                    f"%{query}%",
-                    UUID(user_id),
-                )
-            else:
-                rows = await conn.fetch(
-                    """SELECT * FROM courses.courses
-                       WHERE (name ILIKE $1 OR location ILIKE $1)
-                         AND user_id IS NULL
-                       ORDER BY (user_id IS NULL), name LIMIT 20""",
-                    f"%{query}%",
-                )
-            return [await self._assemble(conn, r) for r in rows]
-
     async def create_course(self, course: Course, *, user_id: Optional[str] = None, connection=None) -> Course:
         try:
             colors = [tee.color.casefold() for tee in course.tees if tee.color is not None]
@@ -690,7 +518,7 @@ class CourseRepositoryDB:
             return await self._assemble(conn, row) if row else None
 
     async def update_course(self, course_id: str, *, user_id: Optional[str] = None, **fields) -> Optional[Course]:
-        allowed = {"name", "external_course_id", "location", "par", "total_holes", "metadata"}
+        allowed = {"name", "external_course_id", "location", "par", "total_holes"}
         updates = {k: v for k, v in fields.items() if k in allowed}
         if not updates:
             course = await self.get_course(course_id)
@@ -756,12 +584,7 @@ class CourseRepositoryDB:
                     raise IntegrityError("Hole is outside the declared course layout")
                 if parent["total_holes"] is None and total_holes is not None:
                     await conn.execute("UPDATE courses.courses SET total_holes=$2 WHERE id=$1", cid, total_holes)
-                # Clear handicaps first so reordered stroke indexes don't collide on UNIQUE(course_id, handicap).
-                await conn.execute(
-                    "UPDATE courses.holes SET handicap=NULL WHERE course_id=$1 AND hole_number = ANY($2::int[])",
-                    cid,
-                    numbers,
-                )
+                await _release_handicaps_before_reordering(conn, cid, numbers)
                 for hole in holes:
                     if hole.number is None:
                         continue
@@ -782,63 +605,6 @@ class CourseRepositoryDB:
             raise DuplicateError("Conflicting course hole or tee identity") from error
         except asyncpg.IntegrityConstraintViolationError as error:
             raise IntegrityError("Invalid verified course data") from error
-
-    async def upsert_hole(self, course_id: str, hole: Hole) -> None:
-        try:
-            async with self._pool.acquire() as conn, conn.transaction():
-                parent = await conn.fetchrow(
-                    "SELECT total_holes FROM courses.courses WHERE id=$1 FOR NO KEY UPDATE",
-                    UUID(course_id),
-                )
-                if parent is None:
-                    raise NotFoundError("Course not found")
-                if hole.number is None or (parent["total_holes"] == HOLES_PER_NINE and hole.number > HOLES_PER_NINE):
-                    raise IntegrityError("Hole is unnumbered or outside the declared course layout")
-                old_par = await conn.fetchval(
-                    "SELECT par FROM courses.holes WHERE course_id=$1 AND hole_number=$2",
-                    UUID(course_id),
-                    hole.number,
-                )
-                if old_par is not None or hole.par is not None:
-                    await conn.execute("UPDATE courses.courses SET par=NULL WHERE id=$1", UUID(course_id))
-                await conn.execute(
-                    """INSERT INTO courses.holes (course_id, hole_number, par, handicap)
-                       VALUES ($1, $2, $3, $4)
-                       ON CONFLICT (course_id, hole_number)
-                       DO UPDATE SET par = EXCLUDED.par, handicap = EXCLUDED.handicap""",
-                    UUID(course_id),
-                    hole.number,
-                    hole.par,
-                    hole.handicap,
-                )
-        except asyncpg.UniqueViolationError as error:
-            raise DuplicateError("Conflicting course hole identity") from error
-        except asyncpg.IntegrityConstraintViolationError as error:
-            raise IntegrityError("Invalid course hole or reference") from error
-
-    async def upsert_tee(self, course_id: str, tee: Tee) -> None:
-        try:
-            async with self._pool.acquire() as conn, conn.transaction():
-                await self._write_tee(conn, UUID(course_id), tee)
-        except asyncpg.UniqueViolationError as error:
-            raise DuplicateError("Conflicting tee rating coverage") from error
-        except asyncpg.IntegrityConstraintViolationError as error:
-            raise IntegrityError("Invalid course tee or reference") from error
-
-    async def delete_course(self, course_id: str, *, user_id: Optional[str] = None) -> bool:
-        try:
-            async with self._pool.acquire() as conn:
-                if user_id:
-                    result = await conn.execute(
-                        "DELETE FROM courses.courses WHERE id = $1 AND user_id = $2",
-                        UUID(course_id),
-                        UUID(user_id),
-                    )
-                else:
-                    result = await conn.execute("DELETE FROM courses.courses WHERE id = $1", UUID(course_id))
-                return result == "DELETE 1"
-        except asyncpg.ForeignKeyViolationError as error:
-            raise ConflictError("Course is referenced by saved records") from error
 
     async def search_course_summaries(
         self, query: str, *, user_id: Optional[str] = None

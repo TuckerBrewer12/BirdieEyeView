@@ -369,7 +369,7 @@ async def test_round_fallback_uses_persisted_course_but_preserves_accepted_par(d
     user = await create_user(database_manager, email="snapshot@example.test")
     course = await make_course(database_manager)
     stale_course = course.model_copy(deep=True)
-    await database_manager.courses.upsert_hole(course.id, Hole(number=1, par=5, handicap=1))
+    await database_manager.courses.apply_verified_scan(course.id, [Hole(number=1, par=5, handicap=1)], [])
     saved = await database_manager.rounds.create_round(
         Round(
             course=stale_course,
@@ -380,7 +380,7 @@ async def test_round_fallback_uses_persisted_course_but_preserves_accepted_par(d
     )
     assert saved.get_hole_par(1) == 5
     assert saved.get_hole_par(2) == 3
-    await database_manager.courses.upsert_hole(course.id, Hole(number=1, par=3, handicap=1))
+    await database_manager.courses.apply_verified_scan(course.id, [Hole(number=1, par=3, handicap=1)], [])
     loaded = await database_manager.rounds.get_round(saved.id)
     summary = (await database_manager.rounds.get_round_summaries_for_user(user.id))[0]
     assert loaded.get_hole_par(1) == 5
@@ -416,11 +416,11 @@ async def test_ambiguous_course_tees_and_outside_layout_holes_are_not_persisted(
         )
     course = await make_course(database_manager, count=9)
     with pytest.raises(IntegrityError, match="layout"):
-        await database_manager.courses.upsert_hole(course.id, Hole(number=12, par=4))
+        await database_manager.courses.apply_verified_scan(course.id, [Hole(number=12, par=4)], [])
     with pytest.raises(IntegrityError, match="layout"):
         await database_manager.courses.fill_course_gaps(course.id, [Hole(number=12, par=4)])
     await database_manager.courses.update_course(course.id, total_holes=18, par=None)
-    await database_manager.courses.upsert_hole(course.id, Hole(number=12, par=4))
+    await database_manager.courses.apply_verified_scan(course.id, [Hole(number=12, par=4)], [])
     with pytest.raises(IntegrityError, match="layout"):
         await database_manager.courses.update_course(course.id, total_holes=9)
     assert (await database_manager.courses.get_course(course.id)).total_holes == 18
@@ -484,14 +484,15 @@ async def test_concurrent_tee_replacements_keep_one_complete_configuration(datab
     course = await make_course(database_manager)
     await asyncio.gather(
         *[
-            database_manager.courses.upsert_tee(
+            database_manager.courses.apply_verified_scan(
                 course.id,
-                Tee(
+                [],
+                [Tee(
                     color=color,
                     hole_yardages={1: yardage},
                     rating_holes=FRONT_NINE,
                     course_rating=rating,
-                ),
+                )],
             )
             for color, yardage, rating in [("Blue", 300, 30.0), ("blue", 400, 31.0)]
         ]
@@ -505,11 +506,11 @@ async def test_concurrent_tee_replacements_keep_one_complete_configuration(datab
 async def test_course_par_does_not_resurrect_after_clearing_observations(database_manager):
     course = await make_course(database_manager, count=9)
     for number in FRONT_NINE:
-        await database_manager.courses.upsert_hole(course.id, Hole(number=number, par=None, handicap=number))
+        await database_manager.courses.apply_verified_scan(course.id, [Hole(number=number, par=None, handicap=number)], [])
     assert (await database_manager.courses.get_course(course.id)).get_par() is None
     supplied = await database_manager.courses.create_course(Course(name="Supplied par", total_holes=9, par=36))
     await database_manager.courses.fill_course_gaps(supplied.id, [Hole(number=1, par=4)])
-    await database_manager.courses.upsert_hole(supplied.id, Hole(number=1, par=None))
+    await database_manager.courses.apply_verified_scan(supplied.id, [Hole(number=1, par=None)], [])
     assert (await database_manager.courses.get_course(supplied.id)).get_par() is None
 
 
