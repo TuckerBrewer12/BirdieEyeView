@@ -41,10 +41,8 @@ async def test_explicit_format_survives_single_bulk_and_edit(database_manager, c
     assert saved.is_complete()
     bulk = (await database_manager.rounds.get_rounds_for_user(user.id))[0]
     assert bulk.intended_holes == coverage and bulk.is_complete()
-    edited = await database_manager.rounds.update_hole_scores(
-        saved.id,
-        [HoleScore(hole_number=coverage[0], strokes=5)],
-        user_id=user.id,
+    edited = await database_manager.rounds.edit_round(
+        saved.id, user_id=user.id, hole_changes={coverage[0]: {"strokes": 5}}, fields={}
     )
     assert edited.is_complete()
     async with database_manager._pool.acquire() as conn:
@@ -102,13 +100,15 @@ async def test_supplied_totals_invalidate_without_resurrecting_after_reload(data
         user.id,
     )
     assert (saved.get_total_putts(), saved.get_total_gir()) == (30, 4)
-    notes = await database_manager.rounds.update_round(saved.id, user_id=user.id, notes="unchanged observations")
+    notes = await database_manager.rounds.edit_round(
+        saved.id, user_id=user.id, hole_changes={}, fields={"notes": "unchanged observations"}
+    )
     assert notes.get_total_putts() == 30
-    await database_manager.rounds.upsert_hole_score(saved.id, HoleScore(hole_number=1, strokes=4, putts=2))
+    await database_manager.rounds.edit_round(saved.id, hole_changes={1: {"strokes": 4, "putts": 2}}, fields={})
     partial = await database_manager.rounds.get_round(saved.id)
     assert partial.get_total_putts() is None
     assert partial.get_total_gir() == 4
-    await database_manager.rounds.upsert_hole_score(saved.id, HoleScore(hole_number=1, strokes=4))
+    await database_manager.rounds.edit_round(saved.id, hole_changes={1: {"strokes": 4, "putts": None}}, fields={})
     cleared = await database_manager.rounds.get_round(saved.id)
     assert cleared.get_total_putts() is None
     assert cleared.get_total_gir() == 4
@@ -254,7 +254,9 @@ async def test_single_slot_pool_loads_and_updates_without_nested_acquisition(pos
             asyncio.gather(*[one_slot.rounds.get_round(saved.id) for _ in range(5)]), timeout=5
         )
         assert all(round_.is_complete() for round_ in results)
-        edited = await asyncio.wait_for(one_slot.rounds.update_round(saved.id, notes="one slot"), timeout=5)
+        edited = await asyncio.wait_for(
+            one_slot.rounds.edit_round(saved.id, hole_changes={}, fields={"notes": "one slot"}), timeout=5
+        )
         assert edited.notes == "one slot"
     finally:
         await single.close()
@@ -447,12 +449,8 @@ async def test_sql_and_model_summaries_ignore_unscored_stats_and_keep_unknowns(d
     assert summary.get_total_gir() == saved.get_total_gir() is None
     assert summary.total_to_par() == saved.total_to_par() == 1
     with pytest.raises(IntegrityError):
-        await database_manager.rounds.update_hole_scores(
-            saved.id,
-            [
-                HoleScore(hole_number=1, strokes=6),
-                HoleScore(hole_number=10, strokes=3),
-            ],
+        await database_manager.rounds.edit_round(
+            saved.id, hole_changes={1: {"strokes": 6}, 10: {"strokes": 3}}, fields={}
         )
     assert (await database_manager.rounds.get_round(saved.id)).get_hole_score(1).strokes == 4
 
@@ -476,7 +474,7 @@ async def test_relink_preserves_par_and_clears_obsolete_hole_and_custom_tee_refe
     async with database_manager._pool.acquire() as conn:
         assert await conn.fetchval("SELECT hole_id FROM users.hole_scores WHERE round_id=$1", UUID(saved.id)) is None
     outsider = await create_user(database_manager, email="relink-other@example.test")
-    assert await database_manager.rounds.update_round(saved.id, user_id=outsider.id) is None
+    assert await database_manager.rounds.edit_round(saved.id, user_id=outsider.id, hole_changes={}, fields={}) is None
     assert await database_manager.courses.update_course(original.id, user_id=outsider.id) is None
 
 

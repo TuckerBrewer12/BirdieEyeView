@@ -1,5 +1,5 @@
-import json
 from datetime import datetime, timezone
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -98,35 +98,18 @@ async def test_get_rounds_for_user_filters_by_course(database_manager):
     assert [round_.id for round_ in rounds] == [saved_round.id]
 
 
-async def test_update_hole_scores_recalculates_total(database_manager):
+async def test_edit_recalculates_the_stored_total(database_manager):
     user, _, saved_round = await _create_linked_round(database_manager)
 
-    updated_round = await database_manager.rounds.update_hole_scores(
-        saved_round.id,
-        [HoleScore(hole_number=1, strokes=5, putts=2)],
-        user_id=user.id,
+    edited = await database_manager.rounds.edit_round(
+        saved_round.id, user_id=user.id, hole_changes={1: {"strokes": 5, "putts": 2}}, fields={}
     )
 
-    assert updated_round.get_hole_score(1).strokes == 5
-    assert updated_round.calculate_total_score() == 73
-
-
-async def test_scan_json_round_trips(database_manager):
-    _, _, saved_round = await _create_linked_round(database_manager)
-
-    scan_id = await database_manager.rounds.save_scan(
-        round_id=saved_round.id,
-        image_path="integration-scorecard.png",
-        llm_model="integration-model",
-        llm_raw_json={"status": "parsed", "holes": 18},
-    )
-    scans = await database_manager.rounds.get_scans_for_round(saved_round.id)
-    raw_scan_json = scans[0]["llm_raw_json"]
-    if isinstance(raw_scan_json, str):
-        raw_scan_json = json.loads(raw_scan_json)
-
-    assert str(scans[0]["id"]) == scan_id
-    assert raw_scan_json == {"status": "parsed", "holes": 18}
+    assert edited.get_hole_score(1).strokes == 5
+    assert edited.calculate_total_score() == 73
+    async with database_manager._pool.acquire() as conn:
+        stored = await conn.fetchval("SELECT total_score FROM users.rounds WHERE id = $1", UUID(saved_round.id))
+    assert stored == 73
 
 
 async def _create_unlinked_round(database_manager):
@@ -180,3 +163,28 @@ async def test_delete_round_removes_owned_round(database_manager):
 
     assert deleted is True
     assert await database_manager.rounds.get_round(saved_round.id) is None
+
+
+async def test_round_owner_lookup(database_manager):
+    user, _, saved_round = await _create_linked_round(database_manager)
+    lookup = database_manager.rounds.get_round_owner_id
+
+    assert await lookup(str(saved_round.id)) == str(user.id)
+    assert await lookup(str(uuid4())) is None
+    assert await lookup("not-a-uuid") is None
+
+
+async def test_played_courses_are_distinct_owner_scoped_and_ordered(database_manager):
+    user = await create_user(database_manager, email="played@example.com")
+    other = await create_user(database_manager, email="played-other@example.com")
+    master = await create_course(database_manager, name="Same Name", external_course_id="played-master")
+    copy = await create_course(database_manager, name="Same Name", external_course_id="played-copy", user_id=user.id)
+    alpha = await create_course(database_manager, name="Alpha Links", external_course_id="played-alpha", user_id=user.id)
+    theirs = await create_course(database_manager, name="Theirs", external_course_id="played-theirs", user_id=other.id)
+    for course in (master, master, copy, alpha):
+        await create_round(database_manager, user_id=user.id, course=course)
+    await create_round(database_manager, user_id=other.id, course=theirs)
+
+    played = await database_manager.rounds.get_played_courses_for_user(str(user.id))
+
+    assert [course["id"] for course in played] == [str(alpha.id), *sorted([str(master.id), str(copy.id)])]

@@ -13,7 +13,7 @@
 | [schema.sql](../../database/schema.sql) | Current schema definition used to create fresh test databases. |
 | [migrations](../../database/migrations) | Incremental SQL changes for existing databases. |
 
-The `courses` schema holds course, hole, tee, and yardage information. The `users` schema holds profiles/auth state, rounds/hole scores, user tees, scan records, and friendships. Inspect SQL for exact table definitions. `user_id IS NULL` distinguishes master courses from user-owned courses; row access and authorization still need enforcement at caller boundaries.
+The `courses` schema holds course, hole, tee, and yardage information. The `users` schema holds profiles/auth state, rounds/hole scores, user tees and friendships, plus the legacy `scorecard_scans` table, which nothing writes any more (it goes in step 10). Inspect SQL for exact table definitions. `user_id IS NULL` distinguishes master courses from user-owned courses; row access and authorization still need enforcement at caller boundaries.
 
 ## Data flow
 
