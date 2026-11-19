@@ -50,6 +50,7 @@ Run these once the planned edits are done, and again after the last fix from the
 - when the OpenAPI schema changed: regenerate `frontend/openapi.json` and `api.gen.ts`, and run the frontend type check
 - `git status --short` shows only the planned files: no probe, scratch or generated leftovers
 - `git diff --check` is clean (scripted edits leave trailing spaces and extra blank lines)
+- when the change deletes or moves code, no import it orphaned in a touched test file: `pyproject.toml` ignores F401 under `tests/**`, so compare `ruff check --isolated --select F401` on those files against the base branch
 
 Live scan evaluation calls paid providers. Run it only when the plan names it and the user has agreed to the cost.
 

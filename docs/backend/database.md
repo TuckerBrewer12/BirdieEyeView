@@ -27,7 +27,7 @@ In the [friendship repository](../../database/repositories/friendship_repo.py), 
 
 In the [course repository](../../database/repositories/course_repo.py), a unique violation on a provider-ID index raises `DuplicateProviderIdError` (a `DuplicateError`), so callers can tell it from a name conflict. `clone_course` recovers from a duplicate only with the user's exact copy (same provider ID, or the name and location the uniqueness index compares), never a fuzzy match. The summary queries escape `LIKE` wildcards in search text and end their order with the course ID; the course list orders the user's played courses first.
 
-The converters and repositories persist the Models coverage, rating, goal and historical-context contracts. The integration includes these migrations:
+The converters and repositories persist the Models coverage, rating, goal and historical-context contracts. Gap filling (`course_repo.fill_course_gaps`, from a reviewed scan or a round linked to a course) keeps a rating's coverage: a rating for the course's layout fills the tee's rating with its `rating_holes`, a rating for other holes (a front-nine rating on an 18-hole course) is added to `courses.tee_ratings` when that coverage has none, and an existing rating is never overwritten. The integration includes these migrations:
 
 - [013_add_course_trigram_indexes.sql](../../database/migrations/013_add_course_trigram_indexes.sql): course-name and location search indexes from `main`.
 - [014_persist_domain_context.sql](../../database/migrations/014_persist_domain_context.sql): explicit coverage, rating and goal metadata, historical context and golf bounds.

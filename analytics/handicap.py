@@ -183,14 +183,6 @@ def handicap_index(
     return index
 
 
-def user_handicap_index(rounds: Iterable[Round], user: Any) -> Optional[float]:
-    return handicap_index(
-        rounds,
-        seed_handicap=getattr(user, "handicap", None),
-        seed_set_at=getattr(user, "last_handicap_update", None),
-    )
-
-
 def handicap_trend(
     rounds: Iterable[Round],
     *,

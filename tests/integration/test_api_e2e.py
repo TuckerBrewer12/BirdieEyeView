@@ -369,6 +369,38 @@ def test_self_only_stats_refuse_everyone_else_even_an_accepted_friend(api):
     assert api.client.get(f"/api/stats/analytics/{alice['id']}", headers=bob["headers"]).status_code == 200
     assert api.client.get(f"/api/stats/analytics/{alice['id']}", headers=carol["headers"]).status_code == 403
     assert api.client.get(f"/api/stats/milestones/{alice['id']}", headers=alice["headers"]).status_code == 404
+    assert api.client.get(f"/api/ai-insights/{alice['id']}", headers=alice["headers"]).status_code == 404
+
+
+def test_a_gap_filled_nine_hole_rating_covers_only_its_holes(api):
+    alice = api.user("alice@example.com")
+    assert api.client.patch(f"/api/users/{alice['id']}", headers=alice["headers"],
+                            json={"handicap": 10.0}).status_code == 200
+    course = api.client.post("/api/courses", headers=alice["headers"], json={
+        "name": "Unrated Links",
+        "holes": [{"number": n, "par": p, "handicap": n} for n, p in PARS.items()],
+        "tees": [{"color": "Blue", "hole_yardages": {str(n): 400 for n in PARS}}],
+    }).json()["id"]
+    front = {n: p for n, p in PARS.items() if n <= 9}
+
+    def save(scores, **extra):
+        response = api.client.post("/api/scan/save", headers=alice["headers"], json={
+            "course_id": course, "tee_box": "Blue", "date": "2026-10-01", "hole_scores": scores, **extra,
+        })
+        assert response.status_code == 200, response.text
+        return api.client.get(f"/api/rounds/{response.json()['id']}", headers=alice["headers"]).json()
+
+    save([{"hole_number": n, "strokes": p + 1} for n, p in front.items()],
+         course_holes=[{"hole_number": n, "par": p} for n, p in front.items()],
+         all_tees=[{"color": "Blue", "course_rating": 35.2, "slope_rating": 118,
+                    "hole_yardages": {str(n): 400 for n in front}}])
+
+    tees = api.client.get(f"/api/courses/{course}", headers=alice["headers"]).json()["tees"]
+    blue = next(t for t in tees if t["color"] == "Blue")
+    assert (blue["course_rating"], blue["slope_rating"], blue["course_handicap"]) == (None, None, None)
+    assert blue["ratings"] == [{"hole_numbers": list(front), "course_rating": 35.2, "slope_rating": 118.0}]
+    eighteen = save([{"hole_number": n, "strokes": p + 1} for n, p in PARS.items()])
+    assert (eighteen["course_handicap"], eighteen["net_score"]) == (None, None)
 
 
 def test_putts_split_counts_only_scored_holes(api):

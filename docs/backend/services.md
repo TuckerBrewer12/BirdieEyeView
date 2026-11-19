@@ -15,14 +15,13 @@
 | [user_tee_service.py](../../services/user_tee_service.py) | User-tee create and update: the linked course's layout check and the rating coverage, recomputed when a rating changes. |
 | [golfcourse_api_service.py](../../services/golfcourse_api_service.py) | External course search and per-tee course details used only for verification. Every provider failure, including a missing API key, raises `CourseProviderUnavailable`. |
 | `mistral_ocr_service.py`, `mistral_scorecard_parser.py`, `gemini_table_merger.py` | OCR, parsed observations, and optional table merging; see [extraction](extraction.md). |
-| [ai_service.py](../../services/ai_service.py) | Rule-based recommendations, strengths, and peer comparisons from Analytics. No LLM call. |
 | `scan_report_service.py`, `scan_report_sanitizer.py`, `scan_report_crypto.py`, `scan_report_storage.py` | Anonymous report validation, metadata removal, authenticated encryption, and private S3-compatible persistence. |
 
 ## How the layers interact
 
 The scan router checks the selected course's access with `load_linkable_course` (unknown 404, another golfer's 403), then hands the service a `ReviewedScan` built by `SaveRoundRequest.to_reviewed_scan(user_id, course)`: the signed-in golfer's id, the access-checked course, and the scanned tees, holes, scores and date in domain form. The service imports nothing from `api`. It never guesses the course; it uses the user's choice:
 
-- **Existing course (`course_id`):** saved against as-is. A user-owned course has missing holes/tees filled from the scan. A master course is overwritten from the scan only when the scan covers every hole the master has data for (a front-nine scan never rewrites an 18-hole master, even a legacy one without `total_holes`), the scan differs, the master has a provider ID, and the provider verifies the scan; otherwise it is unchanged. A picked course is checked under its own name when the request has no `course_name`. When it is overwritten, the round's `par_played`/`handicap_played` come from the verified scan. A scanned rating that differs from the master counts as a change, but is written only when the provider confirms it; a rating missing from the scan is not a change, and the master keeps its ratings for that tee.
+- **Existing course (`course_id`):** saved against as-is. A user-owned course has missing holes/tees filled from the scan, and a tee rating sent with the save keeps the holes it covers (a front-nine rating never becomes the 18-hole rating). The app sends back the course's stored ratings, so in practice this guards API clients and round linking. A master course is overwritten from the scan only when the scan covers every hole the master has data for (a front-nine scan never rewrites an 18-hole master, even a legacy one without `total_holes`), the scan differs, the master has a provider ID, and the provider verifies the scan; otherwise it is unchanged. A picked course is checked under its own name when the request has no `course_name`. When it is overwritten, the round's `par_played`/`handicap_played` come from the verified scan. A scanned rating that differs from the master counts as a change, but is written only when the provider confirms it; a rating missing from the scan is not a change, and the master keeps its ratings for that tee.
 - **Provider pick (`external_course_id`):** links to an existing course with that ID. Otherwise a new course must pass the completeness check (`Course.has_required_course_data()`); if the provider verifies it, the scanned data becomes one master course, else a user-owned course without the provider ID.
 - **Typed name only:** reuses the user's own course with that exact name, or creates a user-owned course that passes the completeness check. No provider call.
 - **No course:** rejected.
@@ -35,7 +34,7 @@ Report submission is independent of round saving and PostgreSQL. Developer retri
 
 ## Refactor considerations
 
-Verified course resolution and the atomic course/round save are part of `backend-refactor`; this does not certify deployment. Parser/OCR/merger review findings and the frontend's handling of the new save rejections remain open. AI suggestions now take their metrics from `analytics/scoring.py`, `putting.py` and `greens.py` (shared eligibility, par and missing-data rules) and the handicap from `user_handicap_index`; benchmark values, priority weights and trend thresholds are unchanged policy assumptions documented in the module. Coordinate calculation changes with Analytics rather than changing rules in the service.
+Verified course resolution and the atomic course/round save are part of `backend-refactor`; this does not certify deployment. Parser/OCR/merger review findings and the frontend's handling of the new save rejections remain open.
 
 ## Changing this domain
 

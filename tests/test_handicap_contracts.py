@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
-from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -105,12 +104,6 @@ async def test_every_screen_reports_the_same_seeded_index():
 
     assert from_dashboard == from_analytics == 10.0
     assert all(call.kwargs.get("limit") in (None, 50) for call in db.rounds.get_rounds_for_user.await_args_list)
-
-
-def test_user_handicap_index_uses_the_seed_and_reset():
-    user = SimpleNamespace(handicap=18.2, last_handicap_update=None)
-
-    assert handicap.user_handicap_index([], user) == 18.2
 
 
 EXPECTED_TABLE = {

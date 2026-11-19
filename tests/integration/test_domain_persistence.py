@@ -8,6 +8,7 @@ import pytest
 from database import DatabaseManager
 from database.exceptions import ConflictError, DuplicateError, IntegrityError
 from models import BACK_NINE, FRONT_NINE, FULL_ROUND, Course, Hole, HoleScore, Round, Tee, TeeRating, User, UserTee
+from services.round_service import link_course
 from tests.integration.helpers import create_course, create_user
 
 pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
@@ -555,3 +556,29 @@ async def test_token_expiry_and_recent_issuance_use_utc_even_in_non_utc_session(
         assert await repository.consume_auth_token("password_reset", "e" * 64) is None
     finally:
         await local.close()
+
+
+async def test_linking_a_round_keeps_its_tee_ratings_coverage(database_manager):
+    user = await create_user(database_manager, email="link-coverage@example.com")
+    front = await database_manager.courses.create_course(Course(
+        name="Front Only", total_holes=9,
+        holes=[Hole(number=n, par=4, handicap=n) for n in FRONT_NINE],
+        tees=[Tee(color="Blue", course_rating=35.2, slope_rating=118, rating_holes=FRONT_NINE,
+                  hole_yardages={n: 400 for n in FRONT_NINE})],
+    ), user_id=user.id)
+    full = await database_manager.courses.create_course(Course(
+        name="Full Links", total_holes=18,
+        holes=[Hole(number=n, par=4, handicap=n) for n in FULL_ROUND],
+        tees=[Tee(color="Blue", hole_yardages={n: 400 for n in FULL_ROUND})],
+    ), user_id=user.id)
+    played = await database_manager.rounds.create_round(
+        Round(course=front, tee_box="Blue", date=datetime(2026, 9, 7, tzinfo=timezone.utc),
+              hole_scores=[HoleScore(hole_number=n, strokes=5, par_played=4) for n in FRONT_NINE]),
+        user.id, course_id=front.id,
+    )
+
+    await link_course(database_manager, str(played.id), full, str(user.id))
+
+    blue = (await database_manager.courses.get_course(full.id)).get_tee("Blue")
+    assert (blue.course_rating, blue.slope_rating) == (None, None)
+    assert [(r.hole_numbers, r.course_rating, r.slope_rating) for r in blue.ratings] == [(FRONT_NINE, 35.2, 118.0)]
