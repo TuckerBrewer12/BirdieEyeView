@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Usage: python scripts/migrate.py                  apply every pending migration, in order
-#        python scripts/migrate.py --status         list applied and pending migrations
-#        python scripts/migrate.py --baseline 016   record 001-016 as already applied (one-time, existing database)
-# Env: DATABASE_URL must point at the database to migrate.
 from __future__ import annotations
 
 import argparse
