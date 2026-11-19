@@ -27,3 +27,11 @@ sessions/
 
 # Claude Code agent worktrees
 .claude/worktrees/
+
+# Local working notes
+/handoff.md
+/1. Fix backend consistency issues*.md
+/outputs/
+
+# macOS
+.DS_Store

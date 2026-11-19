@@ -43,6 +43,13 @@ python -m unittest tests.test_llm.TestScorecardExtraction.test_scores_only_extra
 python -m unittest tests.test_llm.TestScorecardExtraction.test_smart_with_null_repo    # SMART strategy
 ```
 
+## Searching & Checks
+
+- macOS BSD `grep -E`, `git grep -E` and `sed` don't support `\b`: a search using it silently returns nothing. Use a short Python script (or `git grep -w`).
+- `-w` never matches a name with a leading `.`; to find method calls search `[.]name\(`.
+- To find code's users, or every import to rewrite after a move, search every tracked file (`git ls-files`), `data/` and `scripts/` included, and every import form (`from x import y`, `import x.y as z`, `import x`).
+- After a mutation check (breaking code to prove a test catches it), delete `__pycache__` folders before rerunning: a stale `.pyc` survives when the restored file has the same size and modification second.
+
 ## Architecture
 
 ### `models/` — Pydantic v2 domain models
