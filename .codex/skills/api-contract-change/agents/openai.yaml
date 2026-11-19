@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Contract Change"
+  short_description: "Carry an API model change to the frontend"
+  default_prompt: "Use $api-contract-change to carry this API request or response change through the generated types and the frontend, and run both sides' checks."
