@@ -1,6 +1,6 @@
 from database.db_manager import DatabaseManager
 from database.exceptions import NotFoundError
-from models import Course, Round
+from models import Course, Hole, Round
 
 
 async def link_course(db: DatabaseManager, round_id: str, course: Course, user_id: str) -> Round:
@@ -18,7 +18,7 @@ async def link_course(db: DatabaseManager, round_id: str, course: Course, user_i
 
 async def _fill_course_from_round(db: DatabaseManager, round_: Round, course_id: str, conn) -> None:
     scan_holes = [
-        {"hole_number": hs.hole_number, "par": hs.par_played, "handicap": hs.handicap_played}
+        Hole(number=hs.hole_number, par=hs.par_played, handicap=hs.handicap_played)
         for hs in round_.hole_scores
         if hs.hole_number is not None and hs.par_played is not None
     ]
