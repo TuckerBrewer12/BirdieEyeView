@@ -1,0 +1,4 @@
+interface:
+  display_name: "Schema Migration"
+  short_description: "Change the database schema safely"
+  default_prompt: "Use $schema-migration to check, write, test and order this database schema change."
