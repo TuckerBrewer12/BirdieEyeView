@@ -50,6 +50,7 @@ A finding that the code misbehaves needs evidence. Prefer a throwaway probe agai
 - Name it so it cannot be mistaken for a real test (`tests/integration/test_zz_probe_<slug>.py`) and delete it before recon ends. `git status --short` must show no probe file when you finish.
 - Never call paid providers or a non-test database from a probe.
 - Record each result in the artifact's `### Reproduced` table. A suspicion you could not reproduce is listed as unverified, not as a finding.
+- Before stating who a finding affects or what a client sees, trace it end to end. Find the response model's fields and the builder that fills them: a model method returning `None` is not a response value until a response uses it. Check what the frontend really sends (`frontend/src`, such as `pages/scan/scanModel.ts`) whenever the probe used a hand-written request. State only the reach you traced; anything not traced is unverified.
 
 ## Golf ScoreCard Map
 
