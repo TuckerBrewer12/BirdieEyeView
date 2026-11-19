@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Retro"
+  short_description: "Turn corrections into durable fixes"
+  default_prompt: "Use $skill-retro to review this session's corrections and propose fixes for approval."
