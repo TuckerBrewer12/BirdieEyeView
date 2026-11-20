@@ -1,7 +1,7 @@
 # Review bots
 
-On every non-draft PR the Brand Kit, MVVM, and UI Test Checker bots leave
-inline comments and open a second PR that implements the finding, targeting
+On every non-draft PR the Brand Kit, MVVM, UI Test Checker and Backend Rules
+bots leave inline comments and open a second PR that implements the finding, targeting
 the original PR's branch. The Frontend coverage bot is separate: it posts one
 sticky comment with Vitest and UI test changed-line coverage plus an AI
 count of reasonable screenshot and UI test screens. It does not open fix PRs.
@@ -79,7 +79,7 @@ nothing.
 
 | File | What it is |
 | --- | --- |
-| `brand-kit.md`, `mvvm.md`, `ui-test-checker.md` | Review prompts |
+| `brand-kit.md`, `mvvm.md`, `ui-test-checker.md`, `backend-rules.md` | Review prompts. The Backend Rules Bot reviews `api/`, `services/`, `models/`, `analytics/` and `database/` against the Backend rules in `AGENTS.md`, which it reads as its rulebook |
 | `gate.py` | Skip a push that leaves the bot's part of the PR unchanged since its last successful run |
 | `run-bot.sh` | Shared reviewer: diff → model → GitHub review |
 | `cursor-run.sh` | Cursor CLI invocation shared by the review, coverage, and fix runners |
