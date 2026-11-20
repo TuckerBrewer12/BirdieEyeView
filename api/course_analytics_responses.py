@@ -1,15 +1,13 @@
-from typing import List
-
 from analytics import best_rounds
 from analytics import holes
 from analytics import scoring
+from analytics.player_history import RoundWindow
 from api.round_responses import round_summary
 from api.schemas import CourseAnalyticsResponse
-from models import Round
 
 
-def course_analytics(course_id: str, rounds: List[Round]) -> CourseAnalyticsResponse:
-    newest_first = list(reversed(rounds))
+def course_analytics(course_id: str, window: RoundWindow) -> CourseAnalyticsResponse:
+    rounds, newest_first = window.rounds, window.newest_first
     record = best_rounds.course_record(newest_first)
     by_hole = holes.average_score_relative_to_par_by_hole(rounds)
     gir_by_hole = holes.gir_percentage_by_hole(rounds)

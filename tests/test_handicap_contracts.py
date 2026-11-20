@@ -10,6 +10,7 @@ from api.routers import stats
 from models.hole_layout import FRONT_NINE, FULL_ROUND
 from tests.analytics_builders import course, par_round, round_
 from tests.helpers import make_mock_database, make_round_summary, make_user
+from tests.analytics_builders import history_of
 
 START = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
@@ -47,8 +48,7 @@ def test_index_and_used_flags_come_from_the_same_selection():
 def test_display_window_shows_flags_from_the_full_history():
     rounds = rated_rounds([0] * 8 + [10] * 12)
 
-    from api.analytics_responses import _handicap_trend
-    shown = _handicap_trend(make_user(uuid4()), rounds, rounds[-5:])
+    shown = history_of(rounds, make_user(uuid4())).handicap_rows(rounds[-5:])
 
     assert len(shown) == 5 and not any(e["used_in_hi"] for e in shown)
     assert [e["round_index"] for e in shown] == [16, 17, 18, 19, 20]

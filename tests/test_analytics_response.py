@@ -17,6 +17,7 @@ from api.analytics_responses import _handicap_trend, analytics_response
 from api.routers import stats
 from api.schemas import AnalyticsResponse, DashboardResponse, GoalReportResponse, ScoreMix
 from models import Course, Hole, HoleScore, Round
+from tests.analytics_builders import history_of
 
 _SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "sample_golfer.py"
 _spec = importlib.util.spec_from_file_location("sample_golfer", _SCRIPT)
@@ -41,16 +42,21 @@ def _two_rounds():
     return [first, second]
 
 
+def _whole_history_response(rounds, today):
+    history = history_of(rounds)
+    return analytics_response(history, history.window(), today=today)
+
+
 def test_each_handicap_trend_row_says_whether_its_round_falls_in_the_last_year():
     rounds = _two_rounds()
-    response = analytics_response(rounds, rounds, today=date(2027, 2, 2))
+    response = _whole_history_response(rounds, today=date(2027, 2, 2))
     assert [row.in_window for row in response.handicap_trend] == [False, True]
     assert response.notable_achievements.career_totals.one_year.rounds_played == 1
 
 
 def test_the_trend_is_marked_against_the_window_length_it_is_given():
     rounds = _two_rounds()
-    marks = lambda days: [row["in_window"] for row in _handicap_trend(None, rounds, rounds, date(2026, 2, 15), days)]
+    marks = lambda days: [row["in_window"] for row in _handicap_trend(history_of(rounds), rounds, date(2026, 2, 15), days)]
     assert marks(14) == [True, True]
     assert marks(13) == [False, True]
     assert marks(10) == [False, False]
@@ -58,7 +64,7 @@ def test_the_trend_is_marked_against_the_window_length_it_is_given():
 
 def test_analytics_response_works_out_the_figures_the_page_shows():
     rounds = _two_rounds()
-    response = analytics_response(rounds, rounds, today=date(2026, 2, 15))
+    response = _whole_history_response(rounds, today=date(2026, 2, 15))
 
     assert response.kpis.average_putts == 31.5
     assert [row.rolling_average for row in response.score_trend] == [72.0, 76.5]
@@ -83,11 +89,11 @@ def test_analytics_response_marks_milestones_against_the_last_year_ending_today(
     rounds = _two_rounds()
     breaks = lambda response: response.notable_achievements.round_milestones
 
-    now = breaks(analytics_response(rounds, rounds, today=date(2026, 2, 15)))
+    now = breaks(_whole_history_response(rounds, today=date(2026, 2, 15)))
     assert now.one_year.new_personal_records_achieved_count == 8
     assert all(row.achievement.in_window for row in now.lifetime.score_breaks if row.achievement)
 
-    later = breaks(analytics_response(rounds, rounds, today=date(2027, 3, 1)))
+    later = breaks(_whole_history_response(rounds, today=date(2027, 3, 1)))
     assert later.one_year.new_personal_records_achieved_count == 0
     assert not any(row.achievement.in_window for row in later.lifetime.score_breaks if row.achievement)
 

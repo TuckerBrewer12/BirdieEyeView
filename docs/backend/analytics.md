@@ -15,6 +15,7 @@
 | [recent_comparisons.py](../../analytics/recent_comparisons.py) | The Matplotlib export's round comparisons (the selected round against its last 5, 10 and 20). The app's "vs your average" is [round_comparison.py](../../analytics/round_comparison.py). |
 | [best_rounds.py](../../analytics/best_rounds.py) | The best and worst round and their ranks (complete 18-hole rounds by gross score), full rounds, and a course's record. |
 | [score_types.py](../../analytics/score_types.py) | The chart score buckets (eagle-or-better to quad-or-worse) and their order. |
+| [player_history.py](../../analytics/player_history.py) | A golfer's rounds in one order (by date, same-day in save order, undated last), the windows the stats endpoints read, the handicap index and each round's trend row. |
 | [windows.py](../../analytics/windows.py) | Five-round rolling averages and the one-year records window. |
 | [verdicts.py](../../analytics/verdicts.py) | The one good/bad/neutral call, and a hole's putts against two. |
 | [handicap.py](../../analytics/handicap.py) | WHS-based index estimate: differentials, rating coverage, course handicap, trend and used rounds. |
@@ -25,7 +26,7 @@
 
 ## How results reach the app
 
-`api/routers/stats.py` loads player history, chooses filters/windows, calls Analytics, and assembles response data. Frontend view-model hooks shape that data for charts. Python Matplotlib exports are a separate path; React charts do not render those generated PNGs.
+`api/routers/stats.py` checks access, loads the golfer's [PlayerHistory](../../analytics/player_history.py) once and passes it, or a window of it, to a response builder. `PlayerHistory` is the one place rounds are ordered and windowed (limit, course, the home course, `ytd`/`1y`), and the one place the handicap index and each round's trend row come from, so no caller reverses, re-sorts or re-aligns rounds; `scripts/ci/check_backend_conventions.py` fails a PR that loads rounds or calls the player handicap entry points anywhere else. Frontend view-model hooks shape that data for charts. Python Matplotlib exports are a separate path; React charts do not render those generated PNGs.
 
 ## Metric contracts
 
@@ -40,7 +41,7 @@
 
 ### Handicap
 
-[handicap.py](../../analytics/handicap.py) is a WHS-based **estimate**, not an official index. It uses complete 18-hole rounds with the Course/Slope Rating covering the holes played; a rating saved without coverage covers the course's whole layout, and new saves record that coverage. Differentials are rounded to the tenth with .5 up, and the same values drive selection, the index and the used-round flags (computed from the full calculation, then shown for the displayed rounds). When there is no tee rating, a differential falls back to total minus par. The entry points are `player_handicap_index`, `player_index_window` and `player_handicap_trend` in [handicap.py](../../analytics/handicap.py); [api/player_handicap.py](../../api/player_handicap.py) loads the full history and supplies the user's seed/reset. The index selects the best of the latest 20 eligible differentials, and the trend reports the index after each round with its `differential_status`.
+[handicap.py](../../analytics/handicap.py) is a WHS-based **estimate**, not an official index. It uses complete 18-hole rounds with the Course/Slope Rating covering the holes played; a rating saved without coverage covers the course's whole layout, and new saves record that coverage. Differentials are rounded to the tenth with .5 up, and the same values drive selection, the index and the used-round flags (computed from the full calculation, then shown for the displayed rounds). When there is no tee rating, a differential falls back to total minus par. The entry points are `player_handicap_index`, `player_index_window` and `player_handicap_trend` in [handicap.py](../../analytics/handicap.py); [player_history.py](../../analytics/player_history.py) calls them once over the full history with the user's seed/reset (`PlayerHistory.handicap_index`, `index_window`, `handicap_rows`). The index selects the best of the latest 20 eligible differentials, and the trend reports the index after each round with its `differential_status`.
 
 A complete nine-hole round can have a course handicap and net score from half the index and a rating explicitly covering those nine holes. Nine-hole rounds do not yet contribute to the index: that needs the WHS expected-score method. Adjusted gross score, playing conditions and caps are also not implemented.
 

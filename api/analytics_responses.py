@@ -14,9 +14,10 @@ from analytics.achievements import notable_achievements
 from analytics.benchmarks import player_shape
 from analytics.headline import headline
 from analytics.peak import peak_game
+from analytics.player_history import PlayerHistory, RoundWindow
 from api.round_responses import round_summary
 from api.schemas import AnalyticsKpis, AnalyticsResponse
-from models import Round, User
+from models import Round
 
 
 def _rounded(value: Optional[float], digits: int) -> Optional[float]:
@@ -27,35 +28,20 @@ def _average(values: List[float]) -> Optional[float]:
     return sum(values) / len(values) if values else None
 
 
-def _handicap_trend(
-    user: Optional[User],
-    history: List[Round],
-    rounds: List[Round],
-    today: Optional[date] = None,
-    days: int = windows.RECORDS_WINDOW_DAYS,
-) -> List[Dict[str, Any]]:
-    history = el.chronological(history)
-    trend = hcap.player_handicap_trend(user, history)
-    position = {r.id: i for i, r in enumerate(history) if r.id is not None}
+def _handicap_trend(history: PlayerHistory, rounds: List[Round], today: Optional[date], days: int) -> List[Dict[str, Any]]:
     return [
-        {
-            **(trend[position[r.id]] if r.id in position else {
-                "round_index": 0, "round_id": r.id, "handicap_index": None, "differential": None,
-                "used_in_hi": None, "hi_threshold": None, "differential_status": "unrated",
-            }),
-            "in_window": windows.in_window(r, reference_date=today, days=days),
-        }
-        for r in rounds
+        {**row, "in_window": windows.in_window(r, reference_date=today, days=days)}
+        for r, row in zip(rounds, history.handicap_rows(rounds))
     ]
 
 
 def analytics_response(
-    rounds: List[Round],
-    history: List[Round],
-    home_course_id: Optional[str] = None,
+    history: PlayerHistory,
+    window: RoundWindow,
     today: Optional[date] = None,
-    user: Optional[User] = None,
 ) -> AnalyticsResponse:
+    rounds = window.rounds
+    user = history.user
     eighteen = el.complete_rounds(rounds, el.EIGHTEEN)
     nine = el.complete_rounds(rounds, el.NINE)
     scores = [s for s in (r.calculate_total_score() for r in eighteen) if s is not None]
@@ -63,13 +49,15 @@ def analytics_response(
     gir_rows = greens.gir_per_round(rounds)
     putts_rows = putting.putts_per_round(rounds)
     scoring_by_par = scoring.scoring_by_par(rounds)
-    player_index = hcap.player_handicap_index(user, history)
-    best_round = best_rounds.best_round(list(reversed(rounds)))
+    player_index = history.handicap_index
+    best_round = best_rounds.best_round(window.newest_first)
     best = round_summary(best_round) if best_round else None
     average_putts = _average([r.get_total_putts() for r in eighteen if r.get_total_putts() is not None])
     three_putts = putting.three_putt_averages(rounds)
     shape = player_shape(rounds) or {}
-    achievements = notable_achievements(history, reference_date=today, home_course_id=home_course_id)
+    achievements = notable_achievements(
+        history.rounds, reference_date=today, home_course_id=user.home_course_id if user else None
+    )
 
     next_level = benchmarks.next_level_handicap(player_index)
 
@@ -104,7 +92,7 @@ def analytics_response(
         scoring_by_yardage=scoring.scoring_by_yardage_buckets(rounds),
         scoring_by_handicap=scoring.scoring_vs_hole_handicap(rounds),
         gir_vs_non_gir=greens.gir_vs_non_gir_score_distribution(rounds),
-        handicap_trend=_handicap_trend(user, history, rounds, today, days=achievements["window_days"]),
+        handicap_trend=_handicap_trend(history, rounds, today, achievements["window_days"]),
         notable_achievements=achievements,
         score_mix={
             kind: hcap.round_half_up(share, 2) for kind, share in dashboard.score_mix(rounds)["percentages"].items()

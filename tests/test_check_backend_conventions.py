@@ -120,3 +120,37 @@ def test_flags_hard_coded_hole_counts(snippet):
 )
 def test_allows_unrelated_numbers(snippet):
     assert lines(snippet) == []
+
+
+def history_lines(source: str, filename: str) -> list[int]:
+    return [lineno for lineno, message in check_source(textwrap.dedent(source), filename) if "PlayerHistory" in message]
+
+
+def test_rounds_load_through_player_history_only():
+    source = """
+    async def route(db, user):
+        return await db.rounds.get_rounds_for_user(str(user.id), limit=None)
+    """
+    assert history_lines(source, "api/routers/stats.py") == [3]
+    assert history_lines(source, "analytics/player_history.py") == []
+
+
+@pytest.mark.parametrize("call", ["hcap.player_index_window(user, rounds)", "player_handicap_trend(user, rounds)"])
+def test_player_handicap_entry_points_belong_to_player_history(call):
+    source = f"""
+    def build(user, rounds):
+        return {call}
+    """
+    assert history_lines(source, "api/dashboard_responses.py") == [3]
+    assert history_lines(source, "analytics/player_history.py") == []
+    assert history_lines(source, "analytics/handicap.py") == []
+
+
+@pytest.mark.parametrize("call", ["list(reversed(rounds))", "el.chronological(rounds)"])
+def test_api_code_leaves_round_order_to_player_history(call):
+    source = f"""
+    def build(rounds):
+        return {call}
+    """
+    assert history_lines(source, "api/analytics_responses.py") == [3]
+    assert history_lines(source, "analytics/scoring.py") == []
