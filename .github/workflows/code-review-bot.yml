@@ -1,0 +1,84 @@
+name: Code Review Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: code-review-bot-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  code-review:
+    name: Code Review Bot
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    env:
+      BOT_PATHSPEC: ". :!frontend/openapi.json :!frontend/src/types/api.gen.ts :!frontend/src/brand/theme/tokens.gen.css :!frontend/package-lock.json"
+    outputs:
+      has_fixes: ${{ steps.review.outputs.has_fixes }}
+      findings: ${{ steps.review.outputs.findings }}
+
+    if: >-
+      github.event.pull_request.draft == false &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-bots') &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !startsWith(github.head_ref, 'bot-fix/')
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Skip if unchanged since the last run
+        id: gate
+        if: github.event.action == 'synchronize'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: python3 .github/review-bots/gate.py $BOT_PATHSPEC
+
+      - name: Install Cursor CLI
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+
+      - name: Review
+        id: review
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          BOT_NAME: "🐞 Code Review Bot"
+          BOT_PROMPT: .github/review-bots/code-review.md
+          BOT_CLEAN: "No bugs found in this PR."
+          BOT_LEAD: "— likely bugs"
+          BOT_MODEL: grok-4.7-medium
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: bash .github/review-bots/run-bot.sh
+
+  fix:
+    name: Open fix PRs
+    needs: code-review
+    if: needs.code-review.outputs.has_fixes == 'true'
+    uses: ./.github/workflows/review-fix.yml
+    with:
+      pr_number: ${{ github.event.pull_request.number }}
+      head_ref: ${{ github.event.pull_request.head.ref }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      findings_json: ${{ needs.code-review.outputs.findings }}
+      bot_name: "🐞 Code Review Bot"
+    secrets: inherit
