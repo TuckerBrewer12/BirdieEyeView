@@ -67,7 +67,7 @@ CI fails when either is stale.
 - **Partial data is normal.** Model fields are optional because scans are incomplete. Unknown, zero, omitted and explicitly cleared are different states; keep them apart from the form to the SQL.
 - **One figure, one owner.** The handicap index is `api/player_handicap.py`, and every course handicap and net score starts from it through `analytics/handicap.py`. The best round is `analytics.stats.best_round`: the lowest complete 18-hole round. Records count full rounds only. Good, bad or neutral is `analytics/verdicts.py`. Reuse these; never recompute one beside them.
 - **Courses.** `user_id IS NULL` is a read-only master course; otherwise the course belongs to that user. A round can exist without a course: `par_played` and `handicap_played` live on each hole score, `course_name_played` on the round.
-- **Migrations** are numbered SQL files in `database/migrations/`, applied by hand. `database/schema.sql` is the source of truth; change both.
+- **Migrations** are numbered SQL files in `database/migrations/`. Railway applies pending ones before each deploy (`scripts/migrate.py`, tracked in `public.schema_migrations`); a failing migration blocks the deploy. Never edit a merged migration; add a new one. `database/schema.sql` is the source of truth; change both. See `docs/backend/database.md`.
 - **Async.** Never block the event loop: no `requests`, no `time.sleep`, hash and process images off the loop. Ruff bans the obvious cases.
 - **Errors.** Never send exception text to a client; `scripts/ci/check_backend_conventions.py` checks for it, and for hard-coded hole counts.
 
