@@ -22,6 +22,8 @@ concurrency:
 
 permissions:
   contents: read
+  issues: read
+  pull-requests: read
 
 jobs:
   shard:
@@ -37,6 +39,8 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - uses: actions/setup-node@v4
         with:
@@ -47,8 +51,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Pick specs
+        id: pick
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          SPEC_SELECTION: ${{ vars.SPEC_SELECTION }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          args=(--kind screenshot --github-output "$GITHUB_OUTPUT")
+          if [[ "${{ matrix.shard }}" == 1 ]]; then args+=(--summary "$GITHUB_STEP_SUMMARY"); fi
+          if [[ "$EVENT" == pull_request ]]; then args+=(--base HEAD^1); else args+=(--all "a $EVENT run"); fi
+          node scripts/select-specs.mjs "${args[@]}"
+
       - name: Screenshot tests
-        run: npm run test:screenshots -- --shard=${{ matrix.shard }}/3
+        if: steps.pick.outputs.mode != 'none'
+        env:
+          FILES: ${{ steps.pick.outputs.files }}
+        run: npm run test:screenshots -- --shard=${{ matrix.shard }}/3 --pass-with-no-tests $FILES
 
       - uses: actions/upload-artifact@v4
         if: failure()

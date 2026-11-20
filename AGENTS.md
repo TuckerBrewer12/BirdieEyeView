@@ -47,7 +47,7 @@ npm run test:screenshots      # Playwright looks
 ```
 
 - `tests/integration` needs `TEST_DATABASE_URL` pointing at a disposable database; it drops the schemas.
-- Run Playwright locally with `--workers=1` and only the specs you changed; CI runs the full suite.
+- Run Playwright locally with `--workers=1` and only the specs your change reaches: `node scripts/select-specs.mjs --kind ui --base origin/main` (or `--kind screenshot`) lists them with the reason for each. On a PR, CI runs the same selection and writes the reasons to the run summary; `main` runs every spec. To run every spec on a PR, add the `full-suite` label and re-run; to turn selection off everywhere, set the `SPEC_SELECTION` repository variable to `off`.
 - Screenshot baselines are the Linux renders of CI's Playwright image, so a Mac's screenshot run doesn't match them; CI checks looks. To refresh them, look at the failing run's diffs, then add the `update-screenshots` label to the PR: CI regenerates the baselines, commits them to the branch and checks them again.
 - The live scan eval costs provider credits. Run it with the `run-scan-evals` or `run-quick-scan-eval` label on a PR.
 
