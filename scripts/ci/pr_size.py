@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Usage: BASE_SHA=... HEAD_SHA=... GITHUB_EVENT_PATH=... python scripts/ci/pr_size.py
 from __future__ import annotations
 
 import json
