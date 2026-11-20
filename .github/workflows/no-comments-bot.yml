@@ -1,0 +1,99 @@
+name: No Comments Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "**.py"
+      - "**.ts"
+      - "**.tsx"
+      - "**.js"
+      - "**.jsx"
+      - "**.mjs"
+      - "**.cjs"
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to clean
+        required: true
+        type: string
+
+concurrency:
+  group: no-comments-bot-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+
+jobs:
+  no-comments:
+    name: No Comments Bot
+    runs-on: ubuntu-latest
+
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.pull_request.draft == false &&
+        !contains(github.event.pull_request.labels.*.name, 'skip-bots') &&
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        !startsWith(github.head_ref, 'bot-fix/')
+      )
+
+    steps:
+      - name: Resolve pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
+            --jq '"number=\(.number)\nbase=\(.base.sha)\nhead=\(.head.sha)\nref=\(.head.ref)"' \
+            >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.head }}
+          fetch-depth: 0
+          token: ${{ secrets.BOT_PUSH_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Load the bot from the workflow's commit
+        run: |
+          git fetch -q origin "$GITHUB_SHA"
+          mkdir -p "$RUNNER_TEMP/bot"
+          git archive "$GITHUB_SHA" .github/review-bots | tar -x -C "$RUNNER_TEMP/bot"
+
+      - name: Skip if unchanged since the last run
+        id: gate
+        if: github.event.action == 'synchronize'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA: ${{ steps.pr.outputs.base }}
+          HEAD_SHA: ${{ steps.pr.outputs.head }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: python3 "$RUNNER_TEMP/bot/.github/review-bots/gate.py" '*.py' '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' '*.cjs' ':!*.gen.ts' ':!frontend/src/types/'
+
+      - name: Install TypeScript for the guard
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          version="$(node -p "require('./frontend/package.json').devDependencies.typescript")"
+          npm install --silent --no-save --no-package-lock --prefix "$RUNNER_TEMP/ts" "typescript@${version}"
+          echo "TYPESCRIPT_MODULE=$RUNNER_TEMP/ts/node_modules/typescript" >> "$GITHUB_ENV"
+
+      - name: Install Cursor CLI
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+
+      - name: Delete comments
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          BASE_SHA: ${{ steps.pr.outputs.base }}
+          HEAD_SHA: ${{ steps.pr.outputs.head }}
+          HEAD_REF: ${{ steps.pr.outputs.ref }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: bash "$RUNNER_TEMP/bot/.github/review-bots/run-no-comments.sh"

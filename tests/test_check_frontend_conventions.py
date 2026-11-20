@@ -24,7 +24,7 @@ COVERED = {
     "pages/rounds/useRoundsPageViewModel.ts": "",
     "pages/rounds/tests/RoundsPage.robot.ts": "",
     "pages/rounds/tests/RoundsPage.screenshot.spec.ts": "",
-    "pages/rounds/tests/RoundsPage.espresso.spec.ts": "",
+    "pages/rounds/tests/RoundsPage.ui.spec.ts": "",
     "pages/rounds/tests/useRoundsPageViewModelTest.tsx": "",
     "pages/LegacyPage.tsx": "",
 }
@@ -54,7 +54,7 @@ def test_a_covered_tree_passes(src):
         "brand/tests/screenshots/charts/Sparkline.screenshot.spec.ts",
         "pages/rounds/tests/RoundsPage.robot.ts",
         "pages/rounds/tests/RoundsPage.screenshot.spec.ts",
-        "pages/rounds/tests/RoundsPage.espresso.spec.ts",
+        "pages/rounds/tests/RoundsPage.ui.spec.ts",
         "pages/rounds/tests/useRoundsPageViewModelTest.tsx",
     ],
 )

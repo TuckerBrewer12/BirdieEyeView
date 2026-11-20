@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 import { fontsLoaded } from "../../testing/fontsLoaded";
+import { switchToDark } from "../../testing/theme";
 
 export class BrandKitRobot {
   private readonly page: Page;
@@ -31,6 +32,11 @@ export class BrandKitRobot {
   async captureFrame(name: string): Promise<this> {
     await fontsLoaded(this.page);
     await expect(this.page).toHaveScreenshot(name);
+    return this;
+  }
+
+  async switchToDark(): Promise<this> {
+    await switchToDark(this.page);
     return this;
   }
 

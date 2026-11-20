@@ -12,7 +12,7 @@ KIT_KINDS = ("components", "charts")
 COMPONENT_FILE_RE = re.compile(r"^[A-Z][A-Za-z0-9]*\.tsx$")
 PAGE_FILE_RE = re.compile(r"^[A-Z][A-Za-z0-9]*Page\.tsx$")
 VIEW_MODEL_FILE_RE = re.compile(r"^(use[A-Z][A-Za-z0-9]*ViewModel)\.tsx?$")
-SPEC_KINDS = (".screenshot.spec.ts", ".espresso.spec.ts", ".capture.spec.ts")
+SPEC_KINDS = (".screenshot.spec.ts", ".ui.spec.ts", ".capture.spec.ts")
 
 COMPONENT_NAME_RE = re.compile(r"^[A-Z](?=.*[a-z])[A-Za-z0-9]*$")
 COMMENT_RE = re.compile(r"/\*.*?\*/|//[^\n]*", re.DOTALL)
@@ -60,7 +60,7 @@ def check_page_tests(src: Path) -> list[str]:
         for suffix, what in (
             (".robot.ts", "screen robot"),
             (".screenshot.spec.ts", "screenshot spec (look)"),
-            (".espresso.spec.ts", "espresso spec (behaviour)"),
+            (".ui.spec.ts", "UI test (behaviour)"),
         ):
             needed = tests / f"{page.stem}{suffix}"
             if not needed.exists():
@@ -93,7 +93,7 @@ def check_spec_kinds(src: Path) -> list[str]:
             continue
         errors.append(
             f"{rel(spec, src)}: a spec must be .screenshot.spec.ts (look only), "
-            f".espresso.spec.ts (behaviour only) or .capture.spec.ts (demo captures). No Playwright project matches "
+            f".ui.spec.ts (behaviour only) or .capture.spec.ts (demo captures). No Playwright project matches "
             f"this name, so it never runs in a browser."
         )
     return errors

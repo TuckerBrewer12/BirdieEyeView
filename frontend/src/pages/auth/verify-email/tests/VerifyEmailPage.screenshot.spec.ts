@@ -1,16 +1,11 @@
 import { AUTH_MESSAGES } from "../../../../testing/fakes/FakeAuth";
 import { test } from "./VerifyEmailPage.robot";
 
-test("email verified", async ({ verifyEmail }) => {
+test("email verified, light and dark", async ({ verifyEmail }) => {
   await verifyEmail.open();
   await verifyEmail.seesNotice(AUTH_MESSAGES.verified);
   await verifyEmail.capture("verify-email.png");
-});
-
-test("email verified in dark mode", async ({ verifyEmail }) => {
-  await verifyEmail.dark();
-  await verifyEmail.open();
-  await verifyEmail.seesNotice(AUTH_MESSAGES.verified);
+  await verifyEmail.switchToDark();
   await verifyEmail.capture("verify-email-dark.png");
 });
 

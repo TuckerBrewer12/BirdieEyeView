@@ -3,16 +3,11 @@ import { golfers, populatedFriendships } from "../../../../testing/fixtures/frie
 
 const seed = { friendships: populatedFriendships, golfers };
 
-test("received requests", async ({ inbox }) => {
+test("received requests, light and dark", async ({ inbox }) => {
   await inbox.open(seed);
   await inbox.seesAnswerButtons("Riley Brooks");
   await inbox.capture("inbox-received.png");
-});
-
-test("received requests in dark mode", async ({ inbox }) => {
-  await inbox.dark();
-  await inbox.open(seed);
-  await inbox.seesAnswerButtons("Riley Brooks");
+  await inbox.switchToDark();
   await inbox.capture("inbox-received-dark.png");
 });
 

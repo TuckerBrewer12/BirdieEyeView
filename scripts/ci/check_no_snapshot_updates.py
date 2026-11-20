@@ -6,12 +6,15 @@ from pathlib import Path
 
 WORKFLOWS = Path(__file__).resolve().parents[2] / ".github" / "workflows"
 FORBIDDEN = ("--update-snapshots", "test:screenshots:update")
+UPDATER = "update-screenshots.yml"
 
 
 def main() -> int:
     offenses: list[tuple[Path, int, str, str]] = []
 
     for workflow in sorted(WORKFLOWS.glob("*.y*ml")):
+        if workflow.name == UPDATER:
+            continue
         for lineno, raw in enumerate(workflow.read_text().splitlines(), start=1):
             line = raw.split("#", 1)[0]
             for needle in FORBIDDEN:
@@ -23,8 +26,8 @@ def main() -> int:
         print(
             f"::error file={rel},line={lineno}::"
             f"'{needle}' regenerates screenshot baselines in CI, which makes the "
-            f"visual-regression check unable to fail. Update baselines locally "
-            f"with 'npm run test:screenshots:update' and commit them. Found: {line}"
+            f"visual-regression check unable to fail. Only {UPDATER} regenerates "
+            f"them, when a PR is labelled update-screenshots. Found: {line}"
         )
 
     if offenses:

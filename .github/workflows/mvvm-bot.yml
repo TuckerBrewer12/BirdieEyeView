@@ -22,8 +22,11 @@ jobs:
     name: MVVM Bot
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: read
       pull-requests: write
+    env:
+      BOT_PATHSPEC: "frontend/src/pages frontend/src/domain frontend/src/data frontend/src/brand"
     outputs:
       has_fixes: ${{ steps.review.outputs.has_fixes }}
       findings: ${{ steps.review.outputs.findings }}
@@ -39,17 +42,28 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Skip if unchanged since the last run
+        id: gate
+        if: github.event.action == 'synchronize'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: python3 .github/review-bots/gate.py $BOT_PATHSPEC
+
       - name: Install Cursor CLI
+        if: steps.gate.outputs.skip != 'true'
         run: |
           curl https://cursor.com/install -fsS | bash
           echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
 
       - name: Review
         id: review
+        if: steps.gate.outputs.skip != 'true'
         env:
           BOT_NAME: "🧩 MVVM Bot"
           BOT_PROMPT: .github/review-bots/mvvm.md
-          BOT_PATHSPEC: "frontend/src/pages frontend/src/domain frontend/src/data frontend/src/brand"
           BOT_CLEAN: "No view-model or brand kit issues in this PR."
           BOT_LEAD: "— logic or UI that belongs elsewhere"
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

@@ -14,6 +14,7 @@ if str(BOTS) not in sys.path:
     sys.path.insert(0, str(BOTS))
 
 import findings
+import gate
 import links
 import post_review
 import previous
@@ -595,3 +596,50 @@ def test_multiline_suggestion_sets_start_line():
     assert staged[0]["start_line"] == 1
     assert staged[0]["line"] == 3
     assert staged[0]["suggestion"] is not None
+
+
+def _commit(repo: Path, path: str, text: str) -> str:
+    file = repo / path
+    file.parent.mkdir(parents=True, exist_ok=True)
+    file.write_text(text)
+    gate.git("add", "-A")
+    gate.git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", path)
+    return gate.git("rev-parse", "HEAD").stdout.decode().strip()
+
+
+@pytest.fixture
+def pr_repo(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    gate.git("init", "-q", "-b", "main")
+    base = _commit(tmp_path, "frontend/src/pages/a.tsx", "a\n")
+    gate.git("checkout", "-qb", "pr")
+    reviewed = _commit(tmp_path, "frontend/src/pages/a.tsx", "b\n")
+    return tmp_path, base, reviewed
+
+
+def test_gate_skips_when_the_bots_paths_did_not_change(pr_repo):
+    repo, base, reviewed = pr_repo
+    head = _commit(repo, "api/main.py", "x = 1\n")
+    assert gate.unchanged_since(reviewed, base, head, ["frontend/src/pages"]) is True
+
+
+def test_gate_runs_when_the_bots_paths_changed(pr_repo):
+    repo, base, reviewed = pr_repo
+    head = _commit(repo, "frontend/src/pages/a.tsx", "c\n")
+    assert gate.unchanged_since(reviewed, base, head, ["frontend/src/pages"]) is False
+
+
+def test_gate_skips_after_merging_an_unrelated_base(pr_repo):
+    repo, _, reviewed = pr_repo
+    gate.git("checkout", "-q", "main")
+    new_base = _commit(repo, "frontend/src/pages/b.tsx", "main\n")
+    gate.git("checkout", "-q", "pr")
+    gate.git("-c", "user.name=t", "-c", "user.email=t@t", "merge", "-q", "--no-edit", "main")
+    head = gate.git("rev-parse", "HEAD").stdout.decode().strip()
+    assert gate.unchanged_since(reviewed, new_base, head, ["frontend/src/pages"]) is True
+
+
+def test_gate_runs_without_a_previous_run_it_can_find(pr_repo):
+    _, base, reviewed = pr_repo
+    assert gate.unchanged_since("", base, reviewed, ["frontend/src/pages"]) is False
+    assert gate.unchanged_since("0" * 40, base, reviewed, ["frontend/src/pages"]) is False

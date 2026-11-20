@@ -8,6 +8,9 @@ tester.run("specs/capture-after-sees", specs.rules["capture-after-sees"], {
     spec(`await landing.open();\nawait landing.seesHeadline("Scan your scorecard.");\nawait landing.capture("landing.png");`),
     spec(`await rounds.openFailed();\nawait rounds.doesNotSeeEmptyState();\nawait rounds.capture("rounds-error.png");`),
     spec(`await landing.open();\nawait landing.openMenu();`),
+    spec(
+      `await rounds.seesEmptyState();\nawait rounds.capture("rounds-empty.png");\nawait rounds.switchToDark();\nawait rounds.capture("rounds-empty-dark.png");`,
+    ),
   ],
   invalid: [
     {

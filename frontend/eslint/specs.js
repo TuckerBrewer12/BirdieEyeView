@@ -1,4 +1,4 @@
-const WAIT_METHOD = /^(?:sees|doesNotSee)/;
+const WAIT_METHOD = /^(?:sees|doesNotSee|switchToDark$)/;
 
 function enclosingStatement(node) {
   let current = node;

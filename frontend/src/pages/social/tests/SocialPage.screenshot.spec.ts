@@ -3,16 +3,11 @@ import { golfers, populatedFriendships } from "../../../testing/fixtures/friends
 
 const seed = { friendships: populatedFriendships, golfers };
 
-test("friends list", async ({ social }) => {
+test("friends list, light and dark", async ({ social }) => {
   await social.open(seed);
   await social.seesFriend("Avery Lin");
   await social.capture("social-populated.png");
-});
-
-test("friends list in dark mode", async ({ social }) => {
-  await social.dark();
-  await social.open(seed);
-  await social.seesFriend("Avery Lin");
+  await social.switchToDark();
   await social.capture("social-populated-dark.png");
 });
 

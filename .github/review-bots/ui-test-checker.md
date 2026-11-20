@@ -4,7 +4,7 @@ Pages are MVVM. UI tests follow `frontend/src/pages/rounds/tests/` —
 that folder is the reference. Brand-kit component screenshots are
 Brand Kit Bot's job, not yours.
 
-Playwright is this repo's Espresso. Vitest is for view-model logic.
+Playwright runs the UI tests and screenshots. Vitest is for view-model logic.
 
 ## Layout
 
@@ -13,8 +13,8 @@ Playwright is this repo's Espresso. Vitest is for view-model logic.
 - One fluent robot per screen (`<Page>.robot.ts`). Specs import `test` from
   that file and take `{ rounds }` — no `page`, no callback wrapper. Locators
   and actions stay on the robot.
-- Screenshots are `*.screenshot.spec.ts` (Playwright, look). Espresso is
-  `*.espresso.spec.ts` (Playwright, behavior). View models are
+- Screenshots are `*.screenshot.spec.ts` (Playwright, look). UI tests are
+  `*.ui.spec.ts` (Playwright, behavior). View models are
   `tests/use<Page>ViewModelTest.tsx` (Vitest, Android `*Test` naming).
   Never a bare `*.spec.ts` — Vitest would pick it up.
 - Page screenshots use the robot `capture()` (full page, desktop+mobile).
@@ -22,7 +22,7 @@ Playwright is this repo's Espresso. Vitest is for view-model logic.
 - Robots install `FakeSession` + `FakeBackend` in `open()`. Tests never hit
   a live backend. View-model unit tests inject `FakeRoundsRepository`.
   Fakes are named `Fake…` — never `Mock*` or `installFake*`.
-- Screenshots wait for a visible state then capture look. Espresso drives
+- Screenshots wait for a visible state then capture look. UI tests drive
   the robot and asserts behavior. Unit tests cover view-model logic.
 
 ## What to look for
@@ -34,16 +34,16 @@ via `FakeSession.install`. `page.route` is only allowed inside `FakeSession`.
 Same idea as Android fakes over Mockito. Fakes must be named `Fake…`.
 
 **A user flow with no test.** Every reasonable flow this diff adds or
-changes needs an espresso spec, a screenshot spec, or both. Skip hover,
+changes needs a UI test, a screenshot spec, or both. Skip hover,
 focus, and loading spinners. Native OS widgets cannot be screenshot-opened;
-espresso covers those changes. `SortControl`'s menu is in-app — screenshot
-the open panel and espresso the option pick.
+UI tests cover those changes. `SortControl`'s menu is in-app — screenshot
+the open panel and UI-test the option pick.
 
 **The wrong kind of test.** Screenshots verify look: is the button here,
-does this panel open, empty vs populated vs dark. Espresso verifies
+does this panel open, empty vs populated vs dark. UI tests verify
 behavior: tapping this chip filters the list, typing then saving persists,
 tapping this row navigates. If a screenshot spec is asserting a side
-effect, or an espresso spec is only checking pixels, say so.
+effect, or a UI test is only checking pixels, say so.
 
 **View-model logic in Playwright.** Filter, sort, search, pagination, and
 error mapping belong in `tests/use<Page>ViewModelTest.tsx`. Playwright should
@@ -54,7 +54,7 @@ method, the locator belongs on the robot. Specs should look like an
 Android robot test: `await rounds.open(…); await rounds.tapChip("Best");`.
 
 **A missing file.** A new page with no `tests/` folder, robot, screenshot
-spec, or espresso spec. Anchor on the new page file.
+spec, or UI test. Anchor on the new page file.
 
 Report what you would raise in review and nothing you would not.
 
@@ -83,7 +83,7 @@ If you find nothing, reply with exactly `[]`.
 Example:
 
 [
-  {"path": "frontend/src/pages/rounds/RoundsPage.tsx", "line": 50, "body": "Search can filter the list, but there is no espresso spec that types a query and asserts the matching round stays and the others leave. Add it to `tests/RoundsPage.espresso.spec.ts` via the robot."},
+  {"path": "frontend/src/pages/rounds/RoundsPage.tsx", "line": 50, "body": "Search can filter the list, but there is no UI test that types a query and asserts the matching round stays and the others leave. Add it to `tests/RoundsPage.ui.spec.ts` via the robot."},
   {"path": "frontend/src/pages/rounds/RoundsPage.tsx", "line": 120, "body": "Opening the course-link panel is a look change with no screenshot. Drive it from the robot and `capture()` in `RoundsPage.screenshot.spec.ts`."},
   {"path": "frontend/src/pages/rounds/useRoundsPageViewModel.ts", "line": 152, "body": "Filter/sort lives in the view model but has no Vitest coverage. Add `tests/useRoundsPageViewModelTest.tsx`."},
   {"path": "frontend/src/pages/rounds/tests/useRoundsPageViewModelTest.tsx", "line": 10, "body": "`vi.mock('@/lib/api')` is a mock. Inject `FakeRoundsRepository` into `useRoundsPageViewModel` so the view model does not know about fetch."}
