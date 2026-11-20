@@ -15,7 +15,7 @@ from api.request_models import LinkCourseRequest, UpdateRoundRequest
 from api.schemas import RoundResponse, RoundSummaryResponse
 from models import User
 from api.round_responses import round_detail, round_summary, round_list
-from api.player_handicap import player_handicap_index
+from analytics.player_history import PlayerHistory
 from services.round_service import link_course
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ async def get_round(
     round_ = await db.rounds.get_round(str(round_id))
     if not round_:
         raise HTTPException(404, ROUND_NOT_FOUND)
-    return round_detail(round_, await player_handicap_index(db, current_user))
+    return round_detail(round_, (await PlayerHistory.load(db.rounds, current_user)).handicap_index)
 
 
 @router.put("/{round_id}", response_model=RoundResponse)
@@ -80,7 +80,7 @@ async def update_round(
         )
         if not updated:
             raise HTTPException(404, ROUND_NOT_FOUND)
-        return round_detail(updated, await player_handicap_index(db, current_user))
+        return round_detail(updated, (await PlayerHistory.load(db.rounds, current_user)).handicap_index)
     except HTTPException:
         raise
     except NotFoundError:

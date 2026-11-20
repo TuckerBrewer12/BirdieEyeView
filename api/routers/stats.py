@@ -1,4 +1,3 @@
-from datetime import date, timedelta
 from typing import List, Literal, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -27,6 +26,7 @@ from analytics import benchmarks
 from analytics import dashboard
 from analytics import round_comparison
 from analytics.goals import goal_report
+from analytics.player_history import HOME_COURSE, PlayerHistory, timeframe_start
 
 router = APIRouter()
 
@@ -39,8 +39,8 @@ async def get_dashboard(
     db: DatabaseManager = Depends(get_db),
 ):
     summaries = await db.rounds.get_round_summaries_for_user(str(user.id), limit=None, offset=0)
-    history = await db.rounds.get_rounds_for_user(str(user.id), limit=None, offset=0)
-    return dashboard_response(user, summaries, history, dashboard.today())
+    history = await PlayerHistory.load(db.rounds, user)
+    return dashboard_response(summaries, history, dashboard.today())
 
 
 @router.get("/analytics/{user_id}", response_model=AnalyticsResponse)
@@ -61,41 +61,19 @@ async def get_analytics(
     if not user:
         raise HTTPException(404, USER_NOT_FOUND)
 
-    resolved_course_id: Optional[str] = None
-    if course_id and course_id not in ("all", ""):
-        if course_id == "home":
-            resolved_course_id = str(user.home_course_id) if user.home_course_id else None
-        else:
-            try:
-                resolved_course_id = ensure_uuid_str(course_id, "course_id")
-            except ValueError:
-                raise HTTPException(422, COURSE_ID_MUST_BE_A_VALID_UUID) from None
+    window_course_id: Optional[str] = None
+    if course_id == HOME_COURSE:
+        window_course_id = HOME_COURSE
+    elif course_id and course_id != "all":
+        try:
+            window_course_id = ensure_uuid_str(course_id, "course_id")
+        except ValueError:
+            raise HTTPException(422, COURSE_ID_MUST_BE_A_VALID_UUID) from None
 
-    date_from: Optional[date] = None
     today = dashboard.today()
-    if timeframe == "ytd":
-        date_from = date(today.year, 1, 1)
-    elif timeframe == "1y":
-        date_from = today - timedelta(days=365)
-
-    no_matching_course = course_id == "home" and user.home_course_id is None
-    rounds_desc = [] if no_matching_course else await db.rounds.get_rounds_for_user(
-        target_user_id, limit=limit, offset=0,
-        course_id=resolved_course_id,
-        date_from=date_from,
-    )
-    rounds = list(reversed(rounds_desc))
-
-    history_desc = await db.rounds.get_rounds_for_user(
-        target_user_id, limit=None, offset=0,
-    )
-
-    return analytics_response(
-        rounds,
-        list(reversed(history_desc)),
-        home_course_id=user.home_course_id,
-        user=user,
-    )
+    history = await PlayerHistory.load(db.rounds, user)
+    window = history.window(limit=limit, course_id=window_course_id, since=timeframe_start(timeframe, today))
+    return analytics_response(history, window)
 
 
 @router.get("/{user_id}/played-courses", response_model=List[PlayedCourseResponse])
@@ -116,16 +94,9 @@ async def get_goal_report(
     if user.scoring_goal is None and user.scoring_goal_nine is None:
         raise HTTPException(400, NO_SCORING_GOAL)
 
-    rounds_desc = await db.rounds.get_rounds_for_user(str(user.id), limit=limit)
-    rounds = list(reversed(rounds_desc))
-
-    home_course_rounds = None
-    if user.home_course_id:
-        home_rounds_desc = await db.rounds.get_rounds_for_user(
-            str(user.id), limit=None, course_id=str(user.home_course_id)
-        )
-        if home_rounds_desc:
-            home_course_rounds = list(reversed(home_rounds_desc))
+    history = await PlayerHistory.load(db.rounds, user)
+    rounds = history.window(limit=limit).rounds
+    home_course_rounds = history.window(course_id=HOME_COURSE).rounds or None
 
     report = goal_report(rounds, user.scoring_goal, home_course_rounds, scoring_goal_nine=user.scoring_goal_nine)
     return goal_report_response(report)
@@ -141,7 +112,7 @@ async def get_benchmark_comparison(
     db: DatabaseManager = Depends(get_db),
 ):
     viewer_id = str(user.id)
-    rounds = list(reversed(await db.rounds.get_rounds_for_user(viewer_id, limit=limit)))
+    rounds = (await PlayerHistory.load(db.rounds, user)).window(limit=limit).rounds
 
     if against == "handicap":
         if handicap is None or benchmarks.handicap_benchmark(handicap) is None:
@@ -151,7 +122,8 @@ async def get_benchmark_comparison(
         raise HTTPException(422, FRIEND_ID_IS_REQUIRED)
     if not await db.friendships.are_friends(viewer_id, str(friend_id)):
         raise HTTPException(403, FORBIDDEN)
-    friend_rounds = list(reversed(await db.rounds.get_rounds_for_user(str(friend_id), limit=limit)))
+    friend_history = await PlayerHistory.load_rounds_of(db.rounds, str(friend_id))
+    friend_rounds = friend_history.window(limit=limit).rounds
     return BenchmarkComparisonResponse.model_validate(benchmarks.friend_comparison(rounds, friend_rounds))
 
 
@@ -161,8 +133,7 @@ async def get_round_comparison(
     user: User = Depends(get_self),
     db: DatabaseManager = Depends(get_db),
 ):
-    rounds_desc = await db.rounds.get_rounds_for_user(str(user.id), limit=None, offset=0)
-    rounds = list(reversed(rounds_desc))
+    rounds = (await PlayerHistory.load(db.rounds, user)).rounds
 
     if not rounds:
         raise HTTPException(404, NO_ROUNDS_FOUND)
@@ -180,5 +151,5 @@ async def get_course_analytics(
     user: User = Depends(get_self),
     db: DatabaseManager = Depends(get_db),
 ):
-    rounds_desc = await db.rounds.get_rounds_for_user(str(user.id), limit=None, offset=0, course_id=str(course_id))
-    return course_analytics(str(course_id), list(reversed(rounds_desc)))
+    history = await PlayerHistory.load(db.rounds, user)
+    return course_analytics(str(course_id), history.window(course_id=str(course_id)))

@@ -12,7 +12,7 @@ from fastapi.encoders import jsonable_encoder
 
 from analytics.best_rounds import best_round
 from api.analytics_responses import analytics_response
-from api.player_handicap import player_handicap_index
+from analytics.player_history import PlayerHistory
 from api.round_responses import round_detail
 from analytics import dashboard as dashboard_module
 from api.routers import stats
@@ -169,7 +169,8 @@ def _database(rounds: list[Round]):
 
 
 def _a_year_on(rounds: list[Round]):
-    response = analytics_response(rounds, rounds, home_course_id=USER.home_course_id, today=A_YEAR_ON, user=USER)
+    history = PlayerHistory(USER, sorted(rounds, key=lambda r: r.date, reverse=True))
+    response = analytics_response(history, history.window(), today=A_YEAR_ON)
     return response.notable_achievements, response.handicap_trend
 
 
@@ -203,7 +204,7 @@ async def _responses() -> tuple[dict, dict]:
         "playedCourses": played_courses,
         "goalReport": goal_report,
         "benchmarks": benchmarks,
-        "detailRounds": [round_detail(best, await player_handicap_index(db, USER))],
+        "detailRounds": [round_detail(best, (await PlayerHistory.load(db.rounds, USER)).handicap_index)],
     })
     achievements, handicap_trend = _a_year_on(rounds)
     return seed, (jsonable_encoder(achievements), jsonable_encoder(handicap_trend))

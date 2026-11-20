@@ -3,32 +3,27 @@ from typing import List
 
 from analytics import best_rounds
 from analytics import dashboard
-from analytics import eligibility as el
 from analytics import handicap as hcap
 from analytics import scoring
 from analytics import verdicts
 from analytics import windows
+from analytics.player_history import PlayerHistory
 from api.round_responses import round_summary
 from api.schemas import DashboardResponse
-from models import Round, User
+from models import Round
 from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
 
 
-def dashboard_response(user: User, summaries: List[Round], history: List[Round], today: date) -> DashboardResponse:
+def dashboard_response(summaries: List[Round], history: PlayerHistory, today: date) -> DashboardResponse:
     eighteen = dashboard.format_totals(summaries, HOLES_PER_ROUND)
     nine = dashboard.format_totals(summaries, HOLES_PER_NINE)
 
     best = best_rounds.best_round(summaries)
     best_summary = round_summary(best) if best else None
 
-    hi_rounds = el.chronological(history)
-    last_20 = best_rounds.full_rounds(hi_rounds)[-20:]
-    index_window = hcap.player_index_window(user, hi_rounds)
-    full_trend = hcap.player_handicap_trend(user, hi_rounds)
-    by_identity = {id(r): entry for r, entry in zip(hi_rounds, full_trend)}
-    handicap_trend = [by_identity[id(r)] for r in last_20]
-    whs_rounds = [r for i, r in enumerate(hi_rounds) if i in index_window["eligible"]]
-    whs_trend = [by_identity[id(r)] for r in whs_rounds]
+    last_20 = history.last_full_rounds(20)
+    handicap_trend = history.handicap_rows(last_20)
+    whs_rounds = history.index_rounds
     scoring_change = dashboard.scoring_average_change(last_20)
 
     return DashboardResponse(
@@ -42,7 +37,7 @@ def dashboard_response(user: User, summaries: List[Round], history: List[Round],
         best_round_course=best_summary.course_name if best_summary else None,
         best_round_to_par=best_summary.to_par if best_summary else None,
         best_round_date=best_summary.date if best_summary else None,
-        handicap_index=index_window["index"],
+        handicap_index=history.handicap_index,
         recent_rounds=[round_summary(r) for r in summaries[:4]],
         scoring_average_l5=dashboard.scoring_average(last_20, dashboard.RECENT_ROUNDS),
         scoring_average_change=scoring_change,
@@ -50,7 +45,8 @@ def dashboard_response(user: User, summaries: List[Round], history: List[Round],
         handicap_change=dashboard.handicap_change(last_20, handicap_trend, today),
         recent_score_mix=dashboard.score_mix(last_20[-dashboard.RECENT_ROUNDS:])["percentages"],
         whs=dashboard.whs_breakdown(
-            whs_rounds, whs_trend, hcap.score_differentials_per_round(whs_rounds), index_window
+            whs_rounds, history.handicap_rows(whs_rounds), hcap.score_differentials_per_round(whs_rounds),
+            history.index_window,
         ),
         score_trend=scoring.score_trend_with_rolling_average(last_20),
         handicap_trend=[

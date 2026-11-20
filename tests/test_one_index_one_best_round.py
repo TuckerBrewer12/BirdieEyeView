@@ -7,14 +7,16 @@ from uuid import UUID, uuid4
 import pytest
 
 from analytics import best_rounds
+from analytics import dashboard
 from analytics import goals, peak
 from analytics import handicap as hcap
 from analytics.achievements import notable_achievements
 from analytics.handicap import course_handicap
-from api.player_handicap import player_handicap_index
+from analytics.player_history import PlayerHistory
 from api.routers import rounds as rounds_router
 from api.routers import stats as stats_router
 from models import Course, Hole, HoleScore, Round, Tee, User
+from tests.analytics_builders import history_of
 
 _SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "sample_golfer.py"
 _spec = importlib.util.spec_from_file_location("sample_golfer", _SCRIPT)
@@ -71,7 +73,7 @@ def golfer():
 async def test_every_screen_shows_the_golfers_own_index(golfer):
     user, rounds, db = golfer
     user_id = UUID(user.id)
-    index = await player_handicap_index(db, user)
+    index = (await PlayerHistory.load(db.rounds, user)).handicap_index
     assert index is not None
     assert index != hcap.handicap_index(rounds[-20:])
 
@@ -101,14 +103,10 @@ async def test_every_screen_shows_the_golfers_own_index(golfer):
 async def test_a_timeframe_narrows_the_rounds_not_the_index(golfer, monkeypatch):
     user, rounds, db = golfer
 
-    class _Today(date):
-        @classmethod
-        def today(cls):
-            return rounds[-1].date.date() + timedelta(days=30)
-
-    monkeypatch.setattr(stats_router, "date", _Today)
+    monkeypatch.setattr(dashboard, "today", lambda: rounds[0].date.date() + timedelta(days=365 + 45))
     year = await stats_router.get_analytics(UUID(user.id), 50, None, "1y", db, user)
-    assert year.kpis.handicap_index == await player_handicap_index(db, user)
+    assert 0 < year.kpis.total_rounds < len(rounds)
+    assert year.kpis.handicap_index == (await PlayerHistory.load(db.rounds, user)).handicap_index
 
 
 @pytest.mark.asyncio
@@ -209,7 +207,7 @@ def test_the_course_page_best_round_is_never_a_nine():
     nine = _round("nine", 0, holes=9, day=1, course=course)
     from api.course_analytics_responses import course_analytics
 
-    assert course_analytics("home", [full, nine]).best_round_id == "full"
+    assert course_analytics("home", history_of([full, nine]).window()).best_round_id == "full"
 
 
 def test_records_and_milestones_set_by_a_rounds_total_count_full_rounds_only():

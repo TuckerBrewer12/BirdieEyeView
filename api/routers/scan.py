@@ -18,7 +18,7 @@ from api.dependencies import get_current_user, get_optional_current_user, get_db
 from api.error_responses import EXTRACTION_FAILED, OCR_FAILED, ROUND_SAVE_FAILED, SCAN_FAILED, SCAN_SAVE_FAILED
 from api.input_validation import ensure_uuid_str, sanitize_ocr_text, sanitize_user_text
 from api.request_models import SaveRoundRequest
-from api.player_handicap import player_handicap_index
+from analytics.player_history import PlayerHistory
 from analytics.handicap import tee_course_handicap
 from api.scan_errors import ScanExtractionError
 from api.scan_uploads import check_upload_name, prepared_upload
@@ -197,7 +197,7 @@ async def extract_scan(
             _log_diagnostics("extract", diagnostics)
 
             if _rated_tees(round_data):
-                _add_course_handicaps(round_data, await player_handicap_index(db, current_user))
+                _add_course_handicaps(round_data, (await PlayerHistory.load(db.rounds, current_user)).handicap_index)
             confidence_data = scan_confidence(
                 round_data.get("hole_scores", []), assembly.notes, round_notes=assembly.warnings + name_notes
             )

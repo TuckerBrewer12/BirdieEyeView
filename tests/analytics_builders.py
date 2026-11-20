@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 from typing import Dict, Iterable, Optional
 
-from models import Course, Hole, HoleScore, Round, Tee
+from analytics.player_history import PlayerHistory
+from models import Course, Hole, HoleScore, Round, Tee, User
 from models.hole_layout import FRONT_NINE, FULL_ROUND
 
 PARS_18 = {n: 4 for n in FULL_ROUND} | {3: 3, 7: 3, 12: 3, 16: 3, 5: 5, 9: 5, 13: 5, 18: 5}
@@ -48,3 +49,7 @@ def par_round(holes: Iterable[int] = FULL_ROUND, *, over: int = 0, course_obj: O
         extra[holes[i % len(holes)]] += step
     scores = {n: {"strokes": pars[n] + extra[n]} for n in holes}
     return round_(scores, course_obj=course_obj, **round_kwargs)
+
+
+def history_of(oldest_first: Iterable[Round], user: Optional[User] = None) -> PlayerHistory:
+    return PlayerHistory(user, list(reversed(list(oldest_first))))

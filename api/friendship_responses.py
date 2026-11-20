@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from api.player_handicap import player_handicap_index_with_rounds
+from analytics.player_history import PlayerHistory
 from api.schemas import FriendshipResponse
 from database.db_manager import DatabaseManager
 
@@ -22,9 +22,10 @@ async def _friend_figures(db: DatabaseManager, friend_id: str) -> tuple[Optional
     friend = await db.users.get_user(friend_id)
     if friend is None:
         return None, None
-    index, rounds = await player_handicap_index_with_rounds(db, friend)
-    last = rounds[0].date if rounds and rounds[0].date else None
-    return index, last.date().isoformat() if last else None
+    history = await PlayerHistory.load(db.rounds, friend)
+    newest = history.newest_first[0] if history.newest_first else None
+    last = newest.date if newest is not None else None
+    return history.handicap_index, last.date().isoformat() if last else None
 
 
 async def friendship_list(db: DatabaseManager, rows: List[dict], viewer: str) -> List[FriendshipResponse]:
