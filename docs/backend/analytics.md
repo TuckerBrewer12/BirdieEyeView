@@ -26,7 +26,7 @@
 
 ## How results reach the app
 
-`api/routers/stats.py` checks access, loads the golfer's [PlayerHistory](../../analytics/player_history.py) once and passes it, or a window of it, to a response builder. `PlayerHistory` is the one place rounds are ordered and windowed (limit, course, the home course, `ytd`/`1y`), and the one place the handicap index and each round's trend row come from, so no caller reverses, re-sorts or re-aligns rounds. Frontend view-model hooks shape that data for charts. Python Matplotlib exports are a separate path; React charts do not render those generated PNGs.
+`api/routers/stats.py` checks access, loads the golfer's [PlayerHistory](../../analytics/player_history.py) once and passes it, or a window of it, to a response builder. `PlayerHistory` is the one place rounds are ordered and windowed (limit, course, the home course, `ytd`/`1y`), and the one place the handicap index and each round's trend row come from, so no caller reverses, re-sorts or re-aligns rounds; `scripts/ci/check_backend_conventions.py` fails a PR that loads rounds or calls the player handicap entry points anywhere else. Frontend view-model hooks shape that data for charts. Python Matplotlib exports are a separate path; React charts do not render those generated PNGs.
 
 ## Metric contracts
 

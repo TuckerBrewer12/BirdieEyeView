@@ -21,6 +21,11 @@ HOLE_RANGES = {
     (0, 18), (1, 19),
 }
 
+HISTORY_OWNER = "analytics/player_history.py"
+HANDICAP_HOME = "analytics/handicap.py"
+PLAYER_HANDICAP_ENTRY_POINTS = {"player_index_window", "player_handicap_trend", "player_handicap_index"}
+ROUND_ORDERING = {"reversed", "chronological"}
+
 Finding = tuple[int, str]
 
 
@@ -138,11 +143,44 @@ def _hole_count_findings(tree: ast.AST) -> Iterator[Finding]:
                 yield node.lineno, f"range({shown}) walks a hard-coded set of holes; {CONSTANT_HINT}."
 
 
+def _called_name(call: ast.Call) -> str | None:
+    func = call.func
+    if isinstance(func, ast.Name):
+        return func.id
+    return func.attr if isinstance(func, ast.Attribute) else None
+
+
+def _player_history_findings(tree: ast.AST, filename: str) -> Iterator[Finding]:
+    if filename == HISTORY_OWNER:
+        return
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        name = _called_name(node)
+        if name == "get_rounds_for_user":
+            yield node.lineno, (
+                "a golfer's rounds are loaded by PlayerHistory.load(db.rounds, user); "
+                "take history.rounds or history.window(...) instead."
+            )
+        elif name in PLAYER_HANDICAP_ENTRY_POINTS and filename != HANDICAP_HOME:
+            yield node.lineno, (
+                f"{name} is PlayerHistory's to call; read history.handicap_index, "
+                "history.index_window or history.handicap_rows(rounds)."
+            )
+        elif name in ROUND_ORDERING and filename.startswith("api/"):
+            yield node.lineno, (
+                "PlayerHistory decides round order; use history.rounds or a window's "
+                ".rounds (oldest first) or .newest_first."
+            )
+
+
 def check_source(source: str, filename: str = "<string>") -> list[Finding]:
     tree = ast.parse(source, filename=filename)
     leaks = _LeakVisitor()
     leaks.visit(tree)
-    return sorted(leaks.findings + list(_hole_count_findings(tree)))
+    return sorted(
+        leaks.findings + list(_hole_count_findings(tree)) + list(_player_history_findings(tree, filename))
+    )
 
 
 def main() -> int:
@@ -164,7 +202,7 @@ def main() -> int:
         print(f"\n{total} backend convention violation(s).", file=sys.stderr)
         return 1
 
-    print("OK: no leaked exception text or hard-coded hole counts.")
+    print("OK: no leaked exception text, hard-coded hole counts or rounds read around PlayerHistory.")
     return 0
 
 
