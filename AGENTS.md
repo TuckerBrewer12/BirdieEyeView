@@ -98,7 +98,8 @@ Everything else goes, including `/** */` doc comments: nothing here is a public 
 
 ## Pull requests
 
-- Branch from `main` and open PRs against `main`. The description is two sections, **What?** and **Why?**, and nothing else.
+- Branch from `main` and open PRs against `main`. The description is two sections, **What?** and **Why?**, and nothing else besides the template's size box.
+- Keep a PR under 500 changed lines; generated files and images don't count. The `PR size` check fails above that. Split the work; when it truly can't be split, say why under **Why?** and tick "Over 500 lines on purpose" or add the `large-pr` label.
 - After every push, wait for CI and the review bots (Brand Kit, MVVM, UI Test Checker, Backend Rules, Frontend coverage, No Comments). Fix what is right, reply on each thread with what you did or why you didn't, and repeat until they have nothing new. A check that also fails on `main` is inherited: say so rather than fixing it in an unrelated PR.
 - The bots' fix PRs (`bot-fix/…`, labelled `skip-bots`) target your branch. Check one against the latest base before merging it; if it duplicates or conflicts with something already there, fix it on your branch and close it with a note.
 - Keep behaviour-preserving cleanup separate from rule changes. Run `pip freeze > requirements.txt` before pushing a new backend dependency.
