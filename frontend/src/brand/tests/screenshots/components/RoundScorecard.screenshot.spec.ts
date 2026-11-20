@@ -1,20 +1,14 @@
 import { test } from "@playwright/test";
 import { BrandKitRobot } from "../../BrandKit.robot";
-import { enableDark } from "../../previewScreenshot";
 
 test.describe("RoundScorecard", () => {
   test.use({ viewport: { width: 960, height: 1260 } });
 
-  test("light", async ({ page }) => {
+  test("light and dark", async ({ page }) => {
     const kit = new BrandKitRobot(page);
     await kit.openFrame("RoundScorecard");
     await kit.captureFrame("round-scorecard.png");
-  });
-
-  test("dark", async ({ page }) => {
-    await enableDark(page);
-    const kit = new BrandKitRobot(page);
-    await kit.openFrame("RoundScorecard");
+    await kit.switchToDark();
     await kit.captureFrame("round-scorecard-dark.png");
   });
 

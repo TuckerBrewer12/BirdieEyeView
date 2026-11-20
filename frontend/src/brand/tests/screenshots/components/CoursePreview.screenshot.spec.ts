@@ -1,14 +1,9 @@
 import { test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../previewScreenshot";
+import { capturePreview, capturePreviewLightAndDark } from "../../previewScreenshot";
 
 test.describe("CoursePreview", () => {
-  test("light", async ({ page }) => {
-    await capturePreview(page, "CoursePreview", "course-preview.png");
-  });
-
-  test("dark", async ({ page }) => {
-    await enableDark(page);
-    await capturePreview(page, "CoursePreview", "course-preview-dark.png");
+  test("light and dark", async ({ page }) => {
+    await capturePreviewLightAndDark(page, "CoursePreview", "course-preview");
   });
 
   test("focused", async ({ page }) => {

@@ -12,13 +12,13 @@ npm run build
 
 ## Tests
 
-Three layers, borrowed from Android. Playwright is this repo's Espresso;
-Vitest is for view-model logic.
+Three layers. Playwright runs the UI tests and screenshots; Vitest is for
+view-model logic.
 
 | Layer | Files | Command | What it proves |
 |---|---|---|---|
 | View model | `tests/use<Page>ViewModelTest.tsx` | `npm test` | Filter, sort, search, pagination, error mapping |
-| Espresso | `tests/<Page>.espresso.spec.ts` | `npm run test:espresso` | Behavior: tapping, typing, navigating, persisting |
+| UI test | `tests/<Page>.ui.spec.ts` | `npm run test:ui` | Behavior: tapping, typing, navigating, persisting |
 | Screenshot | `tests/<Page>.screenshot.spec.ts` | `npm run test:screenshots` | Look: empty vs populated vs dark, panels open |
 
 `src/pages/rounds/tests/` is the reference layout.
@@ -34,29 +34,31 @@ are always named `Fake…`. This is enforced in review by
 `page.getBy…` belongs on the robot.
 
 **Naming.** Never a bare `*.spec.ts`; Vitest would pick it up. Vitest matches
-`*.test.*` and `*Test.*`, Playwright matches `*.espresso.spec.ts` and
+`*.test.*` and `*Test.*`, Playwright matches `*.ui.spec.ts` and
 `*.screenshot.spec.ts`.
 
 ### Screenshot baselines
 
-Baselines are committed as `*-darwin.png`, so the CI job runs on
-`macos-latest` to match. Regenerate them locally, on purpose, and review the
-image diff like any other change:
+Baselines are the Linux renders of CI's Playwright image
+(`mcr.microsoft.com/playwright`, the version in `package-lock.json`), so a
+screenshot run on a Mac doesn't match them. CI checks looks, in three shards.
 
-```bash
-npm run test:screenshots:update
-```
+To change them on purpose, look at the failing run's diffs, then add the
+`update-screenshots` label to the PR. `update-screenshots.yml` regenerates the
+baselines in the same image, commits them to the branch and runs the check
+again. Review the image diff like any other change.
 
-CI must never do this for you — a run that regenerates baselines can't fail.
-`scripts/ci/check_no_snapshot_updates.py` enforces it.
+The check itself never regenerates baselines, so it can always fail.
+`scripts/ci/check_no_snapshot_updates.py` allows `--update-snapshots` in
+`update-screenshots.yml` only.
 
 ## CI gates
 
 | Check | Workflow | Gates |
 |---|---|---|
-| `Frontend (test \| lint \| types \| build \| espresso)` | `tests.yml` | Unit tests, ESLint, tsc, production build, behavior |
+| `Frontend (test \| lint \| types \| build \| ui)` | `tests.yml` | Unit tests, ESLint, tsc, production build, behavior |
 | `Frontend visual regression` | `screenshots.yml` | Rendered output against committed baselines |
-| `Frontend coverage comment` | `frontend-coverage-bot.yml` | PR comment: Vitest changed-line % plus AI screenshot/espresso counts |
+| `Frontend coverage comment` | `frontend-coverage-bot.yml` | PR comment: Vitest changed-line % plus AI screenshot/UI test counts |
 | `Repo invariants` | `tests.yml` | Includes the no-baseline-regeneration rule |
 
 On a backend-only PR the frontend steps skip (via the `changes` job) but the
@@ -67,6 +69,6 @@ the trace and the actual/diff images land.
 ## Before pushing
 
 ```bash
-npm test && npm run test:espresso && npm run test:screenshots
+npm test && npm run test:ui
 npm run lint -- --max-warnings=0 && npm run typecheck && npm run build
 ```

@@ -1,36 +1,22 @@
 import { expect, test } from "@playwright/test";
-import { capturePreview, enableDark } from "../../previewScreenshot";
+import { capturePreviewLightAndDark } from "../../previewScreenshot";
 import { BrandKitRobot } from "../../BrandKit.robot";
 import { fontsLoaded } from "../../../../testing/fontsLoaded";
 
 test.describe("PickerMenu", () => {
-  test("light", async ({ page }) => {
-    await capturePreview(page, "PickerMenu", "picker-menu.png");
+  test("light and dark", async ({ page }) => {
+    await capturePreviewLightAndDark(page, "PickerMenu", "picker-menu");
   });
 
-  test("dark", async ({ page }) => {
-    await enableDark(page);
-    await capturePreview(page, "PickerMenu", "picker-menu-dark.png");
-  });
-
-  test("menu", async ({ page }) => {
+  test("menu, light and dark", async ({ page }) => {
     const kit = new BrandKitRobot(page);
     await kit.open("PickerMenu");
     await page.getByRole("button", { name: "Sort by", exact: true }).first().click();
     await expect(page.getByRole("menu")).toBeVisible();
     await fontsLoaded(page);
-    await expect(page.locator("[data-slot=picker-options]")).toHaveScreenshot(
-      "picker-menu-menu.png",
-    );
-  });
-
-  test("menu dark", async ({ page }) => {
-    await enableDark(page);
-    const kit = new BrandKitRobot(page);
-    await kit.open("PickerMenu");
-    await page.getByRole("button", { name: "Sort by", exact: true }).first().click();
-    await expect(page.getByRole("menu")).toBeVisible();
-    await fontsLoaded(page);
-    await expect(page.locator("[data-slot=picker-options]")).toHaveScreenshot("picker-menu-menu-dark.png");
+    const options = page.locator("[data-slot=picker-options]");
+    await expect(options).toHaveScreenshot("picker-menu-menu.png");
+    await kit.switchToDark();
+    await expect(options).toHaveScreenshot("picker-menu-menu-dark.png");
   });
 });

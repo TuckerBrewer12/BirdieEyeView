@@ -2,16 +2,11 @@ import { test } from "./CoursesPage.robot";
 import { populatedCourses } from "../../../testing/fixtures/courses";
 import { storedRounds } from "../../../testing/fixtures/rounds";
 
-test("populated list", async ({ courses }) => {
+test("populated list, light and dark", async ({ courses }) => {
   await courses.open(populatedCourses, { rounds: storedRounds });
   await courses.seesRecord("Half Moon Bay", "75.0");
   await courses.capture("courses-populated.png");
-});
-
-test("populated list in dark mode", async ({ courses }) => {
-  await courses.dark();
-  await courses.open(populatedCourses, { rounds: storedRounds });
-  await courses.seesRecord("Half Moon Bay", "75.0");
+  await courses.switchToDark();
   await courses.capture("courses-populated-dark.png");
 });
 

@@ -4,8 +4,8 @@ import type { RoundDto } from "../../../../types/api";
 import { FakeSession } from "../../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../../testing/fakes/FakeBackend";
 import { formatCourseName } from "../../../../domain/course";
-import { fontsLoaded } from "../../../../testing/fontsLoaded";
-import { captureOptions } from "../../../../testing/fullPageCapture";
+import { switchToDark } from "../../../../testing/theme";
+import { captureOptions, readyForCapture } from "../../../../testing/fullPageCapture";
 
 export class RoundDetailRobot {
   private readonly page: Page;
@@ -18,6 +18,11 @@ export class RoundDetailRobot {
     await this.page.addInitScript(() => {
       localStorage.setItem("theme", "dark");
     });
+    return this;
+  }
+
+  async switchToDark(): Promise<this> {
+    await switchToDark(this.page);
     return this;
   }
 
@@ -248,7 +253,7 @@ export class RoundDetailRobot {
     if (await this.page.locator('[data-slot="round-flow"]').isVisible()) {
       await expect(this.page.locator("svg circle").last()).toBeVisible();
     }
-    await fontsLoaded(this.page);
+    await readyForCapture(this.page, options.fullPage);
     await expect(this.page).toHaveScreenshot(name, captureOptions(options.fullPage));
     return this;
   }

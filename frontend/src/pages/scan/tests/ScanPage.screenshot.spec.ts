@@ -8,16 +8,11 @@ import {
   unsureCard,
 } from "../../../testing/fixtures/scan";
 
-test("upload, nothing picked", async ({ scan }) => {
+test("upload, nothing picked, light and dark", async ({ scan }) => {
   await scan.open();
   await scan.seesUpload();
   await scan.capture("scan-upload.png");
-});
-
-test("upload in dark mode", async ({ scan }) => {
-  await scan.dark();
-  await scan.open();
-  await scan.seesUpload();
+  await scan.switchToDark();
   await scan.capture("scan-upload-dark.png");
 });
 
@@ -36,20 +31,13 @@ test("a course picked ahead of the scan", async ({ scan }) => {
   await scan.capture("scan-course-picked.png");
 });
 
-test("the card being read", async ({ scan }) => {
+test("the card being read, light and dark", async ({ scan }) => {
   await scan.open({ holdScan: true });
   await scan.chooseScorecard();
   await scan.tapExtract();
   await scan.seesProcessing();
   await scan.capture("scan-processing.png", { maskScanAnimation: true });
-});
-
-test("the card being read in dark mode", async ({ scan }) => {
-  await scan.dark();
-  await scan.open({ holdScan: true });
-  await scan.chooseScorecard();
-  await scan.tapExtract();
-  await scan.seesProcessing();
+  await scan.switchToDark();
   await scan.capture("scan-processing-dark.png", { maskScanAnimation: true });
 });
 
@@ -78,23 +66,15 @@ test("the scanned card under review", async ({ scan }) => {
   await scan.capture("scan-review.png");
 });
 
-test("the scanned card under review in dark mode", async ({ scan }) => {
-  await scan.dark();
-  await scan.open({ scan: unsureCard });
-  await scan.chooseScorecard();
-  await scan.tapExtract();
-  await scan.seesReview(SCANNED_COURSE_NAME);
-  await scan.seesScoresToCheck(UNSURE_HOLES);
-  await scan.capture("scan-review-dark.png");
-});
-
-test("a card with scores the scan wasn't sure of", async ({ scan }) => {
+test("a card with scores the scan wasn't sure of, light and dark", async ({ scan }) => {
   await scan.open({ scan: unsureCard });
   await scan.chooseScorecard();
   await scan.tapExtract();
   await scan.seesReview(SCANNED_COURSE_NAME);
   await scan.seesScoresToCheck(UNSURE_HOLES);
   await scan.capture("scan-review-to-check.png");
+  await scan.switchToDark();
+  await scan.capture("scan-review-dark.png");
 });
 
 test("a card linked to a saved course", async ({ scan }) => {
@@ -124,7 +104,7 @@ test("the blank card hand entry opens", async ({ scan }) => {
   await scan.capture("scan-review-blank.png");
 });
 
-test("a saved round", async ({ scan }) => {
+test("a saved round, light and dark", async ({ scan }) => {
   await scan.open();
   await scan.chooseScorecard();
   await scan.tapExtract();
@@ -132,16 +112,7 @@ test("a saved round", async ({ scan }) => {
   await scan.tapSave();
   await scan.seesSaved();
   await scan.capture("scan-saved.png");
-});
-
-test("a saved round in dark mode", async ({ scan }) => {
-  await scan.dark();
-  await scan.open();
-  await scan.chooseScorecard();
-  await scan.tapExtract();
-  await scan.seesReview(SCANNED_COURSE_NAME);
-  await scan.tapSave();
-  await scan.seesSaved();
+  await scan.switchToDark();
   await scan.capture("scan-saved-dark.png");
 });
 
