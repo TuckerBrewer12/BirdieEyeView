@@ -60,12 +60,47 @@ export function formatTeeName(tee: string): string {
   return `${formatCourseName(tee)} tees`;
 }
 
-const TRAILING_RATING = /^(.*?)[\s,]*\(?(\d{2}(?:\.\d)?)\s*\/\s*(\d{2,3})\)?\s*$/;
+// A rating and slope as a card prints them after a tee: "70.8/123", "(68.9 / 118)".
+const RATING = /(\d{2}(?:\.\d)?)\s*\/\s*(\d{2,3})/g;
+// Who a rating is for, when a card prints one per set of players: "M:", "W", "Men's", "Ladies".
+const RATED_FOR = String.raw`(m|w|l|men'?s|women'?s|men|women|ladies)`;
+const NAME_THEN_FOR = new RegExp(String.raw`^(.*?)[\s(,]+${RATED_FOR}\s*:?[\s(]*$`, "i");
+const BETWEEN = new RegExp(String.raw`^[\s(),;|·-]*(?:${RATED_FOR}\s*:?)?[\s()]*$`, "i");
 
-export function teeNameParts(tee: string): { name: string; rating: string | null } {
-  const match = TRAILING_RATING.exec(tee.trim());
-  if (!match || !match[1]) return { name: formatCourseName(tee), rating: null };
-  return { name: formatCourseName(match[1]), rating: `${match[2]} / ${match[3]}` };
+function ratedFor(label: string | undefined): string {
+  if (!label) return "";
+  return `${label.length === 1 ? label.toUpperCase() : formatCourseName(label)} `;
+}
+
+/**
+ * A tee as written on a card, split into its name and every rating and slope printed after it:
+ * "BLUE 70.8/123" is Blue over "70.8 / 123", and "White M: 69.1/123 W: 74.8 / 133" is White over
+ * "M 69.1 / 123" and "W 74.8 / 133". Anything else after the name keeps it whole.
+ */
+export function teeNameParts(tee: string): { name: string; ratings: string[] } {
+  const text = tee.trim();
+  const whole = { name: formatCourseName(text), ratings: [] };
+  const matches = [...text.matchAll(RATING)];
+  if (matches.length === 0) return whole;
+
+  const before = text.slice(0, matches[0].index);
+  const named = NAME_THEN_FOR.exec(before);
+  const name = (named?.[1] ?? before).replace(/[\s(,:-]+$/, "");
+  if (!name) return whole;
+
+  const ratings: string[] = [];
+  let label = named?.[2];
+  for (const [i, match] of matches.entries()) {
+    ratings.push(`${ratedFor(label)}${match[1]} / ${match[2]}`);
+    const end = (match.index ?? 0) + match[0].length;
+    const gap = text.slice(end, matches[i + 1]?.index ?? text.length);
+    const between = BETWEEN.exec(gap);
+    if (!between) return whole;
+    label = between[1];
+  }
+  // A label after the last rating is for nothing.
+  if (label) return whole;
+  return { name: formatCourseName(name), ratings };
 }
 
 export function teeRatingLabel(

@@ -13,7 +13,7 @@ export default function RoundScorecardPreview() {
       <RoundScorecard round={linked} teeBox="Blue" />
       <RoundScorecard
         round={linked}
-        teeBox="BLUE 70.8/123"
+        teeBox="White M: 69.1/123 W: 74.8 / 133"
         action={
           <Button variant="secondary" size="xs">
             Scan another

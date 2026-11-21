@@ -123,12 +123,30 @@ describe("courseSummaryFrom", () => {
 
 describe("teeNameParts", () => {
   it("splits a rating and slope read off the card from the tee's name", () => {
-    expect(teeNameParts("BLUE 70.8/123")).toEqual({ name: "Blue", rating: "70.8 / 123" });
-    expect(teeNameParts("White (68.9 / 118)")).toEqual({ name: "White", rating: "68.9 / 118" });
+    expect(teeNameParts("BLUE 70.8/123")).toEqual({ name: "Blue", ratings: ["70.8 / 123"] });
+    expect(teeNameParts("White (68.9 / 118)")).toEqual({ name: "White", ratings: ["68.9 / 118"] });
+  });
+
+  it("splits off every rating when the card prints one for men and one for women", () => {
+    expect(teeNameParts("White M: 69.1/123 W: 74.8 / 133")).toEqual({
+      name: "White",
+      ratings: ["M 69.1 / 123", "W 74.8 / 133"],
+    });
+    expect(teeNameParts("RED (Men's 66.0/110, Ladies 71.2/121)")).toEqual({
+      name: "Red",
+      ratings: ["Men's 66.0 / 110", "Ladies 71.2 / 121"],
+    });
+    expect(teeNameParts("Gold 70.1/125 72.9/128")).toEqual({ name: "Gold", ratings: ["70.1 / 125", "72.9 / 128"] });
   });
 
   it("keeps a name with no rating whole", () => {
-    expect(teeNameParts("black")).toEqual({ name: "Black", rating: null });
-    expect(teeNameParts("Gold 2")).toEqual({ name: "Gold 2", rating: null });
+    expect(teeNameParts("black")).toEqual({ name: "Black", ratings: [] });
+    expect(teeNameParts("Gold 2")).toEqual({ name: "Gold 2", ratings: [] });
+  });
+
+  it("keeps the tee whole when there's more than ratings after its name", () => {
+    expect(teeNameParts("Blue 70.8/123 back nine")).toEqual({ name: "Blue 70.8/123 Back Nine", ratings: [] });
+    expect(teeNameParts("70.8/123")).toEqual({ name: "70.8/123", ratings: [] });
+    expect(teeNameParts("White 69.1/123 W:")).toEqual({ name: "White 69.1/123 W:", ratings: [] });
   });
 });

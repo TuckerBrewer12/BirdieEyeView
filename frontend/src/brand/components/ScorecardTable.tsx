@@ -250,15 +250,23 @@ function ScorecardTable({ round, teeBox, edits, toCheck, nine, className }: Scor
 
 export { ScorecardTable };
 
+// The tee's swatch and name, with any ratings read off the card one per line under them from `md` (a
+// phone's nine has no room). The ratings start under the swatch to use the column's whole width; each
+// line truncates, and the whole tee as read is its title.
 function TeeLabel({ teeBox }: { teeBox: string }) {
-  const { name, rating } = teeNameParts(teeBox);
+  const { name, ratings } = teeNameParts(teeBox);
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <TeeSwatch color={teeBox} className="size-2 shrink-0 rounded-full" />
-      <span className="flex flex-col leading-tight">
-        <span>{name}</span>
-        {rating && <span className="hidden text-caption font-medium text-muted-foreground md:block">{rating}</span>}
+    <span data-slot="tee-label" title={teeBox} className="flex min-w-0 flex-col leading-tight">
+      <span className="flex min-w-0 items-center gap-1.5">
+        <TeeSwatch color={teeBox} className="size-2 shrink-0 rounded-full" />
+        {/* Caption size on a phone, like the yards beside it, so a colour name like "White" fits the column. */}
+        <span className="truncate text-caption md:text-label">{name}</span>
       </span>
+      {ratings.map((rating) => (
+        <span key={rating} className="hidden truncate text-caption font-medium text-muted-foreground md:block">
+          {rating}
+        </span>
+      ))}
     </span>
   );
 }
