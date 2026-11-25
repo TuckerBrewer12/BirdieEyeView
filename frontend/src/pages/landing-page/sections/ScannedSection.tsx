@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button, Card, CardContent, EmptyNote, PageTitle, RoundScorecard } from "@/brand";
 import { tokens } from "@/brand/theme";
-import { SIGN_UP_OFFER } from "../present";
+import { scannedRoundLine, SIGN_UP_OFFER } from "../present";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
 export function ScannedSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
+  const roundLine = scannedRoundLine(viewModel.round);
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
@@ -16,7 +17,7 @@ export function ScannedSection({ viewModel }: { viewModel: TryItYourselfViewMode
     >
       <div className="flex flex-col gap-1.5">
         <PageTitle>Here’s your round.</PageTitle>
-        {viewModel.roundLine && <p className="text-body-lg text-muted-foreground">{viewModel.roundLine}</p>}
+        {roundLine && <p className="text-body-lg text-muted-foreground">{roundLine}</p>}
       </div>
 
       {viewModel.round && (
