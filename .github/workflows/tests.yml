@@ -31,6 +31,7 @@ jobs:
             frontend:
               - 'frontend/**'
               - '.github/workflows/tests.yml'
+              - 'scripts/ci/bundle_budget.py'
 
   python:
     name: Python (${{ matrix.check }})
@@ -236,7 +237,11 @@ jobs:
 
       - name: Production build
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'build'
-        run: npm run build
+        run: npm run build -- --sourcemap
+
+      - name: Entry chunk within budget
+        if: needs.changes.outputs.frontend == 'true' && matrix.check == 'build'
+        run: python3 ../scripts/ci/bundle_budget.py
 
       - name: Install Playwright Chromium
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'ui'

@@ -36,3 +36,5 @@ Colours, type, measures and motion come from `src/brand/theme/tokens.ts`; no raw
 ## Validation
 
 View models are tested with `Fake*` repositories (no `vi.fn`/`vi.mock`). Pages have a Playwright robot, UI tests for flows and screenshot specs for looks, all against `FakeBackend`. `scripts/ci/check_frontend_conventions.py` checks each kit component has a preview and screenshot spec, each page a robot with screenshot specs and UI tests, and each view model a test. See [testing practices](testing.md). Update the [page guide](../frontend/README.md) when a page's data flow changes.
+
+CI builds with source maps and runs `scripts/ci/bundle_budget.py`: the entry chunk must stay under `ENTRY_GZIP_BUDGET_KB` gzipped and hold nothing from `src/testing/`, `previews/` or `BrandHarness`. Code a signed-out visitor doesn't need belongs in a lazily loaded chunk; raise the budget only with the reason in the PR. Locally: `npm run build -- --sourcemap && python3 ../scripts/ci/bundle_budget.py`.
