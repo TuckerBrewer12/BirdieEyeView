@@ -60,7 +60,7 @@ Whenever recon or planning creates or updates an artifact, present the actual Ma
 6. If planning identifies a new material choice that needs user direction, ask immediately and stop. After the user answers, update the implementation artifact with the resolution before continuing.
 7. Stop and ask the user to confirm the completed plan. Do not edit application or test code before explicit approval.
 8. After approval, read and run `$implementation-loop`. If it stops for a plan amendment, get the user's approval before it continues.
-9. When the change altered behavior, responsibilities, contracts, or source file locations described in `docs/`, `CLAUDE.md` or `AGENTS.md`, read and run `$update-docs` for the guides the plan and implementation named.
+9. When the change altered behavior, responsibilities, contracts, or source file locations described in `docs/` or `AGENTS.md`, read and run `$update-docs` for the guides the plan and implementation named.
 10. End with a concise summary of changed files, tests run, docs updated, residual risks, and both artifact paths. Offer to draft the pull request description (see Pull Request Text). Do not commit.
 
 Do not silently turn an unresolved recon or planning question into a decision. A recommended option may accompany the question, but the user's answer must be recorded before advancing to the next phase.

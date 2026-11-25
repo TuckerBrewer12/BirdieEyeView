@@ -33,7 +33,7 @@ Create the parent directory when needed. Preserve existing user-authored notes i
 - Keep the blast radius narrow and name any intentional tradeoffs.
 - Include tests as part of the plan, not as an afterthought.
 - Include database migrations only when schema changes are required.
-- Name the `docs/` guides the change will make inaccurate, and the `CLAUDE.md`/`AGENTS.md` bullets, so `$update-docs` can update them after implementation.
+- Name the `docs/` guides the change will make inaccurate, and the `AGENTS.md` rules, so `$update-docs` can update them after implementation.
 - When a response or request model changes, plan the regeneration of `frontend/openapi.json` and `api.gen.ts` and say what the frontend owner needs to know.
 - Resolve material implementation preferences with the user before finishing the plan (see Clarification Checkpoint). A recommended approach is not user confirmation.
 - Do not repeat a question already answered in the request or recon artifact.
@@ -90,7 +90,7 @@ Write or update this content in the implementation artifact:
 - `<command or test file>`: <what it proves>
 
 ### Docs To Update
-- `<docs path, CLAUDE.md/AGENTS.md bullet, or handoff.md entry>`: <what will become inaccurate, or "None">
+- `<docs path, AGENTS.md rule, or handoff.md entry>`: <what will become inaccurate, or "None">
 
 ### Frontend Impact
 <None, or: regenerated types, changed responses or errors, and what the frontend owner needs to do.>

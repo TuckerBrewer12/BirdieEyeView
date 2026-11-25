@@ -5,8 +5,8 @@ import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBa
 import { sampleAnalyticsAYearOn, withoutRounds } from "../../../testing/fakes/analyticsResponses";
 import { sampleGolfer } from "../../../testing/fixtures/sampleGolfer";
 import type { AnalyticsFilters } from "../../../domain/analyticsFilters";
-import { fontsLoaded } from "../../../testing/fontsLoaded";
-import { captureOptions } from "../../../testing/fullPageCapture";
+import { switchToDark } from "../../../testing/theme";
+import { captureOptions, readyForCapture } from "../../../testing/fullPageCapture";
 
 const FROZEN_NOW = "2026-06-02T18:00:00.000Z";
 
@@ -29,6 +29,11 @@ export class CareerRobot {
     await this.page.addInitScript(() => {
       localStorage.setItem("theme", "dark");
     });
+    return this;
+  }
+
+  async switchToDark(): Promise<this> {
+    await switchToDark(this.page);
     return this;
   }
 
@@ -187,7 +192,7 @@ export class CareerRobot {
 
   async capture(name: string, options: { fullPage?: boolean } = {}): Promise<this> {
     await this.page.evaluate(() => window.scrollTo(0, 0));
-    await fontsLoaded(this.page);
+    await readyForCapture(this.page, options.fullPage);
     await expect(this.page).toHaveScreenshot(name, captureOptions(options.fullPage));
     return this;
   }

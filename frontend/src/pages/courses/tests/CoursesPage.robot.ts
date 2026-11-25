@@ -3,8 +3,8 @@ import { test as base, expect } from "../../../testing/playwright";
 import type { CourseSummaryDto } from "../../../types/api";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
-import { fontsLoaded } from "../../../testing/fontsLoaded";
-import { captureOptions } from "../../../testing/fullPageCapture";
+import { switchToDark } from "../../../testing/theme";
+import { captureOptions, readyForCapture } from "../../../testing/fullPageCapture";
 
 export class CoursesRobot {
   private readonly page: Page;
@@ -17,6 +17,11 @@ export class CoursesRobot {
     await this.page.addInitScript(() => {
       localStorage.setItem("theme", "dark");
     });
+    return this;
+  }
+
+  async switchToDark(): Promise<this> {
+    await switchToDark(this.page);
     return this;
   }
 
@@ -93,7 +98,7 @@ export class CoursesRobot {
   }
 
   async capture(name: string): Promise<this> {
-    await fontsLoaded(this.page);
+    await readyForCapture(this.page);
     await expect(this.page).toHaveScreenshot(name, captureOptions());
     return this;
   }

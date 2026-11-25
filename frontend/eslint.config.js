@@ -238,11 +238,11 @@ export default defineConfig([
     rules: { 'specs/full-page-capture': 'error' },
   },
   {
-    files: ['src/**/*.espresso.spec.ts'],
+    files: ['src/**/*.ui.spec.ts'],
     rules: {
       'no-restricted-syntax': ['error', {
         selector: "CallExpression[callee.property.name=/^(toHaveScreenshot|toHaveCSS|capture)$/], CallExpression[callee.name='getComputedStyle']",
-        message: 'Espresso specs check behaviour. Put look checks in the screenshot spec through the robot’s capture().',
+        message: 'UI tests check behaviour. Put look checks in the screenshot spec through the robot’s capture().',
       }],
     },
   },
@@ -265,12 +265,12 @@ export default defineConfig([
         paths: [{
           name: '@testing-library/react',
           importNames: ['render', 'screen', 'fireEvent', 'within'],
-          message: 'Test the view model with renderHook. Rendering and clicking a page belongs in its espresso spec.',
+          message: 'Test the view model with renderHook. Rendering and clicking a page belongs in its UI test.',
         }],
       }],
       'no-restricted-globals': ['error',
-        { name: 'localStorage', message: 'Persistence is behaviour: check it in an espresso spec, or through a storage Fake.' },
-        { name: 'sessionStorage', message: 'Persistence is behaviour: check it in an espresso spec, or through a storage Fake.' },
+        { name: 'localStorage', message: 'Persistence is behaviour: check it in a UI test, or through a storage Fake.' },
+        { name: 'sessionStorage', message: 'Persistence is behaviour: check it in a UI test, or through a storage Fake.' },
       ],
     },
   },

@@ -35,13 +35,13 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
-npm run test:espresso
+npm run test:ui
 npm run test:screenshots
 ```
 
-Use focused test filters where appropriate. Vitest runs view-model, hook and helper tests in jsdom, with `Fake*` repositories rather than mocks. Playwright runs espresso flows (behaviour, through each page's robot) and screenshot specs (looks); both start their own Vite server on port 5174 and answer the API from `FakeBackend`. Screenshot baselines are the macOS renders CI takes (`*-darwin.png`). Update them only after reviewing the intended visual change; do not regenerate baselines to hide an unexplained failure.
+Use focused test filters where appropriate. Vitest runs view-model, hook and helper tests in jsdom, with `Fake*` repositories rather than mocks. Playwright runs UI tests (behaviour, through each page's robot) and screenshot specs (looks); both start their own Vite server on port 5174 and answer the API from `FakeBackend`. Screenshot baselines are the Linux renders of CI's Playwright image (`mcr.microsoft.com/playwright`, the version in `package-lock.json`), so a screenshot run on a Mac doesn't match them; CI runs the suite in three shards. Update them only after reviewing the intended visual change in the failing run's diffs; do not regenerate baselines to hide an unexplained failure.
 
-Refresh screenshot baselines locally (`npm run test:screenshots:update`) and commit them. [check_no_snapshot_updates.py](../../scripts/ci/check_no_snapshot_updates.py) rejects workflows that would regenerate them.
+To refresh them, add the `update-screenshots` label to the PR. [update-screenshots.yml](../../.github/workflows/update-screenshots.yml) regenerates the baselines in the same image, commits them to the branch, removes the label and runs the check again; review the PNG diff before merging. [check_no_snapshot_updates.py](../../scripts/ci/check_no_snapshot_updates.py) rejects any other workflow that would regenerate them, so the check itself can always fail.
 
 ## Live checks
 

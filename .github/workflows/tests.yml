@@ -195,7 +195,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        check: [test, lint, types, build, espresso]
+        check: [test, lint, types, build, ui]
     steps:
       - uses: actions/checkout@v4
 
@@ -239,19 +239,19 @@ jobs:
         run: npm run build
 
       - name: Install Playwright Chromium
-        if: needs.changes.outputs.frontend == 'true' && matrix.check == 'espresso'
+        if: needs.changes.outputs.frontend == 'true' && matrix.check == 'ui'
         run: npx playwright install --with-deps chromium
 
-      - name: Espresso tests
-        if: needs.changes.outputs.frontend == 'true' && matrix.check == 'espresso'
-        run: npm run test:espresso
+      - name: UI tests
+        if: needs.changes.outputs.frontend == 'true' && matrix.check == 'ui'
+        run: npm run test:ui
 
       # Without this the trace that `trace: "on-first-retry"` records dies
-      # with the runner, and a flaky espresso failure is undebuggable.
+      # with the runner, and a flaky UI test failure is undebuggable.
       - uses: actions/upload-artifact@v4
-        if: failure() && matrix.check == 'espresso'
+        if: failure() && matrix.check == 'ui'
         with:
-          name: espresso-report
+          name: ui-report
           path: |
             frontend/playwright-report
             frontend/test-results

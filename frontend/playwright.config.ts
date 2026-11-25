@@ -2,15 +2,17 @@ import { defineConfig, devices, type ReporterDescription } from "@playwright/tes
 
 const collectCoverage = process.env.VITE_COVERAGE === "true";
 
+const sameRasterOnEveryRunner = { args: ["--disable-skia-runtime-opts", "--font-render-hinting=none"] };
+
 const reporter: ReporterDescription[] = [process.env.CI ? ["github"] : ["list"]];
 if (collectCoverage) {
   reporter.push([
     "monocart-reporter",
     {
-      name: "Espresso coverage",
-      outputFile: "coverage/espresso/index.html",
+      name: "UI test coverage",
+      outputFile: "coverage/ui/index.html",
       coverage: {
-        outputDir: "coverage/espresso",
+        outputDir: "coverage/ui",
         reports: [["json", { file: "coverage-final.json" }], ["html", { subdir: "html" }], "console-summary"],
       },
     },
@@ -19,9 +21,11 @@ if (collectCoverage) {
 
 export default defineConfig({
   testDir: "./src",
+  snapshotPathTemplate: "{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{ext}",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 3 : undefined,
   reporter,
   timeout: 30_000,
   expect: {
@@ -47,19 +51,23 @@ export default defineConfig({
     {
       name: "desktop",
       testMatch: "**/*.screenshot.spec.ts",
+      retries: process.env.CI ? 1 : 0,
       grepInvert: /@phone/,
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },
+        launchOptions: sameRasterOnEveryRunner,
       },
     },
     {
       name: "mobile",
       testMatch: "**/*.screenshot.spec.ts",
+      retries: process.env.CI ? 1 : 0,
       testIgnore: ["**/brand/**", "**/tests/screenshots/**"],
       use: {
         ...devices["iPhone 14"],
         browserName: "chromium",
+        launchOptions: sameRasterOnEveryRunner,
       },
     },
     {
@@ -69,8 +77,8 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     {
-      name: "espresso",
-      testMatch: "**/*.espresso.spec.ts",
+      name: "ui",
+      testMatch: "**/*.ui.spec.ts",
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },

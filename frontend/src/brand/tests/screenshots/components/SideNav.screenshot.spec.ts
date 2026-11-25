@@ -1,15 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { capturePreviewLightAndDark } from "../../previewScreenshot";
 import { BrandKitRobot } from "../../BrandKit.robot";
-import { capturePreview, enableDark } from "../../previewScreenshot";
 
 test.describe("SideNav", () => {
-  test("light", async ({ page }) => {
-    await capturePreview(page, "SideNav", "side-nav.png");
-  });
-
-  test("dark", async ({ page }) => {
-    await enableDark(page);
-    await capturePreview(page, "SideNav", "side-nav-dark.png");
+  test("light and dark", async ({ page }) => {
+    await capturePreviewLightAndDark(page, "SideNav", "side-nav");
   });
 
   test("sign-out shows on the golfer's row", async ({ page }) => {

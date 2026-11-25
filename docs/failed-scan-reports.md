@@ -232,11 +232,11 @@ encryption without requesting those APIs. See
 .venv/bin/python -m pytest -q tests/test_scan_report_sanitizer.py tests/test_scan_report_crypto.py tests/test_scan_report_storage.py tests/test_scan_report_cli.py tests/test_scan_report_logging.py tests/test_scan_report_routes.py tests/test_scan_report_service.py tests/test_scan_router_helpers.py tests/test_api_main.py
 cd frontend
 npx vitest run src/data/tests/scanReportRepository.test.ts src/data/tests/useFailedScanReportTest.tsx
-npm run test:espresso -- src/pages/scan/tests/ScanPage.espresso.spec.ts src/pages/landing-page/tests/LandingPage.espresso.spec.ts
+npm run test:ui -- src/pages/scan/tests/ScanPage.ui.spec.ts src/pages/landing-page/tests/LandingPage.ui.spec.ts
 npm run test:screenshots -- src/brand/tests/screenshots/components/ScanReport.screenshot.spec.ts src/pages/scan/tests/ScanPage.screenshot.spec.ts
 ```
 
-The espresso flows run on `FakeBackend` through each page's robot: a sent
+The UI tests run on `FakeBackend` through each page's robot: a sent
 report, one that can't be stored, a sent report after leaving the page, a new
 photo clearing it, and a report from the landing page without an account. The
 screenshots cover the banner, sent and not, and the dialog. No live OCR or
