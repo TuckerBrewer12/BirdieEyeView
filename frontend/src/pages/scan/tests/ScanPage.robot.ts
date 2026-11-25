@@ -205,6 +205,15 @@ export class ScanRobot {
     return this;
   }
 
+  async seesSavedWithoutRound(): Promise<this> {
+    const saved = this.page.locator("[data-slot=scan-saved]");
+    await expect(saved).toContainText("It's in your rounds, but it couldn't be shown here.");
+    await expect(saved.getByRole("button", { name: "Share", exact: true })).toHaveCount(0);
+    await expect(saved.getByRole("button", { name: "View round" })).toBeVisible();
+    await expect(saved.getByRole("button", { name: "Scan another" })).toBeVisible();
+    return this;
+  }
+
   async tapScanAnother(): Promise<this> {
     await this.page.getByRole("button", { name: "Scan another" }).click();
     return this;

@@ -29,7 +29,7 @@ export function ScanPage({ userId }: { userId: string }) {
       return (
         <div className="flex flex-col pb-6">
           <PageHeader title="Round saved" revealAt={100} />
-          {viewModel.savedRound ? (
+          {viewModel.savedRound || viewModel.savedRoundFailed ? (
             <ScanSuccessStep
               round={viewModel.savedRound}
               onView={() => viewModel.openSavedRound((roundId) => void navigate(`/rounds/${roundId}`))}

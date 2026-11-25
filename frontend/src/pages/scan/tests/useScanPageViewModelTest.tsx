@@ -279,6 +279,19 @@ describe("useScanPageViewModel", () => {
     expect(result.current.review.round).toBeNull();
   });
 
+  it("says the round saved even when it can't be loaded back to show", async () => {
+    const { result, rounds } = renderVm();
+    await scanToReview(result);
+    rounds.store.roundError = "Round not found.";
+
+    act(() => result.current.review.save());
+
+    await waitFor(() => expect(result.current.savedRoundFailed).toBe(true));
+    expect(result.current.step).toBe("success");
+    expect(result.current.savedRound).toBeNull();
+    expect(rounds.store.savedScans).toHaveLength(1);
+  });
+
   it("stays on the review with the reason when saving fails", async () => {
     const { result, rounds } = renderVm();
     rounds.store.saveError = "That round could not be saved.";
