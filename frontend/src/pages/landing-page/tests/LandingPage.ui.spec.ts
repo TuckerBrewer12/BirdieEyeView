@@ -15,11 +15,13 @@ test("the hero's photo gives way to the card's setup, then to the scanned round"
   await landing.seesScannedCard();
 });
 
-test("Sign up free under the scanned round goes to register", async ({ landing }) => {
+test("a scanned card says the score, and Sign up free under it goes to register without promising to save it", async ({ landing }) => {
   await landing.open();
   await landing.chooseScorecard();
   await landing.tapScan();
   await landing.seesScannedCard();
+  await landing.seesScore("You shot 79 (+8) with 34 putts.");
+  await landing.seesSignUpOffer();
   await landing.tapSignUp("Sign up free");
   await landing.goesTo("/register");
 });
@@ -74,6 +76,14 @@ test.describe("on a phone", () => {
     await landing.seesScannedCard();
     await landing.tapScanAnother();
     await landing.seesScanner();
+  });
+
+  test("the score is on screen after a scan, though the scorecard's totals are not", async ({ landing }) => {
+    await landing.open();
+    await landing.chooseScorecard();
+    await landing.tapScan();
+    await landing.seesScannedCard();
+    await landing.seesScore("You shot 79 (+8) with 34 putts.");
   });
 
   test("the scanner is on screen without scrolling", async ({ landing }) => {

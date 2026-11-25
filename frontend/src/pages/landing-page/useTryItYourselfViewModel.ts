@@ -9,6 +9,7 @@ import { useFailedScanReport, type FailedScanReport } from "@/data/useFailedScan
 import type { FailedScanAttempt } from "@/domain/scanReport";
 import { failedScanAttempt, scanFailureOf } from "@/lib/scanReports";
 import { NO_CARD_FACTS, SCAN_STEPS, SCAN_STEP_HOLD_MS, cardContext, scanStepAt, type CardFacts } from "@/domain/scan";
+import { scannedRoundLine } from "./present";
 
 export interface TryItYourselfViewModel {
   step: "upload" | "processing" | "review";
@@ -26,6 +27,7 @@ export interface TryItYourselfViewModel {
 
   round: Round | null;
   hasScores: boolean;
+  roundLine: string | null;
 }
 
 export function useTryItYourselfViewModel(
@@ -115,5 +117,6 @@ export function useTryItYourselfViewModel(
 
     round,
     hasScores: (round?.holes.length ?? 0) > 0,
+    roundLine: scannedRoundLine(round),
   };
 }

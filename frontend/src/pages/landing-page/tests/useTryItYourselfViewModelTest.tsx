@@ -67,6 +67,7 @@ describe("useTryItYourselfViewModel", () => {
     await waitFor(() => expect(result.current.step).toBe("review"));
     expect(result.current.round?.course?.name).toBe(SCANNED_COURSE_NAME);
     expect(result.current.hasScores).toBe(true);
+    expect(result.current.roundLine).toBe("You shot 79 (+8) with 34 putts.");
   });
 
   it("returns to the photo with the reason when the scan fails", async () => {
