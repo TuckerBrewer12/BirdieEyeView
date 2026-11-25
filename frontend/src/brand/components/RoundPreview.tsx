@@ -13,9 +13,15 @@ import { formatDay, formatDayShort, dayParts } from "@/domain/date";
 
 interface RoundListProps {
   round: RoundSummary;
-  variant?: "history";
+  variant?: undefined;
   onClick?: () => void;
   onLinkClick?: () => void;
+}
+
+interface RoundHistoryProps {
+  round: RoundSummary;
+  variant: "history";
+  onClick?: () => void;
 }
 
 interface RoundHighlightProps {
@@ -38,57 +44,44 @@ interface RoundSummaryProps {
   frame?: "outline" | "none";
 }
 
-type RoundPreviewProps = RoundListProps | RoundHighlightProps | RoundCompactProps | RoundSummaryProps;
+type RoundPreviewProps =
+  | RoundListProps
+  | RoundHistoryProps
+  | RoundHighlightProps
+  | RoundCompactProps
+  | RoundSummaryProps;
+
+const MISSING = "—";
 
 export function RoundPreview(props: RoundPreviewProps) {
-  if (props.variant === "highlight") {
-    return <RoundHighlight round={props.round} onClick={props.onClick} />;
+  switch (props.variant) {
+    case "history":
+      return <RoundHistoryRow {...props} />;
+    case "highlight":
+      return <RoundHighlight {...props} />;
+    case "compact":
+      return <RoundCompact {...props} />;
+    case "summary":
+      return <RoundSummaryBox {...props} />;
+    default:
+      return <RoundListRow {...props} />;
   }
-  if (props.variant === "compact") {
-    return <RoundCompact {...props} />;
-  }
-  if (props.variant === "summary") {
-    return <RoundSummaryBox round={props.round} holes={props.holes} frame={props.frame} />;
-  }
+}
 
-  const { round, variant, onClick, onLinkClick } = props;
+function listMeta(round: RoundSummary): string[] {
+  const nines =
+    round.frontNine.total != null && round.backNine.total != null
+      ? `${round.frontNine.total} · ${round.backNine.total}`
+      : null;
+  const putts = round.putts != null ? `${round.putts} putts` : null;
+  return [nines, putts, round.teeBox].filter((part): part is string => !!part);
+}
 
-  if (variant === "history") {
-    return (
-      <RowButton
-        data-slot="round-preview"
-        data-variant="history"
-        onClick={onClick}
-        disabled={!onClick}
-        className={cn(
-          "flex w-full items-center gap-3 px-3.5 py-3 text-left md:gap-4 md:px-5",
-          onClick ? "cursor-pointer hover:bg-muted/half" : "cursor-default",
-        )}
-      >
-        <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <span className="text-body font-semibold text-foreground md:text-body-sm">{formatDay(round.date) ?? "—"}</span>
-          {round.holes.length > 0 && (
-            <HoleScoreBars holes={round.holes} variant="strip" className="w-full md:max-w-70" />
-          )}
-        </span>
-        <span className="flex shrink-0 flex-col items-end gap-1 md:flex-row md:items-center md:gap-4">
-          <span className="text-xl leading-none font-bold text-foreground md:text-title">{round.score ?? "—"}</span>
-          <ToParPill toPar={round.toPar} size="row" ground="muted" />
-        </span>
-      </RowButton>
-    );
-  }
-
+function RoundListRow({ round, onClick, onLinkClick }: Omit<RoundListProps, "variant">) {
   const dateParts = dayParts(round.date);
   const courseName = courseLabel(round.course?.name);
   const unlinked = !round.course?.id;
-  const meta = [
-    round.frontNine.total != null && round.backNine.total != null
-      ? `${round.frontNine.total} · ${round.backNine.total}`
-      : null,
-    round.putts != null ? `${round.putts} putts` : null,
-    round.teeBox,
-  ].filter(Boolean);
+  const meta = listMeta(round);
 
   return (
     <div
@@ -104,7 +97,7 @@ export function RoundPreview(props: RoundPreviewProps) {
             <span className="text-lg leading-tight font-bold text-foreground md:text-xl">{dateParts.day}</span>
           </>
         ) : (
-          <span className="text-label text-muted-foreground">—</span>
+          <span className="text-label text-muted-foreground">{MISSING}</span>
         )}
       </div>
 
@@ -147,7 +140,7 @@ export function RoundPreview(props: RoundPreviewProps) {
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-1 md:flex-row md:items-center md:gap-4">
-        <span className="text-name leading-none font-bold text-foreground md:text-title">{round.score ?? "—"}</span>
+        <span className="text-name leading-none font-bold text-foreground md:text-title">{round.score ?? MISSING}</span>
         <ToParPill toPar={round.toPar} size="row" ground="muted" />
       </div>
       <ChevronRight aria-hidden className="hidden size-3.5 shrink-0 text-muted-foreground md:block" />
@@ -155,13 +148,33 @@ export function RoundPreview(props: RoundPreviewProps) {
   );
 }
 
-function RoundHighlight({
-  round,
-  onClick,
-}: {
-  round: RoundSummary | null;
-  onClick?: () => void;
-}) {
+function RoundHistoryRow({ round, onClick }: Omit<RoundHistoryProps, "variant">) {
+  return (
+    <RowButton
+      data-slot="round-preview"
+      data-variant="history"
+      onClick={onClick}
+      disabled={!onClick}
+      className={cn(
+        "flex w-full items-center gap-3 px-3.5 py-3 text-left md:gap-4 md:px-5",
+        onClick ? "cursor-pointer hover:bg-muted/half" : "cursor-default",
+      )}
+    >
+      <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <span className="text-body font-semibold text-foreground md:text-body-sm">{formatDay(round.date) ?? MISSING}</span>
+        {round.holes.length > 0 && (
+          <HoleScoreBars holes={round.holes} variant="strip" className="w-full md:max-w-70" />
+        )}
+      </span>
+      <span className="flex shrink-0 flex-col items-end gap-1 md:flex-row md:items-center md:gap-4">
+        <span className="text-xl leading-none font-bold text-foreground md:text-title">{round.score ?? MISSING}</span>
+        <ToParPill toPar={round.toPar} size="row" ground="muted" />
+      </span>
+    </RowButton>
+  );
+}
+
+function RoundHighlight({ round, onClick }: Omit<RoundHighlightProps, "variant">) {
   if (!round) {
     return (
       <EmptyNote data-slot="round-preview" className="p-4">
@@ -193,7 +206,7 @@ function RoundHighlight({
             {courseLabel(round.course?.name)}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
-            {formatDayShort(round.date) ?? "—"}
+            {formatDayShort(round.date) ?? MISSING}
             {round.toPar != null && (
               <>
                 {" · "}
@@ -210,7 +223,7 @@ function RoundHighlight({
 
       <div className="shrink-0 text-right">
         <div className="text-figure-lg font-black tracking-tighter text-card-foreground transition-colors group-hover:text-primary">
-          {round.score ?? "—"}
+          {round.score ?? MISSING}
         </div>
       </div>
     </button>
@@ -220,7 +233,7 @@ function RoundHighlight({
 function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactProps, "variant">) {
   const stacked = layout === "stacked";
   const courseName = courseLabel(round.course?.name);
-  const date = formatDayShort(round.date) ?? "—";
+  const date = formatDayShort(round.date) ?? MISSING;
 
   return (
     <RowButton
@@ -247,18 +260,14 @@ function RoundCompact({ round, layout = "inline", onClick }: Omit<RoundCompactPr
         </>
       )}
       <span className={cn("shrink-0 text-xl font-semibold text-foreground", !stacked && "text-right")}>
-        {round.score ?? "—"}
+        {round.score ?? MISSING}
       </span>
       <ToParPill toPar={round.toPar} size="row" />
     </RowButton>
   );
 }
 
-function RoundSummaryBox({
-  round,
-  holes = "nines",
-  frame = "outline",
-}: Pick<RoundSummaryProps, "round" | "holes" | "frame">) {
+function RoundSummaryBox({ round, holes = "nines", frame = "outline" }: Omit<RoundSummaryProps, "variant">) {
   const when = roundDayAndTee(round);
   return (
     <div
@@ -272,7 +281,7 @@ function RoundSummaryBox({
           {when && <p className="mt-0.5 text-body-sm text-muted-foreground">{when}</p>}
         </div>
         <div className="flex items-baseline gap-1.5">
-          <StatValue size="lg">{round.score ?? "—"}</StatValue>
+          <StatValue size="lg">{round.score ?? MISSING}</StatValue>
           <ToParPill toPar={round.toPar} ground="muted" />
         </div>
       </div>
