@@ -95,7 +95,7 @@ async function run(browser, side, profile, scenario, token) {
   const result = { dashboard: await mark(page, "dashboard"), kb: kb(), script: await script() };
   await page.waitForTimeout(3000);
   const start = await page.evaluate(() => { window.__watchAnalytics = true; return performance.now(); });
-  await page.getByRole("link", { name: "Analytics" }).locator("visible=true").first().click();
+  await page.getByRole("link", { name: "Analytics", exact: true }).locator("visible=true").first().click();
   result.switchMs = (await mark(page, "analytics")) - start;
   await context.close();
   return result;
