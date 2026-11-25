@@ -29,7 +29,7 @@ serve() {
   cp "$ROOT/frontend/server/staticServer.js" "$dir/server/"
   echo '{"type":"module"}' > "$dir/package.json"
   ln -sfn "$(cd "$dist" && pwd)" "$dir/dist"
-  (cd "$dir" && PORT="$static_port" node server.js > "$WORK/$side.log" 2>&1 & echo $! > "$WORK/$side-static.pid")
+  (cd "$dir" && PORT="$static_port" exec node server.js > "$WORK/$side.log" 2>&1 & echo $! > "$WORK/$side-static.pid")
   node "$ROOT/scripts/perf/tls_proxy.mjs" "$tls_port" "$static_port" "$api_port" "$WORK" \
     > "$WORK/$side-tls.log" 2>&1 & echo $! > "$WORK/$side-tls.pid"
 }
