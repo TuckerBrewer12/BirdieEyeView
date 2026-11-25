@@ -9,3 +9,6 @@ FOLLOW THIS FORMAT EXACTLY ON YOUR PR
 
 <!-- Why this change is needed. The bug it fixes, the problem it solves, or what
      it unblocks. If it's a follow-up, link the PR or issue. -->
+
+- [ ] Over 500 lines on purpose
+<!-- Tick only when the PR can't be split, and say why under Why?. Generated files don't count. -->

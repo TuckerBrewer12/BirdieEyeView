@@ -1,10 +1,33 @@
 import { defineConfig } from 'vitest/config'
+import type { Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import istanbul from 'vite-plugin-istanbul'
 import path from 'path'
 
 const collectCoverage = process.env.VITE_COVERAGE === 'true'
+
+function dropBrandHarnessFromBuilds(): Plugin {
+  const app = path.resolve(__dirname, 'src/App.tsx')
+  const stub = '\0brand-harness-stub'
+  let replaced = false
+  return {
+    name: 'drop-brand-harness-from-builds',
+    apply: 'build',
+    enforce: 'pre',
+    resolveId(source, importer) {
+      if (source !== './brand/BrandHarness' || importer !== app) return null
+      replaced = true
+      return stub
+    },
+    load(id) {
+      return id === stub ? 'export function BrandHarness() { return null }' : null
+    },
+    buildEnd(error) {
+      if (!error && !replaced) this.error('App.tsx no longer imports ./brand/BrandHarness; update this plugin')
+    },
+  }
+}
 
 // Unit tests run in a US timezone, where UTC midnight is the evening before, so a
 // date-only string read as UTC shows up as the wrong day instead of passing on a
@@ -13,6 +36,7 @@ if (process.env.VITEST) process.env.TZ = 'America/Los_Angeles'
 
 export default defineConfig({
   plugins: [
+    dropBrandHarnessFromBuilds(),
     react(),
     tailwindcss(),
     ...(collectCoverage
@@ -46,7 +70,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: false,
     setupFiles: ['./src/test-setup.ts'],
-    include: ['src/**/*.{test,spec}.{ts,tsx}', 'src/**/*Test.{ts,tsx}', 'eslint/**/*.test.js'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'src/**/*Test.{ts,tsx}', 'eslint/**/*.test.js', 'server/**/*.test.js'],
     exclude: ['src/**/*.screenshot.spec.ts', 'src/**/*.ui.spec.ts', 'src/**/*.capture.spec.ts'],
     coverage: {
       provider: 'v8',
