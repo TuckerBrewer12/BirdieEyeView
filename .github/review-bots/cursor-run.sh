@@ -64,6 +64,10 @@ PY
   fi
   cmd+=("$instruction")
 
+  if [[ -n "${BOT_AGENT_TIMEOUT:-}" ]]; then
+    cmd=(timeout --kill-after=30s "$BOT_AGENT_TIMEOUT" "${cmd[@]}")
+  fi
+
   if [[ -n "$stdout_file" ]]; then
     "${cmd[@]}" >"$stdout_file"
   else
