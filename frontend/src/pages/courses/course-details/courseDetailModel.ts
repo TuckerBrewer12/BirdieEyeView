@@ -35,10 +35,9 @@ export function teeLine(tee: TeeDto): string {
     .join(" · ");
 }
 
-export function lowerIndexNote(tee: TeeDto | null): string | null {
-  const score = tee?.score_to_lower_index;
-  if (tee == null || score == null) return null;
-  const from = tee.color ? `the ${formatTeeName(tee.color)}` : "this tee";
+export function lowerIndexNote(score: number | null, teeName: string | null): string | null {
+  if (score == null) return null;
+  const from = teeName ? `the ${formatTeeName(teeName)}` : "this tee";
   return `Shoot ${score} or better from ${from} and your handicap index comes down.`;
 }
 
