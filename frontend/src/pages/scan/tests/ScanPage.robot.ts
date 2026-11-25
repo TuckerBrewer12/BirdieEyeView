@@ -245,7 +245,23 @@ export class ScanRobot {
   async seesScanFailed(): Promise<this> {
     await expect(this.page.getByRole("alert")).toContainText("Couldn't read this card.");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Read card", exact: true })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Read card again", exact: true })).toBeVisible();
+    await expect(this.readButton()).toHaveCount(0);
+    return this;
+  }
+
+  scanWorksNextTime(): this {
+    if (this.backend) this.backend.scan = scannedCard;
+    return this;
+  }
+
+  async tapReadAgain(): Promise<this> {
+    await this.page.getByRole("button", { name: "Read card again", exact: true }).click();
+    return this;
+  }
+
+  async tapTypeScoresInstead(): Promise<this> {
+    await this.page.getByRole("alert").getByRole("button", { name: "Type the scores in instead" }).click();
     return this;
   }
 
