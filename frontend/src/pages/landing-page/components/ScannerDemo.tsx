@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { ScanLine, Type } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence, LazyMotion } from "framer-motion";
 import { Card, CardContent, CardFactsForm, RoundPreview } from "@/brand";
 import { tokens } from "@/brand/theme";
 import type { CardFacts } from "@/domain/scan";
@@ -23,7 +23,7 @@ const noop = () => {};
 
 function SetupPanel() {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: DEMO_MOTION.recedeScale }}
@@ -35,13 +35,13 @@ function SetupPanel() {
           <CardFactsForm card={DEMO_FACTS} onChange={noop} idPrefix="demo" />
         </CardContent>
       </Card>
-    </motion.div>
+    </m.div>
   );
 }
 
 function ReadRound() {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
@@ -53,7 +53,7 @@ function ReadRound() {
           <RoundPreview variant="summary" holes="strip" frame="none" round={SAMPLE_ROUND} />
         </CardContent>
       </Card>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -81,7 +81,7 @@ function HandicapTap() {
       style={TAP_POSITION}
       className="absolute top-(--tap-y) left-(--tap-x) -translate-x-1/2 -translate-y-1/2 sm:top-(--tap-y-wide) sm:left-(--tap-x-wide)"
     >
-      <motion.div
+      <m.div
         initial={{ scale: DEMO_MOTION.tap.reachScale, opacity: 0 }}
         animate={{
           scale: [DEMO_MOTION.tap.reachScale, DEMO_MOTION.tap.pressScale, 1],
@@ -96,7 +96,7 @@ function HandicapTap() {
 
 function AppScreen({ screen, tapping }: { screen: TourScreen; tapping: boolean }) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -104,7 +104,7 @@ function AppScreen({ screen, tapping }: { screen: TourScreen; tapping: boolean }
       className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-2xl bg-card"
     >
       <AnimatePresence initial={false}>
-        <motion.div
+        <m.div
           key={screen}
           initial={{ opacity: 0, scale: DEMO_MOTION.screenEnterScale }}
           animate={{ opacity: 1, scale: 1 }}
@@ -114,11 +114,13 @@ function AppScreen({ screen, tapping }: { screen: TourScreen; tapping: boolean }
         >
           <TourPicture screen={screen} />
           {tapping && <HandicapTap />}
-        </motion.div>
+        </m.div>
       </AnimatePresence>
-    </motion.div>
+    </m.div>
   );
 }
+
+const loadLayoutFeatures = () => import("./layoutMotionFeatures").then((module) => module.default);
 
 export function ScannerDemo() {
   const { phase, label, screen, tapping, tourPrimed } = useScannerDemoViewModel();
@@ -132,7 +134,7 @@ export function ScannerDemo() {
     >
       <picture>
         <source type="image/webp" srcSet="/hero/physical-card.webp" />
-        <motion.img
+        <m.img
           src="/hero/physical-card.jpg"
           alt="A paper scorecard held over a golf cart"
           className="absolute inset-0 h-full w-full origin-left object-cover"
@@ -164,7 +166,7 @@ export function ScannerDemo() {
 
       <AnimatePresence>
         {phase === "scanning" && (
-          <motion.div
+          <m.div
             initial={{ top: "-20%" }}
             animate={{ top: "120%" }}
             exit={{ opacity: 0 }}
@@ -174,15 +176,17 @@ export function ScannerDemo() {
         )}
       </AnimatePresence>
 
-      <motion.div
-        layout
-        className="absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full whitespace-nowrap bg-foreground/glass px-4 py-2 text-xs font-semibold tracking-chip text-background shadow-card backdrop-blur"
-      >
-        {phase === "mapping" && <Type className="size-3.5 text-primary" />}
-        {phase === "scanning" && <ScanLine className="size-3.5 animate-pulse text-score-birdie" />}
-        {scanned && <div className="size-2 rounded-full bg-score-birdie" />}
-        {label}
-      </motion.div>
+      <LazyMotion features={loadLayoutFeatures}>
+        <m.div
+          layout
+          className="absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full whitespace-nowrap bg-foreground/glass px-4 py-2 text-xs font-semibold tracking-chip text-background shadow-card backdrop-blur"
+        >
+          {phase === "mapping" && <Type className="size-3.5 text-primary" />}
+          {phase === "scanning" && <ScanLine className="size-3.5 animate-pulse text-score-birdie" />}
+          {scanned && <div className="size-2 rounded-full bg-score-birdie" />}
+          {label}
+        </m.div>
+      </LazyMotion>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { tokens, verdictFill } from "@/brand/theme";
 import type { HoleStats } from "@/domain";
@@ -93,7 +93,7 @@ export function HoleGreensPuttsChart({ holes }: HoleGreensPuttsChartProps) {
                 <g key={hole.hole}>
                   <rect x={left} y={G.top} width={column * bar} height={G.bottom - G.top} rx={corner} fill={tokens.color.chart.muted} />
                   {hole.greens != null && (
-                    <motion.rect
+                    <m.rect
                       x={left}
                       width={column * bar}
                       rx={corner}

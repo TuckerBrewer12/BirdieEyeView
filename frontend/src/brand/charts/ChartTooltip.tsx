@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 
@@ -17,7 +17,7 @@ export function ChartTooltip({ id, at, flipAt = tokens.chart.tooltipFlip, size =
   return (
     <AnimatePresence>
       {id != null && (
-        <motion.div
+        <m.div
           key={id}
           data-slot="chart-tooltip"
           className={cn(
@@ -34,7 +34,7 @@ export function ChartTooltip({ id, at, flipAt = tokens.chart.tooltipFlip, size =
           transition={{ duration: tokens.motion.duration.collapse }}
         >
           {children}
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

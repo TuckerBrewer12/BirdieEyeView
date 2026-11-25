@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { ScoreMixBar } from "@/brand/charts/ScoreMixBar";
 import { paddedExtent } from "@/brand/charts/scales";
@@ -86,7 +86,7 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
               const fill = toParMarkFill(roundAverageToParTenths(hole.averageToPar));
               return (
                 <g key={hole.hole}>
-                  <motion.rect
+                  <m.rect
                     width={column * bar}
                     rx={corner}
                     fill={fill}
@@ -95,7 +95,7 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
                     transition={move}
                   />
                   {hole.spread != null && hole.spread > 0 && (
-                    <motion.g
+                    <m.g
                       initial={false}
                       animate={{ x: centre }}
                       transition={move}
@@ -106,7 +106,7 @@ export function HoleProfileChart({ holes, ranked = false }: HoleProfileChartProp
                       <line x1={0} x2={0} y1={y(hole.averageToPar - hole.spread)} y2={y(hole.averageToPar + hole.spread)} />
                       <line x1={-cap} x2={cap} y1={y(hole.averageToPar + hole.spread)} y2={y(hole.averageToPar + hole.spread)} />
                       <line x1={-cap} x2={cap} y1={y(hole.averageToPar - hole.spread)} y2={y(hole.averageToPar - hole.spread)} />
-                    </motion.g>
+                    </m.g>
                   )}
                   <HoleNumber x={centre} y={bottom + numberDrop} active={hovered === i} moving>
                     {hole.hole}

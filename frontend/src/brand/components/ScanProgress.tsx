@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 
@@ -24,14 +24,14 @@ function ScanProgress({ photoUrl, label, steps, phase, className }: ScanProgress
     >
       <div className="relative aspect-3/2 w-full max-w-scan-photo overflow-hidden rounded-photo bg-muted shadow-photo">
         {photoUrl && <img src={photoUrl} alt="Your scorecard" className="block size-full object-cover" />}
-        <motion.div
+        <m.div
           aria-hidden
           className="absolute inset-x-0 top-0 bg-scan-shade"
           initial={false}
           animate={{ height: line }}
           transition={{ duration: tokens.motion.scanLine, ease: "easeInOut" }}
         />
-        <motion.div
+        <m.div
           aria-hidden
           className="absolute inset-x-0 h-1 bg-scan-line shadow-scan-line"
           initial={false}

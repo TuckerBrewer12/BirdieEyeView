@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { scaleLinear } from "d3-scale";
 import { curveStepAfter, line } from "d3-shape";
 import { cn } from "@/brand/cn";
@@ -124,7 +124,7 @@ export function RoundFlowChart({ round }: RoundFlowChartProps) {
 
             {first <= 9 && last > 9 && <NineDivider x={x(10)} top={0} bottom={H} />}
 
-            <motion.path
+            <m.path
               d={path}
               fill="none"
               stroke={tokens.color.foreground}

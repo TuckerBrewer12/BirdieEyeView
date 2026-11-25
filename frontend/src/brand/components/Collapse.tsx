@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { cn } from "@/brand/cn";
 import { tokens } from "@/brand/theme";
 
@@ -13,7 +13,7 @@ function Collapse({ open, children, className }: CollapseProps) {
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           key="collapse-content"
           data-slot="collapse"
           initial={{ opacity: 0, height: 0 }}
@@ -23,7 +23,7 @@ function Collapse({ open, children, className }: CollapseProps) {
           className={cn("overflow-hidden", className)}
         >
           {children}
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

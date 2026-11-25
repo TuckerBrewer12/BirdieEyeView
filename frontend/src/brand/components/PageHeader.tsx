@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { m, useScroll, useTransform } from "framer-motion";
 import { cn } from "@/brand/cn";
 
 interface PageHeaderProps {
@@ -34,9 +34,9 @@ function RevealingPageHeader({
   const opacity = useTransform(scrollY, [Math.max(0, revealAt - 30), revealAt], [0, 1]);
 
   return (
-    <motion.header data-slot="page-header" className={className} style={{ opacity }}>
+    <m.header data-slot="page-header" className={className} style={{ opacity }}>
       {children}
-    </motion.header>
+    </m.header>
   );
 }
 

@@ -1,13 +1,13 @@
 import { RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Button, Card, CardContent, EmptyNote, PageTitle, RoundScorecard } from "@/brand";
 import { tokens } from "@/brand/theme";
 import type { TryItYourselfViewModel } from "../useTryItYourselfViewModel";
 
 export function ScannedSection({ viewModel }: { viewModel: TryItYourselfViewModel }) {
   return (
-    <motion.section
+    <m.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: tokens.motion.scanStep.review }}
@@ -38,6 +38,6 @@ export function ScannedSection({ viewModel }: { viewModel: TryItYourselfViewMode
           <Button render={<Link to="/register" />}>Sign up free</Button>
         </CardContent>
       </Card>
-    </motion.section>
+    </m.section>
   );
 }

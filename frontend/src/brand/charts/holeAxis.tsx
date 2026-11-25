@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { tokens } from "@/brand/theme";
 import { useLayoutTransition } from "./useLayoutTransition";
 
@@ -26,9 +26,9 @@ export function HoleNumber({
     fill: active ? tokens.color.foreground : tokens.color.mutedForeground,
   } as const;
   return moving ? (
-    <motion.text {...text} initial={false} animate={{ x }} transition={move}>
+    <m.text {...text} initial={false} animate={{ x }} transition={move}>
       {children}
-    </motion.text>
+    </m.text>
   ) : (
     <text {...text} x={x}>
       {children}

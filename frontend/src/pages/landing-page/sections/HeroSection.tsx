@@ -1,6 +1,6 @@
 import { Camera, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import {
   Alert,
   AlertDescription,
@@ -25,7 +25,7 @@ export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }
 
   return (
     <section className="mx-auto grid max-w-276 items-center gap-10 px-5 pt-6 pb-16 md:px-6 md:pt-14 md:pb-18 lg:grid-cols-2 lg:gap-14">
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={tokens.motion.entrance}
@@ -51,11 +51,11 @@ export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }
           </p>
         </div>
         <p className="hidden text-body text-muted-foreground md:block">No account needed to try.</p>
-      </motion.div>
+      </m.div>
 
       <AnimatePresence mode="wait">
         {viewModel.step === "processing" ? (
-          <motion.div
+          <m.div
             key="processing"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -65,9 +65,9 @@ export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }
             <Card className="py-0">
               <ScanProgress photoUrl={previewUrl} label={viewModel.phaseLabel} steps={SCAN_STEPS.length} phase={viewModel.phase} />
             </Card>
-          </motion.div>
+          </m.div>
         ) : viewModel.photo ? (
-          <motion.div
+          <m.div
             key="setup"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -106,9 +106,9 @@ export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }
                 </Button>
               </CardContent>
             </Card>
-          </motion.div>
+          </m.div>
         ) : (
-          <motion.div
+          <m.div
             key="photo"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -122,7 +122,7 @@ export function HeroSection({ viewModel }: { viewModel: TryItYourselfViewModel }
                 <AlertDescription>{viewModel.error}</AlertDescription>
               </Alert>
             )}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </section>
