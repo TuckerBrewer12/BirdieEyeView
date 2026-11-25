@@ -1,4 +1,4 @@
-FOLLOW THIS FORMAT EXACTLY ON YOUR PR
+<!-- Keep exactly these two sections and the size box. -->
 
 ## What?
 
