@@ -14,3 +14,9 @@ test("handicap sheet open", async ({ dashboard }) => {
   await dashboard.seesHandicapSheet();
   await dashboard.capture("dashboard-handicap-sheet.png", { fullPage: false });
 });
+
+test("a new golfer with no rounds", async ({ dashboard }) => {
+  await dashboard.openAsNewGolfer();
+  await dashboard.seesFirstRoundOffer();
+  await dashboard.capture("dashboard-no-rounds.png");
+});

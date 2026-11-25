@@ -3,21 +3,35 @@ import { firstNameOf, greetingFor } from "../present";
 import { BestRoundCard, GoalCard, ScoreMixCard, ScoringAverageCard } from "./DashboardCards";
 import { RecentRounds } from "./RecentRounds";
 import { GreetingHeader } from "./GreetingHeader";
+import { FirstRoundCard } from "./FirstRoundCard";
 import { LastRoundCard } from "./LastRoundCard";
 
 export function DashboardMobileLayout({ vm }: { vm: DashboardPageViewModel }) {
   if (!vm.loaded) return null;
 
+  const greeting = (
+    <GreetingHeader
+      compact
+      greeting={greetingFor()}
+      name={firstNameOf(vm.user)}
+      handicap={vm.handicap}
+      handicapLine={vm.handicapLine}
+      onHandicapClick={vm.openHandicapSheet}
+    />
+  );
+
+  if (!vm.hasRounds) {
+    return (
+      <div className="flex flex-col gap-4">
+        {greeting}
+        <FirstRoundCard compact />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <GreetingHeader
-        compact
-        greeting={greetingFor()}
-        name={firstNameOf(vm.user)}
-        handicap={vm.handicap}
-        handicapLine={vm.handicapLine}
-        onHandicapClick={vm.openHandicapSheet}
-      />
+      {greeting}
 
       {vm.lastRound && <LastRoundCard compact round={vm.lastRound} />}
 
