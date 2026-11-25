@@ -84,6 +84,30 @@ export const populatedDashboard: DashboardDto = {
   rounds_this_year: 4,
 };
 
+export const emptyDashboard: DashboardDto = {
+  ...populatedDashboard,
+  best_round: null,
+  best_round_id: null,
+  best_round_course: null,
+  best_round_to_par: null,
+  best_round_date: null,
+  handicap_index: null,
+  total_rounds: 0,
+  scoring_average: null,
+  recent_rounds: [],
+  scoring_average_l5: null,
+  scoring_average_change: null,
+  scoring_average_verdict: null,
+  handicap_change: { this_month: null, this_month_verdict: null },
+  recent_score_mix: { eagle: 0, birdie: 0, par: 0, bogey: 0, double: 0, triple: 0, quad: 0 },
+  whs: { rows: [], window_size: 0, count_used: 0, adjustment: 0, diff_avg: null, has_rated_rounds: false },
+  score_trend: [],
+  handicap_trend: [],
+  rounds_this_year: 0,
+};
+
+export const newGolfer: UserDto = { ...dashboardUser, handicap: null, scoring_goal: null };
+
 export const dashboardGoalReport: GoalReportDto = {
   nine_hole: null,
   scoring_average: 76.8,

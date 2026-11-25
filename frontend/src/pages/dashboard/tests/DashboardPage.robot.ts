@@ -5,11 +5,14 @@ import type { FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
 import {
   dashboardGoalReport,
   dashboardUser,
+  emptyDashboard,
+  newGolfer,
   populatedDashboard,
 } from "../../../testing/fixtures/dashboard";
 import { storedRounds } from "../../../testing/fixtures/rounds";
 import { switchToDark } from "../../../testing/theme";
 import { captureOptions, readyForCapture } from "../../../testing/fullPageCapture";
+import { FIRST_ROUND } from "../present";
 
 const FROZEN_NOW = "2026-06-15T18:00:00.000Z";
 
@@ -47,6 +50,48 @@ export class DashboardRobot {
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await this.seesGreeting();
     await expect(this.page.locator("[data-slot=last-round-card]").locator("visible=true")).toBeVisible();
+    return this;
+  }
+
+  async openAsNewGolfer(): Promise<this> {
+    await this.page.emulateMedia({ reducedMotion: "reduce" });
+    await this.page.clock.setFixedTime(new Date(FROZEN_NOW));
+    await FakeSession.install(this.page, {
+      rounds: [],
+      handicapIndex: null,
+      dashboard: emptyDashboard,
+      profile: newGolfer,
+    });
+    await this.page.goto("/");
+    await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await this.seesGreeting();
+    return this;
+  }
+
+  private firstRoundCard() {
+    return this.page.getByRole("region", { name: FIRST_ROUND.title }).locator("visible=true");
+  }
+
+  async seesFirstRoundOffer(): Promise<this> {
+    await expect(this.firstRoundCard()).toBeVisible();
+    await expect(this.firstRoundCard().getByRole("link", { name: FIRST_ROUND.action })).toBeVisible();
+    return this;
+  }
+
+  async seesNoEmptyFigures(): Promise<this> {
+    for (const slot of ["last-round-card", "scoring-average-card", "best-round-card", "score-mix-card", "goal-card", "recent-rounds"]) {
+      await expect(this.page.locator(`[data-slot=${slot}]`)).toHaveCount(0);
+    }
+    return this;
+  }
+
+  async scanFirstRound(): Promise<this> {
+    await this.firstRoundCard().getByRole("link", { name: FIRST_ROUND.action }).click();
+    return this;
+  }
+
+  async isAtScan(): Promise<this> {
+    await expect(this.page).toHaveURL(/\/scan$/);
     return this;
   }
 

@@ -3,20 +3,34 @@ import { firstNameOf, greetingFor } from "../present";
 import { BestRoundCard, GoalCard, ScoreMixCard, ScoringAverageCard } from "./DashboardCards";
 import { RecentRounds } from "./RecentRounds";
 import { GreetingHeader } from "./GreetingHeader";
+import { FirstRoundCard } from "./FirstRoundCard";
 import { LastRoundCard } from "./LastRoundCard";
 
 export function DashboardDesktopLayout({ vm }: { vm: DashboardPageViewModel }) {
   if (!vm.loaded) return null;
 
+  const greeting = (
+    <GreetingHeader
+      greeting={greetingFor()}
+      name={firstNameOf(vm.user)}
+      handicap={vm.handicap}
+      handicapLine={vm.handicapLine}
+      onHandicapClick={vm.openHandicapSheet}
+    />
+  );
+
+  if (!vm.hasRounds) {
+    return (
+      <div className="flex max-w-240 flex-col gap-5">
+        {greeting}
+        <FirstRoundCard />
+      </div>
+    );
+  }
+
   return (
     <div className="flex max-w-240 flex-col gap-5">
-      <GreetingHeader
-        greeting={greetingFor()}
-        name={firstNameOf(vm.user)}
-        handicap={vm.handicap}
-        handicapLine={vm.handicapLine}
-        onHandicapClick={vm.openHandicapSheet}
-      />
+      {greeting}
 
       {vm.lastRound && <LastRoundCard round={vm.lastRound} />}
 
