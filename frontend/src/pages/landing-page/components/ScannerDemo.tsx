@@ -130,18 +130,21 @@ export function ScannerDemo() {
       data-slot="scanner-demo"
       className="relative flex aspect-3/4 w-full items-center justify-center overflow-hidden rounded-2xl bg-muted sm:aspect-11/10 md:rounded-3xl lg:aspect-square"
     >
-      <motion.img
-        src="/hero/physical-card.jpg"
-        alt="A paper scorecard held over a golf cart"
-        className="absolute inset-0 h-full w-full origin-left object-cover"
-        initial={false}
-        animate={{
-          filter: phase === "mapping" ? `brightness(0.5) blur(${tokens.blur.xs}px)` : "brightness(1) blur(0px)",
-          opacity: touring ? 0 : 1,
-          scale: touring ? DEMO_MOTION.recedeScale : 1,
-        }}
-        transition={{ duration: DEMO_MOTION.crossfade }}
-      />
+      <picture>
+        <source type="image/webp" srcSet="/hero/physical-card.webp" />
+        <motion.img
+          src="/hero/physical-card.jpg"
+          alt="A paper scorecard held over a golf cart"
+          className="absolute inset-0 h-full w-full origin-left object-cover"
+          initial={false}
+          animate={{
+            filter: phase === "mapping" ? `brightness(0.5) blur(${tokens.blur.xs}px)` : "brightness(1) blur(0px)",
+            opacity: touring ? 0 : 1,
+            scale: touring ? DEMO_MOTION.recedeScale : 1,
+          }}
+          transition={{ duration: DEMO_MOTION.crossfade }}
+        />
+      </picture>
 
       <AnimatePresence>
         {phase === "result" && <ReadRound />}
