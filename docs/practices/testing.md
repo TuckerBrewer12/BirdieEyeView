@@ -35,6 +35,7 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
+npm run size
 npm run test:ui
 npm run test:screenshots
 ```

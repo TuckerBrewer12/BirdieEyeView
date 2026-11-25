@@ -42,6 +42,7 @@ for c in scripts/ci/check_*.py; do .venv/bin/python "$c"; done
 cd frontend
 npm test                      # Vitest
 npm run lint && npm run typecheck
+npm run build && npm run size  # gzip bundle budget
 npm run test:ui         # Playwright flows
 npm run test:screenshots      # Playwright looks
 ```
