@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -152,3 +153,41 @@ async def test_goal_report_works_with_only_a_nine_hole_goal():
     report = (await stats.get_goal_report(limit=50, user=user, db=db)).model_dump()
 
     assert report["nine_hole"]["on_track"] is True and report["gap"] is None
+
+
+@pytest.mark.asyncio
+async def test_unfiltered_analytics_reads_the_rounds_once_and_pages_from_them():
+    user_id = uuid4()
+    user = make_user(user_id)
+    newest, older = par_round(over=2, round_id="newest"), par_round(over=9, round_id="older")
+    db = analytics_db(user, [newest, older])
+
+    result = (await stats.get_analytics(user_id, 1, None, None, db, user)).model_dump()
+
+    assert db.rounds.get_rounds_for_user.await_count == 1
+    assert db.rounds.get_rounds_for_user.await_args.kwargs["limit"] is None
+    assert result["kpis"]["total_rounds"] == 1
+    assert [row["round_id"] for row in result["score_trend"]] == ["newest"]
+
+
+@pytest.mark.asyncio
+async def test_filtered_analytics_reads_the_page_and_the_history_together():
+    user_id = uuid4()
+    user = make_user(user_id)
+    started = []
+    both_started = asyncio.Event()
+
+    async def get_rounds_for_user(_user_id, **kwargs):
+        started.append(kwargs)
+        if len(started) == 2:
+            both_started.set()
+        await both_started.wait()
+        return []
+
+    db = make_mock_database()
+    db.users.get_user = AsyncMock(return_value=user)
+    db.rounds.get_rounds_for_user = get_rounds_for_user
+
+    await asyncio.wait_for(stats.get_analytics(user_id, 50, None, "1y", db, user), timeout=2)
+
+    assert [kwargs["limit"] for kwargs in started] == [50, None]
