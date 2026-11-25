@@ -4,6 +4,7 @@ set -euo pipefail
 
 BOTS="$(cd "$(dirname "$0")" && pwd)"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
+export BOT_AGENT_TIMEOUT="${BOT_AGENT_TIMEOUT:-12m}"
 # shellcheck source=cursor-run.sh
 source "$BOTS/cursor-run.sh"
 
@@ -56,7 +57,18 @@ if not isinstance(items, list):
 prompt_path.write_text(prompt_path.read_text() + previous_mod.prompt_appendix(items))
 PY
 
-if ! cursor_run ask "$WORK/prompt.txt" "$WORK/findings.json"; then
+agent_status=0
+cursor_run ask "$WORK/prompt.txt" "$WORK/findings.json" || agent_status=$?
+if (( agent_status == 124 || agent_status == 137 )); then
+  unfinished="### ${BOT_NAME}
+
+Didn't finish reviewing within ${BOT_AGENT_TIMEOUT}, so nothing was checked. Re-run the job from the PR's checks list to try again."
+  gh api -X POST "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" -f body="$unfinished" --silent || true
+  echo "::error title=${BOT_NAME}::Review didn't finish within ${BOT_AGENT_TIMEOUT}."
+  emit_no_fixes
+  exit 1
+fi
+if (( agent_status != 0 )); then
   echo "::error title=${BOT_NAME}::Cursor CLI failed; not reviewing."
   emit_no_fixes
   exit 1
