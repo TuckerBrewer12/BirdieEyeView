@@ -39,8 +39,10 @@ async def get_dashboard(
     user: User = Depends(get_self),
     db: DatabaseManager = Depends(get_db),
 ):
-    summaries = await db.rounds.get_round_summaries_for_user(str(user.id), limit=None, offset=0)
-    history = await db.rounds.get_rounds_for_user(str(user.id), limit=None, offset=0)
+    summaries, history = await asyncio.gather(
+        db.rounds.get_round_summaries_for_user(str(user.id), limit=None, offset=0),
+        db.rounds.get_rounds_for_user(str(user.id), limit=None, offset=0),
+    )
     return dashboard_response(user, summaries, history, dashboard.today())
 
 
