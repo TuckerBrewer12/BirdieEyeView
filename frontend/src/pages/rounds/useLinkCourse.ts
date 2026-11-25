@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { roundsChanged } from "@/data/playerCache";
 import { queryKeys } from "@/data/queryKeys";
 import type { RoundSummary } from "@/domain";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
@@ -20,10 +21,7 @@ export function useLinkCourse(
       queryClient.setQueryData<RoundSummary[]>(queryKeys.rounds(userId), (prev) =>
         prev?.map((r) => (r.id === updated.id ? updated : r)),
       );
-      void queryClient.invalidateQueries({ queryKey: queryKeys.rounds(userId) });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.round(updated.id) });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.allCourseLists(userId) });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.allCourseAnalytics(userId) });
+      void roundsChanged(queryClient, userId);
     },
   });
 }
