@@ -65,7 +65,7 @@ def main() -> int:
     with open(os.environ["GITHUB_EVENT_PATH"]) as event_file:
         pr = json.load(event_file)["pull_request"]
     numstat = subprocess.run(
-        ["git", "diff", "--numstat", "--no-renames", f"{os.environ['BASE_SHA']}...{os.environ['HEAD_SHA']}"],
+        ["git", "diff", "--numstat", "--find-renames", f"{os.environ['BASE_SHA']}...{os.environ['HEAD_SHA']}"],
         check=True, capture_output=True, text=True,
     ).stdout
     files = counted_files(numstat)

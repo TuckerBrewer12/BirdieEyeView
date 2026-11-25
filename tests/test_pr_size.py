@@ -57,3 +57,9 @@ def test_an_unticked_box_does_not():
 
 def test_prs_opened_before_the_cap_are_not_held_to_it():
     assert verdict(_files(5000), "", [], OLD)[0]
+
+
+def test_a_moved_file_counts_only_the_lines_it_changed():
+    numstat = "3\t1\tanalytics/{stats.py => scoring.py}\n0\t0\tdocs/{old.md => new.md}"
+
+    assert sum(lines for _, lines in counted_files(numstat)) == 4
