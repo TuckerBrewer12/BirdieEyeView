@@ -36,3 +36,5 @@ Colours, type, measures and motion come from `src/brand/theme/tokens.ts`; no raw
 ## Validation
 
 View models are tested with `Fake*` repositories (no `vi.fn`/`vi.mock`). Pages have a Playwright robot, UI tests for flows and screenshot specs for looks, all against `FakeBackend`. `scripts/ci/check_frontend_conventions.py` checks each kit component has a preview and screenshot spec, each page a robot with screenshot specs and UI tests, and each view model a test. See [testing practices](testing.md). Update the [page guide](../frontend/README.md) when a page's data flow changes.
+
+`npm run size` (after `npm run build`; CI's build job runs it) checks `dist/` against the gzip budgets in `frontend/.size-limit.js`: the first load's JS and CSS, read from the built `index.html` by `frontend/scripts/first-load-assets.mjs`, and all JS together. A change that needs more raises the limit in the same PR and says why under **Why?**; a change that shrinks the bundle lowers it.
