@@ -1,8 +1,12 @@
 # Review bots
 
-On every non-draft PR the Brand Kit, MVVM, UI Test Checker and Backend Rules
-bots leave inline comments and open a second PR that implements the finding, targeting
-the original PR's branch. The Frontend coverage bot is separate: it posts one
+On every non-draft PR the Brand Kit, MVVM, UI Test Checker, Backend Rules
+and Code Review bots leave inline comments and open a second PR that
+implements the finding, targeting the original PR's branch. The Code Review
+Bot runs on every PR, whatever it touches, and looks only for bugs: each
+finding names the input or sequence that goes wrong. It skips generated files
+(`openapi.json`, `api.gen.ts`, `tokens.gen.css`, `package-lock.json`) and
+leaves the repo's own rules to the other bots. The Frontend coverage bot is separate: it posts one
 sticky comment with Vitest and UI test changed-line coverage plus an AI
 count of reasonable screenshot and UI test screens. It does not open fix PRs.
 
@@ -79,7 +83,7 @@ nothing.
 
 | File | What it is |
 | --- | --- |
-| `brand-kit.md`, `mvvm.md`, `ui-test-checker.md`, `backend-rules.md` | Review prompts. The Backend Rules Bot reviews `api/`, `services/`, `models/`, `analytics/` and `database/` against the Backend rules in `AGENTS.md`, which it reads as its rulebook |
+| `brand-kit.md`, `mvvm.md`, `ui-test-checker.md`, `backend-rules.md`, `code-review.md` | Review prompts. The Backend Rules Bot reviews `api/`, `services/`, `models/`, `analytics/` and `database/` against the Backend rules in `AGENTS.md`, which it reads as its rulebook |
 | `gate.py` | Skip a push that leaves the bot's part of the PR unchanged since its last successful run |
 | `run-bot.sh` | Shared reviewer: diff → model → GitHub review |
 | `cursor-run.sh` | Cursor CLI invocation shared by the review, coverage, and fix runners |
