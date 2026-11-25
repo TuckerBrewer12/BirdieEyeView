@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from "react-router-dom";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./context/auth";
-import { ScanPage, ScanSessionProvider } from "./pages/scan";
+import { ScanSessionProvider } from "./pages/scan/ScanSessionProvider";
 import { AppLayout } from "./app/AppLayout";
 import {
   ForgotPasswordPage,
@@ -13,14 +13,20 @@ import {
   VerifyPendingPage,
 } from "./pages/auth";
 import { LandingPage } from "./pages/landing-page";
-
-import { DashboardPage } from "./pages/dashboard";
-import { RoundsPage, RoundDetailPage } from "./pages/rounds";
-import { CoursesPage, CourseDetailPage } from "./pages/courses";
-import { AnalyticsPage } from "./pages/analytics";
-import { CareerPage } from "./pages/career";
-import { SettingsPage } from "./pages/settings";
-import { SocialPage, FriendsInboxPage } from "./pages/social";
+import {
+  AnalyticsPage,
+  CareerPage,
+  CourseDetailPage,
+  CoursesPage,
+  DashboardPage,
+  FriendsInboxPage,
+  PreloadSignedInPages,
+  RoundDetailPage,
+  RoundsPage,
+  ScanPage,
+  SettingsPage,
+  SocialPage,
+} from "./app/signedInPages";
 import { BrandHarness } from "./brand/BrandHarness";
 
 function ScrollToTop() {
@@ -94,6 +100,8 @@ function AppRoutes() {
 
   return (
     <AppLayout>
+      <Suspense fallback={null}>
+        <PreloadSignedInPages />
         <Routes>
           <Route path="/" element={<DashboardPage userId={userId} />} />
           <Route path="/rounds" element={<RoundsPage userId={userId} />} />
@@ -109,6 +117,7 @@ function AppRoutes() {
           <Route path="/settings" element={<SettingsPage userId={userId} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+      </Suspense>
     </AppLayout>
   );
 }
