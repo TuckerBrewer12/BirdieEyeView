@@ -65,6 +65,7 @@ export interface ScanPageViewModel {
   review: ScanReviewViewModel;
 
   savedRound: RoundDetail | null;
+  savedRoundFailed: boolean;
   scanAnother: () => void;
   openSavedRound: (open: (roundId: string) => void) => void;
 }
@@ -224,6 +225,7 @@ export function useScanPageViewModel(
     review,
 
     savedRound: savedRound.data ?? null,
+    savedRoundFailed: savedRound.isError,
     scanAnother: startOver,
     openSavedRound,
   };
