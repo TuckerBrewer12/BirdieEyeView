@@ -191,3 +191,25 @@ async def test_filtered_analytics_reads_the_page_and_the_history_together():
     await asyncio.wait_for(stats.get_analytics(user_id, 50, None, "1y", db, user), timeout=2)
 
     assert [kwargs["limit"] for kwargs in started] == [50, None]
+
+
+@pytest.mark.asyncio
+async def test_dashboard_reads_the_summaries_and_the_history_together():
+    user = make_user(uuid4())
+    started = []
+    both_started = asyncio.Event()
+
+    async def read(name):
+        started.append(name)
+        if len(started) == 2:
+            both_started.set()
+        await both_started.wait()
+        return []
+
+    db = make_mock_database()
+    db.rounds.get_round_summaries_for_user = lambda *_args, **_kwargs: read("summaries")
+    db.rounds.get_rounds_for_user = lambda *_args, **_kwargs: read("history")
+
+    await asyncio.wait_for(stats.get_dashboard(user=user, db=db), timeout=2)
+
+    assert sorted(started) == ["history", "summaries"]
