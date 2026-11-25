@@ -49,7 +49,7 @@ class BaseGolfModel(BaseModel):
         return self._revision
 
     def field_revision(self, name: str) -> int:
-        return self._field_revisions.get(name, 0)
+        return self.__pydantic_private__['_field_revisions'].get(name, 0)
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name in type(self).model_fields and hasattr(self, '__pydantic_fields_set__'):
