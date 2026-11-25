@@ -20,6 +20,7 @@ import {
 import { CoursePerformance } from "./components/CoursePerformance";
 import { CourseRecordCard } from "./components/CourseRecordCard";
 import { CourseScorecard } from "./components/CourseScorecard";
+import { lowerIndexNote } from "./courseDetailModel";
 import { useCourseDetailPageViewModel } from "./useCourseDetailPageViewModel";
 
 export function CourseDetailPage({ userId }: { userId: string }) {
@@ -38,6 +39,8 @@ export function CourseDetailPage({ userId }: { userId: string }) {
       </Alert>
     );
   }
+
+  const lowerIndex = lowerIndexNote(viewModel.lowerIndex.score, viewModel.lowerIndex.teeName);
 
   return (
     <div className="flex flex-col gap-3.5 pb-6 md:gap-4">
@@ -76,9 +79,9 @@ export function CourseDetailPage({ userId }: { userId: string }) {
             <TeePicker tees={viewModel.tees} value={viewModel.selectedTee ?? ""} onChange={viewModel.selectTee} />
           )}
 
-          {viewModel.lowerIndex && (
+          {lowerIndex && (
             <p data-slot="lower-index" className="text-body-sm text-muted-foreground">
-              {viewModel.lowerIndex}
+              {lowerIndex}
             </p>
           )}
 

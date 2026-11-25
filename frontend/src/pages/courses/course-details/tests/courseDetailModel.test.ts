@@ -93,23 +93,28 @@ describe("teeLine", () => {
 describe("lowerIndexNote", () => {
   it("says what to shoot off the picked tee to bring the index down", () => {
     const [blue, white] = halfMoonBayCourseWithIndexTargets.tees;
-    expect(lowerIndexNote(blue!)).toBe("Shoot 84 or better from the Blue tees and your handicap index comes down.");
-    expect(lowerIndexNote(white!)).toBe("Shoot 81 or better from the White tees and your handicap index comes down.");
+    expect(lowerIndexNote(blue!.score_to_lower_index, blue!.color)).toBe(
+      "Shoot 84 or better from the Blue tees and your handicap index comes down.",
+    );
+    expect(lowerIndexNote(white!.score_to_lower_index, white!.color)).toBe(
+      "Shoot 81 or better from the White tees and your handicap index comes down.",
+    );
   });
 
   it("names a tee the way the kit does, or none when it has no colour", () => {
     const [blue] = halfMoonBayCourseWithIndexTargets.tees;
-    expect(lowerIndexNote({ ...blue!, color: "gold " })).toBe(
+    expect(lowerIndexNote(blue!.score_to_lower_index, "gold ")).toBe(
       "Shoot 84 or better from the Gold tees and your handicap index comes down.",
     );
-    expect(lowerIndexNote({ ...blue!, color: null })).toBe(
+    expect(lowerIndexNote(blue!.score_to_lower_index, null)).toBe(
       "Shoot 84 or better from this tee and your handicap index comes down.",
     );
   });
 
-  it("says nothing without a score from the server or a tee", () => {
-    expect(lowerIndexNote(halfMoonBayCourse.tees[0]!)).toBeNull();
-    expect(lowerIndexNote(null)).toBeNull();
+  it("says nothing without a score from the server", () => {
+    const [blue] = halfMoonBayCourse.tees;
+    expect(lowerIndexNote(blue!.score_to_lower_index, blue!.color)).toBeNull();
+    expect(lowerIndexNote(null, null)).toBeNull();
   });
 });
 

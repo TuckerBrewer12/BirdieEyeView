@@ -64,23 +64,23 @@ describe("useCourseDetailPageViewModel", () => {
     expect(result.current.teeLine).toBe("White tees · 6,100 yds · 70.1 / 122");
   });
 
-  it("says what to shoot off the picked tee to lower the index, following the pick", async () => {
+  it("returns the score and tee name to lower the index, following the pick", async () => {
     const repository = new FakeCoursesRepository();
     repository.fullCourses = [halfMoonBayCourseWithIndexTargets];
     const { result } = renderVm(repository);
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.lowerIndex).toBe("Shoot 84 or better from the Blue tees and your handicap index comes down.");
+    expect(result.current.lowerIndex).toEqual({ score: 84, teeName: "Blue" });
 
     act(() => result.current.selectTee("White"));
-    expect(result.current.lowerIndex).toBe("Shoot 81 or better from the White tees and your handicap index comes down.");
+    expect(result.current.lowerIndex).toEqual({ score: 81, teeName: "White" });
   });
 
-  it("says nothing about the index when the server sent no score", async () => {
+  it("returns no score to lower the index when the server sent none", async () => {
     const repository = new FakeCoursesRepository();
     repository.fullCourses = [halfMoonBayCourse];
     const { result } = renderVm(repository);
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.lowerIndex).toBeNull();
+    expect(result.current.lowerIndex).toEqual({ score: null, teeName: "Blue" });
   });
 
   it("adds the golfer's record, rows and latest rounds once they have played here", async () => {
