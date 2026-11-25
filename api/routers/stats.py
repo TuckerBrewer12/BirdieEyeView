@@ -1,3 +1,4 @@
+import asyncio
 from datetime import date, timedelta
 from typing import List, Literal, Optional
 from uuid import UUID
@@ -78,20 +79,26 @@ async def get_analytics(
     elif timeframe == "1y":
         date_from = today - timedelta(days=365)
 
-    no_matching_course = course_id == "home" and user.home_course_id is None
-    rounds_desc = [] if no_matching_course else await db.rounds.get_rounds_for_user(
-        target_user_id, limit=limit, offset=0,
-        course_id=resolved_course_id,
-        date_from=date_from,
-    )
-    rounds = list(reversed(rounds_desc))
+    def read_history():
+        return db.rounds.get_rounds_for_user(target_user_id, limit=None, offset=0)
 
-    history_desc = await db.rounds.get_rounds_for_user(
-        target_user_id, limit=None, offset=0,
-    )
+    if course_id == "home" and user.home_course_id is None:
+        rounds_desc, history_desc = [], await read_history()
+    elif resolved_course_id is None and date_from is None:
+        history_desc = await read_history()
+        rounds_desc = history_desc[:limit]
+    else:
+        rounds_desc, history_desc = await asyncio.gather(
+            db.rounds.get_rounds_for_user(
+                target_user_id, limit=limit, offset=0,
+                course_id=resolved_course_id,
+                date_from=date_from,
+            ),
+            read_history(),
+        )
 
     return analytics_response(
-        rounds,
+        list(reversed(rounds_desc)),
         list(reversed(history_desc)),
         home_course_id=user.home_course_id,
         user=user,
