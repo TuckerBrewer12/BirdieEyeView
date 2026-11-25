@@ -1,16 +1,36 @@
 import json
+from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Optional, TypeAlias
 from uuid import UUID
 
+from asyncpg import Record
 from pydantic import ValidationError
 
 from models import Course, Hole, Tee, TeeRating, HoleScore, Round, User, UserTee
 from models.hole_layout import FRONT_NINE
 from database.exceptions import IntegrityError
 
+Row: TypeAlias = Mapping[str, Any] | Record
 
-def hole_from_row(row) -> Hole:
+
+def _id_str(value: Any) -> Optional[str]:
+    return str(value) if value else None
+
+
+def _uuid(value: Optional[str]) -> Optional[UUID]:
+    return UUID(value) if value else None
+
+
+def _float(value: Any) -> Optional[float]:
+    return float(value) if value is not None else None
+
+
+def _decoded_json(raw: Any) -> Any:
+    return json.loads(raw) if isinstance(raw, str) else raw
+
+
+def hole_from_row(row: Row) -> Hole:
     return Hole(
         number=row["hole_number"],
         par=row["par"],
@@ -18,13 +38,12 @@ def hole_from_row(row) -> Hole:
     )
 
 
-def tee_from_row(tee_row, yardage_rows: list, rating_rows=None) -> Tee:
-    hole_yardages = {r["hole_number"]: r["yardage"] for r in yardage_rows}
+def tee_from_row(tee_row: Row, yardage_rows: Sequence[Row], rating_rows: Optional[Sequence[Row]] = None) -> Tee:
     return Tee(
         color=tee_row["color"],
-        slope_rating=float(tee_row["slope_rating"]) if tee_row["slope_rating"] is not None else None,
-        course_rating=float(tee_row["course_rating"]) if tee_row["course_rating"] is not None else None,
-        hole_yardages=hole_yardages,
+        slope_rating=_float(tee_row["slope_rating"]),
+        course_rating=_float(tee_row["course_rating"]),
+        hole_yardages={r["hole_number"]: r["yardage"] for r in yardage_rows},
         yardage_holes=tee_row.get("yardage_holes"),
         rating_holes=tee_row.get("rating_holes"),
         total_yardage=tee_row.get("total_yardage"),
@@ -32,21 +51,21 @@ def tee_from_row(tee_row, yardage_rows: list, rating_rows=None) -> Tee:
     )
 
 
-def rating_from_row(row) -> TeeRating:
+def rating_from_row(row: Row) -> TeeRating:
     return TeeRating(
         hole_numbers=row["hole_numbers"], course_rating=row["course_rating"], slope_rating=row["slope_rating"]
     )
 
 
 def course_from_rows(
-    course_row,
-    hole_rows: list,
-    tee_rows: list,
-    yardage_rows_by_tee: Dict[UUID, list],
-    rating_rows_by_tee=None,
+    course_row: Row,
+    hole_rows: Sequence[Row],
+    tee_rows: Sequence[Row],
+    yardage_rows_by_tee: Mapping[UUID, Sequence[Row]],
+    rating_rows_by_tee: Optional[Mapping[UUID, Sequence[Row]]] = None,
 ) -> Course:
     holes = sorted(
-        [hole_from_row(r) for r in hole_rows],
+        (hole_from_row(r) for r in hole_rows),
         key=lambda h: h.number or 0,
     )
     tees = [
@@ -62,11 +81,11 @@ def course_from_rows(
         par=course_row["par"],
         holes=holes,
         tees=tees,
-        user_id=str(course_row["user_id"]) if course_row["user_id"] else None,
+        user_id=_id_str(course_row["user_id"]),
     )
 
 
-def hole_score_from_row(row) -> HoleScore:
+def hole_score_from_row(row: Row) -> HoleScore:
     return HoleScore(
         hole_number=row["hole_number"],
         strokes=row["strokes"],
@@ -82,14 +101,14 @@ def hole_score_from_row(row) -> HoleScore:
 
 
 def round_from_rows(
-    round_row,
-    hole_score_rows: list,
+    round_row: Row,
+    hole_score_rows: Sequence[Row],
     course: Optional[Course],
     tee_color: Optional[str] = None,
-    user_tee: Optional["UserTee"] = None,
+    user_tee: Optional[UserTee] = None,
 ) -> Round:
     hole_scores = sorted(
-        [hole_score_from_row(r) for r in hole_score_rows],
+        (hole_score_from_row(r) for r in hole_score_rows),
         key=lambda hs: hs.hole_number or 0,
     )
     return Round(
@@ -108,7 +127,7 @@ def round_from_rows(
     )
 
 
-def user_from_row(user_row, rounds: Optional[List[Round]] = None) -> User:
+def user_from_row(user_row: Row, rounds: Optional[list[Round]] = None) -> User:
     return User(
         id=str(user_row["id"]),
         friend_code=user_row.get("friend_code"),
@@ -116,8 +135,8 @@ def user_from_row(user_row, rounds: Optional[List[Round]] = None) -> User:
         email=user_row["email"],
         email_verified=bool(user_row.get("email_verified", False)),
         email_verified_at=user_row.get("email_verified_at"),
-        home_course_id=str(user_row["home_course_id"]) if user_row["home_course_id"] else None,
-        handicap=float(user_row["handicap_index"]) if user_row["handicap_index"] is not None else None,
+        home_course_id=_id_str(user_row["home_course_id"]),
+        handicap=_float(user_row["handicap_index"]),
         rounds=rounds or [],
         created_at=user_row["created_at"],
         last_handicap_update=user_row.get("last_handicap_update"),
@@ -126,7 +145,7 @@ def user_from_row(user_row, rounds: Optional[List[Round]] = None) -> User:
     )
 
 
-def course_to_row(course: Course, user_id: Optional[UUID] = None) -> dict:
+def course_to_row(course: Course, user_id: Optional[UUID] = None) -> dict[str, Any]:
     expected = course.get_expected_holes()
     if expected is None and sorted(h.number for h in course.holes if h.number is not None) == list(FRONT_NINE):
         expected = FRONT_NINE
@@ -138,10 +157,6 @@ def course_to_row(course: Course, user_id: Optional[UUID] = None) -> dict:
         "total_holes": len(expected) if expected is not None else None,
         "user_id": user_id,
     }
-
-
-def hole_to_row(hole: Hole, course_id: UUID) -> tuple:
-    return (course_id, hole.number, hole.par, hole.handicap)
 
 
 def tee_to_row(tee: Tee, course_id: UUID) -> tuple:
@@ -156,11 +171,11 @@ def tee_to_row(tee: Tee, course_id: UUID) -> tuple:
     )
 
 
-def tee_ratings_to_rows(tee, tee_id: UUID) -> list:
+def tee_ratings_to_rows(tee: Tee | UserTee, tee_id: UUID) -> list[tuple]:
     return [(tee_id, rating.hole_numbers, rating.course_rating, rating.slope_rating) for rating in tee.ratings]
 
 
-def tee_yardages_to_rows(tee: Tee, tee_id: UUID) -> list:
+def tee_yardages_to_rows(tee: Tee, tee_id: UUID) -> list[tuple[UUID, int, int]]:
     return [(tee_id, hole_num, yardage) for hole_num, yardage in sorted(tee.hole_yardages.items())]
 
 
@@ -186,7 +201,7 @@ def round_to_row(
     user_id: UUID,
     course_id: Optional[UUID] = None,
     tee_id: Optional[UUID] = None,
-) -> dict:
+) -> dict[str, Any]:
     scored = round_.scored_holes()
     if not scored or any(score.hole_number is None for score in round_.hole_scores):
         raise IntegrityError("A saved round requires unique numbered holes and at least one score")
@@ -212,31 +227,29 @@ def round_to_row(
     }
 
 
-def user_to_row(user: User) -> dict:
+def user_to_row(user: User) -> dict[str, Any]:
     return {
         "friend_code": user.friend_code,
         "name": user.name,
         "email": user.email,
         "handicap_index": user.handicap,
-        "home_course_id": UUID(user.home_course_id) if user.home_course_id else None,
+        "home_course_id": _uuid(user.home_course_id),
         "scoring_goal": user.scoring_goal,
         "scoring_goal_nine": user.scoring_goal_nine,
     }
 
 
-def user_tee_from_row(row, rating_rows=None) -> UserTee:
-    hole_yardages = row["hole_yardages"] if row["hole_yardages"] is not None else {}
+def user_tee_from_row(row: Row, rating_rows: Optional[Sequence[Row]] = None) -> UserTee:
+    stored_yardages = row["hole_yardages"]
     try:
-        if isinstance(hole_yardages, str):
-            hole_yardages = json.loads(hole_yardages)
         return UserTee(
             id=str(row["id"]),
             user_id=str(row["user_id"]),
-            course_id=str(row["course_id"]) if row["course_id"] else None,
+            course_id=_id_str(row["course_id"]),
             name=row["name"],
-            slope_rating=float(row["slope_rating"]) if row["slope_rating"] is not None else None,
-            course_rating=float(row["course_rating"]) if row["course_rating"] is not None else None,
-            hole_yardages=hole_yardages,
+            slope_rating=_float(row["slope_rating"]),
+            course_rating=_float(row["course_rating"]),
+            hole_yardages=_decoded_json(stored_yardages) if stored_yardages is not None else {},
             yardage_holes=row.get("yardage_holes"),
             rating_holes=row.get("rating_holes"),
             total_yardage=row.get("total_yardage"),
@@ -247,10 +260,10 @@ def user_tee_from_row(row, rating_rows=None) -> UserTee:
         raise IntegrityError("Invalid stored user tee data") from error
 
 
-def user_tee_to_row(ut: UserTee) -> dict:
+def user_tee_to_row(ut: UserTee) -> dict[str, Any]:
     return {
         "user_id": UUID(ut.user_id),
-        "course_id": UUID(ut.course_id) if ut.course_id else None,
+        "course_id": _uuid(ut.course_id),
         "name": ut.name,
         "slope_rating": ut.slope_rating,
         "course_rating": ut.course_rating,
@@ -261,38 +274,47 @@ def user_tee_to_row(ut: UserTee) -> dict:
     }
 
 
-def round_from_summary_row(row) -> Round:
-    raw = row["hole_scores"]
-    holes = (json.loads(raw) if isinstance(raw, str) else raw) or []
-    course = None
-    if row["course_id"]:
-        course = Course(
-            id=str(row["course_id"]),
-            name=row["course_name"],
-            par=row["course_par"],
-            total_holes=row.get("course_total_holes"),
-            holes=[Hole(**h) for h in (json.loads(row["course_holes"]) if isinstance(row.get("course_holes"), str) else row.get("course_holes") or [])]
-                if "course_holes" in row else [Hole(number=h["hole_number"], par=h["course_par"]) for h in holes if h["course_par"] is not None],
-        )
+def round_from_summary_row(row: Row) -> Round:
+    holes = _decoded_json(row["hole_scores"]) or []
     return Round(
         id=str(row["id"]),
-        course=course,
+        course=_summary_course(row, holes),
         tee_box=row["tee_box_played"],
         date=row["round_date"],
         intended_holes=row.get("intended_holes"),
         notes=row.get("notes"),
         total_putts=row.get("supplied_total_putts"),
         total_gir=row.get("supplied_total_gir"),
-        hole_scores=[
-            HoleScore(
-                hole_number=h["hole_number"],
-                strokes=h["strokes"],
-                played=h.get("played"),
-                putts=h["putts"],
-                green_in_regulation=h["green_in_regulation"],
-                par_played=h["par_played"],
-            )
-            for h in holes
-        ],
+        hole_scores=[_summary_hole_score(h) for h in holes],
         course_name_played=row["course_name_played"],
+    )
+
+
+def _summary_course(row: Row, holes: Sequence[Mapping[str, Any]]) -> Optional[Course]:
+    if not row["course_id"]:
+        return None
+    return Course(
+        id=str(row["course_id"]),
+        name=row["course_name"],
+        par=row["course_par"],
+        total_holes=row.get("course_total_holes"),
+        holes=_summary_course_holes(row, holes),
+    )
+
+
+def _summary_course_holes(row: Row, holes: Sequence[Mapping[str, Any]]) -> list[Hole]:
+    if "course_holes" in row:
+        stored = row["course_holes"]
+        return [Hole(**h) for h in (json.loads(stored) if isinstance(stored, str) else stored or [])]
+    return [Hole(number=h["hole_number"], par=h["course_par"]) for h in holes if h["course_par"] is not None]
+
+
+def _summary_hole_score(hole: Mapping[str, Any]) -> HoleScore:
+    return HoleScore(
+        hole_number=hole["hole_number"],
+        strokes=hole["strokes"],
+        played=hole.get("played"),
+        putts=hole["putts"],
+        green_in_regulation=hole["green_in_regulation"],
+        par_played=hole["par_played"],
     )
