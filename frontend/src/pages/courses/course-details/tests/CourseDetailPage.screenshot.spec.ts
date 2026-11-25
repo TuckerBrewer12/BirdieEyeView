@@ -1,6 +1,10 @@
 import { test } from "./CourseDetailPage.robot";
 import { halfMoonBayAnalytics, halfMoonBayFiveRoundsAnalytics } from "../../../../testing/fixtures/courseAnalytics";
-import { halfMoonBayCourse, ratedHalfMoonBayCourse } from "../../../../testing/fixtures/roundDetails";
+import {
+  halfMoonBayCourse,
+  halfMoonBayCourseWithIndexTargets,
+  ratedHalfMoonBayCourse,
+} from "../../../../testing/fixtures/roundDetails";
 
 test("a course not played yet, with the golfer's course handicap off the tee, light and dark", async ({ courseDetail }) => {
   await courseDetail.open(ratedHalfMoonBayCourse);
@@ -8,6 +12,12 @@ test("a course not played yet, with the golfer's course handicap off the tee, li
   await courseDetail.capture("course-detail-populated.png");
   await courseDetail.switchToDark();
   await courseDetail.capture("course-detail-populated-dark.png");
+});
+
+test("the score off the picked tee that lowers the golfer's index, under the tee picker", async ({ courseDetail }) => {
+  await courseDetail.open(halfMoonBayCourseWithIndexTargets);
+  await courseDetail.seesScoreToLowerIndex(84, "Blue");
+  await courseDetail.capture("course-detail-lower-index.png");
 });
 
 test("a record that didn't load: an error with Retry in place of the prompt to scan", async ({ courseDetail }) => {

@@ -119,6 +119,20 @@ async def test_the_course_page_sends_each_rated_tee_its_score_to_lower_the_index
     assert [t.score_to_lower_index for t in signed_out.tees] == [None, None, None]
 
 
+@pytest.mark.asyncio
+async def test_the_course_page_reads_same_day_rounds_in_the_order_the_index_does():
+    course, user = presidio(), golfer()
+    history = season(course, [10, 29, *range(28, 9, -1)])
+    history[1] = history[1].model_copy(update={"date": history[0].date})
+    db = make_mock_database()
+    db.courses.get_course = AsyncMock(return_value=course)
+    db.rounds.get_rounds_for_user = AsyncMock(return_value=list(reversed(history)))
+
+    page = await courses.get_course(UUID(course.id), db, user)
+    blue = next(t for t in page.tees if t.color == "Blue")
+    assert blue.score_to_lower_index == score_to_lower_index(user, history, AT_PAR_RATING, NEUTRAL_SLOPE)
+
+
 def test_a_rounds_course_carries_no_score_to_lower_the_index():
     assert [t.score_to_lower_index for t in course_detail(presidio(), 13.5).tees] == [None] * 3
 

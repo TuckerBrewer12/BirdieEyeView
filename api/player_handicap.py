@@ -35,4 +35,4 @@ class GolferHandicap:
 
 async def golfer_handicap(db: DatabaseManager, user: Optional[User]) -> GolferHandicap:
     index, rounds = await player_handicap_index_with_rounds(db, user)
-    return GolferHandicap(user, index, rounds) if user is not None else GolferHandicap()
+    return GolferHandicap(user, index, list(reversed(rounds))) if user is not None else GolferHandicap()
