@@ -107,3 +107,17 @@ Everything else goes, including `/** */` doc comments: nothing here is a public 
 ## Keeping this file current
 
 Edit this file when a rule, command or responsibility changes, and the `docs/` guide for the area alongside it. Keep it to rules and pointers: what a module does belongs in `docs/`, and the code is the source of truth for details.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues, through the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The default five: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root, created when needed. See `docs/agents/domain.md`.
