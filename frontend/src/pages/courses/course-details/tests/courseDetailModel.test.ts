@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest";
 import { courseAnalyticsFrom } from "@/domain/courseAnalytics";
 import { courseResponse } from "@/testing/fakes/courseResponses";
 import { emptyCourseAnalytics, halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
-import { halfMoonBayCourse } from "@/testing/fixtures/roundDetails";
+import { halfMoonBayCourse, halfMoonBayCourseWithIndexTargets } from "@/testing/fixtures/roundDetails";
 import {
   greensFigures,
   holesInOrder,
   nineFrom,
   recordFigures,
   selectedTee,
+  lowerIndexNote,
   teeLine,
   trendPoints,
 } from "../courseDetailModel";
@@ -86,6 +87,29 @@ describe("teeLine", () => {
       "Blue tees · 6,500 yds · 72.4 / 130 · hcp 12",
     );
     expect(teeLine(measured.tees[0]!)).toBe("Blue tees · 7,200 yds");
+  });
+});
+
+describe("lowerIndexNote", () => {
+  it("says what to shoot off the picked tee to bring the index down", () => {
+    const [blue, white] = halfMoonBayCourseWithIndexTargets.tees;
+    expect(lowerIndexNote(blue!)).toBe("Shoot 84 or better from the Blue tees and your handicap index comes down.");
+    expect(lowerIndexNote(white!)).toBe("Shoot 81 or better from the White tees and your handicap index comes down.");
+  });
+
+  it("names a tee the way the kit does, or none when it has no colour", () => {
+    const [blue] = halfMoonBayCourseWithIndexTargets.tees;
+    expect(lowerIndexNote({ ...blue!, color: "gold " })).toBe(
+      "Shoot 84 or better from the Gold tees and your handicap index comes down.",
+    );
+    expect(lowerIndexNote({ ...blue!, color: null })).toBe(
+      "Shoot 84 or better from this tee and your handicap index comes down.",
+    );
+  });
+
+  it("says nothing without a score from the server or a tee", () => {
+    expect(lowerIndexNote(halfMoonBayCourse.tees[0]!)).toBeNull();
+    expect(lowerIndexNote(null)).toBeNull();
   });
 });
 

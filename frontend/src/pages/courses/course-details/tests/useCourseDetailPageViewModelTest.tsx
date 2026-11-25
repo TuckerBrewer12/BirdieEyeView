@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect } from "vitest";
 import type { ReactNode } from "react";
 import { halfMoonBayAnalytics } from "@/testing/fixtures/courseAnalytics";
-import { halfMoonBayCourse } from "@/testing/fixtures/roundDetails";
+import { halfMoonBayCourse, halfMoonBayCourseWithIndexTargets } from "@/testing/fixtures/roundDetails";
 import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { useCourseDetailPageViewModel } from "../useCourseDetailPageViewModel";
 
@@ -62,6 +62,25 @@ describe("useCourseDetailPageViewModel", () => {
     act(() => result.current.selectTee("White"));
     expect(result.current.selectedTee).toBe("White");
     expect(result.current.teeLine).toBe("White tees · 6,100 yds · 70.1 / 122");
+  });
+
+  it("says what to shoot off the picked tee to lower the index, following the pick", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.fullCourses = [halfMoonBayCourseWithIndexTargets];
+    const { result } = renderVm(repository);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.lowerIndex).toBe("Shoot 84 or better from the Blue tees and your handicap index comes down.");
+
+    act(() => result.current.selectTee("White"));
+    expect(result.current.lowerIndex).toBe("Shoot 81 or better from the White tees and your handicap index comes down.");
+  });
+
+  it("says nothing about the index when the server sent no score", async () => {
+    const repository = new FakeCoursesRepository();
+    repository.fullCourses = [halfMoonBayCourse];
+    const { result } = renderVm(repository);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.lowerIndex).toBeNull();
   });
 
   it("adds the golfer's record, rows and latest rounds once they have played here", async () => {

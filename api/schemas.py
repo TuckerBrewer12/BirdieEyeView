@@ -41,6 +41,7 @@ class TeeResponse(ResponseModel):
     front_nine_yardage: Optional[int] = None
     back_nine_yardage: Optional[int] = None
     course_handicap: Optional[int] = None
+    score_to_lower_index: Optional[int] = None
 
 
 class CourseResponse(ResponseModel):

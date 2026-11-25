@@ -2388,6 +2388,8 @@ export interface components {
             ratings: {
                 [key: string]: unknown;
             }[];
+            /** Score To Lower Index */
+            score_to_lower_index: number | null;
             /** Slope Rating */
             slope_rating: number | null;
             /** Total Yardage */

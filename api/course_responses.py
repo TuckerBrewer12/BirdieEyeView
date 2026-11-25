@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 from analytics.handicap import tee_course_handicap
 from analytics.stats import course_record
@@ -6,10 +6,18 @@ from api.schemas import CourseResponse, CourseSummaryResponse, TeeResponse
 from database.db_manager import DatabaseManager
 from models import Course, Round, Tee, User
 from models.course import CourseSummary
-from models.hole import HOLES_PER_NINE
+from models.hole import HOLES_PER_NINE, HOLES_PER_ROUND
+
+ScoreToLowerIndex = Callable[[float, float], Optional[int]]
 
 
-def _tee(tee: Tee, par: Optional[int], handicap_index: Optional[float], coverage=None) -> TeeResponse:
+def _tee(
+    tee: Tee,
+    par: Optional[int],
+    handicap_index: Optional[float],
+    coverage=None,
+    lower_index: Optional[ScoreToLowerIndex] = None,
+) -> TeeResponse:
     rating = tee.get_rating(coverage) if coverage else None
     if rating is None and coverage and tee.rating_holes is None and not tee.ratings:
         slope, course_rating = tee.slope_rating, tee.course_rating
@@ -26,10 +34,20 @@ def _tee(tee: Tee, par: Optional[int], handicap_index: Optional[float], coverage
         front_nine_yardage=tee.front_nine_yardage,
         back_nine_yardage=tee.back_nine_yardage,
         course_handicap=tee_course_handicap(index, slope, course_rating, par),
+        score_to_lower_index=(
+            lower_index(course_rating, slope)
+            if lower_index and coverage and len(coverage) == HOLES_PER_ROUND
+            and course_rating is not None and slope is not None
+            else None
+        ),
     )
 
 
-def course_detail(course: Course, handicap_index: Optional[float] = None) -> CourseResponse:
+def course_detail(
+    course: Course,
+    handicap_index: Optional[float] = None,
+    lower_index: Optional[ScoreToLowerIndex] = None,
+) -> CourseResponse:
     par = course.get_par()
     return CourseResponse(
         total_holes=course.total_holes,
@@ -42,7 +60,10 @@ def course_detail(course: Course, handicap_index: Optional[float] = None) -> Cou
         front_nine_par=course.front_nine_par,
         back_nine_par=course.back_nine_par,
         holes=course.holes,
-        tees=[_tee(tee, par, handicap_index, course.get_expected_holes()) for tee in course.tees_by_length()],
+        tees=[
+            _tee(tee, par, handicap_index, course.get_expected_holes(), lower_index)
+            for tee in course.tees_by_length()
+        ],
     )
 
 

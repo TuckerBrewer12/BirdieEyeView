@@ -137,6 +137,18 @@ export class CourseDetailRobot {
     return this;
   }
 
+  async seesScoreToLowerIndex(score: number, tee: string): Promise<this> {
+    await expect(
+      this.page.getByText(`Shoot ${score} or better from the ${tee} tees and your handicap index comes down.`),
+    ).toBeVisible();
+    return this;
+  }
+
+  async seesNoScoreToLowerIndex(): Promise<this> {
+    await expect(this.page.getByText(/your handicap index comes down/)).toHaveCount(0);
+    return this;
+  }
+
   async seesSelectedTee(color: string): Promise<this> {
     await expect(
       this.page.getByRole("group", { name: "Tee" }).getByRole("button", { name: new RegExp(`^${color}\\b`) }),

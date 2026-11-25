@@ -7,6 +7,7 @@ export interface StoredTee {
   slope_rating: number | null;
   course_rating: number | null;
   course_handicap?: number | null;
+  score_to_lower_index?: number | null;
 }
 
 export interface StoredCourse {
@@ -53,6 +54,7 @@ function teeResponse(tee: StoredTee): TeeDto {
     front_nine_yardage: nineYardage(tee, 1),
     back_nine_yardage: nineYardage(tee, 10),
     course_handicap: tee.course_handicap ?? null,
+    score_to_lower_index: tee.score_to_lower_index ?? null,
     rating_holes: null,
     ratings: [],
     yardage_holes: null,
