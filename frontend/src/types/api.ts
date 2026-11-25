@@ -51,6 +51,7 @@ export type ParTypeComparisonDto = Schemas["ParTypeComparison"];
 export type FriendshipDto = Schemas["FriendshipResponse"];
 export type FriendshipStatusRequestDto = Schemas["FriendshipStatusRequest"];
 export type UserChangesDto = Schemas["UpdateUserRequest"];
+export type RoundChangesDto = Schemas["UpdateRoundRequest"];
 
 export type AuthUserDto = Schemas["AuthUserResponse"];
 export type RegisterDto = Schemas["RegisterResponse"];

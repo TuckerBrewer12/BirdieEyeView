@@ -13,6 +13,7 @@ import type {
   GoalReportDto,
   OcrTextDto,
   PlayedCourseDto,
+  RoundChangesDto,
   RoundComparisonDto,
   RoundDto,
   RoundSummaryDto,
@@ -21,6 +22,7 @@ import type {
   ScanDto,
   ScanReportDto,
   ScanReportErrorDto,
+  UserChangesDto,
   UserDto,
 } from "@/types/api";
 import { apiUrl } from "@/lib/apiBase";
@@ -35,28 +37,42 @@ import {
   USER_FACING_ERRORS,
 } from "@/lib/userFacingErrors";
 
-async function fetchJSON<T>(path: string): Promise<T> {
-  const res = await fetchWithUserFacingError(apiUrl(`/api${path}`), {
-    credentials: "include",
-    headers: withAuthHeaders(),
-  });
-  if (!res.ok) {
-    throw new Error(await getUserFacingError(res));
-  }
-  return parseJsonResponse<T>(res);
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+interface RequestOptions {
+  method?: Method;
+  body?: unknown;
+  fallback?: string;
 }
 
-async function postJSON<T>(path: string, body: unknown, fallback?: string): Promise<T> {
+async function send(path: string, { method = "GET", body, fallback }: RequestOptions = {}): Promise<Response> {
+  const hasBody = body !== undefined;
   const res = await fetchWithUserFacingError(apiUrl(`/api${path}`), {
-    method: "POST",
+    method,
     credentials: "include",
-    headers: withAuthHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify(body),
+    headers: withAuthHeaders(hasBody ? { "Content-Type": "application/json" } : {}),
+    ...(hasBody && { body: JSON.stringify(body) }),
   }, fallback);
   if (!res.ok) {
     throw new Error(await getUserFacingError(res, fallback));
   }
-  return parseJsonResponse<T>(res, fallback);
+  return res;
+}
+
+async function requestJSON<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const res = await send(path, options);
+  return parseJsonResponse<T>(res, options.fallback);
+}
+
+const fetchJSON = <T>(path: string) => requestJSON<T>(path);
+const postJSON = <T>(path: string, body: unknown, fallback?: string) =>
+  requestJSON<T>(path, { method: "POST", body, fallback });
+const putJSON = <T>(path: string, body: unknown) => requestJSON<T>(path, { method: "PUT", body });
+const patchJSON = <T>(path: string, body: unknown) => requestJSON<T>(path, { method: "PATCH", body });
+
+function withQuery(path: string, params: URLSearchParams): string {
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
 }
 
 async function postForm(path: string, fields: Record<string, string | File>, fallback?: string): Promise<Response> {
@@ -80,32 +96,6 @@ async function reportFailure(res: Response): Promise<string> {
   return isReportError(payload) && payload.code === "report_storage_unavailable"
     ? USER_FACING_ERRORS.reportUnavailable
     : USER_FACING_ERRORS.reportNotSaved;
-}
-
-async function putJSON<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetchWithUserFacingError(apiUrl(`/api${path}`), {
-    method: "PUT",
-    credentials: "include",
-    headers: withAuthHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    throw new Error(await getUserFacingError(res));
-  }
-  return parseJsonResponse<T>(res);
-}
-
-async function patchJSON<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetchWithUserFacingError(apiUrl(`/api${path}`), {
-    method: "PATCH",
-    credentials: "include",
-    headers: withAuthHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    throw new Error(await getUserFacingError(res));
-  }
-  return parseJsonResponse<T>(res);
 }
 
 export const api = {
@@ -185,35 +175,20 @@ export const api = {
   getRound: (roundId: string) =>
     fetchJSON<RoundDto>(`/rounds/${roundId}`),
 
-  updateRound: (
-    roundId: string,
-    body: {
-      hole_scores?: { hole_number: number; strokes?: number | null; putts?: number | null; fairway_hit?: boolean | null; green_in_regulation?: boolean | null }[];
-      tee_box?: string | null;
-      notes?: string;
-      weather_conditions?: string;
-      course_name_played?: string | null;
-    }
-  ) => putJSON<RoundDto>(`/rounds/${roundId}`, body),
+  updateRound: (roundId: string, changes: RoundChangesDto) =>
+    putJSON<RoundDto>(`/rounds/${roundId}`, changes),
 
   linkCourse: (roundId: string, courseId: string) =>
     postJSON<RoundSummaryDto>(`/rounds/${roundId}/link-course`, { course_id: courseId }),
 
-  deleteRound: async (roundId: string) => {
-    const res = await fetchWithUserFacingError(apiUrl(`/api/rounds/${roundId}`), {
-      method: "DELETE",
-      credentials: "include",
-      headers: withAuthHeaders(),
-    }, USER_FACING_ERRORS.deleteRound);
-    if (!res.ok) {
-      throw new Error(await getUserFacingError(res, USER_FACING_ERRORS.deleteRound));
-    }
+  deleteRound: async (roundId: string): Promise<void> => {
+    await send(`/rounds/${roundId}`, { method: "DELETE", fallback: USER_FACING_ERRORS.deleteRound });
   },
 
   getCourses: (userId?: string, limit = 50, offset = 0) => {
     const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
     if (userId) params.set("user_id", userId);
-    return fetchJSON<CourseSummaryDto[]>(`/courses?${params}`);
+    return fetchJSON<CourseSummaryDto[]>(withQuery("/courses", params));
   },
 
   searchCourses: (query: string, userId?: string, includeExternal = false, includeRecord = false) => {
@@ -221,7 +196,7 @@ export const api = {
     if (userId) params.set("user_id", userId);
     if (includeExternal) params.set("include_external", "true");
     if (includeRecord) params.set("include_record", "true");
-    return fetchJSON<CourseSummaryDto[]>(`/courses/search?${params}`);
+    return fetchJSON<CourseSummaryDto[]>(withQuery("/courses/search", params));
   },
 
   getCourse: (courseId: string) =>
@@ -230,8 +205,8 @@ export const api = {
   getUser: (userId: string) =>
     fetchJSON<UserDto>(`/users/${userId}`),
 
-  updateUser: (userId: string, body: { home_course_id?: string | null; handicap?: number | null; scoring_goal?: number | null }) =>
-    patchJSON<UserDto>(`/users/${userId}`, body),
+  updateUser: (userId: string, changes: UserChangesDto) =>
+    patchJSON<UserDto>(`/users/${userId}`, changes),
 
   getGoalReport: (userId: string, limit = 50) =>
     fetchJSON<GoalReportDto>(`/stats/${userId}/goal-report?limit=${limit}`),
@@ -239,21 +214,18 @@ export const api = {
   cloneCourse: (courseId: string, userId: string) =>
     postJSON<CourseSummaryDto>(`/courses/${courseId}/clone?user_id=${encodeURIComponent(userId)}`, {}),
 
-  getAnalytics: (userId: string, filters: AnalyticsFilters | number = 50) => {
-    const f: AnalyticsFilters = typeof filters === "number"
-      ? { limit: filters, timeframe: "all", courseId: "all" }
-      : filters;
-    const p = new URLSearchParams({ limit: String(f.limit) });
-    if (f.timeframe !== "all") p.set("timeframe", f.timeframe);
-    if (f.courseId !== "all") p.set("course_id", f.courseId);
-    return fetchJSON<AnalyticsDto>(`/stats/analytics/${userId}?${p}`);
+  getAnalytics: (userId: string, filters: AnalyticsFilters) => {
+    const params = new URLSearchParams({ limit: String(filters.limit) });
+    if (filters.timeframe !== "all") params.set("timeframe", filters.timeframe);
+    if (filters.courseId !== "all") params.set("course_id", filters.courseId);
+    return fetchJSON<AnalyticsDto>(withQuery(`/stats/analytics/${userId}`, params));
   },
 
   getBenchmarkComparison: (userId: string, target: BenchmarkTarget, limit = 20) => {
-    const p = new URLSearchParams({ against: target.against, limit: String(limit) });
-    if (target.against === "handicap") p.set("handicap", String(target.handicap));
-    if (target.against === "friend") p.set("friend_id", target.friendId);
-    return fetchJSON<BenchmarkComparisonDto>(`/stats/${userId}/benchmark?${p}`);
+    const params = new URLSearchParams({ against: target.against, limit: String(limit) });
+    if (target.against === "handicap") params.set("handicap", String(target.handicap));
+    if (target.against === "friend") params.set("friend_id", target.friendId);
+    return fetchJSON<BenchmarkComparisonDto>(withQuery(`/stats/${userId}/benchmark`, params));
   },
 
   getPlayedCourses: (userId: string) =>
@@ -268,8 +240,7 @@ export const api = {
   getFriendships: (status?: FriendshipDto["status"]) => {
     const params = new URLSearchParams();
     if (status) params.set("status", status);
-    const suffix = params.toString() ? `?${params.toString()}` : "";
-    return fetchJSON<FriendshipDto[]>(`/users/me/friends${suffix}`);
+    return fetchJSON<FriendshipDto[]>(withQuery("/users/me/friends", params));
   },
 
   sendFriendRequest: (addresseeFriendCode: string) =>
