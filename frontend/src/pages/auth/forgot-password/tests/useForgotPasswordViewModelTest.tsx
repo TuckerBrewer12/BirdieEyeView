@@ -2,10 +2,10 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { AUTH_MESSAGES, FakeAuth } from "@/testing/fakes/FakeAuth";
 import { queryWrapper } from "../../tests/queryWrapper";
-import { useForgotPasswordViewModel } from "../useForgotPasswordViewModel";
+import { useForgotPasswordViewModel, type ForgotPasswordArrival } from "../useForgotPasswordViewModel";
 
-function renderVm(auth = new FakeAuth()) {
-  const view = renderHook(() => useForgotPasswordViewModel(auth), { wrapper: queryWrapper() });
+function renderVm(auth = new FakeAuth(), arrival: ForgotPasswordArrival = {}) {
+  const view = renderHook(() => useForgotPasswordViewModel(auth, arrival), { wrapper: queryWrapper() });
   return { auth, ...view };
 }
 
@@ -30,5 +30,10 @@ describe("useForgotPasswordViewModel", () => {
 
     await waitFor(() => expect(result.current.error).toBe("Too many reset attempts."));
     expect(result.current.notice).toBeNull();
+  });
+
+  it("starts from the email sign in handed over, trimmed", () => {
+    const { result } = renderVm(new FakeAuth(), { email: " sam@example.com " });
+    expect(result.current.email).toBe("sam@example.com");
   });
 });
