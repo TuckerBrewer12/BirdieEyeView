@@ -27,12 +27,34 @@ function fromUser(userId: string): QueryKey[] {
   ];
 }
 
-async function markStale(queryClient: QueryClient, keys: QueryKey[]): Promise<void> {
-  await Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+async function markStale(
+  queryClient: QueryClient,
+  keys: QueryKey[],
+  keep?: QueryKey,
+): Promise<void> {
+  await Promise.all(
+    keys.map((queryKey) =>
+      queryClient.invalidateQueries(
+        keep === undefined
+          ? { queryKey }
+          : { queryKey, predicate: (query) => !sameQueryKey(query.queryKey, keep) },
+      ),
+    ),
+  );
 }
 
-export function roundsChanged(queryClient: QueryClient, userId: string): Promise<void> {
-  return markStale(queryClient, fromRounds(userId));
+function sameQueryKey(queryKey: QueryKey, other: QueryKey): boolean {
+  return (
+    queryKey.length === other.length && queryKey.every((part, index) => Object.is(part, other[index]))
+  );
+}
+
+export function roundsChanged(
+  queryClient: QueryClient,
+  userId: string,
+  options?: { keep: QueryKey },
+): Promise<void> {
+  return markStale(queryClient, fromRounds(userId), options?.keep);
 }
 
 export function userChanged(queryClient: QueryClient, userId: string): Promise<void> {

@@ -44,6 +44,21 @@ describe("playerCache", () => {
     expect(stale(client, unrelated)).toEqual([]);
   });
 
+  it("leaves a round that was just written fresh and still marks the others stale", async () => {
+    const kept = queryKeys.round("round-1");
+    const sibling = queryKeys.round("round-9");
+    const client = cacheWith([kept, sibling, ...fromRounds, ...unrelated]);
+
+    await roundsChanged(client, "user-1", { keep: kept });
+
+    const others = fromRounds.filter((key) => key[0] !== "round" || key[1] !== "round-1");
+
+    expect(stale(client, [kept])).toEqual([]);
+    expect(stale(client, [sibling])).toEqual([sibling]);
+    expect(stale(client, others)).toEqual(others);
+    expect(stale(client, unrelated)).toEqual([]);
+  });
+
   it("marks the figures that start from the profile stale when the golfer changes", async () => {
     const fromUser = [
       queryKeys.settings("user-1"),
