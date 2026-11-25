@@ -6,6 +6,7 @@ import type { FakeBackend } from "../../../testing/fakes/FakeBackend";
 import { SCANNED_COURSE_NAME, scannedCard } from "../../../testing/fixtures/scan";
 import { expectTheme, switchToDark } from "../../../testing/theme";
 import { captureOptions, readyForCapture } from "../../../testing/fullPageCapture";
+import { SIGN_UP_OFFER } from "../present";
 
 const CARD_PHOTO = fileURLToPath(new URL("../../../../public/hero/physical-card.jpg", import.meta.url));
 const CARD_NAME = "physical-card.jpg";
@@ -131,6 +132,17 @@ export class LandingRobot {
     await expect(this.page.getByRole("heading", { level: 1, name: "Here’s your round." })).toBeVisible();
     await expect(this.page.getByText(`${SCANNED_COURSE_NAME} ·`, { exact: false })).toBeVisible();
     await expect(this.page.getByRole("button", { name: "Scan another" })).toBeVisible();
+    return this;
+  }
+
+  async seesScore(line: string): Promise<this> {
+    await expect(this.page.getByText(line, { exact: true })).toBeInViewport();
+    return this;
+  }
+
+  async seesSignUpOffer(): Promise<this> {
+    await expect(this.page.getByText(SIGN_UP_OFFER.title, { exact: true })).toBeVisible();
+    await expect(this.page.getByText(SIGN_UP_OFFER.detail, { exact: true })).toBeVisible();
     return this;
   }
 
