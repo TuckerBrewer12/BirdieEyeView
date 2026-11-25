@@ -4,7 +4,7 @@ set -euo pipefail
 
 BOTS="$(cd "$(dirname "$0")" && pwd)"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
-export BOT_AGENT_TIMEOUT="${BOT_AGENT_TIMEOUT:-12m}"
+export BOT_AGENT_TIMEOUT="${BOT_AGENT_TIMEOUT:-20m}"
 # shellcheck source=cursor-run.sh
 source "$BOTS/cursor-run.sh"
 
