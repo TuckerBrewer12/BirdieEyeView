@@ -25,7 +25,7 @@ async def db_round_trip_ms() -> float:
 
 
 async def main(paths: list[str]) -> None:
-    async with httpx.AsyncClient(timeout=120) as client:
+    async with httpx.AsyncClient(timeout=120, headers={"User-Agent": "birdie-perf"}) as client:
         login = await client.post(f"{BASE_API}/api/auth/login", json={"email": "scheffler@example.com", "password": "bench-password-123"})
         user = login.json()["user_id"]
         headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
