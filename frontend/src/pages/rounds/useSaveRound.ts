@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { roundsChanged } from "@/data/playerCache";
 import { queryKeys } from "@/data/queryKeys";
 import type { RoundDetail, RoundEdits } from "@/domain";
 import { roundsRepository, type RoundsRepository } from "./roundsRepository";
@@ -17,16 +18,7 @@ export function useSaveRound(
     mutationFn: ({ round, edits }: SaveRoundVariables) => repository.saveRound(round, edits),
     onSuccess: (saved, { round }) => {
       queryClient.setQueryData(queryKeys.round(round.id), saved);
-      for (const queryKey of [
-        queryKeys.rounds(userId),
-        queryKeys.roundComparison(userId, round.id),
-        queryKeys.analytics(userId),
-        queryKeys.dashboard(userId),
-        queryKeys.allCourseLists(userId),
-        queryKeys.allCourseAnalytics(userId),
-      ]) {
-        void queryClient.invalidateQueries({ queryKey });
-      }
+      void roundsChanged(queryClient, userId, [queryKeys.round(round.id)]);
     },
     onError: (err) => console.error("Save failed:", err),
   });
