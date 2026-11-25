@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -83,11 +84,13 @@ async def get_course(
     db: DatabaseManager = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user),
 ):
-    course = await load_linkable_course(
-        db, course_id, str(current_user.id) if current_user else None,
-        missing_detail=COURSE_NOT_FOUND, missing_status=404,
+    course, index = await asyncio.gather(
+        load_linkable_course(
+            db, course_id, str(current_user.id) if current_user else None,
+            missing_detail=COURSE_NOT_FOUND, missing_status=404,
+        ),
+        player_handicap_index(db, current_user),
     )
-    index = await player_handicap_index(db, current_user) if current_user else None
     return course_detail(course, index)
 
 
