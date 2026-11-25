@@ -21,7 +21,7 @@ def test_password_hash_and_verify_roundtrip():
 
 
 def test_access_token_includes_expected_claims(monkeypatch):
-    monkeypatch.setenv("SECRET_KEY", "test-secret-key-for-jwt")
+    monkeypatch.setenv("SECRET_KEY", "test-secret-key-for-jwt-at-least-32-bytes")
     monkeypatch.setenv("JWT_ISSUER", "test-issuer")
     monkeypatch.setenv("JWT_AUDIENCE", "test-aud")
     monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
