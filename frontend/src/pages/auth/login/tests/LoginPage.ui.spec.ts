@@ -57,3 +57,14 @@ test("Forgot? beside the password goes to Reset password", async ({ login }) => 
   await login.tapForgot();
   await login.seesHeading("Reset password");
 });
+
+test("Forgot? takes the typed email to Reset password, and Back to sign in brings it back", async ({ login }) => {
+  await login.open();
+  await login.typeEmail("sam@example.com");
+  const forgot = await login.tapForgot();
+  await forgot.seesEmail("sam@example.com");
+  await forgot.typeEmail("sam.r@example.com");
+  const back = await forgot.backToSignIn();
+  await back.seesHeading("Sign in");
+  await back.seesEmail("sam.r@example.com");
+});

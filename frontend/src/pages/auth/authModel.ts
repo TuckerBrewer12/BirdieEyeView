@@ -23,3 +23,11 @@ export function hasErrors(errors: object): boolean {
 export function isUnverifiedSignIn(message: string | null | undefined): boolean {
   return message?.toLowerCase().includes("email not verified") ?? false;
 }
+
+export function carryEmail(state: unknown, email: string): Record<string, unknown> {
+  const carried: Record<string, unknown> = typeof state === "object" && state !== null ? { ...state } : {};
+  delete carried.flash;
+  delete carried.email;
+  const address = email.trim();
+  return address ? { ...carried, email: address } : carried;
+}

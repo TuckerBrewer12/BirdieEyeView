@@ -1,11 +1,14 @@
+import { useLocation } from "react-router-dom";
 import { AuthCard, Button, Field, FieldLabel, Input } from "@/brand";
 import { useAuth } from "@/context/auth";
+import { carryEmail } from "../authModel";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
-import { useForgotPasswordViewModel } from "./useForgotPasswordViewModel";
+import { useForgotPasswordViewModel, type ForgotPasswordArrival } from "./useForgotPasswordViewModel";
 
 export function ForgotPasswordPage() {
-  const viewModel = useForgotPasswordViewModel(useAuth());
+  const routeState: unknown = useLocation().state;
+  const viewModel = useForgotPasswordViewModel(useAuth(), (routeState ?? {}) as ForgotPasswordArrival);
 
   return (
     <AuthCard
@@ -13,7 +16,10 @@ export function ForgotPasswordPage() {
       description="We’ll email you a reset link."
       footer={
         <p>
-          Remembered it? <AuthLink to="/login">Back to sign in</AuthLink>
+          Remembered it?{" "}
+          <AuthLink to="/login" state={carryEmail(routeState, viewModel.email)}>
+            Back to sign in
+          </AuthLink>
         </p>
       }
     >

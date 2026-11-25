@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { AuthCard, Button, Field, FieldLabel, Input } from "@/brand";
 import { useAuth } from "@/context/auth";
+import { carryEmail } from "../authModel";
 import { AuthLink } from "../components/AuthLink";
 import { AuthNotice } from "../components/AuthNotice";
 import { PasswordField } from "../components/PasswordField";
@@ -10,7 +11,8 @@ const ERROR_ID = "login-error";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const arrival = (useLocation().state ?? {}) as LoginArrival;
+  const routeState: unknown = useLocation().state;
+  const arrival = (routeState ?? {}) as LoginArrival;
   const viewModel = useLoginViewModel(useAuth(), arrival);
 
   return (
@@ -56,7 +58,11 @@ export function LoginPage() {
           autoComplete="current-password"
           invalid={viewModel.credentialsRefused}
           describedBy={viewModel.credentialsRefused ? ERROR_ID : undefined}
-          labelAction={<AuthLink to="/forgot-password">Forgot?</AuthLink>}
+          labelAction={
+            <AuthLink to="/forgot-password" state={carryEmail(routeState, viewModel.email)}>
+              Forgot?
+            </AuthLink>
+          }
         />
 
         <Button type="submit" size="lg" className="mt-1" disabled={viewModel.submitting}>

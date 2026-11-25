@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasErrors, isUnverifiedSignIn, newPasswordErrors } from "../authModel";
+import { carryEmail, hasErrors, isUnverifiedSignIn, newPasswordErrors } from "../authModel";
 
 describe("newPasswordErrors", () => {
   it("passes a long enough password typed the same twice", () => {
@@ -26,5 +26,20 @@ describe("isUnverifiedSignIn", () => {
     expect(isUnverifiedSignIn("Email not verified. Please verify your email before signing in.")).toBe(true);
     expect(isUnverifiedSignIn("Invalid email or password")).toBe(false);
     expect(isUnverifiedSignIn(null)).toBe(false);
+  });
+});
+
+describe("carryEmail", () => {
+  it("hands the trimmed email to the next screen", () => {
+    expect(carryEmail(null, " sam@example.com ")).toEqual({ email: "sam@example.com" });
+  });
+
+  it("keeps what else the screen arrived with, but not its one-off line", () => {
+    const arrived = { from: "/rounds/r1", email: "old@example.com", flash: "Password reset" };
+    expect(carryEmail(arrived, "sam@example.com")).toEqual({ from: "/rounds/r1", email: "sam@example.com" });
+  });
+
+  it("drops an email that was cleared", () => {
+    expect(carryEmail({ email: "old@example.com" }, "  ")).toEqual({});
   });
 });

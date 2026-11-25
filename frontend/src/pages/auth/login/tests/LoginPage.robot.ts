@@ -1,4 +1,5 @@
 import { test as base, expect } from "../../../../testing/playwright";
+import { ForgotPasswordRobot } from "../../forgot-password/tests/ForgotPasswordPage.robot";
 import { AuthScreenRobot, type AuthSeed } from "../../tests/AuthScreen.robot";
 
 export class LoginRobot extends AuthScreenRobot {
@@ -34,11 +35,6 @@ export class LoginRobot extends AuthScreenRobot {
     return this;
   }
 
-  async seesEmail(email: string): Promise<this> {
-    await expect(this.page.getByLabel("Email", { exact: true })).toHaveValue(email);
-    return this;
-  }
-
   async seesPasswordShown(): Promise<this> {
     await expect(this.page.getByLabel("Password", { exact: true })).toHaveAttribute("type", "text");
     return this;
@@ -57,10 +53,10 @@ export class LoginRobot extends AuthScreenRobot {
     return this;
   }
 
-  async tapForgot(): Promise<this> {
+  async tapForgot(): Promise<ForgotPasswordRobot> {
     await this.tap("Forgot?");
     await this.isAt("/forgot-password");
-    return this;
+    return new ForgotPasswordRobot(this.page);
   }
 
   async doesNotSeeResend(): Promise<this> {
