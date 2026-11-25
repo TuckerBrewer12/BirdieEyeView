@@ -18,7 +18,7 @@ export function useSaveRound(
     mutationFn: ({ round, edits }: SaveRoundVariables) => repository.saveRound(round, edits),
     onSuccess: (saved, { round }) => {
       queryClient.setQueryData(queryKeys.round(round.id), saved);
-      void roundsChanged(queryClient, userId);
+      void roundsChanged(queryClient, userId, [queryKeys.round(round.id)]);
     },
     onError: (err) => console.error("Save failed:", err),
   });

@@ -1,4 +1,4 @@
-import type { QueryClient, QueryKey } from "@tanstack/react-query";
+import { hashKey, type QueryClient, type QueryKey } from "@tanstack/react-query";
 import { queryKeys } from "./queryKeys";
 
 function fromRounds(userId: string): QueryKey[] {
@@ -27,12 +27,17 @@ function fromUser(userId: string): QueryKey[] {
   ];
 }
 
-async function markStale(queryClient: QueryClient, keys: QueryKey[]): Promise<void> {
-  await Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+async function markStale(queryClient: QueryClient, keys: QueryKey[], written: QueryKey[] = []): Promise<void> {
+  const fresh = new Set(written.map(hashKey));
+  await Promise.all(
+    keys.map((queryKey) =>
+      queryClient.invalidateQueries({ queryKey, predicate: (query) => !fresh.has(query.queryHash) }),
+    ),
+  );
 }
 
-export function roundsChanged(queryClient: QueryClient, userId: string): Promise<void> {
-  return markStale(queryClient, fromRounds(userId));
+export function roundsChanged(queryClient: QueryClient, userId: string, written: QueryKey[] = []): Promise<void> {
+  return markStale(queryClient, fromRounds(userId), written);
 }
 
 export function userChanged(queryClient: QueryClient, userId: string): Promise<void> {

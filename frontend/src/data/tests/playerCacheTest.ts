@@ -1,4 +1,4 @@
-import { QueryClient, type QueryKey } from "@tanstack/react-query";
+import { QueryClient, QueryObserver, type QueryKey } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { roundsChanged, userChanged } from "../playerCache";
 import { queryKeys } from "../queryKeys";
@@ -59,5 +59,30 @@ describe("playerCache", () => {
 
     expect(stale(client, fromUser)).toEqual(fromUser);
     expect(stale(client, unrelated)).toEqual([]);
+  });
+
+  it("keeps an entry the change just wrote fresh", async () => {
+    const client = cacheWith([queryKeys.round("round-1"), queryKeys.round("round-2")]);
+
+    await roundsChanged(client, "user-1", [queryKeys.round("round-1")]);
+
+    expect(stale(client, [queryKeys.round("round-1"), queryKeys.round("round-2")])).toEqual([
+      queryKeys.round("round-2"),
+    ]);
+  });
+
+  it("settles even when a mounted query's refetch fails", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(queryKeys.analytics("user-1", { limit: 20 }), {});
+    const observer = new QueryObserver(client, {
+      queryKey: queryKeys.analytics("user-1", { limit: 20 }),
+      queryFn: () => Promise.reject(new Error("Server error")),
+      staleTime: Infinity,
+    });
+    const unsubscribe = observer.subscribe(() => undefined);
+
+    await expect(userChanged(client, "user-1")).resolves.toBeUndefined();
+    expect(client.getQueryState(queryKeys.analytics("user-1", { limit: 20 }))?.status).toBe("error");
+    unsubscribe();
   });
 });
