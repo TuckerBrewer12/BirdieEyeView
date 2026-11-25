@@ -12,7 +12,7 @@ from urllib.parse import parse_qs, urlparse
 import asyncpg
 import pytest
 from fastapi.testclient import TestClient
-from jose import jwt
+import jwt
 from PIL import Image
 
 import api.main as api_main
