@@ -1,6 +1,3 @@
-# Usage: python scripts/perf/pg_latency.py LISTEN_PORT POSTGRES_PORT ONE_WAY_MS
-# A TCP proxy in front of Postgres that holds every chunk ONE_WAY_MS in each direction, so a round trip
-# costs about twice that. Point an API's DATABASE_URL at LISTEN_PORT.
 import asyncio
 import sys
 import time

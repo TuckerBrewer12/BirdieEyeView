@@ -1,7 +1,3 @@
-# Usage: python scripts/perf/http_times.py PATH [PATH ...]   e.g. stats/dashboard/{user} rounds/{round}
-# Env: BASE_API (http://127.0.0.1:8100), PR_API (http://127.0.0.1:8200), DB_PORT (the port both APIs use), N (21)
-# Times each path on both APIs, alternating requests, and prints one markdown row per path with the
-# database round trip measured through DB_PORT. {user} and {round} become the seeded golfer and their latest round.
 import asyncio
 import os
 import statistics
