@@ -31,7 +31,8 @@
     "sync:live:android": "CAPACITOR_SERVER_URL=${CAPACITOR_SERVER_URL:-http://10.2.1.202:5173} npx cap sync android",
     "open:ios": "npx cap open ios",
     "open:android": "npx cap open android",
-    "gen-icons": "npx @capacitor/assets generate"
+    "gen-icons": "npx @capacitor/assets generate",
+    "size": "size-limit"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -64,6 +65,7 @@
     "@eslint-community/eslint-plugin-eslint-comments": "^4.8.1",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.62.1",
+    "@size-limit/file": "^12.1.0",
     "@tailwindcss/vite": "^4.2.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -83,6 +85,7 @@
     "knip": "^6.42.1",
     "monocart-reporter": "^2.13.1",
     "openapi-typescript": "^7.13.0",
+    "size-limit": "^12.1.0",
     "tailwindcss": "^4.2.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",

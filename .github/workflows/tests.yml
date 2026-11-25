@@ -238,6 +238,10 @@ jobs:
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'build'
         run: npm run build
 
+      - name: Bundle size budget
+        if: needs.changes.outputs.frontend == 'true' && matrix.check == 'build'
+        run: npm run size
+
       - name: Install Playwright Chromium
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'ui'
         run: npx playwright install --with-deps chromium
