@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from uuid import UUID
 
@@ -56,10 +57,13 @@ async def get_round(
     current_user: User = Depends(get_current_user),
 ):
     await _check_round_ownership(round_id, current_user, db)
-    round_ = await db.rounds.get_round(str(round_id))
+    round_, index = await asyncio.gather(
+        db.rounds.get_round(str(round_id)),
+        player_handicap_index(db, current_user),
+    )
     if not round_:
         raise HTTPException(404, ROUND_NOT_FOUND)
-    return round_detail(round_, await player_handicap_index(db, current_user))
+    return round_detail(round_, index)
 
 
 @router.put("/{round_id}", response_model=RoundResponse)

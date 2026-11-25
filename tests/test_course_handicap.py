@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
@@ -128,6 +129,28 @@ async def test_a_course_sends_the_signed_in_golfers_course_handicap_per_tee():
     signed_out = await courses.get_course(UUID(course.id), db, None)
     assert [t.course_handicap for t in signed_out.tees] == [None, None, None]
 
+
+
+@pytest.mark.asyncio
+async def test_a_course_and_the_golfers_index_are_read_together():
+    user = User(id=str(uuid4()), name="Sam", email="sam@example.com", handicap=10.4)
+    course = _course()
+    started, both = [], asyncio.Event()
+
+    async def read(name, result):
+        started.append(name)
+        if len(started) == 2:
+            both.set()
+        await both.wait()
+        return result
+
+    db = make_mock_database()
+    db.courses.get_course = lambda *_args, **_kwargs: read("course", course)
+    db.rounds.get_rounds_for_user = lambda *_args, **_kwargs: read("index", [])
+
+    await asyncio.wait_for(courses.get_course(UUID(course.id), db, user), timeout=2)
+
+    assert sorted(started) == ["course", "index"]
 
 def test_a_course_without_an_index_has_no_course_handicaps():
     assert [t.course_handicap for t in course_detail(_course()).tees] == [None, None, None]

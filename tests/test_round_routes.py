@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
@@ -141,3 +142,42 @@ async def test_link_course_rejects_mismatched_layout_without_server_error():
     assert raised.value.status_code == 422
 
 
+
+
+async def _both_started(started, both, name, result):
+    started.append(name)
+    if len(started) == 2:
+        both.set()
+    await both.wait()
+    return result
+
+
+@pytest.mark.asyncio
+async def test_round_detail_reads_the_round_and_the_golfers_index_together():
+    user = make_user(uuid4())
+    round_id = uuid4()
+    started, both = [], asyncio.Event()
+    db = make_mock_database()
+    db.rounds.get_round_owner_id = AsyncMock(return_value=str(user.id))
+    db.rounds.get_round = lambda *_args: _both_started(started, both, "round", make_round(round_id=str(round_id)))
+    db.rounds.get_rounds_for_user = lambda *_args, **_kwargs: _both_started(started, both, "index", [])
+
+    await asyncio.wait_for(rounds.get_round(round_id, db, user), timeout=2)
+
+    assert sorted(started) == ["index", "round"]
+
+
+@pytest.mark.asyncio
+async def test_someone_elses_round_is_refused_before_anything_is_read():
+    user = make_user(uuid4())
+    db = make_mock_database()
+    db.rounds.get_round_owner_id = AsyncMock(return_value=str(uuid4()))
+    db.rounds.get_round = AsyncMock()
+    db.rounds.get_rounds_for_user = AsyncMock()
+
+    with pytest.raises(HTTPException) as refused:
+        await rounds.get_round(uuid4(), db, user)
+
+    assert refused.value.status_code == 403
+    db.rounds.get_round.assert_not_awaited()
+    db.rounds.get_rounds_for_user.assert_not_awaited()
