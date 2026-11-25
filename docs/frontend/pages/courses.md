@@ -14,7 +14,7 @@ The course list with each course's tees and the golfer's record there, and a cou
 
 ## How it works
 
-The list (`GET /courses`, search with `include_record=true`) carries tee colours longest first and the record's rounds, average and best. The course page reads the course (`course_detail()`) and `GET /api/stats/course-analytics/{user}/{course}`: the record, the score trend, a row a hole and the nine sums. The scorecard is `ScorecardCard` + `ScorecardGrid` off the picked tee; My performance draws `TrendAreaChart`, `HoleProfileChart` and `HoleGreensPuttsChart`.
+The list (`GET /courses`, search with `include_record=true`) carries tee colours longest first and the record's rounds, average and best. The course page reads the course (`course_detail()`) and `GET /api/stats/course-analytics/{user}/{course}`: the record, the score trend, a row a hole and the nine sums. Under the tee picker, the picked tee's `score_to_lower_index` reads "Shoot 84 or better from the Blue tees and your handicap index comes down." (`lowerIndexNote`), and nothing shows when the server sent none. The scorecard is `ScorecardCard` + `ScorecardGrid` off the picked tee; My performance draws `TrendAreaChart`, `HoleProfileChart` and `HoleGreensPuttsChart`.
 
 ## Boundaries and checks when changing it
 

@@ -1,7 +1,7 @@
 import { test } from "./CourseDetailPage.robot";
 import { populatedCourses } from "../../../../testing/fixtures/courses";
 import { halfMoonBayAnalytics } from "../../../../testing/fixtures/courseAnalytics";
-import { halfMoonBayCourse } from "../../../../testing/fixtures/roundDetails";
+import { halfMoonBayCourse, halfMoonBayCourseWithIndexTargets } from "../../../../testing/fixtures/roundDetails";
 import { storedRounds } from "../../../../testing/fixtures/rounds";
 
 test("opening a course URL and back returns to the list", async ({ courseDetail }) => {
@@ -67,4 +67,17 @@ test("my performance shows the trend and the hole charts, and orders the holes h
   await courseDetail.seesHolesHardestFirst();
   await courseDetail.tapView("Course");
   await courseDetail.seesAverageRow();
+});
+
+test("each tee says what to shoot to lower the golfer's index", async ({ courseDetail }) => {
+  await courseDetail.open(halfMoonBayCourseWithIndexTargets);
+  await courseDetail.seesScoreToLowerIndex(84, "Blue");
+  await courseDetail.tapTee("White");
+  await courseDetail.seesScoreToLowerIndex(81, "White");
+});
+
+test("a course with no score to lower the index says nothing about it", async ({ courseDetail }) => {
+  await courseDetail.open(halfMoonBayCourse);
+  await courseDetail.seesSelectedTee("Blue");
+  await courseDetail.seesNoScoreToLowerIndex();
 });

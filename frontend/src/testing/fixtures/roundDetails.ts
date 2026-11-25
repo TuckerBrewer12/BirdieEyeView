@@ -84,6 +84,11 @@ function withCourseHandicaps(course: CourseDto, handicaps: number[]): CourseDto 
 
 export const ratedHalfMoonBayCourse: CourseDto = withCourseHandicaps(halfMoonBayCourse, [12, 9]);
 
+export const halfMoonBayCourseWithIndexTargets: CourseDto = {
+  ...ratedHalfMoonBayCourse,
+  tees: ratedHalfMoonBayCourse.tees.map((tee, i) => ({ ...tee, score_to_lower_index: [84, 81][i] ?? null })),
+};
+
 export const ratedPebbleBeachCourse: CourseDto = withCourseHandicaps(pebbleBeachCourse, [16]);
 
 export const ratedHalfMoonBayRound: RoundDto = roundResponse({ ...hmbRound, course: ratedHalfMoonBayCourse });

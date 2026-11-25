@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -13,6 +14,8 @@ from models.round import Round
 CLOSE_TO_COUNTING = 2.0
 MAX_HANDICAP_INDEX = 54.0
 WHS_WINDOW = 20
+TRANSITION_ROUNDS = 10
+LOWEST_SCORE_UNDER_RATING = 40
 FLOAT_NOISE_PLACES = 6
 
 _WHS_TABLE: List[tuple[int, float]] = [
@@ -171,7 +174,7 @@ def handicap_index(
     use_last_n: int = WHS_WINDOW,
     *,
     seed_handicap: Optional[float] = None,
-    transition_rounds: int = 10,
+    transition_rounds: int = TRANSITION_ROUNDS,
     seed_set_at: Optional[datetime] = None,
 ) -> Optional[float]:
     _check_window(use_last_n)
@@ -197,7 +200,7 @@ def handicap_trend(
     rounds: Iterable[Round],
     *,
     seed_handicap: Optional[float] = None,
-    transition_rounds: int = 10,
+    transition_rounds: int = TRANSITION_ROUNDS,
     seed_set_at: Optional[datetime] = None,
 ) -> List[Dict[str, Any]]:
     ordered = el.chronological(rounds)
@@ -267,7 +270,7 @@ def _seed(user: Optional[User]) -> Dict[str, Any]:
 
 
 def index_window(rounds: Iterable[Round], use_last_n: int = WHS_WINDOW, *,
-                 seed_handicap: Optional[float] = None, transition_rounds: int = 10,
+                 seed_handicap: Optional[float] = None, transition_rounds: int = TRANSITION_ROUNDS,
                  seed_set_at: Optional[datetime] = None) -> Dict[str, Any]:
     _check_window(use_last_n)
     ordered = el.chronological(rounds)
@@ -282,6 +285,36 @@ def index_window(rounds: Iterable[Round], use_last_n: int = WHS_WINDOW, *,
                 "eligible": {i for i,r in enumerate(ordered) if id(r) in eligible_ids},
                 "threshold": max((d.value for d in used), default=None), "rated": len(eligible),
                 "count": count, "adjustment": adjustment}
+
+
+def score_to_lower_index(
+    user: Optional[User],
+    rounds: Iterable[Round],
+    course_rating: Optional[float],
+    slope_rating: Optional[float],
+    *,
+    played: Optional[datetime] = None,
+) -> Optional[int]:
+    if course_rating is None or not slope_rating:
+        return None
+    differentials = _differentials(el.chronological(rounds))
+    options = {"use_last_n": WHS_WINDOW, "transition_rounds": TRANSITION_ROUNDS, **_seed(user)}
+    current, _ = _index_from(differentials, **options)
+    if current is None:
+        return None
+    next_round = Round(date=played or datetime.now(timezone.utc))
+
+    def lowers(score: int) -> bool:
+        value = round_half_up(score_differential(score, course_rating, slope_rating), 1)
+        posted = sorted([*differentials, _Differential(next_round, value)], key=lambda d: el.date_key(d.round_obj))
+        after, _ = _index_from(posted, **options)
+        return after is not None and after < current
+
+    highest = math.ceil(course_rating + MAX_HANDICAP_INDEX * slope_rating / 113)
+    lowest = math.floor(course_rating) - LOWEST_SCORE_UNDER_RATING
+    if lowers(highest):
+        return None
+    return next((score for score in range(highest - 1, lowest - 1, -1) if lowers(score)), None)
 
 
 def round_net_score(round_obj: Round, handicap_index: Optional[float]) -> Optional[int]:

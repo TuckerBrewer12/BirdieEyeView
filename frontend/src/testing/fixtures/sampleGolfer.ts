@@ -2274,6 +2274,7 @@ export const sampleGolfer = {
             "hole_yardages": {"1": 378, "10": 389, "11": 441, "12": 172, "13": 365, "14": 498, "15": 155, "16": 410, "17": 395, "18": 531, "2": 512, "3": 431, "4": 165, "5": 402, "6": 356, "7": 148, "8": 418, "9": 520},
             "rating_holes": null,
             "ratings": [],
+            "score_to_lower_index": null,
             "slope_rating": 133.0,
             "total_yardage": 6686,
             "yardage_holes": null

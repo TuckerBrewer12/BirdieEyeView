@@ -336,6 +336,7 @@ function fromScan(scan: ScannedRoundDto): Round {
       rating_holes: null,
       ratings: [],
       yardage_holes: null,
+      score_to_lower_index: null,
     })),
   };
   const unread: Round = {

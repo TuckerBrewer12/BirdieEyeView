@@ -15,6 +15,7 @@ import {
   RECENT_ROUNDS,
   greensFigures,
   holesInOrder,
+  lowerIndexNote,
   namedTees,
   nineFrom,
   recordFigures,
@@ -40,6 +41,7 @@ export interface CourseDetailPageViewModel {
   selectedTee: string | null;
   selectTee: (name: string) => void;
   teeLine: string | null;
+  lowerIndex: string | null;
   nines: ScorecardNine[];
   played: boolean;
   record: RecordFigure[];
@@ -91,6 +93,7 @@ export function useCourseDetailPageViewModel(
     selectedTee: tee?.color ?? null,
     selectTee: setPicked,
     teeLine: tee ? teeLine(tee) : null,
+    lowerIndex: lowerIndexNote(tee),
     nines: course ? [nineFrom(course, "front", tee, golfer), nineFrom(course, "back", tee, golfer)] : [],
     played,
     record: golfer ? recordFigures(golfer) : [],

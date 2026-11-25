@@ -76,6 +76,12 @@ export function CourseDetailPage({ userId }: { userId: string }) {
             <TeePicker tees={viewModel.tees} value={viewModel.selectedTee ?? ""} onChange={viewModel.selectTee} />
           )}
 
+          {viewModel.lowerIndex && (
+            <p data-slot="lower-index" className="text-body-sm text-muted-foreground">
+              {viewModel.lowerIndex}
+            </p>
+          )}
+
           <CourseScorecard teeLine={viewModel.teeLine} nines={viewModel.nines} played={viewModel.played} />
 
           {viewModel.played ? (

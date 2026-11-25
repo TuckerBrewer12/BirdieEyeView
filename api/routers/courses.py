@@ -13,7 +13,7 @@ from api.messages import (
 from api.course_access import load_linkable_course, require_own_filter
 from api.course_responses import course_detail, course_summary, external_summaries, summary_list
 from api.dependencies import get_db, get_optional_current_user, get_current_user
-from api.player_handicap import player_handicap_index
+from api.player_handicap import golfer_handicap
 from api.input_validation import sanitize_search_query
 from api.request_models import CreateCourseRequest, UpdateCourseRequest
 from api.schemas import CourseResponse, CourseSummaryResponse
@@ -87,8 +87,8 @@ async def get_course(
         db, course_id, str(current_user.id) if current_user else None,
         missing_detail=COURSE_NOT_FOUND, missing_status=404,
     )
-    index = await player_handicap_index(db, current_user) if current_user else None
-    return course_detail(course, index)
+    golfer = await golfer_handicap(db, current_user)
+    return course_detail(course, golfer.index, golfer.score_to_lower_index)
 
 
 @router.post("", status_code=201)

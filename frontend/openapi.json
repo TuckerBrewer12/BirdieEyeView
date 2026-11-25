@@ -6881,6 +6881,17 @@
             "title": "Ratings",
             "type": "array"
           },
+          "score_to_lower_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score To Lower Index"
+          },
           "slope_rating": {
             "anyOf": [
               {
@@ -6929,7 +6940,8 @@
           "total_yardage",
           "front_nine_yardage",
           "back_nine_yardage",
-          "course_handicap"
+          "course_handicap",
+          "score_to_lower_index"
         ],
         "title": "TeeResponse",
         "type": "object"
