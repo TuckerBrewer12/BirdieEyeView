@@ -1,4 +1,3 @@
-// Usage: node scripts/perf/tls_proxy.mjs LISTEN_PORT STATIC_PORT API_PORT CERT_DIR
 // Chrome only asks for brotli over HTTPS, so the benchmark talks to server.js through this.
 import fs from "node:fs";
 import http from "node:http";

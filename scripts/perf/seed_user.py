@@ -1,6 +1,3 @@
-# Usage: DATABASE_URL=... python scripts/perf/seed_user.py [copies]
-# Loads the Scheffler rounds `copies` times (default 4, 224 rounds), each copy's dates moved back a year
-# further, and gives the golfer a password so the browser and HTTP benchmarks can sign in as them.
 import asyncio
 import json
 import os

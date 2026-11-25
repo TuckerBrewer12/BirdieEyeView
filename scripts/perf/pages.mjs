@@ -1,6 +1,3 @@
-// Usage: node scripts/perf/pages.mjs  (after serve_pair.sh and seed_user.py)
-// Env: RUNS (9), SCENARIOS (landing,switch), API (http://127.0.0.1:8000), CHROMIUM (a browser binary), OUT (perf.json)
-// Prints markdown tables of medians and ranges, base vs PR, on a slow phone and on 4G.
 import fs from "node:fs";
 import { createRequire } from "node:module";
 
