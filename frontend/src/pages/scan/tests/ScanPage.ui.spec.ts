@@ -149,6 +149,25 @@ test("a failed scan keeps the photo and says why", async ({ scan }) => {
   await scan.seesScanFailed();
 });
 
+test("a failed scan reads the same photo again", async ({ scan }) => {
+  await scan.open({ scan: undefined });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesScanFailed();
+  scan.scanWorksNextTime();
+  await scan.tapReadAgain();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+});
+
+test("after a failed scan the scores can be typed in instead", async ({ scan }) => {
+  await scan.open({ scan: undefined });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesScanFailed();
+  await scan.tapTypeScoresInstead();
+  await scan.seesSetup();
+});
+
 test("a failed scan can be reported, and the report says why it failed", async ({ scan }) => {
   await scan.open({ scan: undefined, reportStorage: true });
   await scan.chooseScorecard();
