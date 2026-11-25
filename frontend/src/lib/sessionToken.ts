@@ -19,6 +19,10 @@ function getSessionToken(): string | null {
   return token || null;
 }
 
+export function hasSessionToken(): boolean {
+  return getSessionToken() !== null;
+}
+
 export function setSessionToken(token: string | null): void {
   if (!storage) return;
   for (const key of LEGACY_ACCESS_TOKEN_KEYS) {

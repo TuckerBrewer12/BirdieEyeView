@@ -2,7 +2,7 @@
 
 ## App lifecycle
 
-[main.tsx](../../frontend/src/main.tsx) creates the React Query client and mounts the app. [App.tsx](../../frontend/src/App.tsx) installs the auth and theme providers and `ScanSessionProvider`, chooses public versus signed-in routes, and wraps signed-in pages in [AppLayout](../../frontend/src/app/AppLayout.tsx) (the side rail on a computer, the tab bar and More sheet on a phone, from [navigation.ts](../../frontend/src/app/navigation.ts)).
+[main.tsx](../../frontend/src/main.tsx) creates the React Query client and mounts the app. [App.tsx](../../frontend/src/App.tsx) installs the auth and theme providers and `ScanSessionProvider`, chooses public versus signed-in routes, and wraps signed-in pages in [AppLayout](../../frontend/src/app/AppLayout.tsx) (the side rail on a computer, the tab bar and More sheet on a phone, from [navigation.ts](../../frontend/src/app/navigation.ts)). The signed-in pages come from [signedInPages.ts](../../frontend/src/app/signedInPages.ts): a build loads each from its own chunk the first time it shows, starting the page a tab opens on alongside the session check and the rest once the first page is up and the browser is idle; dev, and so every test suite, imports them all up front. A chunk that fails to load after a deploy reloads the tab once. A new signed-in page goes there, next to its route in `App.tsx`.
 
 [AuthContext](../../frontend/src/context/AuthContext.tsx) owns the session and account actions. [ScanSessionProvider](../../frontend/src/pages/scan/ScanSessionProvider.tsx) keeps the scan in progress across navigation; it is in-memory state, not a saved round.
 
