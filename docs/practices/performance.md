@@ -21,4 +21,12 @@ Nine runs per side (`RUNS=9`, the default), alternating order, with medians and 
 
 ## Backend changes
 
+A backend change that saves database round trips only shows with the database some distance away. To measure one:
+
+1. Put `scripts/perf/pg_latency.py 6432 5432 ONE_WAY_MS` in front of Postgres. A round trip then costs about twice `ONE_WAY_MS`.
+2. Run the base checkout's API on port 8100 and the PR's on 8200, both with `DATABASE_URL` on port 6432.
+3. `DB_PORT=6432 PGDATABASE=<db> python scripts/perf/http_times.py "stats/dashboard/{user}" "rounds/{round}"` prints one table row per path: the measured `SELECT 1` round trip, then base and PR medians over 21 alternating requests.
+
+Repeat for a few delays (0, 1, 5 and 10 ms one way cover the same network through another region). Restart both APIs after changing the delay. Identical code on both sides can still differ by about 10% at a handful of requests; keep `N` at 21.
+
 Profile before porting an old plan: `cProfile` around `dashboard_response` or `analytics_response` on the seeded rounds shows the current hot path, which moves as the code does. Report the response JSON as byte-identical before and after when the change shouldn't alter output.
