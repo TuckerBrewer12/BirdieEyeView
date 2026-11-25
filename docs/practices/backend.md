@@ -32,6 +32,6 @@ Await database/network work through its supported async boundary. Check whether 
 
 ## Python tooling: existing configuration
 
-[pyproject.toml](../../pyproject.toml) configures Ruff with a Python 3.13 target and 120-character line-length setting. The selected lint families focus on correctness/dead code; this is not evidence of an enforced whole-project formatter or a mandate to reformat untouched files. Do not run blanket formatting as part of an unrelated change.
+[pyproject.toml](../../pyproject.toml) configures Ruff with a Python 3.13 target and 120-character line-length setting. The selected lint families focus on correctness/dead code; this is not evidence of an enforced whole-project formatter or a mandate to reformat untouched files. Do not run blanket formatting as part of an unrelated change. `scripts/ci/dead_code.py` runs vulture in CI's lint job and fails on any function, method or class in `api/`, `services/`, `database/`, `analytics/` or `models/` that nothing calls; tests, scripts and `data/` count as callers. When a change replaces a helper, delete the old one in the same PR.
 
 Run focused pytest checks and `ruff check` over relevant changed Python files; broader checks are described in [testing practices](testing.md). Keep functional changes and migrations separately reviewable from mechanical cleanup.

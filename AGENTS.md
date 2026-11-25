@@ -37,6 +37,7 @@ Checks, narrowest first:
 .venv/bin/python -m pytest -q tests/test_<area>.py
 .venv/bin/python -m pytest -q --ignore=tests/integration
 .venv/bin/ruff check .
+.venv/bin/python scripts/ci/dead_code.py       # needs vulture==2.16
 for c in scripts/ci/check_*.py; do .venv/bin/python "$c"; done
 
 cd frontend

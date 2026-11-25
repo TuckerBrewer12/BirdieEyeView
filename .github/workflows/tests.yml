@@ -54,7 +54,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           # bandit[toml] so `-c pyproject.toml` is readable on every version.
-          pip install ruff "bandit[toml]"
+          pip install ruff "bandit[toml]" vulture==2.16
 
       - name: Unit tests + coverage
         if: matrix.check == 'test'
@@ -63,6 +63,10 @@ jobs:
       - name: Ruff
         if: matrix.check == 'lint'
         run: ruff check --output-format=github .
+
+      - name: Dead code
+        if: matrix.check == 'lint'
+        run: python scripts/ci/dead_code.py
 
       - name: API schema is current
         if: matrix.check == 'types'

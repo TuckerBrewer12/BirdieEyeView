@@ -247,12 +247,6 @@ class Round(BaseGolfModel):
             running[s.hole_number] = total
         return running
 
-    def scored_par(self) -> Optional[int]:
-        par = self.played_par()
-        if par is None and self.holes_played() >= HOLES_PER_ROUND:
-            par = self.get_par()
-        return par
-
     def played_par(self) -> Optional[int]:
         pars = [self.get_hole_par(s.hole_number) for s in self.hole_scores
                 if s.strokes is not None and s.hole_number is not None]
@@ -322,9 +316,6 @@ class Round(BaseGolfModel):
     def nine_par(self, first: int, last: int) -> Optional[int]:
         pars = [self.get_hole_par(n) for n in range(first, last + 1)]
         return None if any(p is None for p in pars) else sum(pars)  # type: ignore[arg-type]
-
-    def _scores_on(self, first: int, last: int) -> List[HoleScore]:
-        return [s for s in self.hole_scores if s.hole_number is not None and first <= s.hole_number <= last]
 
     def _nine_total(self, first: int, last: int) -> Optional[int]:
         numbers = tuple(range(first, last + 1))
