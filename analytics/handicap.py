@@ -306,7 +306,8 @@ def score_to_lower_index(
 
     def lowers(score: int) -> bool:
         value = round_half_up(score_differential(score, course_rating, slope_rating), 1)
-        after, _ = _index_from([*differentials, _Differential(next_round, value)], **options)
+        posted = sorted([*differentials, _Differential(next_round, value)], key=lambda d: el.date_key(d.round_obj))
+        after, _ = _index_from(posted, **options)
         return after is not None and after < current
 
     highest = math.ceil(course_rating + MAX_HANDICAP_INDEX * slope_rating / 113)

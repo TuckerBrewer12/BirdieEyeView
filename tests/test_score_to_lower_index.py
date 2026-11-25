@@ -97,6 +97,14 @@ def test_no_score_without_an_index_or_ratings():
     assert score_to_lower_index(user, history, AT_PAR_RATING, None) is None
 
 
+def test_a_round_posted_today_sits_before_undated_rounds_in_the_window():
+    course, user = presidio(), golfer()
+    undated = [r.model_copy(update={"date": None}) for r in season(course, list(range(29, 9, -1)))]
+    assert player_handicap_index(user, undated) == 13.5
+
+    assert score_to_lower_index(user, undated, AT_PAR_RATING, NEUTRAL_SLOPE) is None
+
+
 def test_no_score_when_any_round_would_lower_the_index():
     user = golfer()
     history = season(presidio(), [10, 11, 30, 30, 30])
