@@ -1,6 +1,8 @@
 import json
 from datetime import date
 
+import pytest
+
 from database.converters import round_from_summary_row
 from api.round_responses import round_detail
 from models import Course, Hole, HoleScore, Round, Tee, UserTee
@@ -165,3 +167,19 @@ def test_list_row_without_a_course_or_holes():
     assert round_.course is None
     assert round_.hole_scores == []
     assert round_.calculate_total_score() is None
+
+
+def test_a_round_with_no_putts_anywhere_reads_its_total_without_fingerprinting_the_holes(monkeypatch):
+    round_ = Round(hole_scores=[HoleScore(hole_number=n, strokes=4) for n in range(1, 19)])
+    monkeypatch.setattr(Round, "_stat_fingerprint", lambda self, field: pytest.fail("fingerprint built"))
+
+    assert round_.get_total_putts() is None
+    assert round_.get_total_gir() is None
+
+
+def test_a_stored_putt_total_still_counts_until_a_hole_changes():
+    round_ = Round(hole_scores=[HoleScore(hole_number=n, strokes=4) for n in range(1, 19)], total_putts=32)
+    assert round_.get_total_putts() == 32
+
+    assert round_.update_hole_score(7, strokes=5) is None
+    assert round_.get_total_putts() is None

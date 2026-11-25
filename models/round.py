@@ -133,6 +133,8 @@ class Round(BaseGolfModel):
         observations = [getattr(s, field) for s in scored]
         if any(value is not None for value in observations):
             return sum(observations) if all(value is not None for value in observations) else None
+        if supplied is None:
+            return None
         if self._summary_sources.get(field) == self._stat_fingerprint(field):
             return supplied
         return None
