@@ -17,6 +17,23 @@ export interface PickedCourse {
   name: string;
 }
 
+export interface ScanArrival {
+  scanAtCourse: PickedCourse;
+}
+
+export function scanAtCourse(course: { id: string; name: string }): ScanArrival {
+  return { scanAtCourse: { id: course.id, name: course.name } };
+}
+
+export function presetCourseFrom(state: unknown): PickedCourse | null {
+  if (typeof state !== "object" || state === null || !("scanAtCourse" in state)) return null;
+  const course: unknown = (state as { scanAtCourse: unknown }).scanAtCourse;
+  if (typeof course !== "object" || course === null) return null;
+  const { id, name } = course as { id?: unknown; name?: unknown };
+  if (typeof id !== "string" || !id) return null;
+  return { id, name: typeof name === "string" && name ? name : id };
+}
+
 export interface ManualSetup {
   course: PickedCourse | null;
   teeBox: string;

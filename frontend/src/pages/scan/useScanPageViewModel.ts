@@ -21,7 +21,7 @@ import {
   type ScanMode,
   type ScanStep,
 } from "./scanModel";
-import { newScanSession, useScanSession } from "./scanSession";
+import { newScanSession, useScanSession, withArrivingCourse } from "./scanSession";
 import { useSavedRound } from "./useSavedRound";
 import { useScanReviewViewModel, type ScanReviewViewModel } from "./useScanReviewViewModel";
 import { useScanSetupViewModel, type ScanSetupViewModel } from "./useScanSetupViewModel";
@@ -57,6 +57,7 @@ export interface ScanPageViewModel {
   courseSearch: CourseSearch;
   pickPresetCourse: (course: CourseSummary) => void;
   clearPresetCourse: () => void;
+  arriveWithCourse: (course: PickedCourse) => void;
 
   phase: number;
   slow: boolean;
@@ -165,6 +166,11 @@ export function useScanPageViewModel(
     [setSession, resetCourseSearch],
   );
 
+  const arriveWithCourse = useCallback(
+    (course: PickedCourse) => setSession((current) => withArrivingCourse(current, course)),
+    [setSession],
+  );
+
   const clearPresetCourse = useCallback(
     () => setSession((current) => ({ ...current, presetCourse: null })),
     [setSession],
@@ -241,6 +247,7 @@ export function useScanPageViewModel(
     courseSearch,
     pickPresetCourse,
     clearPresetCourse,
+    arriveWithCourse,
 
     phase,
     slow,

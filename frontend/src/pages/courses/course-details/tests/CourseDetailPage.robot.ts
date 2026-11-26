@@ -117,6 +117,12 @@ export class CourseDetailRobot {
     return this;
   }
 
+  async seesScanAt(courseName: string): Promise<this> {
+    await expect(this.page.getByText(courseName, { exact: true })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Clear course" })).toBeVisible();
+    return this;
+  }
+
   async tapRecentRound(dateLabel: string): Promise<this> {
     await this.page.getByRole("button", { name: new RegExp(`^${dateLabel}`) }).click();
     return this;
@@ -160,6 +166,11 @@ export class CourseDetailRobot {
   async goBack(): Promise<this> {
     await this.page.getByRole("button", { name: "Courses", exact: true }).click();
     await expect(this.page.getByPlaceholder("Search courses")).toBeVisible();
+    return this;
+  }
+
+  async browserBack(): Promise<this> {
+    await this.page.goBack();
     return this;
   }
 

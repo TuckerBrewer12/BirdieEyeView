@@ -15,7 +15,7 @@ Reads a photographed scorecard into a round to review and save, or takes scores 
 
 ## How it works
 
-Photo: the photo and what's on the card (`CardFactsForm`, sent as the scan's note by `cardContext()`), then Read card → processing (`ScanProgress`; Cancel aborts the read and goes back to the photo, and past `SCAN_SLOW_AFTER_MS` a note says it is taking longer than usual) → review (unsure scores ringed) → saved. By hand: course, tee and date, then a blank card. The scan session and the read's `AbortController` live above the routes (`ScanSessionProvider`), so a scan outlives navigation and can still be cancelled after coming back. A failed read keeps the photo; its banner offers another photo and, as a small link, Report scan (`ScanReport`), which opens a dialog before sending an anonymous report.
+Photo: the photo and what's on the card (`CardFactsForm`, sent as the scan's note by `cardContext()`), then Read card → processing (`ScanProgress`; Cancel aborts the read and goes back to the photo, and past `SCAN_SLOW_AFTER_MS` a note says it is taking longer than usual) → review (unsure scores ringed) → saved. By hand: course, tee and date, then a blank card. The scan session and the read's `AbortController` live above the routes (`ScanSessionProvider`), so a scan outlives navigation and can still be cancelled after coming back. Another page starts a card at a course by navigating to `/scan` with `scanAtCourse(course)` as router state; Scan picks it ahead once (`withArrivingCourse`) unless a card is already under way, then clears the state. A failed read keeps the photo; its banner offers another photo and, as a small link, Report scan (`ScanReport`), which opens a dialog before sending an anonymous report.
 
 ## Boundaries and checks when changing it
 

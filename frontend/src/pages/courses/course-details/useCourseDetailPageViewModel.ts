@@ -6,6 +6,7 @@ import type { RoundSummary } from "@/domain/round";
 import { averageLine, type AverageLine } from "@/domain/trend";
 import { messageFrom } from "@/lib/userFacingErrors";
 import type { CourseDto } from "@/types/api";
+import { scanAtCourse, type ScanArrival } from "../../scan/scanModel";
 import { coursesRepository, type CoursesRepository } from "../coursesRepository";
 import { useCourse } from "../useCourse";
 import { useCourseAnalytics } from "../useCourseAnalytics";
@@ -42,6 +43,7 @@ export interface CourseDetailPageViewModel {
   teeLine: string | null;
   nines: ScorecardNine[];
   played: boolean;
+  scanHere: ScanArrival | null;
   record: RecordFigure[];
   recentRounds: RoundSummary[];
   view: CourseView;
@@ -93,6 +95,7 @@ export function useCourseDetailPageViewModel(
     teeLine: tee ? teeLine(tee) : null,
     nines: course ? [nineFrom(course, "front", tee, golfer), nineFrom(course, "back", tee, golfer)] : [],
     played,
+    scanHere: course?.id && !played ? scanAtCourse({ id: course.id, name: formatCourseName(course.name) }) : null,
     record: golfer ? recordFigures(golfer) : [],
     recentRounds: golfer ? golfer.rounds.slice(0, RECENT_ROUNDS) : [],
     view: played ? view : "course",

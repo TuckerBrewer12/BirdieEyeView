@@ -4,6 +4,7 @@ import { type Download, type Page } from "@playwright/test";
 import { test as base, expect } from "../../../testing/playwright";
 import { FakeSession } from "../../../testing/fakes/FakeSession";
 import type { FakeBackend, FakeBackendSeed } from "../../../testing/fakes/FakeBackend";
+import type { CourseDto } from "../../../types/api";
 import { scannedCard } from "../../../testing/fixtures/scan";
 import { switchToDark } from "../../../testing/theme";
 import { captureOptions, readyForCapture } from "../../../testing/fullPageCapture";
@@ -48,6 +49,21 @@ export class ScanRobot {
     await this.page.goto("/scan");
     await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
     await expect(this.title()).toBeVisible();
+    return this;
+  }
+
+  async openFromCourse(course: CourseDto, seed: FakeBackendSeed = {}): Promise<this> {
+    await this.page.emulateMedia({ reducedMotion: "reduce" });
+    await this.page.clock.setFixedTime(new Date("2026-10-15T12:00:00Z"));
+    this.backend = await FakeSession.install(this.page, { scan: scannedCard, fullCourses: [course], ...seed });
+    await this.page.goto(`/courses/${course.id}`);
+    await this.page.getByRole("button", { name: "Scan a round" }).click();
+    await expect(this.title()).toBeVisible();
+    return this;
+  }
+
+  async seesScanSentFor(courseId: string): Promise<this> {
+    await expect.poll(() => this.backend?.scanRequests.at(-1)?.course_id).toBe(courseId);
     return this;
   }
 

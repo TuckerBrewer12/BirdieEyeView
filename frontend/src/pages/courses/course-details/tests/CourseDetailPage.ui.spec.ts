@@ -26,11 +26,14 @@ test("a course played shows the golfer's average row and record", async ({ cours
   await courseDetail.seesRecord("75.0");
 });
 
-test("a course not played offers to scan a round", async ({ courseDetail }) => {
+test("a course not played offers to scan a round there, with the course picked ahead", async ({ courseDetail }) => {
   await courseDetail.open(halfMoonBayCourse);
   await courseDetail.seesNotPlayed();
   await courseDetail.tapScanARound();
   await courseDetail.isAtScan();
+  await courseDetail.seesScanAt("Half Moon Bay");
+  await courseDetail.browserBack();
+  await courseDetail.isAtCourse(halfMoonBayCourse.id ?? "");
 });
 
 test("a record that didn't load says so, and Retry shows it", async ({ courseDetail }) => {
