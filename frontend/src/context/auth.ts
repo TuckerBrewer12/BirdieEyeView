@@ -12,6 +12,7 @@ export interface AuthContextValue extends AuthState, AuthActions {
   refreshSession(): Promise<AuthState | null>;
   logout(): Promise<void>;
   loading: boolean;
+  signedOutByUser: boolean;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

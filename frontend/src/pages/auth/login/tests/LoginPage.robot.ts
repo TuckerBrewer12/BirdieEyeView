@@ -18,6 +18,22 @@ export class LoginRobot extends AuthScreenRobot {
     return this;
   }
 
+  async arriveFrom(path: string, seed: AuthSeed = {}): Promise<this> {
+    await this.visit(path, "Sign in", seed);
+    return this;
+  }
+
+  async seesSignedInAt(path: string): Promise<this> {
+    await expect
+      .poll(() => {
+        const url = new URL(this.page.url());
+        return `${url.pathname}${url.search}${url.hash}`;
+      })
+      .toBe(path);
+    await expect(this.page.getByRole("heading", { name: "Sign in" })).toHaveCount(0);
+    return this;
+  }
+
   async signIn(email: string, password: string): Promise<this> {
     await this.fill("Email", email);
     await this.typePassword(password);
