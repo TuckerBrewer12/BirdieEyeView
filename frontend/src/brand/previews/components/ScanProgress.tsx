@@ -7,6 +7,13 @@ export default function ScanProgressPreview() {
     <div className="flex flex-col gap-8">
       <ScanProgress photoUrl={scorecardPhoto} label={SCAN_STEPS[2]} steps={SCAN_STEPS.length} phase={2} />
       <ScanProgress photoUrl={scorecardPhoto} label={SCAN_STEPS[0]} steps={SCAN_STEPS.length} phase={0} />
+      <ScanProgress
+        photoUrl={scorecardPhoto}
+        label={SCAN_STEPS[3]}
+        steps={SCAN_STEPS.length}
+        phase={3}
+        note="Taking longer than usual."
+      />
     </div>
   );
 }

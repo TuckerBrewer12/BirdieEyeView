@@ -7,12 +7,13 @@ interface ScanProgressProps {
   label: string;
   steps: number;
   phase: number;
+  note?: string | null;
   className?: string;
 }
 
 const { lineFrom, lineTo } = tokens.scan;
 
-function ScanProgress({ photoUrl, label, steps, phase, className }: ScanProgressProps) {
+function ScanProgress({ photoUrl, label, steps, phase, note, className }: ScanProgressProps) {
   const at = steps > 1 ? lineFrom + ((lineTo - lineFrom) * phase) / (steps - 1) : lineFrom;
   const line = `${at}%`;
   return (
@@ -45,6 +46,16 @@ function ScanProgress({ photoUrl, label, steps, phase, className }: ScanProgress
           <span key={i} className={cn("h-1 w-9 rounded-xs md:w-10", i <= phase ? "bg-primary" : "bg-border-strong")} />
         ))}
       </div>
+      {note && (
+        <motion.p
+          className="max-w-xs text-center text-body-sm text-muted-foreground"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={tokens.motion.entrance}
+        >
+          {note}
+        </motion.p>
+      )}
     </div>
   );
 }

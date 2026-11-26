@@ -5,6 +5,8 @@ export const SCAN_STEPS = ["Finding the course…", "Reading tees…", "Reading 
 
 export const SCAN_STEP_HOLD_MS = 3500;
 
+export const SCAN_SLOW_AFTER_MS = 20_000;
+
 export function scanStepAt(phase: number): { label: string; phase: number } {
   const shown = Math.min(Math.max(phase, 0), SCAN_STEPS.length - 1);
   return { label: SCAN_STEPS[shown], phase: shown };

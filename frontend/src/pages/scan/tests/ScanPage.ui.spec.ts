@@ -1,4 +1,5 @@
 import { test } from "./ScanPage.robot";
+import { SCAN_SLOW_AFTER_MS } from "../../../domain/scan";
 import { strokesToPar, toParLabel } from "../../../domain/score";
 import { pebbleBeachCourse } from "../../../testing/fixtures/roundDetails";
 import { SCANNED_COURSE_NAME, scannedCard, UNSURE_HOLES, unsureCard } from "../../../testing/fixtures/scan";
@@ -221,6 +222,43 @@ test("a new photo clears the report with the failed read", async ({ scan }) => {
   await scan.seesScanFailed();
   await scan.chooseAnotherPhotoFromBanner();
   await scan.seesNoReport();
+});
+
+test("a read can be cancelled, back to the same photo with nothing wrong", async ({ scan }) => {
+  await scan.open({ holdScan: true });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesProcessing();
+  await scan.tapCancelRead();
+  await scan.seesChosenCard();
+  await scan.seesNoScanFailure();
+  await scan.seesNoReport();
+});
+
+test("after a cancel, the same photo reads again", async ({ scan }) => {
+  await scan.open({ holdScan: true });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesProcessing();
+  await scan.tapCancelRead();
+  await scan.seesChosenCard();
+  await scan.finishScan();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+});
+
+test("a long read says it's taking longer than usual, and can still be cancelled", async ({ scan }) => {
+  await scan.holdsTheClock();
+  await scan.open({ holdScan: true });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesProcessing();
+  await scan.seesNoSlowNote();
+  await scan.waitFor(SCAN_SLOW_AFTER_MS);
+  await scan.seesReadTakingLong();
+  await scan.tapCancelRead();
+  await scan.seesChosenCard();
+  await scan.seesNoScanFailure();
 });
 
 test("a scan still running when the golfer leaves is there when they come back", async ({ scan }) => {

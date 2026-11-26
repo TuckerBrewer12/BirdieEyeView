@@ -75,7 +75,12 @@ function withQuery(path: string, params: URLSearchParams): string {
   return query ? `${path}?${query}` : path;
 }
 
-async function postForm(path: string, fields: Record<string, string | File>, fallback?: string): Promise<Response> {
+async function postForm(
+  path: string,
+  fields: Record<string, string | File>,
+  fallback?: string,
+  signal?: AbortSignal,
+): Promise<Response> {
   const form = new FormData();
   for (const [name, value] of Object.entries(fields)) form.append(name, value);
   return fetchWithUserFacingError(apiUrl(`/api${path}`), {
@@ -83,6 +88,7 @@ async function postForm(path: string, fields: Record<string, string | File>, fal
     credentials: "include",
     headers: withAuthHeaders(),
     body: form,
+    signal,
   }, fallback);
 }
 
@@ -118,10 +124,10 @@ export const api = {
     return body.ocr_text || null;
   },
 
-  extractScan: async (fields: Record<string, string | File>): Promise<ScanDto> => {
+  extractScan: async (fields: Record<string, string | File>, signal?: AbortSignal): Promise<ScanDto> => {
     let res: Response;
     try {
-      res = await postForm("/scan/extract", fields, USER_FACING_ERRORS.scan);
+      res = await postForm("/scan/extract", fields, USER_FACING_ERRORS.scan, signal);
     } catch (error) {
       throw new ScanFailedError(messageFrom(error, USER_FACING_ERRORS.scan), {
         category: "network_error", stage: "unknown", http_status: null,

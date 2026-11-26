@@ -154,6 +154,31 @@ export class ScanRobot {
     return this;
   }
 
+  async holdsTheClock(): Promise<this> {
+    await this.page.clock.install({ time: new Date("2026-10-15T12:00:00Z") });
+    return this;
+  }
+
+  async waitFor(ms: number): Promise<this> {
+    await this.page.clock.runFor(ms);
+    return this;
+  }
+
+  async seesReadTakingLong(): Promise<this> {
+    await expect(this.page.locator("[data-slot=scan-progress]")).toContainText("Taking longer than usual.");
+    return this;
+  }
+
+  async seesNoSlowNote(): Promise<this> {
+    await expect(this.page.locator("[data-slot=scan-progress]")).not.toContainText("Taking longer than usual.");
+    return this;
+  }
+
+  async tapCancelRead(): Promise<this> {
+    await this.page.getByRole("button", { name: "Cancel", exact: true }).click();
+    return this;
+  }
+
   async finishScan(): Promise<this> {
     this.backend?.finishScan();
     return this;

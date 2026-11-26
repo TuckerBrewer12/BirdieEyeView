@@ -1,4 +1,4 @@
-import { createContext, useContext, type Dispatch, type SetStateAction } from "react";
+import { createContext, useContext, type Dispatch, type RefObject, type SetStateAction } from "react";
 import type { PickedPhoto } from "@/data/useCardText";
 import { NO_CARD_FACTS, type CardFacts } from "@/domain/scan";
 import type { FailedScanAttempt } from "@/domain/scanReport";
@@ -33,6 +33,7 @@ export function newScanSession(today: string = todayIso()): ScanSession {
 export interface ScanSessionStore {
   session: ScanSession;
   setSession: Dispatch<SetStateAction<ScanSession>>;
+  readingRef: RefObject<AbortController | null>;
 }
 
 export const ScanSessionContext = createContext<ScanSessionStore | null>(null);

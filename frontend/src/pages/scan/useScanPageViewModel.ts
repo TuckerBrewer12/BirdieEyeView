@@ -10,7 +10,7 @@ import { useCourseSearch, type CourseSearch } from "@/data/useCourseSearch";
 import { failedScanAttempt, scanFailureOf } from "@/lib/scanReports";
 import { messageFrom, USER_FACING_ERRORS } from "@/lib/userFacingErrors";
 import type { CourseSummary } from "@/domain/course";
-import { SCAN_STEPS, SCAN_STEP_HOLD_MS, cardContext, type CardFacts } from "@/domain/scan";
+import { SCAN_SLOW_AFTER_MS, SCAN_STEPS, SCAN_STEP_HOLD_MS, cardContext, type CardFacts } from "@/domain/scan";
 import { coursesRepository, type CoursesRepository } from "../courses/coursesRepository";
 import { roundsRepository, type RoundsRepository } from "../rounds/roundsRepository";
 import {
@@ -59,6 +59,8 @@ export interface ScanPageViewModel {
   clearPresetCourse: () => void;
 
   phase: number;
+  slow: boolean;
+  cancelRead: () => void;
 
   setup: ScanSetupViewModel;
 
@@ -75,8 +77,9 @@ export function useScanPageViewModel(
   repositories: ScanPageRepositories = defaultRepositories,
 ): ScanPageViewModel {
   const { scan, courses, rounds, reports } = repositories;
-  const { session, setSession } = useScanSession();
+  const { session, setSession, readingRef } = useScanSession();
   const [phase, setPhase] = useState(0);
+  const [slow, setSlow] = useState(false);
   const latestPick = useRef(0);
 
   const courseSearch = useCourseSearch(userId, courses);
@@ -105,9 +108,12 @@ export function useScanPageViewModel(
       () => setPhase((current) => Math.min(current + 1, SCAN_STEPS.length - 1)),
       SCAN_STEP_HOLD_MS,
     );
+    const slowTimer = setTimeout(() => setSlow(true), SCAN_SLOW_AFTER_MS);
     return () => {
       clearInterval(timer);
+      clearTimeout(slowTimer);
       setPhase(0);
+      setSlow(false);
     };
   }, [step]);
 
@@ -168,15 +174,25 @@ export function useScanPageViewModel(
     const { photo, card, presetCourse } = session;
     if (!photo) return;
     const stillPicked = (current: typeof session) => current.photo?.id === photo.id;
+    const read = new AbortController();
+    readingRef.current = read;
     setSession((current) => ({ ...current, error: null, failedScan: null }));
-    extractCard({ photo: photo.file, userContext: cardContext(card), ocrText: cardText, courseId: presetCourse?.id ?? null })
+    extractCard({
+      photo: photo.file,
+      userContext: cardContext(card),
+      ocrText: cardText,
+      courseId: presetCourse?.id ?? null,
+      signal: read.signal,
+    })
       .then((result) => {
+        if (read.signal.aborted) return;
         setSession((current) =>
           stillPicked(current) ? { ...current, review: reviewFromScan(result, todayIso()) } : current,
         );
         if (presetCourse) setReviewQuery(courseQueryFrom(result.round.course?.name));
       })
       .catch((err: unknown) => {
+        if (read.signal.aborted) return;
         setSession((current) =>
           stillPicked(current)
             ? {
@@ -186,8 +202,16 @@ export function useScanPageViewModel(
               }
             : current,
         );
+      })
+      .finally(() => {
+        if (readingRef.current === read) readingRef.current = null;
       });
-  }, [session, setSession, extractCard, cardText, setReviewQuery]);
+  }, [session, setSession, readingRef, extractCard, cardText, setReviewQuery]);
+
+  const cancelRead = useCallback(() => {
+    readingRef.current?.abort();
+    readingRef.current = null;
+  }, [readingRef]);
 
   const openSavedRound = useCallback(
     (open: (roundId: string) => void) => {
@@ -219,6 +243,8 @@ export function useScanPageViewModel(
     clearPresetCourse,
 
     phase,
+    slow,
+    cancelRead,
 
     setup,
 

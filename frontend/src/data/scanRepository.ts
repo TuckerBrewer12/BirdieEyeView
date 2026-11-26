@@ -6,6 +6,7 @@ export interface ExtractRequest {
   userContext: string;
   ocrText: string | null;
   courseId?: string | null;
+  signal?: AbortSignal;
 }
 
 export interface ScanRepository {
@@ -19,12 +20,12 @@ export const scanRepository: ScanRepository = {
     return api.readScanText(photo);
   },
 
-  extract({ photo, userContext, ocrText, courseId }) {
+  extract({ photo, userContext, ocrText, courseId, signal }) {
     const fields: Record<string, string | File> = { file: photo };
     if (courseId) fields.course_id = courseId;
     if (userContext.trim()) fields.user_context = userContext.trim();
     if (ocrText) fields.ocr_text = ocrText;
-    return api.extractScan(fields);
+    return api.extractScan(fields, signal);
   },
 
   async save(request) {
