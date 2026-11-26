@@ -85,7 +85,7 @@ nothing.
 | --- | --- |
 | `brand-kit.md`, `mvvm.md`, `ui-test-checker.md`, `backend-rules.md`, `code-review.md` | Review prompts. The Backend Rules Bot reviews `api/`, `services/`, `models/`, `analytics/` and `database/` against the Backend rules in `AGENTS.md`, which it reads as its rulebook |
 | `gate.py` | Skip a push that leaves the bot's part of the PR unchanged since its last successful run |
-| `run-bot.sh` | Shared reviewer: diff → model → GitHub review |
+| `run-bot.sh` | Shared reviewer: diff → model → GitHub review. The model gets `BOT_AGENT_TIMEOUT` (default `5m`, under the Code Review Bot's 15-minute job limit); past it the bot comments that it didn't finish and fails the check |
 | `cursor-run.sh` | Cursor CLI invocation shared by the review, coverage, and fix runners |
 | `previous.py` | Match earlier comments, ✅/❌ recheck, skip duplicate fix PRs |
 | `post_review.py` | JSON findings → review payload + fixable list |
