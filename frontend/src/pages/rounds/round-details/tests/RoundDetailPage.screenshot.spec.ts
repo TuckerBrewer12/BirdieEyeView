@@ -70,6 +70,15 @@ test("edit mode", async ({ roundDetail }) => {
   await roundDetail.capture("round-detail-edit.png");
 });
 
+test("leaving mid-edit", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.tapEdit();
+  await roundDetail.typeStrokes(1, 7);
+  await roundDetail.leaveTo("Analytics");
+  await roundDetail.seesLeavePrompt();
+  await roundDetail.capture("round-detail-unsaved-prompt.png");
+});
+
 test("edit mode on a course with no tees", async ({ roundDetail }) => {
   await roundDetail.open(scannedRound);
   await roundDetail.tapEdit();

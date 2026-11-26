@@ -193,3 +193,54 @@ test.describe("on a phone", () => {
     await roundDetail.seesScore(80);
   });
 });
+
+test("leaving mid-edit asks first, and discarding leaves the round as it was", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.tapEdit();
+  await roundDetail.typeStrokes(1, 7);
+  await roundDetail.leaveTo("Dashboard");
+  await roundDetail.seesLeavePrompt();
+  await roundDetail.staysAt(`/rounds/${halfMoonBayRound.id}`);
+
+  await roundDetail.discardAndLeave();
+  await roundDetail.isAt("/");
+
+  await roundDetail.goBack();
+  await roundDetail.seesViewActions();
+  await roundDetail.seesScore(78);
+});
+
+test("saving from the leave prompt keeps the edit and leaves", async ({ roundDetail }) => {
+  await roundDetail.open(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.tapEdit();
+  await roundDetail.typeStrokes(1, 7);
+  await roundDetail.leaveTo("Dashboard");
+  await roundDetail.saveAndLeave();
+  await roundDetail.isAt("/");
+
+  await roundDetail.goBack();
+  await roundDetail.seesViewActions();
+  await roundDetail.seesScore(80);
+});
+
+test("the Rounds button asks first mid-edit, and Keep editing stays with the edit", async ({ roundDetail }) => {
+  await roundDetail.openFromRounds(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.tapEdit();
+  await roundDetail.typeStrokes(1, 7);
+  await roundDetail.tapBack();
+  await roundDetail.seesLeavePrompt();
+
+  await roundDetail.keepEditing();
+  await roundDetail.isAt(`/rounds/${halfMoonBayRound.id}`);
+  await roundDetail.seesEditing();
+  await roundDetail.seesScore(80);
+});
+
+test("the Rounds button goes straight back when the edit changed nothing", async ({ roundDetail }) => {
+  await roundDetail.openFromRounds(halfMoonBayRound, { fullCourses: [halfMoonBayCourse] });
+  await roundDetail.tapEdit();
+  await roundDetail.typeStrokes(1, 7);
+  await roundDetail.typeStrokes(1, 5);
+  await roundDetail.tapBack();
+  await roundDetail.isAt("/rounds");
+});

@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { useLeaveGuard } from "@/app/useLeaveGuard";
 import { useShareRound } from "@/platform/useShareRound";
 import { roundShareMessage } from "@/domain/share";
 import { courseLabel } from "@/domain/course";
@@ -12,6 +13,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  ConfirmDialog,
   CourseLinkSearch,
   Input,
   LoadingState,
@@ -33,6 +35,7 @@ export function RoundDetailPage({ userId }: { userId: string }) {
   const navigate = useNavigate();
   const viewModel = useRoundDetailPageViewModel(userId, roundId);
   const { cardRef: shareCardRef, share: shareRound, sharing } = useShareRound();
+  const guard = useLeaveGuard(viewModel.editor.dirty);
 
   if (viewModel.loading) {
     return <LoadingState>Loading round...</LoadingState>;
@@ -63,17 +66,17 @@ export function RoundDetailPage({ userId }: { userId: string }) {
         deleteLine={viewModel.deleteLine}
         canLink={viewModel.canLink}
         onEdit={viewModel.enterEditMode}
-        onSave={editor.save}
+        onSave={() => editor.save()}
         onCancelEdit={editor.cancel}
         onShare={() => void shareRound(roundShareMessage(played))}
         onLink={viewModel.openLinkCourse}
         onDelete={viewModel.requestDelete}
         onConfirmDelete={() => viewModel.confirmDeleteRound(() => void navigate("/rounds"))}
         onCancelDelete={viewModel.cancelDelete}
-        onBack={() => void navigate(-1)}
+        onBack={() => guard.request(-1)}
       />
 
-      {viewModel.actionError && (
+      {viewModel.actionError && !guard.blocked && (
         <Alert tone="danger">
           <AlertDescription>{viewModel.actionError}</AlertDescription>
         </Alert>
@@ -182,6 +185,27 @@ export function RoundDetailPage({ userId }: { userId: string }) {
           <RoundComparisonSection userId={userId} roundId={played.id} />
         </div>
       )}
+
+      <ConfirmDialog
+        open={guard.blocked}
+        onOpenChange={(open) => {
+          if (!open) guard.stay();
+        }}
+        title="Save changes before leaving?"
+        tone="default"
+        confirmLabel={editor.saving ? "Saving…" : "Save"}
+        pending={editor.saving}
+        onConfirm={() => editor.save(guard.leave)}
+        alternative={{
+          label: "Discard",
+          onClick: () => {
+            editor.cancel();
+            guard.leave();
+          },
+        }}
+        cancelLabel="Keep editing"
+        error={editor.error}
+      />
     </div>
   );
 }

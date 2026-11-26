@@ -137,4 +137,45 @@ describe("useRoundEditorViewModel", () => {
     act(() => result.current.searchCourses("Tor"));
     expect(result.current.playedNameToKeep).toBeNull();
   });
+
+  it("is dirty only once an edit differs from the round", () => {
+    const { result } = renderEditor(halfMoonBayRound);
+    expect(result.current.dirty).toBe(false);
+    act(() => result.current.start());
+    expect(result.current.dirty).toBe(false);
+
+    const hole1 = halfMoonBayRound.hole_scores.find((hole) => hole.hole_number === 1);
+    const saved = hole1?.strokes ?? null;
+    act(() => result.current.setScore(1, "strokes", (saved ?? 0) + 1));
+    expect(result.current.dirty).toBe(true);
+    act(() => result.current.setScore(1, "strokes", saved));
+    expect(result.current.dirty).toBe(false);
+
+    act(() => result.current.setTeeBox("White"));
+    expect(result.current.dirty).toBe(true);
+    act(() => result.current.cancel());
+    expect(result.current.dirty).toBe(false);
+  });
+
+  it("runs the save's follow-up once the round is saved and editing has closed", async () => {
+    const { result } = renderEditor(halfMoonBayRound);
+    let followUps = 0;
+    act(() => result.current.start());
+    act(() => result.current.setTeeBox("White"));
+    act(() => result.current.save(() => { followUps += 1; }));
+    await waitFor(() => expect(followUps).toBe(1));
+    expect(result.current.editing).toBe(false);
+    expect(result.current.dirty).toBe(false);
+  });
+
+  it("does not run the save's follow-up when the save fails", async () => {
+    const { result } = renderEditor(halfMoonBayRound, { updateError: "nope" });
+    let followedUp = false;
+    act(() => result.current.start());
+    act(() => result.current.setTeeBox("White"));
+    act(() => result.current.save(() => { followedUp = true; }));
+    await waitFor(() => expect(result.current.error).toBe("nope"));
+    expect(followedUp).toBe(false);
+    expect(result.current.dirty).toBe(true);
+  });
 });

@@ -14,10 +14,10 @@ One round: its summary, scorecard, the round flow, "vs your average", and editin
 
 ## How it works
 
-`GET /api/rounds/{id}` sends the round with every figure the `Round` model works out, plus the golfer's course handicap and net score. The comparison reads `GET /api/stats/compare/{user}/{round}` (last 5, last 20, all, each figure with a verdict). Editing keeps live totals through `Round.previewEdits` until the saved response replaces them. Share draws `RoundShareCard` to a PNG.
+`GET /api/rounds/{id}` sends the round with every figure the `Round` model works out, plus the golfer's course handicap and net score. The comparison reads `GET /api/stats/compare/{user}/{round}` (last 5, last 20, all, each figure with a verdict). Editing keeps live totals through `Round.previewEdits` until the saved response replaces them. While an edit differs from the round (`editorChanged`), leaving through a link, the Rounds button or a reload asks first (`useLeaveGuard` in `app/`, the same `ConfirmDialog` as Settings); browser Back isn't caught. Share draws `RoundShareCard` to a PNG.
 
 ## Boundaries and checks when changing it
 
-Edits preview with the server's rules and are replaced by the saved round. Check an unlinked round, a nine, a round with no putts, editing the tee, and delete's confirmation.
+Edits preview with the server's rules and are replaced by the saved round. Check an unlinked round, a nine, a round with no putts, editing the tee, leaving mid-edit, and delete's confirmation.
 
 These checks describe useful validation scenarios, not a claim that dedicated tests already cover every case. Shared conventions are in [frontend practices](../../practices/frontend.md). Return to the [page index](../README.md).

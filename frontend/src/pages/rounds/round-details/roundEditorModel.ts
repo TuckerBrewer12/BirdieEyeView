@@ -83,3 +83,25 @@ export function roundEditor(state: RoundEditor, action: RoundEditAction): RoundE
       return { ...state, course: courseEditFromRound(action.round) };
   }
 }
+
+function sameCourse(a: CourseEdit, b: CourseEdit): boolean {
+  if (a.status === "linked" && b.status === "linked") return a.course.id === b.course.id;
+  if (a.status === "custom" && b.status === "custom") return a.name === b.name;
+  return a.status === b.status;
+}
+
+export function editorChanged(editor: RoundEditor, round: RoundDetail | undefined): boolean {
+  if (!editor.editing || !round) return false;
+  const holeChanged = round.holes.some((hole) => {
+    const edit: HoleEdits[number] | undefined = editor.holes[hole.hole];
+    if (edit === undefined) return false;
+    return (
+      (edit.strokes !== undefined && edit.strokes !== hole.strokes) ||
+      (edit.putts !== undefined && edit.putts !== hole.putts) ||
+      (edit.gir !== undefined && edit.gir !== hole.gir)
+    );
+  });
+  if (holeChanged) return true;
+  if (editor.teeBox !== (round.teeBox ?? "")) return true;
+  return !sameCourse(editor.course, courseEditFromRound(round));
+}

@@ -6,13 +6,14 @@ import type { CourseSummary } from "@/domain/course";
 import type { CourseDto } from "@/types/api";
 import { roundsRepository, type RoundsRepository } from "../roundsRepository";
 import { useSaveRound } from "../useSaveRound";
-import { closedEditor, roundEditor } from "./roundEditorModel";
+import { closedEditor, editorChanged, roundEditor } from "./roundEditorModel";
 
 const NO_EDITS: HoleEdits = {};
 const PICKING: CourseEdit = { status: "picking" };
 
 export interface RoundEditorViewModel {
   editing: boolean;
+  dirty: boolean;
   saving: boolean;
   error: string | null;
   scores: HoleEdits;
@@ -28,7 +29,7 @@ export interface RoundEditorViewModel {
   courseSearching: boolean;
   start: () => void;
   cancel: () => void;
-  save: () => void;
+  save: (onSaved?: () => void) => void;
   setScore: (hole: number, field: "strokes" | "putts", value: number | null) => void;
   setGir: (hole: number, value: boolean | null) => void;
   setTeeBox: (teeBox: string) => void;
@@ -70,13 +71,18 @@ export function useRoundEditorViewModel(
     dispatch({ type: "stop" });
   }, [clearErrors, resetSearch]);
 
-  const save = useCallback(() => {
+  const save = useCallback((onSaved?: () => void) => {
     if (!round || !editor.editing) return;
     clearErrors();
     const { holes, teeBox, course } = editor;
     saveRound(
       { round, edits: { holes, teeBox, course } },
-      { onSuccess: () => dispatch({ type: "stop" }) },
+      {
+        onSuccess: () => {
+          dispatch({ type: "stop" });
+          onSaved?.();
+        },
+      },
     );
   }, [round, editor, clearErrors, saveRound]);
 
@@ -97,6 +103,7 @@ export function useRoundEditorViewModel(
 
   return {
     editing: editor.editing,
+    dirty: editorChanged(editor, round),
     saving,
     error: saveError ? messageFrom(saveError, "Could not save this round.") : courseLoadError,
     scores: editor.editing ? editor.holes : NO_EDITS,

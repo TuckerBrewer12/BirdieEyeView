@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { useBeforeUnload, useLocation, useNavigate } from "react-router-dom";
 
+export type LeaveDestination = string | number;
+
 export interface LeaveGuard {
   blocked: boolean;
   stay: () => void;
   leave: () => void;
+  request: (to: LeaveDestination) => void;
 }
 
 /**
- * While `active`, stops the player leaving the page: an in-app link waits on `leave` or `stay`,
- * and closing or reloading the tab asks the browser to confirm. The app uses `BrowserRouter`,
+ * While `active`, stops the player leaving the page: an in-app link, or a control that calls
+ * `request`, waits on `leave` or `stay`, and closing or reloading the tab asks the browser to confirm. The app uses `BrowserRouter`,
  * which has no blocker of its own, so this listens for the link click itself. Browser Back is not
  * caught: the router handles the pop before any listener here could, so stopping it needs the
  * data router's `useBlocker`.
@@ -17,7 +20,7 @@ export interface LeaveGuard {
 export function useLeaveGuard(active: boolean): LeaveGuard {
   const location = useLocation();
   const navigate = useNavigate();
-  const [pendingPath, setPendingPath] = useState<string | null>(null);
+  const [pending, setPending] = useState<LeaveDestination | null>(null);
   const currentPath = `${location.pathname}${location.search}${location.hash}`;
 
   useBeforeUnload((event) => {
@@ -39,17 +42,32 @@ export function useLeaveGuard(active: boolean): LeaveGuard {
       if (nextPath === currentPath) return;
       event.preventDefault();
       event.stopPropagation();
-      setPendingPath(nextPath);
+      setPending(nextPath);
     };
     document.addEventListener("click", onClickCapture, true);
     return () => document.removeEventListener("click", onClickCapture, true);
   }, [active, currentPath]);
 
-  const stay = useCallback(() => setPendingPath(null), []);
-  const leave = useCallback(() => {
-    setPendingPath(null);
-    if (pendingPath) void navigate(pendingPath);
-  }, [navigate, pendingPath]);
+  const go = useCallback(
+    (to: LeaveDestination) => {
+      if (typeof to === "number") void navigate(to);
+      else void navigate(to);
+    },
+    [navigate],
+  );
 
-  return { blocked: pendingPath !== null, stay, leave };
+  const stay = useCallback(() => setPending(null), []);
+  const leave = useCallback(() => {
+    setPending(null);
+    if (pending !== null) go(pending);
+  }, [go, pending]);
+  const request = useCallback(
+    (to: LeaveDestination) => {
+      if (active) setPending(to);
+      else go(to);
+    },
+    [active, go],
+  );
+
+  return { blocked: pending !== null, stay, leave, request };
 }
