@@ -205,6 +205,15 @@ export class ScanRobot {
     return this;
   }
 
+  async seesSavedWithoutRound(): Promise<this> {
+    const saved = this.page.locator("[data-slot=scan-saved]");
+    await expect(saved).toContainText("It's in your rounds, but it couldn't be shown here.");
+    await expect(saved.getByRole("button", { name: "Share", exact: true })).toHaveCount(0);
+    await expect(saved.getByRole("button", { name: "View round" })).toBeVisible();
+    await expect(saved.getByRole("button", { name: "Scan another" })).toBeVisible();
+    return this;
+  }
+
   async tapScanAnother(): Promise<this> {
     await this.page.getByRole("button", { name: "Scan another" }).click();
     return this;
@@ -245,7 +254,23 @@ export class ScanRobot {
   async seesScanFailed(): Promise<this> {
     await expect(this.page.getByRole("alert")).toContainText("Couldn't read this card.");
     await expect(this.page.getByText(CARD_NAME)).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Read card", exact: true })).toBeVisible();
+    await expect(this.page.getByRole("button", { name: "Read card again", exact: true })).toBeVisible();
+    await expect(this.readButton()).toHaveCount(0);
+    return this;
+  }
+
+  scanWorksNextTime(): this {
+    if (this.backend) this.backend.scan = scannedCard;
+    return this;
+  }
+
+  async tapReadAgain(): Promise<this> {
+    await this.page.getByRole("button", { name: "Read card again", exact: true }).click();
+    return this;
+  }
+
+  async tapTypeScoresInstead(): Promise<this> {
+    await this.page.getByRole("alert").getByRole("button", { name: "Type the scores in instead" }).click();
     return this;
   }
 

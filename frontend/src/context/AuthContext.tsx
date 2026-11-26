@@ -8,7 +8,7 @@ import {
   parseJsonResponse,
   USER_FACING_ERRORS,
 } from "@/lib/userFacingErrors";
-import type { AuthUserDto, MessageDto, RegisterDto } from "@/types/api";
+import type { AuthUserDto, MessageDto } from "@/types/api";
 import { AuthContext, type AuthState } from "./auth";
 
 const EMPTY_AUTH_STATE: AuthState = {
@@ -17,6 +17,24 @@ const EMPTY_AUTH_STATE: AuthState = {
   email: null,
   emailVerified: false,
 };
+
+function authStateFrom(user: AuthUserDto): AuthState {
+  return {
+    userId: user.user_id,
+    name: user.name,
+    email: user.email,
+    emailVerified: !!user.email_verified,
+  };
+}
+
+function sameAuthState(a: AuthState, b: AuthState): boolean {
+  return (
+    a.userId === b.userId &&
+    a.name === b.name &&
+    a.email === b.email &&
+    a.emailVerified === b.emailVerified
+  );
+}
 
 async function callAuth<T>(path: string, body: object): Promise<T> {
   const res = await fetchWithUserFacingError(apiUrl(`/api/auth${path}`), {
@@ -31,6 +49,11 @@ async function callAuth<T>(path: string, body: object): Promise<T> {
   return parseJsonResponse<T>(res, USER_FACING_ERRORS.account);
 }
 
+async function callAuthForMessage(path: string, body: object): Promise<string> {
+  const data = await callAuth<MessageDto>(path, body);
+  return data.message;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(EMPTY_AUTH_STATE);
   const latestStateRef = useRef<AuthState>(EMPTY_AUTH_STATE);
@@ -40,37 +63,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     latestStateRef.current = state;
   }, [state]);
 
+  const updateState = useCallback((next: AuthState) => {
+    setState((prev) => (sameAuthState(prev, next) ? prev : next));
+  }, []);
+
   const refreshSession = useCallback(async (): Promise<AuthState | null> => {
     try {
       const data = await api.getAuthSession();
       if (!data) {
         setSessionToken(null);
-        setState((prev) =>
-          prev.userId === null && prev.name === null && prev.email === null && prev.emailVerified === false
-            ? prev
-            : EMPTY_AUTH_STATE
-        );
+        updateState(EMPTY_AUTH_STATE);
         return null;
       }
-      const nextState: AuthState = {
-        userId: data.user_id,
-        name: data.name,
-        email: data.email,
-        emailVerified: !!data.email_verified,
-      };
-      setState((prev) =>
-        prev.userId === nextState.userId &&
-        prev.name === nextState.name &&
-        prev.email === nextState.email &&
-        prev.emailVerified === nextState.emailVerified
-          ? prev
-          : nextState
-      );
+      const nextState = authStateFrom(data);
+      updateState(nextState);
       return nextState;
     } catch {
       return latestStateRef.current.userId ? latestStateRef.current : null;
     }
-  }, []);
+  }, [updateState]);
 
   useEffect(() => {
     void refreshSession().finally(() => setLoading(false));
@@ -96,43 +107,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     const data = await callAuth<AuthUserDto>("/login", { email, password });
     setSessionToken(data.access_token ?? null);
-    setState({
-      userId: data.user_id,
-      name: data.name,
-      email: data.email,
-      emailVerified: !!data.email_verified,
-    });
+    setState(authStateFrom(data));
   };
 
-  const register = async (name: string, email: string, password: string) => {
-    const data = await callAuth<RegisterDto>("/register", { name, email, password });
-    return data.message;
-  };
+  const register = (name: string, email: string, password: string) =>
+    callAuthForMessage("/register", { name, email, password });
 
-  const resendVerification = async (email: string) => {
-    const data = await callAuth<MessageDto>("/resend-verification", { email });
-    return data.message;
-  };
+  const resendVerification = (email: string) =>
+    callAuthForMessage("/resend-verification", { email });
 
   const verifyEmail = async (token: string) => {
-    const data = await callAuth<MessageDto>("/verify-email", { token });
+    const message = await callAuthForMessage("/verify-email", { token });
     await refreshSession();
-    return data.message;
+    return message;
   };
 
-  const forgotPassword = async (email: string) => {
-    const data = await callAuth<MessageDto>("/forgot-password", { email });
-    return data.message;
-  };
+  const forgotPassword = (email: string) =>
+    callAuthForMessage("/forgot-password", { email });
 
-  const resetPassword = async (token: string, newPassword: string) => {
-    const data = await callAuth<MessageDto>("/reset-password", { token, new_password: newPassword });
-    return data.message;
-  };
+  const resetPassword = (token: string, newPassword: string) =>
+    callAuthForMessage("/reset-password", { token, new_password: newPassword });
 
   const logout = async () => {
     try {
-      await callAuth<{ message: string }>("/logout", {});
+      await callAuth<MessageDto>("/logout", {});
     } finally {
       setSessionToken(null);
       setState(EMPTY_AUTH_STATE);

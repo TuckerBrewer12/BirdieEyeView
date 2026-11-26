@@ -12,6 +12,12 @@ import { teeRatingLabel } from "@/domain/course";
 import type { UserDto } from "@/types/api";
 import type { BestRound, WhsRound } from "./model";
 
+export const FIRST_ROUND = {
+  title: "Scan your first round",
+  detail: "Take a photo of a scorecard, or type it in by hand. Every hole goes into your handicap, averages and trends.",
+  action: "Scan a scorecard",
+} as const;
+
 export function firstNameOf(user: UserDto | null): string {
   return user?.name?.split(" ")[0] ?? "Golfer";
 }

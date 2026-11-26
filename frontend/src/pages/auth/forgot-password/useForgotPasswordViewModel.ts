@@ -3,6 +3,10 @@ import { messageFrom } from "@/lib/userFacingErrors";
 import type { AuthActions } from "../authActions";
 import { useRequestReset } from "../useRequestReset";
 
+export interface ForgotPasswordArrival {
+  email?: string | null;
+}
+
 export interface ForgotPasswordViewModel {
   email: string;
   setEmail: (email: string) => void;
@@ -14,8 +18,9 @@ export interface ForgotPasswordViewModel {
 
 export function useForgotPasswordViewModel(
   auth: Pick<AuthActions, "forgotPassword">,
+  arrival: ForgotPasswordArrival = {},
 ): ForgotPasswordViewModel {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => (arrival.email ?? "").trim());
   const request = useRequestReset(auth);
   const { mutate: requestReset } = request;
 

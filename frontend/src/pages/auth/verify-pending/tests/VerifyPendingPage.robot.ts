@@ -8,11 +8,6 @@ export class VerifyPendingRobot extends AuthScreenRobot {
     return this;
   }
 
-  async seesEmail(email: string): Promise<this> {
-    await expect(this.page.getByLabel("Email", { exact: true })).toHaveValue(email);
-    return this;
-  }
-
   verifyElsewhere(): this {
     if (!this.backend) throw new Error("Open the screen first.");
     this.backend.signedOut = false;

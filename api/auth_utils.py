@@ -8,9 +8,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import bcrypt
-from jose import JWTError, jwt
+import jwt
 
 ALGORITHM = "HS256"
+REQUIRED_CLAIMS = ["exp", "iat", "sub", "iss", "aud", "jti"]
 
 
 def _env_int(name: str, default: int) -> int:
@@ -138,8 +139,9 @@ def decode_access_token(token: str) -> Optional[dict]:
             algorithms=[ALGORITHM],
             audience=get_jwt_audience(),
             issuer=get_jwt_issuer(),
+            options={"require": REQUIRED_CLAIMS},
         )
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
 

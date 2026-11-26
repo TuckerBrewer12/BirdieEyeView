@@ -61,6 +61,16 @@ export class AuthScreenRobot {
     await this.page.getByRole("button", { name, exact: true }).click();
   }
 
+  async typeEmail(email: string): Promise<this> {
+    await this.fill("Email", email);
+    return this;
+  }
+
+  async seesEmail(email: string): Promise<this> {
+    await expect(this.page.getByLabel("Email", { exact: true })).toHaveValue(email);
+    return this;
+  }
+
   async seesHeading(heading: string): Promise<this> {
     await expect(this.page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
     return this;

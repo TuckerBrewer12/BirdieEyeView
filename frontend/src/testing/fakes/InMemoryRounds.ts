@@ -29,6 +29,7 @@ export interface InMemoryRoundsSeed {
   saveError?: string | null;
   coursesError?: string | null;
   roundsError?: string | null;
+  roundError?: string | null;
   courseAnalyticsError?: string | null;
   searchDelaysMs?: number[];
 }
@@ -78,6 +79,7 @@ export class InMemoryRounds {
   savedScans: SaveScanRequestDto[] = [];
   coursesError: string | null;
   roundsError: string | null;
+  roundError: string | null;
   courseAnalyticsError: string | null;
   searchDelaysMs: number[];
   private searchCalls = 0;
@@ -102,6 +104,7 @@ export class InMemoryRounds {
     this.saveError = seed.saveError ?? null;
     this.coursesError = seed.coursesError ?? null;
     this.roundsError = seed.roundsError ?? null;
+    this.roundError = seed.roundError ?? null;
     this.courseAnalyticsError = seed.courseAnalyticsError ?? null;
     this.searchDelaysMs = [...(seed.searchDelaysMs ?? [])];
     this.deletedIds = [];
@@ -150,6 +153,7 @@ export class InMemoryRounds {
   }
 
   getRound(roundId: string): RoundDto {
+    if (this.roundError) throw new Error(this.roundError);
     return roundResponse(this.find(roundId));
   }
 

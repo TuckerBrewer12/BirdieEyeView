@@ -39,6 +39,18 @@ test("see all opens the round list", async ({ dashboard }) => {
   await dashboard.isAtRounds();
 });
 
+test("a new golfer is offered a first scan instead of empty figures", async ({ dashboard }) => {
+  await dashboard.openAsNewGolfer();
+  await dashboard.seesFirstRoundOffer();
+  await dashboard.seesNoEmptyFigures();
+});
+
+test("the first-round card opens Scan", async ({ dashboard }) => {
+  await dashboard.openAsNewGolfer();
+  await dashboard.scanFirstRound();
+  await dashboard.isAtScan();
+});
+
 test.describe("on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
@@ -60,5 +72,13 @@ test.describe("on a phone", () => {
     await dashboard.seesHandicapSheet();
     await dashboard.closeHandicapSheet();
     await dashboard.doesNotSeeHandicapSheet();
+  });
+
+  test("a new golfer is offered a first scan, which opens Scan", async ({ dashboard }) => {
+    await dashboard.openAsNewGolfer();
+    await dashboard.seesFirstRoundOffer();
+    await dashboard.seesNoEmptyFigures();
+    await dashboard.scanFirstRound();
+    await dashboard.isAtScan();
   });
 });

@@ -9,6 +9,7 @@ export default function ScanSuccessStepPreview() {
     <div className="flex flex-col gap-4">
       <ScanSuccessStep round={Round.fromDto(halfMoonBayRound)} onView={noop} onScanAnother={noop} />
       <ScanSuccessStep round={Round.fromDto(scannedRound)} onView={noop} onScanAnother={noop} />
+      <ScanSuccessStep round={null} onView={noop} onScanAnother={noop} />
     </div>
   );
 }

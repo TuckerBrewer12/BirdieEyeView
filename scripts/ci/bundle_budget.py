@@ -14,14 +14,14 @@ def entry_chunk() -> Path:
     html = (DIST / "index.html").read_text()
     match = re.search(r'<script type="module"[^>]*src="/(assets/[^"]+\.js)"', html)
     if not match:
-        sys.exit("No module script in frontend/dist/index.html; run `npm run build -- --sourcemap` first.")
+        sys.exit("No module script in frontend/dist/index.html; run `npm run build -- --sourcemap hidden` first.")
     return DIST / match.group(1)
 
 
 def dev_only_modules(chunk: Path) -> list[str]:
     source_map = chunk.with_name(chunk.name + ".map")
     if not source_map.exists():
-        sys.exit(f"No {source_map.name}; build with `npm run build -- --sourcemap`.")
+        sys.exit(f"No {source_map.name}; build with `npm run build -- --sourcemap hidden`.")
     sources = json.loads(source_map.read_text())["sources"]
     return sorted(s for s in sources if any(marker in s for marker in DEV_ONLY_SOURCES))
 

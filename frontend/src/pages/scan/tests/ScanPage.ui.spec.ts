@@ -39,6 +39,19 @@ test("after a save, Scan another opens a fresh card", async ({ scan }) => {
   await scan.seesSavedRounds(1);
 });
 
+test("a round that saved but can't be shown still says so, and makes way for the next card", async ({ scan }) => {
+  await scan.open({ roundError: "Round not found." });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+  await scan.tapSave();
+  await scan.seesSaved();
+  await scan.seesSavedWithoutRound();
+  await scan.seesSavedRounds(1);
+  await scan.tapScanAnother();
+  await scan.seesUpload();
+});
+
 test("a failed save stays on the card and says why", async ({ scan }) => {
   await scan.open({ saveError: "That round could not be saved." });
   await scan.chooseScorecard();
@@ -147,6 +160,25 @@ test("a failed scan keeps the photo and says why", async ({ scan }) => {
   await scan.chooseScorecard();
   await scan.tapExtract();
   await scan.seesScanFailed();
+});
+
+test("a failed scan reads the same photo again", async ({ scan }) => {
+  await scan.open({ scan: undefined });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesScanFailed();
+  scan.scanWorksNextTime();
+  await scan.tapReadAgain();
+  await scan.seesReview(SCANNED_COURSE_NAME);
+});
+
+test("after a failed scan the scores can be typed in instead", async ({ scan }) => {
+  await scan.open({ scan: undefined });
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesScanFailed();
+  await scan.tapTypeScoresInstead();
+  await scan.seesSetup();
 });
 
 test("a failed scan can be reported, and the report says why it failed", async ({ scan }) => {

@@ -27,6 +27,7 @@ export type { ChangeVerdict, WhsBreakdown };
 
 export interface DashboardPageViewModel {
   loaded: boolean;
+  hasRounds: boolean;
   scoringAverage: ScoringAverage;
   user: UserDto | null;
   loading: boolean;
@@ -88,6 +89,7 @@ export function useDashboardPageViewModel(
 
   return {
     loaded: data !== null,
+    hasRounds: rounds.length > 0,
     scoringAverage: data ? scoringAverageFrom(data) : EMPTY_AVERAGE,
     user: user ?? null,
     loading,

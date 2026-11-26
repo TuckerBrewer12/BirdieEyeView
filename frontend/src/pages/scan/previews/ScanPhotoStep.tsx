@@ -17,6 +17,7 @@ const blank: Parameters<typeof ScanPhotoStepWide>[0]["step"] = {
   presetCourse: null,
   pickPresetCourse: noop,
   clearPresetCourse: noop,
+  setMode: noop,
 };
 
 const failed = {

@@ -247,6 +247,16 @@ export default defineConfig([
     },
   },
   {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/data/playerCache.ts', 'src/**/*.test.{ts,tsx}', 'src/**/*Test.{ts,tsx}'],
+    rules: {
+      'no-restricted-properties': ['error', {
+        property: 'invalidateQueries',
+        message: 'What goes stale after a change lives in src/data/playerCache.ts. Call roundsChanged() or userChanged().',
+      }],
+    },
+  },
+  {
     files: ['src/**/*.test.{ts,tsx}', 'src/**/*Test.{ts,tsx}'],
     rules: {
       'no-restricted-properties': ['error',

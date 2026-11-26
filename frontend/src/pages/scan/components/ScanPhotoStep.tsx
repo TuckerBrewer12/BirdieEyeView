@@ -33,6 +33,7 @@ type PhotoStep = Pick<
   | "presetCourse"
   | "pickPresetCourse"
   | "clearPresetCourse"
+  | "setMode"
 >;
 
 interface ScanPhotoStepProps {
@@ -44,6 +45,7 @@ const ACCEPT = "image/*,application/pdf";
 const ANOTHER_PHOTO = "Try another photo";
 
 const READ_CARD = "Read card";
+const READ_AGAIN = "Read card again";
 
 function ScanFailed({ step, action }: { step: PhotoStep; action: ReactNode }) {
   if (!step.error) return null;
@@ -53,7 +55,15 @@ function ScanFailed({ step, action }: { step: PhotoStep; action: ReactNode }) {
     <Alert tone="danger" data-slot="scan-failed" className="px-4 py-3.5 text-body-lg">
       <CircleAlert className="size-5" />
       <AlertDescription>
-        <strong className="block font-semibold md:inline">{title}</strong> {detail}
+        <strong className="block font-semibold md:inline">{title}</strong> {detail}{" "}
+        <Button
+          variant="link"
+          size="inline"
+          className="font-semibold text-current underline"
+          onClick={() => step.setMode("manual")}
+        >
+          Type the scores in instead
+        </Button>
         {report.available && (
           <>
             {" "}
@@ -123,7 +133,7 @@ export function ScanPhotoStepWide({ step, previewUrl }: ScanPhotoStepProps) {
           <div className="flex flex-col gap-5">
             <ScanCardForm form={step} />
             <Button size="lg" onClick={step.extract}>
-              {READ_CARD}
+              {step.error ? READ_AGAIN : READ_CARD}
             </Button>
           </div>
         </CardContent>
@@ -188,7 +198,7 @@ export function ScanPhotoStepPhone({
       <ActionBar>
         {photo ? (
           <Button size="lg" className="flex-1" onClick={step.extract}>
-            {READ_CARD}
+            {step.error ? READ_AGAIN : READ_CARD}
           </Button>
         ) : (
           <PhotoSourceSheet

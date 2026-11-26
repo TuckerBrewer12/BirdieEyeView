@@ -237,11 +237,15 @@ jobs:
 
       - name: Production build
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'build'
-        run: npm run build -- --sourcemap
+        run: npm run build -- --sourcemap hidden
 
       - name: Entry chunk within budget
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'build'
         run: python3 ../scripts/ci/bundle_budget.py
+
+      - name: Bundle size budget
+        if: needs.changes.outputs.frontend == 'true' && matrix.check == 'build'
+        run: npm run size
 
       - name: Install Playwright Chromium
         if: needs.changes.outputs.frontend == 'true' && matrix.check == 'ui'

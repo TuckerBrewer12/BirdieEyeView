@@ -6,6 +6,8 @@ import { populatedRounds } from "@/testing/fixtures/rounds";
 import {
   dashboardGoalReport,
   dashboardUser,
+  emptyDashboard,
+  newGolfer,
   populatedDashboard,
 } from "@/testing/fixtures/dashboard";
 import { FakeDashboardRepository } from "@/testing/fakes/FakeDashboardRepository";
@@ -41,6 +43,28 @@ describe("useDashboardPageViewModel", () => {
     expect(result.current.lastRound?.id).toBe(populatedRounds[0].id);
     expect(result.current.lastRound?.holes[17]?.runningToPar).toBe(result.current.lastRound?.toPar);
     expect(result.current.user?.name).toBe("Test Golfer");
+  });
+
+  it("has rounds once the server sends one", async () => {
+    const { result } = renderVm();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.hasRounds).toBe(true);
+  });
+
+  it("has no rounds, and no last or recent round, before the first is saved", async () => {
+    const { result } = renderVm({ dashboard: emptyDashboard, user: newGolfer, goalReport: null });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.loaded).toBe(true);
+    expect(result.current.hasRounds).toBe(false);
+    expect(result.current.lastRound).toBeNull();
+    expect(result.current.recentRounds).toEqual([]);
+  });
+
+  it("is not loaded, rather than empty, when the dashboard fails", async () => {
+    const { result } = renderVm({ dashboardError: new Error("Network down"), user: dashboardUser });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.loaded).toBe(false);
+    expect(result.current.hasRounds).toBe(false);
   });
 
   it("lists the three rounds before the last one", async () => {
