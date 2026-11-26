@@ -68,3 +68,27 @@ test("Forgot? takes the typed email to Reset password, and Back to sign in bring
   await back.seesHeading("Sign in");
   await back.seesEmail("sam.r@example.com");
 });
+
+test("a link into the app while signed out signs in first, then opens that page", async ({ login }) => {
+  await login.arriveFrom("/courses?from=link#top");
+  await login.isAt("/login");
+  await login.signIn("test@example.com", "password");
+  await login.seesSignedInAt("/courses?from=link#top");
+});
+
+test("a wrong password keeps the page to come back to", async ({ login }) => {
+  await login.arriveFrom("/settings");
+  await login.signIn("test@example.com", "nope");
+  await login.seesError(AUTH_MESSAGES.badCredentials);
+  await login.signIn("test@example.com", "password");
+  await login.seesSignedInAt("/settings");
+});
+
+test("the page to come back to survives a detour through Reset password", async ({ login }) => {
+  await login.arriveFrom("/settings");
+  await login.typeEmail("test@example.com");
+  const forgot = await login.tapForgot();
+  const back = await forgot.backToSignIn();
+  await back.signIn("test@example.com", "password");
+  await back.seesSignedInAt("/settings");
+});

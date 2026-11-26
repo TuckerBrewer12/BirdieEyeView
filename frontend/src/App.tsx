@@ -12,6 +12,7 @@ import {
   VerifyEmailPage,
   VerifyPendingPage,
 } from "./pages/auth";
+import { needsSignIn, returnPathFrom, signInReturnFor } from "./pages/auth/signInReturnModel";
 import { LandingPage } from "./pages/landing-page";
 import {
   AnalyticsPage,
@@ -62,8 +63,16 @@ function RootRoutes() {
   );
 }
 
+function SignedOutRedirect({ signedOutByUser }: { signedOutByUser: boolean }) {
+  const location = useLocation();
+  if (!signedOutByUser && needsSignIn(location.pathname)) {
+    return <Navigate to="/login" replace state={signInReturnFor(location)} />;
+  }
+  return <Navigate to="/" replace />;
+}
+
 function AppRoutes() {
-  const { userId, loading } = useAuth();
+  const { userId, loading, signedOutByUser } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -84,7 +93,7 @@ function AppRoutes() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/verify-pending" element={<VerifyPendingPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<SignedOutRedirect signedOutByUser={signedOutByUser} />} />
       </Routes>
     );
   }
@@ -115,7 +124,7 @@ function AppRoutes() {
           <Route path="/career" element={<CareerPage userId={userId} />} />
           <Route path="/inbox" element={<FriendsInboxPage userId={userId} />} />
           <Route path="/settings" element={<SettingsPage userId={userId} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to={returnPathFrom(location.state) ?? "/"} replace />} />
         </Routes>
       </Suspense>
     </AppLayout>

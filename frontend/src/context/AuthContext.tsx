@@ -58,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(EMPTY_AUTH_STATE);
   const latestStateRef = useRef<AuthState>(EMPTY_AUTH_STATE);
   const [loading, setLoading] = useState(true);
+  const [signedOutByUser, setSignedOutByUser] = useState(false);
 
   useEffect(() => {
     latestStateRef.current = state;
@@ -107,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     const data = await callAuth<AuthUserDto>("/login", { email, password });
     setSessionToken(data.access_token ?? null);
+    setSignedOutByUser(false);
     setState(authStateFrom(data));
   };
 
@@ -133,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await callAuth<MessageDto>("/logout", {});
     } finally {
       setSessionToken(null);
+      setSignedOutByUser(true);
       setState(EMPTY_AUTH_STATE);
     }
   };
@@ -150,6 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshSession,
         logout,
         loading,
+        signedOutByUser,
       }}
     >
       {children}
