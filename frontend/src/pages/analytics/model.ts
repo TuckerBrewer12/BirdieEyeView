@@ -2,10 +2,8 @@ import { parTypesFrom, scoreMixFrom, type ParTypeComparison, type ScoreCounts, t
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
 import type {
   AnalyticsDto,
-  AnalyticsKpisDto,
   GirVsNonGirRowDto,
   HeadlineFigureDto,
-  PeakGameDto,
   ScoringByYardageRowDto,
 } from "@/types/api";
 
@@ -32,7 +30,21 @@ export interface PlayedCourse {
   location: string | null;
 }
 
-export type HeadlineFigure = HeadlineFigureDto;
+export interface HeadlineFigure {
+  metric: HeadlineFigureDto["metric"];
+  value: number | null;
+  change: number | null;
+  verdict: HeadlineFigureDto["verdict"];
+  trend: number[];
+}
+
+export interface Averages {
+  score: number | null;
+  putts: number | null;
+  threePutts: number | null;
+  greensPercent: number | null;
+  puttsPerGir: number | null;
+}
 
 export interface RoundSeriesPoint {
   value: number;
@@ -102,7 +114,7 @@ export interface ShortGame {
 }
 
 export interface Analytics {
-  kpis: AnalyticsKpisDto;
+  averages: Averages;
   roundCount: number;
   headline: HeadlineFigure[];
   scoreTrend: ScorePoint[];
@@ -117,7 +129,6 @@ export interface Analytics {
   puttsPerHole: PuttsPerHole;
   threePutts: ThreePuttRound[];
   yardageBuckets: YardageBucket[];
-  peakGame: PeakGameDto | null;
 }
 
 function seriesFrom<T>(
@@ -152,9 +163,15 @@ export function analyticsFrom(data: AnalyticsDto): Analytics {
   const countsByRound = new Map(data.score_trend.map((row) => [row.round_id, row.score_counts]));
   const withPutts = new Set(data.putts_trend.filter((row) => row.total_putts != null).map((row) => row.round_id));
   return {
-    kpis: data.kpis,
+    averages: {
+      score: data.kpis.scoring_average,
+      putts: data.kpis.average_putts,
+      threePutts: data.kpis.three_putts_per_round,
+      greensPercent: data.kpis.gir_percentage,
+      puttsPerGir: data.kpis.putts_per_gir,
+    },
     roundCount: data.kpis.total_rounds,
-    headline: data.headline,
+    headline: data.headline.map(({ metric, value, change, verdict, trend }) => ({ metric, value, change, verdict, trend })),
     scoreTrend: data.score_trend.flatMap((row) =>
       row.total_score == null
         ? []
@@ -198,6 +215,5 @@ export function analyticsFrom(data: AnalyticsDto): Analytics {
       withPutts.has(row.round_id) && row.three_putt_count != null ? [{ count: row.three_putt_count, costly: row.costly }] : [],
     ),
     yardageBuckets: yardageBucketsFrom(data.scoring_by_yardage),
-    peakGame: data.peak_game,
   };
 }

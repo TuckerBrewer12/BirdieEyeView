@@ -3,6 +3,7 @@ import {
   benchmarkComparisonFrom,
   benchmarkShapeFrom,
   buildRadarData,
+  shapeFrom,
   goalAttemptsFrom,
   goalScoreToBreak,
   goalTargetLabel,
@@ -42,22 +43,22 @@ describe("benchmark comparison", () => {
 describe("radar scale", () => {
   it("draws a friend's shape at their own figures", () => {
     const shape = benchmarkShapeFrom(labBenchmarks["friend:user-avery"].benchmark!);
-    const entries = buildRadarData(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par, shape);
+    const entries = buildRadarData(shapeFrom(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par), shape);
     for (const entry of entries) expect(entry.benchmark).toBeCloseTo(entry.value, 5);
     expect(entries.map((entry) => entry.benchRaw)).toEqual(["44%", "38%", "1.92/GIR", "+0.3", "+0.6", "+0.3"]);
   });
 
   it("puts a figure the comparison has none of at the centre", () => {
     const shape = { ...benchmarkShapeFrom(labBenchmarks["handicap:15"].benchmark!), par5ToPar: null };
-    const par5 = buildRadarData(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par, shape)[5];
+    const par5 = buildRadarData(shapeFrom(averyLabAnalytics.kpis, averyLabAnalytics.scoring_by_par), shape)[5];
     expect(par5.benchmark).toBe(0);
     expect(par5.benchRaw).toBe("—");
   });
 
   it("carries the server's verdict on each axis, and none without a comparison", () => {
     const comparison = benchmarkComparisonFrom(labBenchmarks["handicap:15"]);
-    const entries = buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par, comparison.benchmark, comparison.verdicts);
+    const entries = buildRadarData(shapeFrom(labAnalytics.kpis, labAnalytics.scoring_by_par), comparison.benchmark, comparison.verdicts);
     expect(entries.map((entry) => entry.verdict)).toEqual(["ahead", "ahead", "ahead", "behind", "behind", "ahead"]);
-    expect(buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par).every((entry) => entry.verdict === null)).toBe(true);
+    expect(buildRadarData(shapeFrom(labAnalytics.kpis, labAnalytics.scoring_by_par)).every((entry) => entry.verdict === null)).toBe(true);
   });
 });

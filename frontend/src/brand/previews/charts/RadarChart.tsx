@@ -1,10 +1,10 @@
 import { RadarChart, type RadarAxis } from "@/brand/charts/RadarChart";
-import { benchmarkComparisonFrom, buildRadarData, type RadarEntry } from "@/domain";
+import { benchmarkComparisonFrom, buildRadarData, shapeFrom, type RadarEntry } from "@/domain";
 import { labAnalytics, labBenchmarks } from "@/testing/fixtures/lab";
 
 function axesAgainst(key: string | null): RadarAxis[] {
   const comparison = key ? benchmarkComparisonFrom(labBenchmarks[key]) : null;
-  const entries = buildRadarData(labAnalytics.kpis, labAnalytics.scoring_by_par, comparison?.benchmark, comparison?.verdicts);
+  const entries = buildRadarData(shapeFrom(labAnalytics.kpis, labAnalytics.scoring_by_par), comparison?.benchmark, comparison?.verdicts);
   return entries.map((entry: RadarEntry) => ({
     label: entry.axis,
     value: entry.value,

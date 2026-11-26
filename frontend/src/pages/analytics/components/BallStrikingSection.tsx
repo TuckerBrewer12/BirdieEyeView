@@ -24,7 +24,7 @@ export function BallStrikingSection({ analytics, shown, onShownChange }: { analy
             { label: "5-round avg", tone: "primary" },
           ]}
           format={formatGreens}
-          reference={averageLine(analytics.kpis.gir_percentage, formatGreens)}
+          reference={averageLine(analytics.averages.greensPercent, formatGreens)}
         />
       </SectionCard>
 

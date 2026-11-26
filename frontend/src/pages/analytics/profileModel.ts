@@ -1,20 +1,45 @@
 import type { Friendship } from "@/data/friendsModel";
-import { goalAttemptsFrom, type GoalAttempt } from "@/domain/benchmark";
+import { goalAttemptsFrom, type BenchmarkShape, type GoalAttempt } from "@/domain/benchmark";
+import { shapeFrom } from "@/domain/radar";
 import type { AnalyticsFilters } from "@/domain/analyticsFilters";
-import type { AnalyticsDto, GoalReportDto, GoalSaverDto, PeakImpactDto } from "@/types/api";
+import type { AnalyticsDto, GoalReportDto, GoalSaverDto, PeakGameDto, PeakImpactDto } from "@/types/api";
 
 export const PROFILE_FILTERS: AnalyticsFilters = { limit: 20, timeframe: "all", courseId: "all" };
 
-export type ProfileAnalytics = Pick<AnalyticsDto, "kpis" | "scoring_by_par" | "peak_game" | "next_level_handicap"> & {
+export interface PeakImpact {
+  kind: PeakImpactDto["kind"];
+  peak: number;
+  average: number;
+  strokes: number;
+}
+
+export interface PeakRecord {
+  rounds: { roundId: string | null; courseName: string | null; score: number }[];
+  average: number;
+  impacts: PeakImpact[];
+}
+
+export interface ProfileAnalytics {
+  shape: BenchmarkShape;
+  nextLevelHandicap: number | null;
+  peak: PeakRecord | null;
   lowestScore: number | null;
-};
+}
+
+function peakRecordFrom(peak: PeakGameDto | null): PeakRecord | null {
+  if (!peak) return null;
+  return {
+    rounds: peak.rounds.map((round) => ({ roundId: round.round_id, courseName: round.course_name, score: round.score })),
+    average: peak.average,
+    impacts: peak.impacts.map(({ kind, peak: peakValue, average, strokes }) => ({ kind, peak: peakValue, average, strokes })),
+  };
+}
 
 export function profileAnalyticsFrom(dto: AnalyticsDto): ProfileAnalytics {
   return {
-    kpis: dto.kpis,
-    scoring_by_par: dto.scoring_by_par,
-    peak_game: dto.peak_game,
-    next_level_handicap: dto.next_level_handicap,
+    shape: shapeFrom(dto.kpis, dto.scoring_by_par),
+    nextLevelHandicap: dto.next_level_handicap,
+    peak: peakRecordFrom(dto.peak_game),
     lowestScore: dto.notable_achievements.scoring_records.lifetime.lowest_round ?? null,
   };
 }
@@ -93,19 +118,18 @@ export interface PeakGame {
 }
 
 export function peakGameFrom(
-  analytics: Pick<ProfileAnalytics, "peak_game">,
+  analytics: Pick<ProfileAnalytics, "peak">,
   target: number | null,
   report: GoalReportDto | null | undefined,
 ): PeakGame | null {
-  const peak = analytics.peak_game;
+  const peak = analytics.peak;
   if (target == null || !peak) return null;
   return {
-    rounds: peak.rounds.map((round) => ({ roundId: round.round_id, courseName: round.course_name, score: round.score })),
+    rounds: peak.rounds,
     average: peak.average,
     gapToGoal: report?.peak_gap ?? null,
     meetsGoal: report?.peak_meets_goal ?? null,
   };
 }
 
-export type PeakImpact = PeakImpactDto;
 
