@@ -30,6 +30,13 @@ export function newScanSession(today: string = todayIso()): ScanSession {
   };
 }
 
+export function withArrivingCourse(session: ScanSession, course: PickedCourse): ScanSession {
+  const cardUnderWay =
+    session.photo !== null || session.review !== null || session.savedRoundId !== null || session.setup.course !== null;
+  if (cardUnderWay) return session;
+  return { ...session, mode: "scan", presetCourse: course, error: null, failedScan: null };
+}
+
 export interface ScanSessionStore {
   session: ScanSession;
   setSession: Dispatch<SetStateAction<ScanSession>>;

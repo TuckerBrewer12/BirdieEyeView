@@ -224,6 +224,15 @@ test("a new photo clears the report with the failed read", async ({ scan }) => {
   await scan.seesNoReport();
 });
 
+test("a course's Scan a round opens the upload with that course picked, and the read uses it", async ({ scan }) => {
+  await scan.openFromCourse(pebbleBeachCourse);
+  await scan.seesPresetCourse("Pebble Beach");
+  await scan.chooseScorecard();
+  await scan.tapExtract();
+  await scan.seesScanSentFor(pebbleBeachCourse.id ?? "");
+  await scan.seesReview(SCANNED_COURSE_NAME);
+});
+
 test("a read can be cancelled, back to the same photo with nothing wrong", async ({ scan }) => {
   await scan.open({ holdScan: true });
   await scan.chooseScorecard();

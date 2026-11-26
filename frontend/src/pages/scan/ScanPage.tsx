@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   LoadingState,
   PageHeader,
@@ -14,6 +15,7 @@ import { ScanProcessingStep } from "./components/ScanProcessingStep";
 import { ScanReviewStep } from "./components/ScanReviewStep";
 import { ScanSetupStep } from "./components/ScanSetupStep";
 import { ScanSuccessStep } from "./components/ScanSuccessStep";
+import { presetCourseFrom } from "./scanModel";
 import { useScanPageViewModel } from "./useScanPageViewModel";
 
 const TITLE = "Scan";
@@ -23,6 +25,15 @@ export function ScanPage({ userId }: { userId: string }) {
   const viewModel = useScanPageViewModel(userId);
   const previewUrl = useFilePreview(viewModel.photo);
   const wide = useFromBreakpoint("md");
+  const location = useLocation();
+  const { arriveWithCourse } = viewModel;
+
+  useEffect(() => {
+    const course = presetCourseFrom(location.state);
+    if (!course) return;
+    arriveWithCourse(course);
+    void navigate(location.pathname, { replace: true, state: null });
+  }, [location.state, location.pathname, arriveWithCourse, navigate]);
 
   switch (viewModel.step) {
     case "success":

@@ -14,7 +14,7 @@ The course list with each course's tees and the golfer's record there, and a cou
 
 ## How it works
 
-The list (`GET /courses`, search with `include_record=true`) carries tee colours longest first and the record's rounds, average and best. The course page reads the course (`course_detail()`) and `GET /api/stats/course-analytics/{user}/{course}`: the record, the score trend, a row a hole and the nine sums. The scorecard is `ScorecardCard` + `ScorecardGrid` off the picked tee; My performance draws `TrendAreaChart`, `HoleProfileChart` and `HoleGreensPuttsChart`.
+The list (`GET /courses`, search with `include_record=true`) carries tee colours longest first and the record's rounds, average and best. The course page reads the course (`course_detail()`) and `GET /api/stats/course-analytics/{user}/{course}`: the record, the score trend, a row a hole and the nine sums. The scorecard is `ScorecardCard` + `ScorecardGrid` off the picked tee; My performance draws `TrendAreaChart`, `HoleProfileChart` and `HoleGreensPuttsChart`. On a course the golfer hasn't played, Scan a round opens Scan with the course picked ahead (`scanHere`).
 
 ## Boundaries and checks when changing it
 

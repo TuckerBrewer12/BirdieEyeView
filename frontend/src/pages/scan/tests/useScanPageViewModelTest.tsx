@@ -141,6 +141,24 @@ describe("useScanPageViewModel", () => {
     expect(result.current.review.round?.course?.name).toBe(SCANNED_COURSE_NAME);
   });
 
+  it("sends a course handed over by another page with the scan", async () => {
+    const { result, scan } = renderVm();
+    act(() => result.current.arriveWithCourse({ id: pebbleBeachSummary.id, name: "Pebble Beach" }));
+    expect(result.current.presetCourse).toEqual({ id: pebbleBeachSummary.id, name: "Pebble Beach" });
+    await pick(result);
+    act(() => result.current.extract());
+    await waitFor(() => expect(scan.extractRequests).toHaveLength(1));
+    expect(scan.extractRequests[0].courseId).toBe(pebbleBeachSummary.id);
+  });
+
+  it("keeps a photo already picked when a course is handed over", async () => {
+    const { result } = renderVm();
+    const file = await pick(result);
+    act(() => result.current.arriveWithCourse({ id: pebbleBeachSummary.id, name: "Pebble Beach" }));
+    expect(result.current.photo).toBe(file);
+    expect(result.current.presetCourse).toBeNull();
+  });
+
   it("cancelling a read stops the request and goes back to the photo, with nothing to report", async () => {
     const { result, scan } = renderVm({ result: scannedCard, holdExtract: true });
     const file = await pick(result);

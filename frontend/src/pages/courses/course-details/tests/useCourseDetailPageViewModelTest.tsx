@@ -34,6 +34,7 @@ describe("useCourseDetailPageViewModel", () => {
     expect(result.current.played).toBe(false);
     expect(result.current.record).toEqual([]);
     expect(result.current.recentRounds).toEqual([]);
+    expect(result.current.scanHere).toEqual({ scanAtCourse: { id: halfMoonBayCourse.id, name: "Half Moon Bay" } });
   });
 
   it("a record that didn't load says so in place of the prompt to scan, and Retry reads it", async () => {
@@ -50,6 +51,7 @@ describe("useCourseDetailPageViewModel", () => {
     repository.analyticsError = null;
     act(() => result.current.retryRecord());
     await waitFor(() => expect(result.current.played).toBe(true));
+    expect(result.current.scanHere).toBeNull();
     expect(result.current.recordError).toBeNull();
   });
 

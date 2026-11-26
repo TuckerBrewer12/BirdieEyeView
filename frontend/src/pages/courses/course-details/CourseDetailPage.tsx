@@ -115,7 +115,7 @@ export function CourseDetailPage({ userId }: { userId: string }) {
           ) : (
             <Card data-slot="not-played" className="flex-row items-center justify-between gap-4 px-4 py-4 md:px-5">
               <span className="text-body text-foreground-secondary">You haven’t played here yet.</span>
-              <Button onClick={() => void navigate("/scan")}>Scan a round</Button>
+              <Button onClick={() => void navigate("/scan", { state: viewModel.scanHere })}>Scan a round</Button>
             </Card>
           )}
         </>
