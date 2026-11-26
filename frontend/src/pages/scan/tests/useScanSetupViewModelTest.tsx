@@ -21,7 +21,7 @@ function renderSetup() {
     sessions.push(session);
     return (
       <QueryClientProvider client={client}>
-        <ScanSessionContext.Provider value={{ session, setSession }}>{children}</ScanSessionContext.Provider>
+        <ScanSessionContext.Provider value={{ session, setSession, readingRef: { current: null } }}>{children}</ScanSessionContext.Provider>
       </QueryClientProvider>
     );
   }

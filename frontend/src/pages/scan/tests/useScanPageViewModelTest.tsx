@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { FakeCoursesRepository } from "@/testing/fakes/FakeCoursesRepository";
 import { FakeHandler } from "@/testing/fakes/FakeHandler";
@@ -9,6 +9,7 @@ import { FakeScanRepository, type FakeScanRepositorySeed } from "@/testing/fakes
 import { FakeScanReportRepository } from "@/testing/fakes/FakeScanReportRepository";
 import { pebbleBeach, pebbleBeachSummary } from "@/testing/fixtures/courses";
 import { pebbleBeachCourse } from "@/testing/fixtures/roundDetails";
+import { SCAN_SLOW_AFTER_MS } from "@/domain/scan";
 import { SCANNED_COURSE_NAME, scannedCard } from "@/testing/fixtures/scan";
 import { ScanSessionProvider } from "../ScanSessionProvider";
 import {
@@ -87,6 +88,7 @@ describe("useScanPageViewModel", () => {
       userContext: "my name is Sam. name on score row. row order: score, putts",
       ocrText: "HOLE 1 2 3",
       courseId: pebbleBeachSummary.id,
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -137,6 +139,86 @@ describe("useScanPageViewModel", () => {
 
     await waitFor(() => expect(result.current.step).toBe("review"));
     expect(result.current.review.round?.course?.name).toBe(SCANNED_COURSE_NAME);
+  });
+
+  it("cancelling a read stops the request and goes back to the photo, with nothing to report", async () => {
+    const { result, scan } = renderVm({ result: scannedCard, holdExtract: true });
+    const file = await pick(result);
+    act(() => result.current.extract());
+    await waitFor(() => expect(result.current.step).toBe("processing"));
+
+    act(() => result.current.cancelRead());
+
+    await waitFor(() => expect(result.current.step).toBe("upload"));
+    expect(scan.extractRequests[0].signal?.aborted).toBe(true);
+    expect(result.current.photo).toBe(file);
+    expect(result.current.error).toBeNull();
+    expect(result.current.report.available).toBe(false);
+  });
+
+  it("reads the same photo again after a cancel", async () => {
+    const { result, scan } = renderVm({ result: scannedCard, holdExtract: true });
+    await pick(result);
+    act(() => result.current.extract());
+    await waitFor(() => expect(result.current.step).toBe("processing"));
+    act(() => result.current.cancelRead());
+    await waitFor(() => expect(result.current.step).toBe("upload"));
+
+    act(() => result.current.extract());
+    await waitFor(() => expect(result.current.step).toBe("processing"));
+    act(() => scan.finishExtract());
+
+    await waitFor(() => expect(result.current.step).toBe("review"));
+    expect(scan.extractRequests).toHaveLength(2);
+    expect(scan.extractRequests[1].signal?.aborted).toBe(false);
+  });
+
+  it("cancels a read started before the golfer left the page and came back", async () => {
+    const doubles = fakes({ result: scannedCard, holdExtract: true });
+    const Session = wrapperFor(newClient());
+    let onPage = true;
+    const { result, rerender } = renderHook(() => useScanPageViewModel("user-1", doubles.repositories), {
+      wrapper: ({ children }) => <Session>{onPage ? children : null}</Session>,
+    });
+    await pick(result);
+    act(() => result.current.extract());
+    await waitFor(() => expect(result.current.step).toBe("processing"));
+    onPage = false;
+    rerender();
+    onPage = true;
+    rerender();
+    await waitFor(() => expect(result.current.step).toBe("processing"));
+
+    act(() => result.current.cancelRead());
+
+    await waitFor(() => expect(result.current.step).toBe("upload"));
+    expect(doubles.scan.extractRequests[0].signal?.aborted).toBe(true);
+  });
+
+  it("says a read is slow once it has run past the wait", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const { result } = renderVm({ result: scannedCard, holdExtract: true });
+      await pick(result);
+      act(() => result.current.extract());
+      await waitFor(() => expect(result.current.step).toBe("processing"));
+      expect(result.current.slow).toBe(false);
+
+      act(() => {
+        vi.advanceTimersByTime(SCAN_SLOW_AFTER_MS / 2);
+      });
+      expect(result.current.slow).toBe(false);
+      act(() => {
+        vi.advanceTimersByTime(SCAN_SLOW_AFTER_MS / 2);
+      });
+      expect(result.current.slow).toBe(true);
+
+      act(() => result.current.cancelRead());
+      await waitFor(() => expect(result.current.step).toBe("upload"));
+      expect(result.current.slow).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("returns to the photo with the reason when the scan fails", async () => {

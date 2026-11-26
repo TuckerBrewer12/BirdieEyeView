@@ -35,8 +35,9 @@ export class FakeScanRepository implements ScanRepository {
   async extract(request: ExtractRequest): Promise<ScanDto> {
     this.extractRequests.push(request);
     if (this.seed.holdExtract) {
-      await new Promise<void>((resolve) => {
+      await new Promise<void>((resolve, reject) => {
         this.release = resolve;
+        request.signal?.addEventListener("abort", () => reject(new DOMException("The read was stopped.", "AbortError")));
       });
     }
     const failure = { category: "extraction_failed", stage: "parse", http_status: 500 } as const;

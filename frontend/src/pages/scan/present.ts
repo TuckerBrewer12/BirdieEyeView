@@ -16,3 +16,5 @@ export function scanFailure(error: string): { title: string; detail: string } {
   const detail = error.startsWith(SCAN_FAILED) ? error.slice(SCAN_FAILED.length).trim() : error;
   return { title: SCAN_FAILED, detail };
 }
+
+export const SLOW_READ_NOTE = "Taking longer than usual. You can keep waiting, or cancel and try another photo.";
