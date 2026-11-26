@@ -338,55 +338,6 @@ class CourseRepositoryDB:
                 return None
             return await self._assemble(conn, row)
 
-    async def find_any_user_course_by_name(
-        self,
-        name: str,
-        location: Optional[str] = None,
-    ) -> Optional[Course]:
-        async with self._pool.acquire() as conn:
-            if location:
-                row = await conn.fetchrow(
-                    """SELECT * FROM courses.courses
-                       WHERE LOWER(name) = LOWER($1) AND LOWER(location) = LOWER($2)
-                         AND user_id IS NOT NULL LIMIT 1""",
-                    name,
-                    location,
-                )
-            else:
-                row = await conn.fetchrow(
-                    """SELECT * FROM courses.courses
-                       WHERE LOWER(name) = LOWER($1) AND user_id IS NOT NULL LIMIT 1""",
-                    name,
-                )
-            if not row:
-                if location:
-                    row = await conn.fetchrow(
-                        """SELECT * FROM courses.courses
-                           WHERE name ILIKE $1 AND location ILIKE $2
-                             AND user_id IS NOT NULL LIMIT 1""",
-                        f"%{name}%",
-                        f"%{location}%",
-                    )
-                else:
-                    row = await conn.fetchrow(
-                        """SELECT * FROM courses.courses
-                           WHERE name ILIKE $1 AND user_id IS NOT NULL LIMIT 1""",
-                        f"%{name}%",
-                    )
-            if not row:
-                row = await conn.fetchrow(
-                    """SELECT *, similarity(name, $1) AS sim
-                       FROM courses.courses
-                       WHERE similarity(name, $1) > 0.4 AND user_id IS NOT NULL
-                         AND ($2::text IS NULL OR location ILIKE $2)
-                       ORDER BY sim DESC LIMIT 1""",
-                    name,
-                    f"%{location}%" if location else None,
-                )
-            if not row:
-                return None
-            return await self._assemble(conn, row)
-
     async def fill_course_gaps(
         self,
         course_id: str,
@@ -533,22 +484,6 @@ class CourseRepositoryDB:
                             hole_num,
                             yds,
                         )
-
-    async def promote_to_master(self, course_id: str) -> Course:
-        cid = UUID(course_id)
-        async with self._pool.acquire() as conn:
-            try:
-                row = await conn.fetchrow(
-                    "UPDATE courses.courses SET user_id = NULL WHERE id = $1 RETURNING *",
-                    cid,
-                )
-                if not row:
-                    raise NotFoundError(f"Course {course_id} not found")
-                return await self._assemble(conn, row)
-            except asyncpg.UniqueViolationError:
-                # Race condition: another master with this name now exists
-                row = await conn.fetchrow("SELECT * FROM courses.courses WHERE id = $1", cid)
-                return await self._assemble(conn, row)
 
     async def list_courses(
         self,

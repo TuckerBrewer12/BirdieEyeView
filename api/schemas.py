@@ -948,12 +948,6 @@ class DomainResponse(BaseModel):
         return value
 
 
-class HoleResponse(DomainResponse):
-    number: Optional[int] = None
-    par: Optional[int] = None
-    handicap: Optional[int] = None
-
-
 class TeeRatingResponse(DomainResponse):
     hole_numbers: Tuple[int, ...]
     course_rating: Optional[float] = None

@@ -162,18 +162,6 @@ class UserRepositoryDB:
         except asyncpg.IntegrityConstraintViolationError as error:
             raise IntegrityError("Invalid user data or course reference") from error
 
-    async def update_handicap(self, user_id: str, handicap: float) -> None:
-        async with self._pool.acquire() as conn:
-            result = await conn.execute(
-                """UPDATE users.users
-                   SET handicap_index = $2, last_handicap_update = NOW()
-                   WHERE id = $1""",
-                UUID(user_id),
-                handicap,
-            )
-            if result == "UPDATE 0":
-                raise NotFoundError(f"User {user_id} not found")
-
     async def set_password_hash(self, user_id: str, password_hash: str, *, connection=None) -> None:
         async with write_transaction(self._pool, connection) as conn:
             result = await conn.execute(
