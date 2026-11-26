@@ -9,6 +9,7 @@ These guides make responsibilities and review expectations visible while the fro
 | [Frontend practices](frontend.md) | Page/view-model structure, shared UI, state, and TypeScript tooling. |
 | [Testing](testing.md) | Focused checks, integration boundaries, and live evaluations. |
 | [Documentation](documentation.md) | Keeping explanations, decisions, and review findings current. |
+| [Performance](performance.md) | Measuring a speed change against its base with `scripts/perf/`. |
 
 ## How to interpret these guides
 

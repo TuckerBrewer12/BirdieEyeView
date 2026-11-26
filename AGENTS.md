@@ -18,6 +18,7 @@ BirdieEyeView turns a photo of a paper golf scorecard into a round, then tracks 
 | `api/`, `services/`, `models/`, `analytics/`, `database/`, scanning, `tests/` | `docs/backend/<area>.md` |
 | Frontend structure, the kit, each page | `docs/frontend/` |
 | Conventions | `docs/practices/` |
+| Measuring a speed change | `docs/practices/performance.md` |
 | Review bots | `.github/review-bots/README.md` |
 
 ## Commands
