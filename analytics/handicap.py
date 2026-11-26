@@ -13,6 +13,7 @@ from models.round import Round
 CLOSE_TO_COUNTING = 2.0
 MAX_HANDICAP_INDEX = 54.0
 WHS_WINDOW = 20
+FLOAT_NOISE_PLACES = 6
 
 _WHS_TABLE: List[tuple[int, float]] = [
     (1, -2.0),
@@ -58,7 +59,8 @@ def round_rating(round_obj: Round) -> Optional[Tuple[float, float]]:
 
 
 def course_handicap(handicap_index: float, slope_rating: float, course_rating: float, par: int) -> int:
-    return int(round_half_up(handicap_index * slope_rating / 113 + (course_rating - par), 0))
+    raw = handicap_index * slope_rating / 113 + (course_rating - par)
+    return int(round_half_up(round(raw, FLOAT_NOISE_PLACES), 0))
 
 
 def score_differential(score: int, course_rating: float, slope_rating: float) -> float:
