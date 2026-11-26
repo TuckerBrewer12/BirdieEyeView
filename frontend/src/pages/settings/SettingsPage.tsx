@@ -1,3 +1,4 @@
+import { useLeaveGuard } from "@/app/useLeaveGuard";
 import {
   ActionBar,
   Alert,
@@ -18,7 +19,6 @@ import { courseLabel } from "@/domain/course";
 import { GolfGroup } from "./components/GolfGroup";
 import { HomeCourseSheet } from "./components/HomeCourseSheet";
 import { PreferencesSection } from "./components/PreferencesSection";
-import { useLeaveGuard } from "./useLeaveGuard";
 import { useSettingsPageViewModel } from "./useSettingsPageViewModel";
 
 export function SettingsPage({ userId }: { userId: string }) {

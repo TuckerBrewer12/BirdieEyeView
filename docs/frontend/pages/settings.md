@@ -8,7 +8,7 @@ The handicap, home course and friend code, theme and email updates, and sign out
 
 - [SettingsPage.tsx](../../../frontend/src/pages/settings/SettingsPage.tsx)
 - [useSettingsPageViewModel.ts](../../../frontend/src/pages/settings/useSettingsPageViewModel.ts)
-- [useLeaveGuard.ts](../../../frontend/src/pages/settings/useLeaveGuard.ts)
+- [useLeaveGuard.ts](../../../frontend/src/app/useLeaveGuard.ts)
 - [settingsRepository.ts](../../../frontend/src/pages/settings/settingsRepository.ts)
 
 ## How it works

@@ -40,6 +40,16 @@ export class RoundDetailRobot {
     return this;
   }
 
+  async openFromRounds(round: RoundDto, seed: Omit<FakeBackendSeed, "detailRounds"> = {}): Promise<this> {
+    await this.page.emulateMedia({ reducedMotion: "reduce" });
+    await FakeSession.install(this.page, { detailRounds: [round], ...seed });
+    await this.page.goto("/rounds");
+    await this.page.goto(`/rounds/${round.id}`);
+    await this.page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await expect(this.page.getByRole("button", { name: "Rounds" })).toBeVisible();
+    return this;
+  }
+
   async tapBack(): Promise<this> {
     await this.page.getByRole("button", { name: "Rounds" }).click();
     return this;
@@ -221,6 +231,53 @@ export class RoundDetailRobot {
     await expect(this.page.getByRole("menuitem", { name: "Delete round" })).toBeVisible();
     await expect(this.page.getByRole("menuitem", { name: "Link to a course" })).toHaveCount(0);
     await this.page.keyboard.press("Escape");
+    return this;
+  }
+
+  private leavePrompt() {
+    return this.page.getByRole("alertdialog", { name: "Save changes before leaving?" });
+  }
+
+  async leaveTo(label: string): Promise<this> {
+    await this.page.getByRole("link", { name: label, exact: true }).locator("visible=true").first().click();
+    return this;
+  }
+
+  async seesLeavePrompt(): Promise<this> {
+    await expect(this.leavePrompt()).toBeVisible();
+    return this;
+  }
+
+  async saveAndLeave(): Promise<this> {
+    await this.leavePrompt().getByRole("button", { name: "Save", exact: true }).click();
+    return this;
+  }
+
+  async discardAndLeave(): Promise<this> {
+    await this.leavePrompt().getByRole("button", { name: "Discard", exact: true }).click();
+    return this;
+  }
+
+  async keepEditing(): Promise<this> {
+    await this.leavePrompt().getByRole("button", { name: "Keep editing" }).click();
+    await expect(this.leavePrompt()).toHaveCount(0);
+    return this;
+  }
+
+  async goBack(): Promise<this> {
+    await this.page.goBack();
+    await expect(this.page.getByRole("button", { name: "Rounds" })).toBeVisible();
+    return this;
+  }
+
+  async isAt(path: string): Promise<this> {
+    await expect(this.leavePrompt()).toHaveCount(0);
+    await expect.poll(() => new URL(this.page.url()).pathname).toBe(path);
+    return this;
+  }
+
+  async staysAt(path: string): Promise<this> {
+    await expect.poll(() => new URL(this.page.url()).pathname).toBe(path);
     return this;
   }
 

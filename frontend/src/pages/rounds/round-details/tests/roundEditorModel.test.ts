@@ -8,6 +8,7 @@ import {
 } from "@/testing/fixtures/roundDetails";
 import {
   closedEditor,
+  editorChanged,
   roundEditor,
   type OpenRoundEditor,
   type RoundEditAction,
@@ -74,5 +75,52 @@ describe("roundEditor", () => {
       { type: "restoreCourse", round: halfMoonBayRound },
     );
     expect(editor.course).toEqual({ status: "linked", course: halfMoonBayCourse });
+  });
+});
+
+describe("editorChanged", () => {
+  it("is false while closed, and when nothing has been changed yet", () => {
+    expect(editorChanged(closedEditor, halfMoonBayRound)).toBe(false);
+    expect(editorChanged(edit(halfMoonBayRound), halfMoonBayRound)).toBe(false);
+    expect(editorChanged(edit(scannedRound), scannedRound)).toBe(false);
+  });
+
+  it("is true once a hole's strokes, putts or green change", () => {
+    const strokes = { type: "setScore", hole: 1, field: "strokes", value: (hole1.strokes ?? 0) + 1 } as const;
+    const putts = { type: "setScore", hole: 1, field: "putts", value: (hole1.putts ?? 0) + 1 } as const;
+    const green = { type: "setGir", hole: 1, value: !hole1.gir } as const;
+    expect(editorChanged(edit(halfMoonBayRound, strokes), halfMoonBayRound)).toBe(true);
+    expect(editorChanged(edit(halfMoonBayRound, putts), halfMoonBayRound)).toBe(true);
+    expect(editorChanged(edit(halfMoonBayRound, green), halfMoonBayRound)).toBe(true);
+  });
+
+  it("is true once a hole is cleared", () => {
+    const cleared = edit(halfMoonBayRound, { type: "setScore", hole: 1, field: "strokes", value: null });
+    expect(editorChanged(cleared, halfMoonBayRound)).toBe(true);
+  });
+
+  it("is false again when a score is typed back to what was saved", () => {
+    const editor = edit(
+      halfMoonBayRound,
+      { type: "setScore", hole: 1, field: "strokes", value: (hole1.strokes ?? 0) + 1 },
+      { type: "setScore", hole: 1, field: "strokes", value: hole1.strokes },
+    );
+    expect(editorChanged(editor, halfMoonBayRound)).toBe(false);
+  });
+
+  it("is true once the tee changes", () => {
+    expect(editorChanged(edit(halfMoonBayRound, { type: "setTeeBox", teeBox: "White" }), halfMoonBayRound)).toBe(true);
+  });
+
+  it("is true once the course changes, is cleared, or the played name is renamed", () => {
+    expect(editorChanged(edit(halfMoonBayRound, { type: "linkCourse", course: pebbleBeachCourse }), halfMoonBayRound)).toBe(true);
+    expect(editorChanged(edit(halfMoonBayRound, { type: "changeCourse" }), halfMoonBayRound)).toBe(true);
+    expect(editorChanged(edit(scannedRound, { type: "useCustomName", name: "Torrey Pines" }), scannedRound)).toBe(true);
+  });
+
+  it("is false when the same course is picked again or the search is closed", () => {
+    expect(editorChanged(edit(halfMoonBayRound, { type: "linkCourse", course: halfMoonBayCourse }), halfMoonBayRound)).toBe(false);
+    const reopened = edit(halfMoonBayRound, { type: "changeCourse" }, { type: "restoreCourse", round: halfMoonBayRound });
+    expect(editorChanged(reopened, halfMoonBayRound)).toBe(false);
   });
 });
