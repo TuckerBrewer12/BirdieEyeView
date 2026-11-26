@@ -22,7 +22,14 @@ const analytics = analyticsFrom(sampleGolfer.analytics);
 describe("analyticsFrom", () => {
   it("takes the server's figures as they came", () => {
     expect(analytics.roundCount).toBe(24);
-    expect(analytics.headline).toBe(sampleGolfer.analytics.headline);
+    expect(analytics.headline).toEqual(sampleGolfer.analytics.headline);
+    expect(analytics.averages).toEqual({
+      score: sampleGolfer.analytics.kpis.scoring_average,
+      putts: sampleGolfer.analytics.kpis.average_putts,
+      threePutts: sampleGolfer.analytics.kpis.three_putts_per_round,
+      greensPercent: sampleGolfer.analytics.kpis.gir_percentage,
+      puttsPerGir: sampleGolfer.analytics.kpis.putts_per_gir,
+    });
     expect(analytics.benchmarkHandicap).toBe(sampleGolfer.analytics.next_level_handicap);
     expect(analytics.puttsPerHole).toEqual({ holes: 432, oneOrFewer: 31.71, two: 55.09, threeOrMore: 13.19 });
     expect(analytics.shortGame.tourScrambling).toBe(57);

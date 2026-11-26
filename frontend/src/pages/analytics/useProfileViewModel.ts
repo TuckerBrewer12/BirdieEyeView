@@ -67,7 +67,7 @@ export function useProfileViewModel(
   const peak = useMemo(() => (analytics ? peakGameFrom(analytics, target, report) : null), [analytics, target, report]);
 
   const friends = useMemo(() => friendOptionsFrom(friendships ?? []), [friendships]);
-  const comparison: ComparisonTargetValue = picked?.value ?? analytics?.next_level_handicap ?? null;
+  const comparison: ComparisonTargetValue = picked?.value ?? analytics?.nextLevelHandicap ?? null;
   const selectedFriend = friends.find((f) => f.id === picked?.friendId) ?? friends.at(0) ?? null;
 
   const against = useMemo<BenchmarkTarget | null>(() => {
@@ -79,7 +79,7 @@ export function useProfileViewModel(
   const benchmark = comparisonData?.benchmark ?? null;
 
   const radarAll = useMemo(
-    () => (analytics ? buildRadarData(analytics.kpis, analytics.scoring_by_par, benchmark, comparisonData?.verdicts) : []),
+    () => (analytics ? buildRadarData(analytics.shape, benchmark, comparisonData?.verdicts) : []),
     [analytics, benchmark, comparisonData],
   );
   const radar = radarAll.filter((entry) => entry.hasData);
@@ -118,6 +118,6 @@ export function useProfileViewModel(
     standing: radarStanding(benchmark ? radar : []),
 
     peak,
-    peakImpacts: peak ? (analytics?.peak_game?.impacts ?? []) : [],
+    peakImpacts: peak ? (analytics?.peak?.impacts ?? []) : [],
   };
 }

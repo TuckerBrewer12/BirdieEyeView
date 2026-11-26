@@ -32,7 +32,7 @@ export function PuttingSection({ analytics, shown, onShownChange }: { analytics:
             { label: "Putts", tone: "neutral", mark: "dots" },
             { label: "5-round avg", tone: "primary" },
           ]}
-          reference={averageLine(analytics.kpis.average_putts, formatPutts)}
+          reference={averageLine(analytics.averages.putts, formatPutts)}
         />
       </SectionCard>
 
@@ -42,7 +42,7 @@ export function PuttingSection({ analytics, shown, onShownChange }: { analytics:
           data-slot="three-putts"
           action={
             <span className="text-body text-foreground-secondary">
-              Avg <b className="text-foreground">{threePuttAverage(analytics.kpis.three_putts_per_round)}</b>
+              Avg <b className="text-foreground">{threePuttAverage(analytics.averages.threePutts)}</b>
             </span>
           }
         >

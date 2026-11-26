@@ -22,7 +22,7 @@ const percentLabel = (pct: number | null) => (pct != null ? formatPercent(pct) :
 const puttsLabel = (puttsPerGir: number | null) => (puttsPerGir != null ? `${formatTwoDecimals(puttsPerGir)}/GIR` : "—");
 const averageToParLabel = (averageToPar: number | null) => (averageToPar != null ? formatSigned(averageToPar) : "—");
 
-function shapeOf(kpis: AnalyticsKpisDto, scoringByPar: ScoringByParRowDto[]): BenchmarkShape {
+export function shapeFrom(kpis: AnalyticsKpisDto, scoringByPar: readonly ScoringByParRowDto[]): BenchmarkShape {
   const parAverage = (par: number) =>
     scoringByPar.find((row) => row.par === par && row.sample_size > 0)?.average_to_par ?? null;
   return {
@@ -52,12 +52,10 @@ const AXES: Axis[] = [
 ];
 
 export function buildRadarData(
-  kpis: AnalyticsKpisDto,
-  scoringByPar: ScoringByParRowDto[],
+  mine: BenchmarkShape,
   benchmark?: BenchmarkShape | null,
   verdicts?: BenchmarkVerdicts | null,
 ): RadarEntry[] {
-  const mine = shapeOf(kpis, scoringByPar);
   return AXES.map(({ axis, figure, radius, label }) => ({
     axis,
     value: radius(mine[figure]),

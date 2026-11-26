@@ -70,19 +70,19 @@ describe("friendOptionsFrom", () => {
 
 describe("the server's figures", () => {
   it("maps the server's peak game, with the goal report's gap, once a goal is set", () => {
-    expect(peakGameFrom(labAnalytics, null, labGoalReport)).toBeNull();
-    expect(peakGameFrom({ ...labAnalytics, peak_game: null }, 89, labGoalReport)).toBeNull();
+    expect(peakGameFrom(profileAnalyticsFrom(labAnalytics), null, labGoalReport)).toBeNull();
+    expect(peakGameFrom({ peak: null }, 89, labGoalReport)).toBeNull();
 
-    const peak = peakGameFrom(labAnalytics, 89, labGoalReport)!;
+    const peak = peakGameFrom(profileAnalyticsFrom(labAnalytics), 89, labGoalReport)!;
     expect(peak.rounds[0]).toEqual({ roundId: "lab-6", courseName: "Half Moon Bay", score: 89 });
     expect(peak.average).toBe(89.7);
     expect(peak.gapToGoal).toBe(0.7);
-    expect(peakGameFrom(labAnalytics, 89, null)?.gapToGoal).toBeNull();
+    expect(peakGameFrom(profileAnalyticsFrom(labAnalytics), 89, null)?.gapToGoal).toBeNull();
   });
 
   it("falls back to the window's lowest score from the server's records", () => {
     expect(profileAnalyticsFrom(labAnalytics).lowestScore).toBe(89);
-    expect(profileAnalyticsFrom(labAnalytics).next_level_handicap).toBe(15);
+    expect(profileAnalyticsFrom(labAnalytics).nextLevelHandicap).toBe(15);
   });
 });
 
@@ -125,7 +125,7 @@ describe("profilePresent", () => {
   });
 
   it("words the peak game against the goal", () => {
-    const peak = peakGameFrom(labAnalytics, 89, labGoalReport)!;
+    const peak = peakGameFrom(profileAnalyticsFrom(labAnalytics), 89, labGoalReport)!;
     expect(peakNote(peak, 89)).toEqual({ lead: "best 3 · ", verdict: "0.7 off 90", tone: "bad" });
     expect(peakNote({ ...peak, meetsGoal: true }, 89)).toEqual({ lead: "best 3 · ", verdict: "breaks 90", tone: "good" });
     expect(peakNote({ ...peak, meetsGoal: null }, 89)).toEqual({ lead: "best 3", verdict: null, tone: "neutral" });

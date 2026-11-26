@@ -37,7 +37,7 @@ export type {
   ParTypeVerdict,
 } from "./benchmark";
 
-export { buildRadarData, radarStanding } from "./radar";
+export { buildRadarData, radarStanding, shapeFrom } from "./radar";
 export type { RadarEntry, RadarGap, RadarStanding } from "./radar";
 
 export { courseLabel, courseSummaryFrom, formatCourseName, getTee, teeColors, teeNameParts, teeOptions } from "./course";

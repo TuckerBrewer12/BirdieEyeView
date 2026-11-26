@@ -281,7 +281,7 @@ export function puttingFigures(analytics: Analytics): (Omit<HeadlineTile, "metri
     {
       key: "putts_per_gir",
       label: "Putts / GIR",
-      value: formatOneDecimal(analytics.kpis.putts_per_gir),
+      value: formatOneDecimal(analytics.averages.puttsPerGir),
       delta: "",
       direction: null,
       tone: "neutral" as const,

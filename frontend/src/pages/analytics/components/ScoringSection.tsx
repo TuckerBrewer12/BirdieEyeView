@@ -64,7 +64,7 @@ export function ScoringSection({ analytics, reading, onReadingChange, lines, onL
             { label: reading === "net" ? "Net" : "Score", tone: "neutral", mark: "dots" },
             { label: "5-round avg", tone: "primary" },
           ]}
-          reference={reading === "gross" ? averageLine(analytics.kpis.scoring_average, formatScore) : null}
+          reference={reading === "gross" ? averageLine(analytics.averages.score, formatScore) : null}
           counts={countLines(series, lines)}
           showSeries={scoreShown(lines)}
           offLabel={TREND_LINES_OFF}
